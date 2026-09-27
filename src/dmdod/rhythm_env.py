@@ -81,9 +81,7 @@ class RhythmMotorEnv:
 
     Exact target timestamps remain private. The policy receives only body state
     and a cue for the next unresolved target. Once a tile is hit or missed, its
-    cue disappears and perception advances to the following target. This keeps
-    the toy observation closer to ADOFAI's progressing current/next-tile state
-    instead of blending already-resolved notes with future notes.
+    cue disappears and perception advances to the following target.
 
     Timing judgements use the Normal timing option: 30 degree Perfect, 45 degree
     E/L Perfect, 60 degree Pass, with the timing window tightening with BPM until
@@ -105,6 +103,7 @@ class RhythmMotorEnv:
         control_dt_s: float = 0.010,
         reward_config: RewardConfig | None = None,
         cue_config: VisualCueConfig | None = None,
+        perception_seed: int | None = None,
         tail_s: float = 0.400,
     ) -> None:
         if not targets:
@@ -117,7 +116,12 @@ class RhythmMotorEnv:
         self.timing_windows = normal_timing_windows(self.bpm)
         self.motor = MotorEnv(same_hand=same_hand, control_dt_s=control_dt_s)
         self.reward_config = reward_config or RewardConfig()
-        self._cue_encoder = VisualCueEncoder(self._targets, config=cue_config)
+        self._perception_seed = perception_seed
+        self._cue_encoder = VisualCueEncoder(
+            self._targets,
+            config=cue_config,
+            seed=perception_seed,
+        )
         self._episode_end_s = self._targets[-1].time_s + tail_s
 
         self._used: list[bool] = []
@@ -157,6 +161,7 @@ class RhythmMotorEnv:
         self._total_reward = 0.0
         self._done = False
         self._failed_on_miss = False
+        self._cue_encoder.reset(seed=self._perception_seed)
         return RhythmObservation(motor_observation, self._cue_observation(0.0))
 
     def _next_unresolved_target_index(self) -> int | None:
