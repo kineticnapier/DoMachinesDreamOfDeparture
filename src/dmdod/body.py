@@ -17,7 +17,7 @@ class FingerConfig:
     fatigue_recovery_s: float = 0.35
     fatigue_threshold: float = 0.45
     fatigue_exponent: float = 2.0
-    # Extra cost paid when the requested movement direction reverses.  This is
+    # Extra cost paid when the requested movement direction reverses. This is
     # deliberately separate from |activation| because fast +/- commands can
     # average activation near zero while still requiring repeated effort.
     switch_fatigue_per_reversal: float = 0.00025
@@ -43,7 +43,7 @@ class BilateralConfig:
     """Weak left/right motor-coordination constraint for cross-hand alternation.
 
     This is intentionally not a global KPS ceiling or a shared muscle-force
-    budget.  It only models finite transfer of motor emphasis between hands.
+    budget. It only models finite transfer of motor emphasis between hands.
     A floor of 1.0 disables the constraint.
     """
 
@@ -78,6 +78,9 @@ class FingerState:
     activation: float = 0.0
     fatigue: float = 0.0
     last_command: float = 0.0
+    # Last non-zero requested direction. Keeping this across zero commands
+    # prevents +1 -> 0 -> -1 from evading reversal fatigue.
+    last_nonzero_command_sign: int = 0
 
     def copy(self) -> "FingerState":
         return FingerState(
@@ -86,6 +89,7 @@ class FingerState:
             self.activation,
             self.fatigue,
             self.last_command,
+            self.last_nonzero_command_sign,
         )
 
 
@@ -120,6 +124,14 @@ class TwoFingerBody:
             floor + (1.0 - floor) * right_affinity,
         ]
 
+    @staticmethod
+    def _command_sign(command: float, deadzone: float = 1e-9) -> int:
+        if command > deadzone:
+            return 1
+        if command < -deadzone:
+            return -1
+        return 0
+
     def step(self, left_command: float, right_command: float, dt_s: float) -> tuple[FingerState, FingerState]:
         if dt_s <= 0.0:
             raise ValueError("dt_s must be positive")
@@ -134,7 +146,12 @@ class TwoFingerBody:
             activation = self._clamp(activation, -1.0, 1.0)
 
             load = self._fatigue_load(abs(activation), cfg.fatigue_threshold, cfg.fatigue_exponent)
-            reversed_direction = state.last_command * command < 0.0
+            command_sign = self._command_sign(command)
+            reversed_direction = (
+                command_sign != 0
+                and state.last_nonzero_command_sign != 0
+                and command_sign != state.last_nonzero_command_sign
+            )
             reversal_cost = cfg.switch_fatigue_per_reversal if reversed_direction else 0.0
             fatigue = (
                 state.fatigue
@@ -142,7 +159,19 @@ class TwoFingerBody:
                 + reversal_cost
             )
             fatigue = self._clamp(fatigue, 0.0, 1.0)
-            updated.append(FingerState(state.position_m, state.velocity_m_s, activation, fatigue, command))
+            last_nonzero_sign = (
+                state.last_nonzero_command_sign if command_sign == 0 else command_sign
+            )
+            updated.append(
+                FingerState(
+                    state.position_m,
+                    state.velocity_m_s,
+                    activation,
+                    fatigue,
+                    command,
+                    last_nonzero_sign,
+                )
+            )
 
         hand_scale = [1.0, 1.0]
         coordination_scale = [1.0, 1.0]
@@ -174,9 +203,6 @@ class TwoFingerBody:
                     hand_cfg.coordination_floor,
                 )
         elif press_demand > 1e-9:
-            # Cross-hand fingers keep independent force/fatigue budgets.  The
-            # only shared term is a weak, finite-speed transfer of motor emphasis
-            # between left and right hands.
             bilateral_cfg = self.config.bilateral
             target = (positive_left - positive_right) / press_demand
             tau = max(bilateral_cfg.switch_tau_s, dt_s)
@@ -213,7 +239,16 @@ class TwoFingerBody:
                 position = cfg.max_position_m
                 velocity = min(0.0, velocity)
 
-            next_states.append(FingerState(position, velocity, state.activation, state.fatigue, state.last_command))
+            next_states.append(
+                FingerState(
+                    position,
+                    velocity,
+                    state.activation,
+                    state.fatigue,
+                    state.last_command,
+                    state.last_nonzero_command_sign,
+                )
+            )
 
         self.left, self.right = next_states
         return self.left.copy(), self.right.copy()
