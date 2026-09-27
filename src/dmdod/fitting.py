@@ -15,6 +15,10 @@ class CalibrationTargets:
     same_hand_alternate_hz: float = 12.5
     cross_hand_alternate_hz: float = 16.0
 
+    @property
+    def single_drop_hz(self) -> float:
+        return self.short_single_hz - self.sustained_single_hz
+
 
 @dataclass(frozen=True)
 class CalibrationResult:
@@ -27,15 +31,20 @@ class CalibrationResult:
     profile: str
 
 
+def _single_loss(short: float, sustained: float, targets: CalibrationTargets) -> float:
+    endpoint = (((short-targets.short_single_hz)/targets.short_single_hz)**2
+                + ((sustained-targets.sustained_single_hz)/targets.sustained_single_hz)**2)
+    actual_drop = short - sustained
+    trend = ((actual_drop - targets.single_drop_hz) / targets.short_single_hz) ** 2
+    reverse_penalty = (max(0.0, sustained - short) / targets.short_single_hz) ** 2
+    return endpoint + 2.0 * trend + 4.0 * reverse_penalty
+
+
 def _loss(short: float, sustained: float, alternate: float, targets: CalibrationTargets, alternate_target: float) -> float:
-    return (((short-targets.short_single_hz)/targets.short_single_hz)**2
-            + ((sustained-targets.sustained_single_hz)/targets.sustained_single_hz)**2
-            + ((alternate-alternate_target)/alternate_target)**2)
+    return _single_loss(short, sustained, targets) + ((alternate-alternate_target)/alternate_target)**2
 
 
 def _rate(config: BodyConfig, *, mode: str, duration_s: float, resolution_ms: float) -> float:
-    # Simulation.dt_s remains 1 ms everywhere. resolution_ms only controls the
-    # interval-search precision; it never changes the physical integration step.
     return find_fastest_sustainable_rate(mode=mode, duration_s=duration_s,
                                          resolution_ms=resolution_ms, body_config=config).rate_hz
 
@@ -76,9 +85,6 @@ def fit_body_config(targets: CalibrationTargets = CalibrationTargets(), progress
         raise ValueError("profile must be 'same-hand' or 'cross-hand'")
     say = progress or (lambda _: None)
     base = replace(BodyConfig(), same_hand=same_hand)
-
-    # All stages use the same measurement durations as final validation.
-    # Search resolution may be coarser, but the underlying physics is always 1 ms.
     search_resolution = 2.0
 
     mechanics = list(product((4.0, 6.0, 8.0, 10.0, 12.0), (0.35, 0.45, 0.65, 0.85), (1.0, 1.8)))
@@ -93,7 +99,9 @@ def fit_body_config(targets: CalibrationTargets = CalibrationTargets(), progress
     mechanics_finalists = [c for _, c in ranked[:3]]
 
     fatigue_candidates = []
-    combos = list(product((2.0, 5.0, 10.0, 18.0), (0.15, 0.35, 0.7), (0.45, 0.7, 1.0)))
+    # Include stronger/slower-recovering regimes now that the 5s->20s drop is
+    # explicitly part of the objective rather than an incidental endpoint fit.
+    combos = list(product((2.0, 5.0, 10.0, 18.0, 30.0), (0.08, 0.15, 0.35, 0.7), (0.35, 0.55, 0.8, 1.0)))
     total = len(mechanics_finalists) * len(combos)
     i = 0
     for base_c in mechanics_finalists:
@@ -102,10 +110,9 @@ def fit_body_config(targets: CalibrationTargets = CalibrationTargets(), progress
             c = _scaled(base_c, fatigue=gain, recovery=recovery, fatigue_threshold=threshold)
             short = _rate(c, mode="single", duration_s=5.0, resolution_ms=search_resolution)
             sustained = _rate(c, mode="single", duration_s=20.0, resolution_ms=search_resolution)
-            score = ((short-targets.short_single_hz)/targets.short_single_hz)**2 + ((sustained-targets.sustained_single_hz)/targets.sustained_single_hz)**2
-            fatigue_candidates.append((score, c))
-            if i % 12 == 0 or i == total:
-                say(f"stage 2/3 fatigue: {i}/{total}")
+            fatigue_candidates.append((_single_loss(short, sustained, targets), c))
+            if i % 20 == 0 or i == total:
+                say(f"stage 2/3 fatigue+trend: {i}/{total}")
     current = min(fatigue_candidates, key=lambda x: x[0])[1]
 
     if same_hand:
