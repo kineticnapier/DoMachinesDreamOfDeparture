@@ -4,7 +4,7 @@ from dataclasses import dataclass, replace
 from itertools import product
 from typing import Callable
 
-from .benchmark import find_fastest_sustainable_rate
+from .benchmark import measure_feedback_rate
 from .body import BodyConfig, FingerConfig
 
 
@@ -44,16 +44,14 @@ def _loss(short: float, sustained: float, alternate: float, targets: Calibration
     return _single_loss(short, sustained, targets) + ((alternate-alternate_target)/alternate_target)**2
 
 
-def _rate(config: BodyConfig, *, mode: str, duration_s: float, resolution_ms: float) -> float:
-    return find_fastest_sustainable_rate(mode=mode, duration_s=duration_s,
-                                         resolution_ms=resolution_ms, body_config=config).rate_hz
+def _rate(config: BodyConfig, *, mode: str, duration_s: float) -> float:
+    return measure_feedback_rate(duration_s, mode=mode, body_config=config).rate_hz
 
 
-def _evaluate(config: BodyConfig, targets: CalibrationTargets, alternate_target: float, profile: str,
-              *, resolution_ms: float = 1.0) -> CalibrationResult:
-    short = _rate(config, mode="single", duration_s=5.0, resolution_ms=resolution_ms)
-    sustained = _rate(config, mode="single", duration_s=20.0, resolution_ms=resolution_ms)
-    alternate = _rate(config, mode="alternate", duration_s=10.0, resolution_ms=resolution_ms)
+def _evaluate(config: BodyConfig, targets: CalibrationTargets, alternate_target: float, profile: str) -> CalibrationResult:
+    short = _rate(config, mode="single", duration_s=5.0)
+    sustained = _rate(config, mode="single", duration_s=20.0)
+    alternate = _rate(config, mode="alternate", duration_s=10.0)
     return CalibrationResult(config, _loss(short, sustained, alternate, targets, alternate_target),
                              short, sustained, alternate, alternate_target, profile)
 
@@ -91,25 +89,23 @@ def fit_body_config(targets: CalibrationTargets = CalibrationTargets(), progress
         raise ValueError("profile must be 'same-hand' or 'cross-hand'")
     say = progress or (lambda _: None)
     base = replace(BodyConfig(), same_hand=same_hand)
-    search_resolution = 2.0
 
     mechanics = list(product((4.0, 6.0, 8.0, 10.0, 12.0), (0.35, 0.45, 0.65, 0.85), (1.0, 1.8)))
     ranked = []
     for i, (tau, force, damping) in enumerate(mechanics, 1):
         c = _scaled(base, tau=tau, force=force, damping=damping)
-        rate = _rate(c, mode="single", duration_s=5.0, resolution_ms=search_resolution)
+        rate = _rate(c, mode="single", duration_s=5.0)
         ranked.append((abs(rate-targets.short_single_hz), c))
         if i % 8 == 0 or i == len(mechanics):
             say(f"stage 1/3 mechanics: {i}/{len(mechanics)}")
     ranked.sort(key=lambda x: x[0])
     mechanics_finalists = [c for _, c in ranked[:3]]
 
-    # Reversal fatigue is the main rate-sensitive fatigue term for fast +/- tapping.
     fatigue_candidates = []
     combos = list(product(
-        (1.0, 2.0, 4.0),       # activation fatigue gain
-        (0.08, 0.2, 0.5),      # recovery
-        (0.5, 1.0, 2.0, 4.0, 8.0),  # reversal cost
+        (1.0, 2.0, 4.0),
+        (0.08, 0.2, 0.5),
+        (0.5, 1.0, 2.0, 4.0, 8.0),
     ))
     total = len(mechanics_finalists) * len(combos)
     i = 0
@@ -118,8 +114,8 @@ def fit_body_config(targets: CalibrationTargets = CalibrationTargets(), progress
             i += 1
             c = _scaled(base_c, fatigue=gain, recovery=recovery,
                         fatigue_threshold=0.7, switch_fatigue=switch_cost)
-            short = _rate(c, mode="single", duration_s=5.0, resolution_ms=search_resolution)
-            sustained = _rate(c, mode="single", duration_s=20.0, resolution_ms=search_resolution)
+            short = _rate(c, mode="single", duration_s=5.0)
+            sustained = _rate(c, mode="single", duration_s=20.0)
             fatigue_candidates.append((_single_loss(short, sustained, targets), c))
             if i % 15 == 0 or i == total:
                 say(f"stage 2/3 fatigue+trend: {i}/{total}")
@@ -130,7 +126,7 @@ def fit_body_config(targets: CalibrationTargets = CalibrationTargets(), progress
         coord_results = []
         for i, (capacity, switch, floor) in enumerate(coordination, 1):
             c = _scaled(current, hand_capacity=capacity, switch_tau=switch, coordination_floor=floor)
-            rate = _rate(c, mode="alternate", duration_s=10.0, resolution_ms=search_resolution)
+            rate = _rate(c, mode="alternate", duration_s=10.0)
             score = ((rate-alternate_target)/alternate_target)**2
             coord_results.append((score, c))
             if i % 16 == 0 or i == len(coordination):
@@ -139,5 +135,5 @@ def fit_body_config(targets: CalibrationTargets = CalibrationTargets(), progress
     else:
         say("stage 3/3 coordination: skipped for cross-hand profile")
 
-    say("final validation: same 5 s / 20 s / 10 s tests at 1 ms search resolution")
-    return _evaluate(current, targets, alternate_target, profile, resolution_ms=1.0)
+    say("final validation: event-driven threshold controller, 5 s / 20 s / 10 s")
+    return _evaluate(current, targets, alternate_target, profile)
