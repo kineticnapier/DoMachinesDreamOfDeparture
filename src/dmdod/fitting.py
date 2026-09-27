@@ -28,116 +28,93 @@ class CalibrationResult:
 
 
 def _loss(short: float, sustained: float, alternate: float, targets: CalibrationTargets, alternate_target: float) -> float:
-    return (
-        ((short - targets.short_single_hz) / targets.short_single_hz) ** 2
-        + ((sustained - targets.sustained_single_hz) / targets.sustained_single_hz) ** 2
-        + ((alternate - alternate_target) / alternate_target) ** 2
-    )
+    return (((short-targets.short_single_hz)/targets.short_single_hz)**2
+            + ((sustained-targets.sustained_single_hz)/targets.sustained_single_hz)**2
+            + ((alternate-alternate_target)/alternate_target)**2)
 
 
 def _evaluate(config: BodyConfig, targets: CalibrationTargets, alternate_target: float, profile: str, *, final: bool) -> CalibrationResult:
     resolution = 1.0 if final else 4.0
-    short_duration = 5.0 if final else 2.0
-    long_duration = 20.0 if final else 5.0
-    alt_duration = 10.0 if final else 3.0
-    short = find_fastest_sustainable_rate(mode="single", duration_s=short_duration, resolution_ms=resolution, body_config=config).rate_hz
-    sustained = find_fastest_sustainable_rate(mode="single", duration_s=long_duration, resolution_ms=resolution, body_config=config).rate_hz
-    alternate = find_fastest_sustainable_rate(mode="alternate", duration_s=alt_duration, resolution_ms=resolution, body_config=config).rate_hz
+    short = find_fastest_sustainable_rate(mode="single", duration_s=5.0 if final else 2.0, resolution_ms=resolution, body_config=config).rate_hz
+    sustained = find_fastest_sustainable_rate(mode="single", duration_s=20.0 if final else 5.0, resolution_ms=resolution, body_config=config).rate_hz
+    alternate = find_fastest_sustainable_rate(mode="alternate", duration_s=10.0 if final else 3.0, resolution_ms=resolution, body_config=config).rate_hz
     return CalibrationResult(config, _loss(short, sustained, alternate, targets, alternate_target), short, sustained, alternate, alternate_target, profile)
 
 
-def _quick_short(config: BodyConfig, targets: CalibrationTargets) -> float:
-    rate = find_fastest_sustainable_rate(mode="single", duration_s=1.5, resolution_ms=5.0, body_config=config).rate_hz
-    return abs(rate - targets.short_single_hz) / targets.short_single_hz
+def _single_rates(config: BodyConfig) -> tuple[float, float]:
+    short = find_fastest_sustainable_rate(mode="single", duration_s=2.0, resolution_ms=4.0, body_config=config).rate_hz
+    sustained = find_fastest_sustainable_rate(mode="single", duration_s=5.0, resolution_ms=4.0, body_config=config).rate_hz
+    return short, sustained
 
 
-def _scaled(config: BodyConfig, *, tau: float = 1.0, force: float = 1.0, damping: float = 1.0,
-            fatigue: float = 1.0, recovery: float = 1.0, hand_capacity: float = 1.0,
-            hand_fatigue: float = 1.0, hand_recovery: float = 1.0,
-            switch_tau: float = 1.0, coordination_floor: float = 1.0) -> BodyConfig:
+def _scaled(config: BodyConfig, *, tau=1.0, force=1.0, damping=1.0, fatigue=1.0, recovery=1.0,
+            fatigue_threshold=1.0, hand_capacity=1.0, hand_fatigue=1.0, hand_recovery=1.0,
+            hand_threshold=1.0, switch_tau=1.0, coordination_floor=1.0) -> BodyConfig:
     def finger(f: FingerConfig) -> FingerConfig:
-        return replace(f, activation_tau_s=f.activation_tau_s * tau, max_force_n=f.max_force_n * force,
-                       damping_n_s_m=f.damping_n_s_m * damping, fatigue_gain_s=f.fatigue_gain_s * fatigue,
-                       fatigue_recovery_s=f.fatigue_recovery_s * recovery)
+        return replace(f, activation_tau_s=f.activation_tau_s*tau, max_force_n=f.max_force_n*force,
+                       damping_n_s_m=f.damping_n_s_m*damping, fatigue_gain_s=f.fatigue_gain_s*fatigue,
+                       fatigue_recovery_s=f.fatigue_recovery_s*recovery,
+                       fatigue_threshold=max(0.05, min(0.95, f.fatigue_threshold*fatigue_threshold)))
     h = config.hand
-    hand = replace(
-        h,
-        capacity=max(0.2, h.capacity * hand_capacity),
-        fatigue_gain_s=h.fatigue_gain_s * hand_fatigue,
-        fatigue_recovery_s=h.fatigue_recovery_s * hand_recovery,
-        switch_tau_s=max(0.001, h.switch_tau_s * switch_tau),
-        coordination_floor=max(0.02, min(1.0, h.coordination_floor * coordination_floor)),
-    )
+    hand = replace(h, capacity=max(0.2, h.capacity*hand_capacity), fatigue_gain_s=h.fatigue_gain_s*hand_fatigue,
+                   fatigue_recovery_s=h.fatigue_recovery_s*hand_recovery,
+                   fatigue_threshold=max(0.05, min(0.95, h.fatigue_threshold*hand_threshold)),
+                   switch_tau_s=max(0.001, h.switch_tau_s*switch_tau),
+                   coordination_floor=max(0.02, min(1.0, h.coordination_floor*coordination_floor)))
     return BodyConfig(left=finger(config.left), right=finger(config.right), hand=hand, same_hand=config.same_hand)
 
 
 def fit_body_config(targets: CalibrationTargets = CalibrationTargets(), progress: Callable[[str], None] | None = None,
                     *, profile: str = "same-hand") -> CalibrationResult:
     if profile == "same-hand":
-        alternate_target = targets.same_hand_alternate_hz
-        same_hand = True
+        alternate_target, same_hand = targets.same_hand_alternate_hz, True
     elif profile == "cross-hand":
-        alternate_target = targets.cross_hand_alternate_hz
-        same_hand = False
+        alternate_target, same_hand = targets.cross_hand_alternate_hz, False
     else:
         raise ValueError("profile must be 'same-hand' or 'cross-hand'")
-
     say = progress or (lambda _: None)
     base = replace(BodyConfig(), same_hand=same_hand)
 
-    stage1: list[tuple[float, BodyConfig]] = []
+    # Stage 1: mechanics. Only the short single-finger limit matters here.
     mechanics = list(product((4.0, 6.0, 8.0, 10.0), (0.45, 0.65, 0.85), (1.0, 1.8)))
-    for index, (tau, force, damping) in enumerate(mechanics, 1):
-        config = _scaled(base, tau=tau, force=force, damping=damping)
-        stage1.append((_quick_short(config, targets), config))
-        if index % 4 == 0 or index == len(mechanics):
-            say(f"stage 1/3: {index}/{len(mechanics)}")
-    stage1.sort(key=lambda item: item[0])
-    finalists = [config for _, config in stage1[:4]]
+    ranked = []
+    for i, (tau, force, damping) in enumerate(mechanics, 1):
+        c = _scaled(base, tau=tau, force=force, damping=damping)
+        rate = find_fastest_sustainable_rate(mode="single", duration_s=1.5, resolution_ms=5.0, body_config=c).rate_hz
+        ranked.append((abs(rate-targets.short_single_hz), c))
+        if i % 4 == 0: say(f"stage 1/3 mechanics: {i}/{len(mechanics)}")
+    ranked.sort(key=lambda x: x[0])
+    mechanics_finalists = [c for _, c in ranked[:3]]
 
-    stage2_configs: list[BodyConfig] = []
-    for config in finalists:
-        if same_hand:
-            # Search hand switching explicitly; keep the grid bounded so the
-            # calibration remains practical on a desktop CPU.
-            combinations = product(
-                (2.0, 5.0),          # finger fatigue
-                (0.5, 1.0),          # finger recovery
-                (0.55, 0.80),        # shared capacity
-                (1.0, 2.5, 5.0),     # switching time constant
-                (0.5, 1.0, 1.8),     # minimum non-selected-finger authority
-            )
-            for fatigue, recovery, capacity, switch_tau, floor in combinations:
-                stage2_configs.append(_scaled(
-                    config,
-                    fatigue=fatigue,
-                    recovery=recovery,
-                    hand_capacity=capacity,
-                    switch_tau=switch_tau,
-                    coordination_floor=floor,
-                ))
-        else:
-            for fatigue, recovery in product((2.0, 5.0, 9.0), (0.5, 1.0)):
-                stage2_configs.append(_scaled(config, fatigue=fatigue, recovery=recovery))
+    # Stage 2: fatigue only. No coordination Cartesian product.
+    fatigue_candidates = []
+    combos = list(product((2.0, 5.0, 10.0), (0.35, 0.7, 1.0), (0.55, 0.8, 1.05)))
+    total = len(mechanics_finalists) * len(combos)
+    i = 0
+    for base_c in mechanics_finalists:
+        for gain, recovery, threshold in combos:
+            i += 1
+            c = _scaled(base_c, fatigue=gain, recovery=recovery, fatigue_threshold=threshold)
+            short, sustained = _single_rates(c)
+            score = ((short-targets.short_single_hz)/targets.short_single_hz)**2 + ((sustained-targets.sustained_single_hz)/targets.sustained_single_hz)**2
+            fatigue_candidates.append((score, c))
+            if i % 9 == 0 or i == total: say(f"stage 2/3 fatigue: {i}/{total}")
+    fatigue_candidates.sort(key=lambda x: x[0])
+    current = fatigue_candidates[0][1]
 
-    evaluated: list[CalibrationResult] = []
-    for index, config in enumerate(stage2_configs, 1):
-        evaluated.append(_evaluate(config, targets, alternate_target, profile, final=False))
-        if index % 12 == 0 or index == len(stage2_configs):
-            say(f"stage 2/3: {index}/{len(stage2_configs)}")
-    current = min(evaluated, key=lambda result: result.loss).config
-
-    names = ["tau", "force", "damping", "fatigue", "recovery"]
+    # Stage 3: coordination only for same-hand. Cross-hand has no shared switch.
     if same_hand:
-        names += ["hand_capacity", "hand_fatigue", "hand_recovery", "switch_tau", "coordination_floor"]
-    for round_index, scale in enumerate((1.18, 1.08), 1):
-        neighborhood = [current]
-        for name in names:
-            neighborhood.append(_scaled(current, **{name: 1.0 / scale}))
-            neighborhood.append(_scaled(current, **{name: scale}))
-        results = [_evaluate(config, targets, alternate_target, profile, final=False) for config in neighborhood]
-        current = min(results, key=lambda result: result.loss).config
-        say(f"stage 3/3: refinement {round_index}/2")
+        coordination = list(product((0.45, 0.65, 0.85), (0.6, 1.0, 1.8, 3.0), (0.35, 0.6, 1.0)))
+        coord_results = []
+        for i, (capacity, switch, floor) in enumerate(coordination, 1):
+            c = _scaled(current, hand_capacity=capacity, switch_tau=switch, coordination_floor=floor)
+            rate = find_fastest_sustainable_rate(mode="alternate", duration_s=3.0, resolution_ms=4.0, body_config=c).rate_hz
+            score = ((rate-alternate_target)/alternate_target)**2
+            coord_results.append((score, c))
+            if i % 9 == 0 or i == len(coordination): say(f"stage 3/3 coordination: {i}/{len(coordination)}")
+        current = min(coord_results, key=lambda x: x[0])[1]
+    else:
+        say("stage 3/3 coordination: skipped for cross-hand profile")
 
     say("final validation: 1 s warmup + 5 s / 20 s / 10 s measurement")
     return _evaluate(current, targets, alternate_target, profile, final=True)
