@@ -16,8 +16,9 @@ except ImportError as exc:  # pragma: no cover
 from dmdod.curriculum import curriculum_start_s
 from dmdod.geometry_rhythm_env import GeometryRhythmEnv, GeometryRhythmObservation
 from dmdod.planet_perception import PlanetGeometryObservation, PlanetVisionConfig
+from dmdod.recurrent_policy import RecurrentActorCritic
 from dmdod.rhythm_env import make_regular_targets
-from dmdod.toy_policy import ActorCritic, GEOMETRY_INPUT_DIM, observation_tensor
+from dmdod.toy_policy import GEOMETRY_INPUT_DIM, observation_tensor
 
 
 @dataclass(frozen=True)
@@ -65,16 +66,15 @@ class Summary:
         return ordered[max(0, math.ceil(0.95 * len(ordered)) - 1)]
 
 
-def config_from_checkpoint(saved: dict[str, object]) -> PlanetVisionConfig:
-    raw = saved.get("vision_config", {})
+def config_from_dict(raw: object) -> PlanetVisionConfig:
     if not isinstance(raw, dict):
         raw = {}
     return PlanetVisionConfig(
-        latency_s=float(raw.get("latency_s", 0.050)),
-        latency_jitter_s=float(raw.get("latency_jitter_s", 0.015)),
-        sample_period_s=float(raw.get("sample_period_s", 1.0 / 60.0)),
-        position_noise_std=float(raw.get("position_noise_std", 0.015)),
-        dropout_probability=float(raw.get("dropout_probability", 0.01)),
+        latency_s=float(raw.get("latency_s", 0.0)),
+        latency_jitter_s=float(raw.get("latency_jitter_s", 0.0)),
+        sample_period_s=float(raw.get("sample_period_s", 0.0)),
+        position_noise_std=float(raw.get("position_noise_std", 0.0)),
+        dropout_probability=float(raw.get("dropout_probability", 0.0)),
     )
 
 
@@ -107,7 +107,7 @@ def transform_geometry(
 
 
 def run_episode(
-    model: ActorCritic,
+    model: RecurrentActorCritic,
     device: torch.device,
     *,
     bpm: float,
@@ -130,9 +130,12 @@ def run_episode(
     rng = random.Random(seed ^ 0x5EED5EED)
     frozen = None
     observation, frozen = transform_geometry(env.reset(), mode=mode, rng=rng, frozen=frozen)
+    state = model.initial_state(device)
 
     while True:
-        action = model.deterministic_action(observation_tensor(observation, device))
+        action, state = model.deterministic_action(
+            observation_tensor(observation, device), state
+        )
         transition = env.step(action)
         observation, frozen = transform_geometry(
             transition.observation,
@@ -175,7 +178,7 @@ def fmt(value: float | None, *, signed: bool = False) -> str:
 
 def print_row(label: str, summary: Summary) -> None:
     print(
-        f"  {label:<12} hit={summary.hit_rate:6.3f} "
+        f"  {label:<14} hit={summary.hit_rate:6.3f} "
         f"full={summary.full:3d}/{summary.episodes:<3d} "
         f"clean={summary.clean:3d}/{summary.episodes:<3d} "
         f"ovl={summary.overloads:3d}/{summary.episodes:<3d} "
@@ -191,31 +194,44 @@ def evaluate(args: argparse.Namespace) -> None:
     if not path.exists():
         raise SystemExit(f"checkpoint not found: {path}")
     saved = torch.load(path, map_location=device)
-    if saved.get("experiment") != "planet-geometry-straight-v0.1":
-        raise SystemExit("checkpoint is not planet-geometry-straight-v0.1")
+    if saved.get("experiment") != "planet-geometry-sequence-v0.2":
+        raise SystemExit("checkpoint is not planet-geometry-sequence-v0.2")
 
     input_dim = int(saved.get("input_dim", GEOMETRY_INPUT_DIM))
     hidden_dim = int(saved.get("hidden_dim", 64))
-    model = ActorCritic(input_dim=input_dim, hidden_dim=hidden_dim).to(device)
+    model = RecurrentActorCritic(
+        input_dim=input_dim,
+        hidden_dim=hidden_dim,
+        initial_log_std=float(saved.get("initial_log_std", -0.70)),
+    ).to(device)
     model.load_state_dict(saved["model"])
     model.eval()
 
-    notes = int(saved.get("notes", 16))
+    raw_phase = saved.get("curriculum_phase", {})
+    if not isinstance(raw_phase, dict):
+        raise SystemExit("checkpoint has no curriculum phase metadata")
+    notes = int(raw_phase.get("notes", 1))
+    low = float(raw_phase.get("bpm_min", saved.get("final_bpm_min", 120.0)))
+    high = float(raw_phase.get("bpm_max", saved.get("final_bpm_max", 300.0)))
+    phase_jitter_ms = float(raw_phase.get("eval_phase_jitter_ms", args.phase_jitter_ms))
+    config = config_from_dict(raw_phase.get("vision_config", {}))
     control_dt = float(saved.get("control_dt", 0.010))
-    base_start = float(saved.get("start_s", curriculum_start_s(notes)))
-    low = float(saved.get("bpm_min", 120.0))
-    high = float(saved.get("bpm_max", 300.0))
-    config = config_from_checkpoint(saved)
+    base_start = curriculum_start_s(notes)
+    phase_index = int(saved.get("curriculum_phase_index", 1))
+    phase_name = str(saved.get("curriculum_phase_name", "unknown"))
 
-    print("=== Planet Geometry Policy Evaluation ===")
+    print("=== Planet Geometry Sequence Policy Evaluation ===")
     print(f"checkpoint: {path}")
+    print(f"phase: {phase_index} ({phase_name})")
     print(f"task: {notes} notes, BPM domain={low:g}..{high:g}, control_dt={control_dt*1000:.1f} ms")
+    print("policy: GRU memory reset at each episode")
     print("agent-visible: motor + orbit(x,y) + next-tile vector(x,y)")
     print("no exact time/BPM/target-angle/angle-error/direction flag")
 
     rng = random.Random(args.seed)
+    jitter_ms = phase_jitter_ms if args.phase_jitter_ms is None else args.phase_jitter_ms
     starts = [
-        max(0.050, base_start + rng.uniform(-args.phase_jitter_ms, args.phase_jitter_ms) / 1000.0)
+        max(0.050, base_start + rng.uniform(-jitter_ms, jitter_ms) / 1000.0)
         for _ in range(args.episodes)
     ]
     bpms = [rng.uniform(low, high) if high > low else low for _ in range(args.episodes)]
@@ -265,7 +281,7 @@ def evaluate(args: argparse.Namespace) -> None:
                 local_rng = random.Random(args.seed + point_index * 100000 + i)
                 start = max(
                     0.050,
-                    base_start + local_rng.uniform(-args.phase_jitter_ms, args.phase_jitter_ms) / 1000.0,
+                    base_start + local_rng.uniform(-jitter_ms, jitter_ms) / 1000.0,
                 )
                 runs.append(
                     run_episode(
@@ -284,10 +300,10 @@ def evaluate(args: argparse.Namespace) -> None:
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="Evaluate the planet-geometry policy.")
-    parser.add_argument("--checkpoint", default="checkpoints/planet_geometry_v01.pt")
+    parser = argparse.ArgumentParser(description="Evaluate the recurrent planet-geometry policy.")
+    parser.add_argument("--checkpoint", default="checkpoints/planet_geometry_v02.pt")
     parser.add_argument("--episodes", type=int, default=500)
-    parser.add_argument("--phase-jitter-ms", type=float, default=100.0)
+    parser.add_argument("--phase-jitter-ms", type=float, default=None)
     parser.add_argument("--seed", type=int, default=12345)
     parser.add_argument("--device", default="cpu")
     parser.add_argument("--ablation", action="store_true")
@@ -297,7 +313,7 @@ def main() -> None:
 
     if args.episodes <= 0 or args.sweep_episodes <= 0:
         parser.error("episode counts must be positive")
-    if args.phase_jitter_ms < 0.0:
+    if args.phase_jitter_ms is not None and args.phase_jitter_ms < 0.0:
         parser.error("phase-jitter-ms must be non-negative")
     evaluate(args)
 
