@@ -13,7 +13,8 @@ except ImportError as exc:  # pragma: no cover - user-facing dependency message
         'PyTorch is required. Run: uv sync --extra dev --extra rl --inexact'
     ) from exc
 
-from dmdod.rhythm_env import EpisodeStats, RhythmMotorEnv, make_regular_targets
+from dmdod.ablation import CueAblationMode, CueAblator
+from dmdod.rhythm_env import EpisodeStats, RhythmMotorEnv, RhythmObservation, make_regular_targets
 from dmdod.toy_policy import ActorCritic, observation_tensor
 
 
@@ -23,12 +24,57 @@ class EvalRun:
     timing_errors_ms: tuple[float, ...]
 
 
+@dataclass(frozen=True)
+class EvalSummary:
+    episodes: int
+    total_hits: int
+    total_targets: int
+    total_misses: int
+    total_too_early: int
+    overloads: int
+    full_hits: int
+    zero_too_early: int
+    clean_clears: int
+    timing_errors_ms: tuple[float, ...]
+
+    @property
+    def hit_rate(self) -> float:
+        return self.total_hits / max(self.total_targets, 1)
+
+    @property
+    def mean_too_early(self) -> float:
+        return self.total_too_early / max(self.episodes, 1)
+
+    @property
+    def mean_signed_error_ms(self) -> float | None:
+        if not self.timing_errors_ms:
+            return None
+        return sum(self.timing_errors_ms) / len(self.timing_errors_ms)
+
+    @property
+    def mean_abs_error_ms(self) -> float | None:
+        if not self.timing_errors_ms:
+            return None
+        return sum(abs(error) for error in self.timing_errors_ms) / len(self.timing_errors_ms)
+
+    @property
+    def p95_abs_error_ms(self) -> float | None:
+        return p95_abs(list(self.timing_errors_ms))
+
+
 def p95_abs(values: list[float]) -> float | None:
     if not values:
         return None
     ordered = sorted(abs(value) for value in values)
     index = max(0, math.ceil(0.95 * len(ordered)) - 1)
     return ordered[index]
+
+
+def _policy_observation(
+    observation: RhythmObservation,
+    ablator: CueAblator,
+) -> RhythmObservation:
+    return RhythmObservation(observation.motor, ablator.transform(observation.cue))
 
 
 def run_episode(
@@ -41,6 +87,9 @@ def run_episode(
     same_hand: bool,
     control_dt: float,
     start_s: float,
+    cue_mode: CueAblationMode | str = CueAblationMode.NORMAL,
+    cue_delay_s: float = 0.100,
+    cue_seed: int = 0,
 ) -> EvalRun:
     targets = make_regular_targets(
         bpm=bpm,
@@ -54,17 +103,47 @@ def run_episode(
         same_hand=same_hand,
         control_dt_s=control_dt,
     )
-    observation = env.reset()
+    ablator = CueAblator(
+        cue_mode,
+        control_dt_s=control_dt,
+        delay_s=cue_delay_s,
+        seed=cue_seed,
+    )
+    observation = _policy_observation(env.reset(), ablator)
 
     while True:
         x = observation_tensor(observation, device)
         action = model.deterministic_action(x)
         transition = env.step(action)
-        observation = transition.observation
+        observation = _policy_observation(transition.observation, ablator)
         if transition.done:
             break
 
     return EvalRun(env.stats, env.timing_errors_ms)
+
+
+def summarize_runs(runs: list[EvalRun]) -> EvalSummary:
+    all_errors = tuple(error for run in runs for error in run.timing_errors_ms)
+    return EvalSummary(
+        episodes=len(runs),
+        total_hits=sum(run.stats.hits for run in runs),
+        total_targets=sum(run.stats.targets for run in runs),
+        total_misses=sum(run.stats.misses for run in runs),
+        total_too_early=sum(run.stats.too_early_presses for run in runs),
+        overloads=sum(int(run.stats.overloaded) for run in runs),
+        full_hits=sum(
+            run.stats.hits == run.stats.targets and not run.stats.overloaded
+            for run in runs
+        ),
+        zero_too_early=sum(run.stats.too_early_presses == 0 for run in runs),
+        clean_clears=sum(
+            run.stats.hits == run.stats.targets
+            and run.stats.too_early_presses == 0
+            and not run.stats.overloaded
+            for run in runs
+        ),
+        timing_errors_ms=all_errors,
+    )
 
 
 def print_single(label: str, run: EvalRun) -> None:
@@ -83,6 +162,58 @@ def print_single(label: str, run: EvalRun) -> None:
     print(f"  MAE:        {mae}")
     print(f"  P95:        {p95_text}")
     print(f"  reward:     {stats.total_reward:.3f}")
+
+
+def _fmt_ms(value: float | None, *, signed: bool = False) -> str:
+    if value is None:
+        return "--"
+    return f"{value:+.1f}" if signed else f"{value:.1f}"
+
+
+def print_ablation_row(label: str, summary: EvalSummary) -> None:
+    print(
+        f"  {label:<14} "
+        f"hit={summary.hit_rate:6.3f}  "
+        f"full={summary.full_hits:3d}/{summary.episodes:<3d}  "
+        f"clean={summary.clean_clears:3d}/{summary.episodes:<3d}  "
+        f"ovl={summary.overloads:3d}/{summary.episodes:<3d}  "
+        f"early={summary.mean_too_early:5.2f}  "
+        f"meanErr={_fmt_ms(summary.mean_signed_error_ms, signed=True):>6}ms  "
+        f"MAE={_fmt_ms(summary.mean_abs_error_ms):>5}ms  "
+        f"P95={_fmt_ms(summary.p95_abs_error_ms):>5}ms"
+    )
+
+
+def evaluate_runs(
+    model: ActorCritic,
+    device: torch.device,
+    *,
+    starts_s: list[float],
+    bpm: float,
+    notes: int,
+    pattern: str,
+    same_hand: bool,
+    control_dt: float,
+    cue_mode: CueAblationMode,
+    cue_delay_s: float,
+    seed: int,
+) -> list[EvalRun]:
+    return [
+        run_episode(
+            model,
+            device,
+            bpm=bpm,
+            notes=notes,
+            pattern=pattern,
+            same_hand=same_hand,
+            control_dt=control_dt,
+            start_s=start_s,
+            cue_mode=cue_mode,
+            cue_delay_s=cue_delay_s,
+            cue_seed=seed + i * 1009,
+        )
+        for i, start_s in enumerate(starts_s)
+    ]
 
 
 def evaluate(args: argparse.Namespace) -> None:
@@ -150,47 +281,28 @@ def evaluate(args: argparse.Namespace) -> None:
     print_single("Exact checkpoint schedule:", exact)
 
     rng = random.Random(args.seed)
-    runs: list[EvalRun] = []
     jitter_s = args.start_jitter_ms / 1000.0
-    for _ in range(args.episodes):
-        offset = rng.uniform(-jitter_s, jitter_s) if jitter_s > 0.0 else 0.0
-        start_s = max(0.050, base_start_s + offset)
-        runs.append(
-            run_episode(
-                model,
-                device,
-                bpm=bpm,
-                notes=notes,
-                pattern=pattern,
-                same_hand=same_hand,
-                control_dt=control_dt,
-                start_s=start_s,
-            )
+    starts_s = [
+        max(
+            0.050,
+            base_start_s + (rng.uniform(-jitter_s, jitter_s) if jitter_s > 0.0 else 0.0),
         )
-
-    total_hits = sum(run.stats.hits for run in runs)
-    total_targets = sum(run.stats.targets for run in runs)
-    total_misses = sum(run.stats.misses for run in runs)
-    total_too_early = sum(run.stats.too_early_presses for run in runs)
-    overloads = sum(run.stats.overloaded for run in runs)
-    all_errors = [error for run in runs for error in run.timing_errors_ms]
-    full_hits = sum(
-        run.stats.hits == run.stats.targets and not run.stats.overloaded
-        for run in runs
+        for _ in range(args.episodes)
+    ]
+    runs = evaluate_runs(
+        model,
+        device,
+        starts_s=starts_s,
+        bpm=bpm,
+        notes=notes,
+        pattern=pattern,
+        same_hand=same_hand,
+        control_dt=control_dt,
+        cue_mode=CueAblationMode.NORMAL,
+        cue_delay_s=args.cue_delay_ms / 1000.0,
+        seed=args.seed,
     )
-    zero_too_early = sum(run.stats.too_early_presses == 0 for run in runs)
-    clean_clears = sum(
-        run.stats.hits == run.stats.targets
-        and run.stats.too_early_presses == 0
-        and not run.stats.overloaded
-        for run in runs
-    )
-    mean_abs_error = (
-        sum(abs(error) for error in all_errors) / len(all_errors)
-        if all_errors
-        else None
-    )
-    p95 = p95_abs(all_errors)
+    summary = summarize_runs(runs)
 
     print()
     print(
@@ -199,16 +311,75 @@ def evaluate(args: argparse.Namespace) -> None:
     )
     if args.start_jitter_ms == 0.0 and args.episodes > 1:
         print("  note: zero jitter repeats the same deterministic trajectory")
-    print(f"  hit rate:       {total_hits}/{total_targets} = {total_hits/max(total_targets, 1):.4f}")
-    print(f"  mean hits:      {total_hits/args.episodes:.3f}/{notes}")
-    print(f"  mean misses:    {total_misses/args.episodes:.3f}")
-    print(f"  mean Too Early: {total_too_early/args.episodes:.3f}")
-    print(f"  OVERLOAD runs:  {overloads}/{args.episodes}")
-    print(f"  full-hit runs:  {full_hits}/{args.episodes}")
-    print(f"  zero Too Early: {zero_too_early}/{args.episodes}")
-    print(f"  clean clears:   {clean_clears}/{args.episodes}")
-    print(f"  MAE all hits:   {'--' if mean_abs_error is None else f'{mean_abs_error:.2f} ms'}")
-    print(f"  P95 abs error:  {'--' if p95 is None else f'{p95:.2f} ms'}")
+    print(f"  hit rate:       {summary.total_hits}/{summary.total_targets} = {summary.hit_rate:.4f}")
+    print(f"  mean hits:      {summary.total_hits/args.episodes:.3f}/{notes}")
+    print(f"  mean misses:    {summary.total_misses/args.episodes:.3f}")
+    print(f"  mean Too Early: {summary.mean_too_early:.3f}")
+    print(f"  OVERLOAD runs:  {summary.overloads}/{args.episodes}")
+    print(f"  full-hit runs:  {summary.full_hits}/{args.episodes}")
+    print(f"  zero Too Early: {summary.zero_too_early}/{args.episodes}")
+    print(f"  clean clears:   {summary.clean_clears}/{args.episodes}")
+    print(f"  mean signed error: {'--' if summary.mean_signed_error_ms is None else f'{summary.mean_signed_error_ms:+.2f} ms'}")
+    print(f"  MAE all hits:   {'--' if summary.mean_abs_error_ms is None else f'{summary.mean_abs_error_ms:.2f} ms'}")
+    print(f"  P95 abs error:  {'--' if summary.p95_abs_error_ms is None else f'{summary.p95_abs_error_ms:.2f} ms'}")
+
+    if args.cue_ablation:
+        delay_s = args.cue_delay_ms / 1000.0
+        zero_summary = summarize_runs(
+            evaluate_runs(
+                model,
+                device,
+                starts_s=starts_s,
+                bpm=bpm,
+                notes=notes,
+                pattern=pattern,
+                same_hand=same_hand,
+                control_dt=control_dt,
+                cue_mode=CueAblationMode.ZERO,
+                cue_delay_s=delay_s,
+                seed=args.seed,
+            )
+        )
+        random_summary = summarize_runs(
+            evaluate_runs(
+                model,
+                device,
+                starts_s=starts_s,
+                bpm=bpm,
+                notes=notes,
+                pattern=pattern,
+                same_hand=same_hand,
+                control_dt=control_dt,
+                cue_mode=CueAblationMode.RANDOM,
+                cue_delay_s=delay_s,
+                seed=args.seed,
+            )
+        )
+        delayed_summary = summarize_runs(
+            evaluate_runs(
+                model,
+                device,
+                starts_s=starts_s,
+                bpm=bpm,
+                notes=notes,
+                pattern=pattern,
+                same_hand=same_hand,
+                control_dt=control_dt,
+                cue_mode=CueAblationMode.DELAY,
+                cue_delay_s=delay_s,
+                seed=args.seed,
+            )
+        )
+
+        print()
+        print(
+            f"Cue ablation: same {args.episodes} phase offsets; "
+            f"random replaces both cue channels independently; delay=+{args.cue_delay_ms:g} ms"
+        )
+        print_ablation_row("normal", summary)
+        print_ablation_row("zero", zero_summary)
+        print_ablation_row("random", random_summary)
+        print_ablation_row(f"delay+{args.cue_delay_ms:g}", delayed_summary)
 
 
 def main() -> None:
@@ -221,6 +392,17 @@ def main() -> None:
         default=100.0,
         help="uniformly vary chart start time around the checkpoint's training start",
     )
+    parser.add_argument(
+        "--cue-ablation",
+        action="store_true",
+        help="compare normal, zero, random, and delayed visual cues on the same phase offsets",
+    )
+    parser.add_argument(
+        "--cue-delay-ms",
+        type=float,
+        default=100.0,
+        help="extra policy-side visual delay used by the delay cue-ablation condition",
+    )
     parser.add_argument("--seed", type=int, default=12345)
     parser.add_argument("--device", default="cpu")
     args = parser.parse_args()
@@ -229,6 +411,8 @@ def main() -> None:
         parser.error("episodes must be positive")
     if args.start_jitter_ms < 0.0:
         parser.error("start-jitter-ms must be non-negative")
+    if args.cue_delay_ms < 0.0:
+        parser.error("cue-delay-ms must be non-negative")
     evaluate(args)
 
 
