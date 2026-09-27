@@ -11,7 +11,18 @@ from .body import (
     TwoFingerBody,
 )
 from .calibration import INITIAL_RATE_TARGETS, RateTarget
+from .evaluator import EvaluationSummary, Judgement, TargetHit, TimingEvaluator
 from .keyboard import KeyConfig, KeyEvent, KeyState, TwoKeyKeyboard
+from .motor_env import (
+    LeftThresholdReflexPolicy,
+    MotorAction,
+    MotorDiagnostics,
+    MotorEnv,
+    MotorObservation,
+    MotorPolicy,
+    MotorTransition,
+    TimedKeyEvent,
+)
 from .profiles import PERSONAL_BLUE_SWITCH_V0_1_NAME, personal_blue_switch_v0_1
 from .simulator import Simulation, SimulationConfig, StepResult
 
@@ -26,12 +37,24 @@ __all__ = [
     "TwoFingerBody",
     "RateTarget",
     "INITIAL_RATE_TARGETS",
+    "EvaluationSummary",
+    "Judgement",
+    "TargetHit",
+    "TimingEvaluator",
     "PERSONAL_BLUE_SWITCH_V0_1_NAME",
     "personal_blue_switch_v0_1",
     "KeyConfig",
     "KeyEvent",
     "KeyState",
     "TwoKeyKeyboard",
+    "MotorAction",
+    "MotorObservation",
+    "TimedKeyEvent",
+    "MotorDiagnostics",
+    "MotorTransition",
+    "MotorPolicy",
+    "MotorEnv",
+    "LeftThresholdReflexPolicy",
     "Simulation",
     "SimulationConfig",
     "StepResult",
