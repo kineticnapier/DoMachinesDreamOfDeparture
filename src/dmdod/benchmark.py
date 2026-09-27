@@ -24,6 +24,39 @@ class FeedbackRateResult:
     duration_s: float
 
 
+def _estimate_single_cycle_steps(config: BodyConfig, *, probe_s: float = 1.0) -> int:
+    """Estimate one settled left-finger DOWN->DOWN cycle for phase seeding.
+
+    Cross-hand fingers are physically independent in the current model.  We use
+    a short probe only to obtain the body's own cycle length, then start the
+    second hand half a cycle later.  This avoids reintroducing a fixed duty cycle
+    or waiting for the previous hand's DOWN before the other hand may move.
+    """
+    sim = Simulation(body=TwoFingerBody(config=config))
+    steps = max(1, round(probe_s / sim.config.dt_s))
+    pressing = True
+    downs: list[int] = []
+
+    for step in range(steps):
+        result = sim.step(1.0 if pressing else -1.0, 0.0)
+        for finger, event in result.events:
+            if finger != "left":
+                continue
+            if event is KeyEvent.DOWN:
+                pressing = False
+                downs.append(step)
+            elif event is KeyEvent.UP:
+                pressing = True
+
+    if len(downs) < 2:
+        raise RuntimeError("Could not estimate a single-finger feedback cycle")
+
+    intervals = [b - a for a, b in zip(downs[-5:-1], downs[-4:])]
+    if not intervals:
+        intervals = [downs[-1] - downs[-2]]
+    return max(2, round(sum(intervals) / len(intervals)))
+
+
 def measure_feedback_rate(
     duration_s: float,
     *,
@@ -33,18 +66,23 @@ def measure_feedback_rate(
 ) -> FeedbackRateResult:
     """Measure maximum tapping using key DOWN/UP events as controller feedback.
 
-    Unlike the old 50:50 square-wave benchmark, this controller does not impose
-    an arbitrary duty cycle.  A single finger presses until the key actuates,
-    releases until the key resets, and immediately presses again.  In alternate
-    mode the next finger starts as soon as the expected previous finger actuates;
-    a finger that has not reset yet is kept in release until it is ready.
+    Single-finger control presses until actuation, releases until reset, and
+    immediately presses again.
+
+    Same-hand alternation remains sequential because the shared hand/coordination
+    model is intended to constrain finger switching.  Cross-hand alternation is
+    different: the two independent hands run their own feedback loops in
+    parallel.  The right hand is seeded half of the body's measured single-finger
+    cycle after the left, approximating a 180-degree phase offset without a fixed
+    50:50 square wave.
     """
     if duration_s <= 0.0 or warmup_s < 0.0:
         raise ValueError("duration_s must be positive and warmup_s non-negative")
     if mode not in {"single", "alternate"}:
         raise ValueError("mode must be 'single' or 'alternate'")
 
-    sim = Simulation(body=TwoFingerBody(config=body_config or BodyConfig()))
+    config = body_config or BodyConfig()
+    sim = Simulation(body=TwoFingerBody(config=config))
     warmup_steps = round(warmup_s / sim.config.dt_s)
     measure_steps = round(duration_s / sim.config.dt_s)
     total_steps = warmup_steps + measure_steps
@@ -53,13 +91,29 @@ def measure_feedback_rate(
     single_press = True
     expected = "left"
 
+    # Independent-hand controller state.  The short phase probe is performed in
+    # a separate simulation, so it does not alter fatigue in the measured run.
+    parallel_cross_hand = mode == "alternate" and not config.same_hand
+    left_press = True
+    right_press = True
+    right_start_step = 0
+    if parallel_cross_hand:
+        period_steps = _estimate_single_cycle_steps(config)
+        right_start_step = max(1, round(period_steps / 2.0))
+
     for step in range(total_steps):
         if mode == "single":
             left_command = 1.0 if single_press else -1.0
             right_command = 0.0
+        elif parallel_cross_hand:
+            left_command = 1.0 if left_press else -1.0
+            if step < right_start_step:
+                right_command = 0.0
+            else:
+                right_command = 1.0 if right_press else -1.0
         else:
-            # Non-selected finger always releases.  If the selected finger has
-            # not reset from its previous use, release it too until UP occurs.
+            # Same-hand alternation: the selected finger presses while the other
+            # releases.  Shared hand coordination is therefore part of the rate.
             if expected == "left":
                 left_command = -1.0 if sim.keyboard.left.pressed else 1.0
                 right_command = -1.0
@@ -77,7 +131,22 @@ def measure_feedback_rate(
                         presses += 1
                 elif event is KeyEvent.UP:
                     single_press = True
-            elif mode == "alternate" and event is KeyEvent.DOWN and finger == expected:
+            elif parallel_cross_hand:
+                if finger == "left":
+                    if event is KeyEvent.DOWN:
+                        left_press = False
+                        if step >= warmup_steps:
+                            presses += 1
+                    elif event is KeyEvent.UP:
+                        left_press = True
+                elif finger == "right" and step >= right_start_step:
+                    if event is KeyEvent.DOWN:
+                        right_press = False
+                        if step >= warmup_steps:
+                            presses += 1
+                    elif event is KeyEvent.UP:
+                        right_press = True
+            elif event is KeyEvent.DOWN and finger == expected:
                 if step >= warmup_steps:
                     presses += 1
                 expected = "right" if expected == "left" else "left"
