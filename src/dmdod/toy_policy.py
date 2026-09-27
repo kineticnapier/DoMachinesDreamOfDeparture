@@ -10,41 +10,57 @@ except ImportError as exc:  # pragma: no cover - optional RL dependency
         "Install the rl extra before importing this module."
     ) from exc
 
+from .geometry_rhythm_env import GeometryRhythmObservation
 from .motor_env import MotorAction
 from .rhythm_env import RhythmObservation
 
 
-def observation_tensor(observation: RhythmObservation, device: torch.device) -> torch.Tensor:
-    """Convert only agent-visible observations into the toy policy input tensor."""
+GAUSSIAN_INPUT_DIM = 8
+GEOMETRY_INPUT_DIM = 10
 
+
+def _motor_values(observation: RhythmObservation | GeometryRhythmObservation) -> list[float]:
     m = observation.motor
     # Fixed values here are unit conversions / broad physical scales, not chart
-    # timing information.  Exact simulator/chart time remains unavailable.
-    values = [
+    # timing information. Exact simulator/chart time remains unavailable.
+    return [
         m.left_position_m / 0.006,
         m.right_position_m / 0.006,
         m.left_velocity_m_s / 1.0,
         m.right_velocity_m_s / 1.0,
         1.0 if m.left_pressed else 0.0,
         1.0 if m.right_pressed else 0.0,
-        observation.cue.left,
-        observation.cue.right,
     ]
+
+
+def observation_tensor(
+    observation: RhythmObservation | GeometryRhythmObservation,
+    device: torch.device,
+) -> torch.Tensor:
+    """Convert only agent-visible observations into the policy input tensor."""
+
+    values = _motor_values(observation)
+    if isinstance(observation, GeometryRhythmObservation):
+        g = observation.geometry
+        values.extend([g.orbit_x, g.orbit_y, g.next_x, g.next_y])
+    else:
+        values.extend([observation.cue.left, observation.cue.right])
     return torch.tensor(values, dtype=torch.float32, device=device)
 
 
 class ActorCritic(nn.Module):
-    """Small continuous-action actor-critic used by the first toy RL task."""
+    """Small continuous-action actor-critic used by the first RL tasks."""
 
     def __init__(
         self,
-        input_dim: int = 8,
+        input_dim: int = GAUSSIAN_INPUT_DIM,
         hidden_dim: int = 64,
         initial_log_std: float = -1.20,
     ) -> None:
         super().__init__()
+        self.input_dim = int(input_dim)
         self.backbone = nn.Sequential(
-            nn.Linear(input_dim, hidden_dim),
+            nn.Linear(self.input_dim, hidden_dim),
             nn.Tanh(),
             nn.Linear(hidden_dim, hidden_dim),
             nn.Tanh(),
@@ -53,7 +69,7 @@ class ActorCritic(nn.Module):
         self.critic = nn.Linear(hidden_dim, 1)
         # The first version started at log_std=-0.35 (sigma ~= 0.70), which
         # produced so much random motion that many episodes hit OVERLOAD before
-        # the first cue.  Start at sigma ~= 0.30 instead; log_std remains
+        # the first cue. Start at sigma ~= 0.30 instead; log_std remains
         # learnable and entropy regularization may still increase exploration.
         self.log_std = nn.Parameter(torch.full((2,), float(initial_log_std)))
 
