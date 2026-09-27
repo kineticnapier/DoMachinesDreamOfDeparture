@@ -1,6 +1,6 @@
 import pytest
 
-from dmdod import KeyEvent, Simulation
+from dmdod import BodyConfig, FingerConfig, KeyEvent, Simulation, TwoFingerBody
 
 
 def test_zero_command_stays_at_rest():
@@ -40,3 +40,35 @@ def test_fatigue_is_bounded():
     results = sim.run_constant(1.0, 1.0, 5.0)
     assert 0.0 <= results[-1].left.fatigue <= 1.0
     assert 0.0 <= results[-1].right.fatigue <= 1.0
+
+
+def test_reversal_fatigue_cannot_be_bypassed_through_zero():
+    finger = FingerConfig(
+        fatigue_gain_s=0.0,
+        fatigue_recovery_s=0.0,
+        switch_fatigue_per_reversal=0.10,
+    )
+    body = TwoFingerBody(BodyConfig(left=finger, right=finger))
+
+    body.step(1.0, 0.0, 0.001)
+    body.step(0.0, 0.0, 0.001)
+    body.step(-1.0, 0.0, 0.001)
+
+    assert body.left.fatigue == pytest.approx(0.10)
+    assert body.left.last_nonzero_command_sign == -1
+
+
+def test_returning_to_same_direction_through_zero_has_no_reversal_cost():
+    finger = FingerConfig(
+        fatigue_gain_s=0.0,
+        fatigue_recovery_s=0.0,
+        switch_fatigue_per_reversal=0.10,
+    )
+    body = TwoFingerBody(BodyConfig(left=finger, right=finger))
+
+    body.step(1.0, 0.0, 0.001)
+    body.step(0.0, 0.0, 0.001)
+    body.step(1.0, 0.0, 0.001)
+
+    assert body.left.fatigue == pytest.approx(0.0)
+    assert body.left.last_nonzero_command_sign == 1
