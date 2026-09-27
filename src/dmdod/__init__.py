@@ -23,7 +23,16 @@ from .motor_env import (
     MotorTransition,
     TimedKeyEvent,
 )
+from .perception import VisualCueConfig, VisualCueEncoder, VisualCueObservation
 from .profiles import PERSONAL_BLUE_SWITCH_V0_1_NAME, personal_blue_switch_v0_1
+from .rhythm_env import (
+    EpisodeStats,
+    RewardConfig,
+    RhythmMotorEnv,
+    RhythmObservation,
+    RhythmStep,
+    make_regular_targets,
+)
 from .simulator import Simulation, SimulationConfig, StepResult
 
 __all__ = [
@@ -55,6 +64,15 @@ __all__ = [
     "MotorPolicy",
     "MotorEnv",
     "LeftThresholdReflexPolicy",
+    "VisualCueConfig",
+    "VisualCueEncoder",
+    "VisualCueObservation",
+    "EpisodeStats",
+    "RewardConfig",
+    "RhythmMotorEnv",
+    "RhythmObservation",
+    "RhythmStep",
+    "make_regular_targets",
     "Simulation",
     "SimulationConfig",
     "StepResult",
