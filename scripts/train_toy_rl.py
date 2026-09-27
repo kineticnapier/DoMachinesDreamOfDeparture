@@ -26,6 +26,7 @@ class DeterministicProbe:
     total_too_early: int
     overload_runs: int
     full_hit_runs: int
+    clean_clear_runs: int
     timing_errors_ms: tuple[float, ...]
 
     @property
@@ -35,6 +36,10 @@ class DeterministicProbe:
     @property
     def full_hit_rate(self) -> float:
         return self.full_hit_runs / max(self.episodes, 1)
+
+    @property
+    def clean_clear_rate(self) -> float:
+        return self.clean_clear_runs / max(self.episodes, 1)
 
     @property
     def mean_too_early(self) -> float:
@@ -99,6 +104,7 @@ def deterministic_probe(
     total_too_early = 0
     overload_runs = 0
     full_hit_runs = 0
+    clean_clear_runs = 0
     errors: list[float] = []
 
     was_training = model.training
@@ -123,11 +129,14 @@ def deterministic_probe(
                 break
 
         stats = env.stats
+        full_hit = stats.hits == stats.targets and not stats.overloaded
+        clean_clear = full_hit and stats.too_early_presses == 0
         total_hits += stats.hits
         total_targets += stats.targets
         total_too_early += stats.too_early_presses
         overload_runs += int(stats.overloaded)
-        full_hit_runs += int(stats.hits == stats.targets and not stats.overloaded)
+        full_hit_runs += int(full_hit)
+        clean_clear_runs += int(clean_clear)
         errors.extend(env.timing_errors_ms)
 
     if was_training:
@@ -140,6 +149,7 @@ def deterministic_probe(
         total_too_early=total_too_early,
         overload_runs=overload_runs,
         full_hit_runs=full_hit_runs,
+        clean_clear_runs=clean_clear_runs,
         timing_errors_ms=tuple(errors),
     )
 
@@ -152,23 +162,44 @@ def probe_rank_key(probe: DeterministicProbe) -> tuple[float, ...]:
         1.0 if probe.overload_runs == 0 else 0.0,
         -float(probe.overload_runs),
         probe.hit_rate,
+        probe.clean_clear_rate,
         probe.full_hit_rate,
         -probe.mean_too_early,
         -(error if error is not None else float("inf")),
     )
 
 
-def passes_stage(probe: DeterministicProbe, args: argparse.Namespace) -> bool:
+def passes_stage(
+    probe: DeterministicProbe,
+    args: argparse.Namespace,
+    *,
+    stage_notes: int,
+) -> bool:
+    if probe.overload_runs != 0:
+        return False
+    if stage_notes == 1:
+        # One-note hit/full rates are heavily quantized.  Use the directly
+        # meaningful criterion here: cue-driven clean clears across phase probes.
+        return probe.clean_clear_rate >= args.stage1_clean_rate
     return (
-        probe.overload_runs == 0
-        and probe.hit_rate >= args.advance_hit_rate
+        probe.hit_rate >= args.advance_hit_rate
         and probe.full_hit_rate >= args.advance_full_rate
+    )
+
+
+def stage_criterion_text(args: argparse.Namespace, stage_notes: int) -> str:
+    if stage_notes == 1:
+        return f"clean>={args.stage1_clean_rate:.2f}, no OVERLOAD"
+    return (
+        f"hit>={args.advance_hit_rate:.2f}, "
+        f"full>={args.advance_full_rate:.2f}, no OVERLOAD"
     )
 
 
 def save_checkpoint(
     path: Path,
     model: ActorCritic,
+    optimizer: torch.optim.Optimizer,
     *,
     args: argparse.Namespace,
     same_hand: bool,
@@ -182,8 +213,9 @@ def save_checkpoint(
     path.parent.mkdir(parents=True, exist_ok=True)
     torch.save(
         {
-            "format_version": 3,
+            "format_version": 4,
             "model": model.state_dict(),
+            "optimizer": optimizer.state_dict(),
             "bpm": args.bpm,
             "notes": stage_notes,
             "target_notes": args.notes,
@@ -204,6 +236,8 @@ def save_checkpoint(
                 "episodes": probe.episodes,
                 "hit_rate": probe.hit_rate,
                 "full_hit_rate": probe.full_hit_rate,
+                "clean_clear_rate": probe.clean_clear_rate,
+                "clean_clear_runs": probe.clean_clear_runs,
                 "mean_too_early": probe.mean_too_early,
                 "overload_runs": probe.overload_runs,
                 "mean_abs_error_ms": probe.mean_abs_error_ms,
@@ -211,6 +245,27 @@ def save_checkpoint(
         },
         path,
     )
+
+
+def _validate_resume_checkpoint(
+    saved: dict[str, object],
+    args: argparse.Namespace,
+    *,
+    same_hand: bool,
+) -> None:
+    target_notes = int(saved.get("target_notes", saved.get("notes", args.notes)))
+    if target_notes != args.notes:
+        raise SystemExit(
+            f"resume checkpoint target_notes={target_notes}, but --notes={args.notes}"
+        )
+    if str(saved.get("pattern", args.pattern)) != args.pattern:
+        raise SystemExit("resume checkpoint pattern does not match --pattern")
+    if bool(saved.get("same_hand", same_hand)) != same_hand:
+        raise SystemExit("resume checkpoint same_hand setting does not match")
+    if abs(float(saved.get("bpm", args.bpm)) - args.bpm) > 1e-9:
+        raise SystemExit("resume checkpoint BPM does not match --bpm")
+    if abs(float(saved.get("control_dt", args.control_dt)) - args.control_dt) > 1e-12:
+        raise SystemExit("resume checkpoint control_dt does not match --control-dt")
 
 
 def train(args: argparse.Namespace) -> None:
@@ -224,10 +279,47 @@ def train(args: argparse.Namespace) -> None:
     optimizer = torch.optim.Adam(model.parameters(), lr=args.lr)
     checkpoint = Path(args.checkpoint)
 
+    global_episode = 0
+    resume_stage_pos = 0
+    resumed = False
+    resume_probe: DeterministicProbe | None = None
+
+    if args.resume:
+        if not checkpoint.exists():
+            raise SystemExit(f"resume checkpoint not found: {checkpoint}")
+        saved = torch.load(checkpoint, map_location=device)
+        _validate_resume_checkpoint(saved, args, same_hand=same_hand)
+        model.load_state_dict(saved["model"])
+        if "optimizer" in saved:
+            optimizer.load_state_dict(saved["optimizer"])
+            optimizer_restored = True
+        else:
+            optimizer_restored = False
+        global_episode = int(saved.get("global_episode", 0))
+        saved_stage_notes = int(saved.get("curriculum_stage_notes", saved.get("notes", stages[0])))
+        if saved_stage_notes not in stages:
+            raise SystemExit(
+                f"resume checkpoint stage {saved_stage_notes} is not in current curriculum {stages}"
+            )
+        resume_stage_pos = stages.index(saved_stage_notes)
+        resumed = True
+        print(
+            f"resume: {checkpoint} at {saved_stage_notes} note(s), "
+            f"global episode {global_episode}"
+        )
+        if optimizer_restored:
+            print("resume: optimizer state restored")
+        else:
+            print("resume: legacy checkpoint has no optimizer state; Adam state starts fresh")
+
     probe_env = make_env(
         bpm=args.bpm,
-        notes=max(1, stages[0]),
-        start_s=curriculum_start_s(stages[0]) if not args.no_curriculum else 0.750,
+        notes=max(1, stages[resume_stage_pos]),
+        start_s=(
+            0.750
+            if args.no_curriculum
+            else curriculum_start_s(stages[resume_stage_pos])
+        ),
         pattern=args.pattern,
         same_hand=same_hand,
         control_dt=args.control_dt,
@@ -243,7 +335,7 @@ def train(args: argparse.Namespace) -> None:
     print("OVERLOAD: Too Early +2, valid hit -1, fail at 6")
     print(
         f"exploration: initial log_std={args.initial_log_std:.2f} "
-        f"(sigma={torch.exp(torch.tensor(args.initial_log_std)).item():.3f})"
+        f"(current sigma={model.log_std.detach().exp().mean().item():.3f})"
     )
     if args.no_curriculum:
         print(f"curriculum: disabled ({args.notes} notes)")
@@ -253,14 +345,21 @@ def train(args: argparse.Namespace) -> None:
         f"deterministic checkpoint eval: every {args.eval_every} episodes, "
         f"{args.eval_episodes} phase probes ±{args.eval_start_jitter_ms:g} ms"
     )
+    print(
+        f"stage 1 advance: clean>={args.stage1_clean_rate:.2f}; "
+        f"later stages: hit>={args.advance_hit_rate:.2f}, "
+        f"full>={args.advance_full_rate:.2f}; all require no OVERLOAD"
+    )
     print()
 
-    global_episode = 0
     saved_probe: DeterministicProbe | None = None
-    saved_stage_notes = stages[0]
-    reached_stage_notes = stages[0]
+    saved_stage_notes = stages[resume_stage_pos]
+    reached_stage_notes = stages[resume_stage_pos]
 
-    for stage_index, stage_notes in enumerate(stages, start=1):
+    active_stages = stages[resume_stage_pos:]
+    for stage_offset, stage_notes in enumerate(active_stages):
+        stage_pos = resume_stage_pos + stage_offset
+        stage_index = stage_pos + 1
         stage_start_s = (
             0.750 if args.no_curriculum else curriculum_start_s(stage_notes)
         )
@@ -273,6 +372,37 @@ def train(args: argparse.Namespace) -> None:
             f"--- stage {stage_index}/{len(stages)}: {stage_notes} note(s), "
             f"base start={stage_start_s*1000:.0f} ms ---"
         )
+
+        if resumed and stage_offset == 0:
+            resume_probe = deterministic_probe(
+                model,
+                device,
+                bpm=args.bpm,
+                notes=stage_notes,
+                base_start_s=stage_start_s,
+                pattern=args.pattern,
+                same_hand=same_hand,
+                control_dt=args.control_dt,
+                episodes=args.eval_episodes,
+                start_jitter_ms=args.eval_start_jitter_ms,
+            )
+            stage_best_key = probe_rank_key(resume_probe)
+            saved_probe = resume_probe
+            saved_stage_notes = stage_notes
+            print(
+                f"  resume baseline: hit={resume_probe.hit_rate:.3f}  "
+                f"full={resume_probe.full_hit_runs}/{resume_probe.episodes}  "
+                f"clean={resume_probe.clean_clear_runs}/{resume_probe.episodes}  "
+                f"early={resume_probe.mean_too_early:.2f}/run  "
+                f"OVERLOAD={resume_probe.overload_runs}/{resume_probe.episodes}  "
+                f"MAE={'--' if resume_probe.mean_abs_error_ms is None else f'{resume_probe.mean_abs_error_ms:.1f}ms'}"
+            )
+            if stage_pos < len(stages) - 1 and passes_stage(
+                resume_probe, args, stage_notes=stage_notes
+            ):
+                print(f"  stage already passed on resume: {stage_criterion_text(args, stage_notes)}")
+                print()
+                continue
 
         for stage_episode in range(1, args.episodes + 1):
             global_episode += 1
@@ -363,6 +493,7 @@ def train(args: argparse.Namespace) -> None:
             print(
                 f"  eval mean-policy: hit={probe.hit_rate:.3f}  "
                 f"full={probe.full_hit_runs}/{probe.episodes}  "
+                f"clean={probe.clean_clear_runs}/{probe.episodes}  "
                 f"early={probe.mean_too_early:.2f}/run  "
                 f"OVERLOAD={probe.overload_runs}/{probe.episodes}  "
                 f"MAE={'--' if probe_error is None else f'{probe_error:.1f}ms'}"
@@ -376,6 +507,7 @@ def train(args: argparse.Namespace) -> None:
                 save_checkpoint(
                     checkpoint,
                     model,
+                    optimizer,
                     args=args,
                     same_hand=same_hand,
                     stage_index=stage_index,
@@ -387,16 +519,15 @@ def train(args: argparse.Namespace) -> None:
                 )
                 print(f"  saved deterministic best -> {checkpoint}")
 
-            if stage_index < len(stages) and passes_stage(probe, args):
+            if stage_pos < len(stages) - 1 and passes_stage(
+                probe, args, stage_notes=stage_notes
+            ):
                 stage_passed = True
-                print(
-                    f"  stage passed: hit>={args.advance_hit_rate:.2f}, "
-                    f"full>={args.advance_full_rate:.2f}, no OVERLOAD"
-                )
+                print(f"  stage passed: {stage_criterion_text(args, stage_notes)}")
                 print()
                 break
 
-        if stage_index < len(stages) and not stage_passed:
+        if stage_pos < len(stages) - 1 and not stage_passed:
             print(
                 f"curriculum stopped at {stage_notes} note(s): "
                 f"advance criterion was not reached within {args.episodes} episodes"
@@ -410,6 +541,7 @@ def train(args: argparse.Namespace) -> None:
     if saved_probe is not None:
         print(f"deterministic hit rate: {saved_probe.hit_rate:.4f}")
         print(f"deterministic full-hit runs: {saved_probe.full_hit_runs}/{saved_probe.episodes}")
+        print(f"deterministic clean clears: {saved_probe.clean_clear_runs}/{saved_probe.episodes}")
         print(f"deterministic OVERLOAD runs: {saved_probe.overload_runs}/{saved_probe.episodes}")
         print(f"deterministic mean Too Early: {saved_probe.mean_too_early:.3f}")
         if saved_probe.mean_abs_error_ms is not None:
@@ -438,12 +570,18 @@ def main() -> None:
     parser.add_argument("--device", default="cpu")
     parser.add_argument("--log-every", type=int, default=10)
     parser.add_argument("--eval-every", type=int, default=10)
-    parser.add_argument("--eval-episodes", type=int, default=5)
+    parser.add_argument("--eval-episodes", type=int, default=20)
     parser.add_argument("--train-start-jitter-ms", type=float, default=100.0)
     parser.add_argument("--eval-start-jitter-ms", type=float, default=100.0)
+    parser.add_argument("--stage1-clean-rate", type=float, default=0.80)
     parser.add_argument("--advance-hit-rate", type=float, default=0.90)
     parser.add_argument("--advance-full-rate", type=float, default=0.80)
     parser.add_argument("--no-curriculum", action="store_true")
+    parser.add_argument(
+        "--resume",
+        action="store_true",
+        help="continue from --checkpoint; older checkpoints resume with fresh optimizer state",
+    )
     parser.add_argument("--checkpoint", default="checkpoints/toy_policy.pt")
     args = parser.parse_args()
 
@@ -453,6 +591,8 @@ def main() -> None:
         parser.error("log/eval intervals and eval episodes must be positive")
     if args.train_start_jitter_ms < 0.0 or args.eval_start_jitter_ms < 0.0:
         parser.error("start jitter values must be non-negative")
+    if not 0.0 <= args.stage1_clean_rate <= 1.0:
+        parser.error("stage1-clean-rate must be between 0 and 1")
     if not 0.0 <= args.advance_hit_rate <= 1.0:
         parser.error("advance-hit-rate must be between 0 and 1")
     if not 0.0 <= args.advance_full_rate <= 1.0:
