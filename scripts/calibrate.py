@@ -53,12 +53,16 @@ def main() -> None:
         print(f"  hand_recovery_s        = {c.hand.fatigue_recovery_s:.6f}")
         print(f"  hand_switch_tau_s      = {c.hand.switch_tau_s:.6f}")
         print(f"  coordination_floor     = {c.hand.coordination_floor:.6f}")
+    else:
+        print(f"  bilateral_switch_tau_s = {c.bilateral.switch_tau_s:.6f}")
+        print(f"  bilateral_coord_floor  = {c.bilateral.coordination_floor:.6f}")
     print()
     print("Measurement excludes the first 1 s warmup.")
-    if args.profile == "cross-hand":
-        print("Cross-hand fingers run parallel feedback loops seeded about 180 degrees apart.")
-    else:
+    if c.same_hand:
         print("Speed is produced by threshold feedback, not a fixed 50:50 square wave.")
+    else:
+        print("Cross-hand fingers run parallel feedback loops seeded about 180 degrees apart.")
+        print("The bilateral term is a weak coordination cost, not a hard/global KPS ceiling.")
     print("These values fit the initial blue-switch calibration profile; they are not universal human constants.")
 
 
