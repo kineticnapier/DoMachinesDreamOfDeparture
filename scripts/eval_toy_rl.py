@@ -100,17 +100,30 @@ def evaluate(args: argparse.Namespace) -> None:
 
     bpm = float(checkpoint.get("bpm", 180.0))
     notes = int(checkpoint.get("notes", 16))
+    target_notes = int(checkpoint.get("target_notes", notes))
     pattern = str(checkpoint.get("pattern", "left"))
     control_dt = float(checkpoint.get("control_dt", 0.010))
+    base_start_s = float(checkpoint.get("start_s", 0.750))
     same_hand = pattern != "alternate" or bool(checkpoint.get("same_hand", False))
 
-    probe_targets = make_regular_targets(bpm=bpm, count=max(2, notes), start_s=0.750, pattern=pattern)
+    probe_targets = make_regular_targets(
+        bpm=bpm,
+        count=max(1, notes),
+        start_s=base_start_s,
+        pattern=pattern,
+    )
     probe_env = RhythmMotorEnv(probe_targets, bpm=bpm, same_hand=same_hand, control_dt_s=control_dt)
     windows = probe_env.timing_windows
 
     print("=== Deterministic Toy Policy Evaluation ===")
     print(f"checkpoint: {checkpoint_path}")
-    print(f"task: {bpm:g} BPM, {notes} notes, pattern={pattern}, control_dt={control_dt*1000:.1f} ms")
+    print(
+        f"task: {bpm:g} BPM, {notes} notes, pattern={pattern}, "
+        f"control_dt={control_dt*1000:.1f} ms, start={base_start_s*1000:.0f} ms"
+    )
+    if bool(checkpoint.get("curriculum", False)):
+        stage_index = checkpoint.get("curriculum_stage_index", "?")
+        print(f"curriculum checkpoint: stage {stage_index}, {notes}/{target_notes} notes")
     print("action: tanh(actor mean), no sampling / exploration noise")
     print(
         f"Normal timing: Perfect ±{windows.perfect_s*1000:.2f} ms, "
@@ -120,6 +133,8 @@ def evaluate(args: argparse.Namespace) -> None:
     print("OVERLOAD: Too Early +2, valid hit -1, fail at 6")
     if int(checkpoint.get("format_version", 0)) < 2:
         print("note: checkpoint predates ADOFAI timing/OVERLOAD training; this is an out-of-distribution rules test")
+    if int(checkpoint.get("format_version", 0)) == 2:
+        print("note: checkpoint predates deterministic-eval curriculum selection")
     print()
 
     exact = run_episode(
@@ -130,16 +145,16 @@ def evaluate(args: argparse.Namespace) -> None:
         pattern=pattern,
         same_hand=same_hand,
         control_dt=control_dt,
-        start_s=0.750,
+        start_s=base_start_s,
     )
-    print_single("Exact training schedule:", exact)
+    print_single("Exact checkpoint schedule:", exact)
 
     rng = random.Random(args.seed)
     runs: list[EvalRun] = []
     jitter_s = args.start_jitter_ms / 1000.0
     for _ in range(args.episodes):
         offset = rng.uniform(-jitter_s, jitter_s) if jitter_s > 0.0 else 0.0
-        start_s = max(0.050, 0.750 + offset)
+        start_s = max(0.050, base_start_s + offset)
         runs.append(
             run_episode(
                 model,
@@ -159,7 +174,10 @@ def evaluate(args: argparse.Namespace) -> None:
     total_too_early = sum(run.stats.too_early_presses for run in runs)
     overloads = sum(run.stats.overloaded for run in runs)
     all_errors = [error for run in runs for error in run.timing_errors_ms]
-    full_hits = sum(run.stats.hits == run.stats.targets for run in runs)
+    full_hits = sum(
+        run.stats.hits == run.stats.targets and not run.stats.overloaded
+        for run in runs
+    )
     zero_too_early = sum(run.stats.too_early_presses == 0 for run in runs)
     clean_clears = sum(
         run.stats.hits == run.stats.targets
@@ -177,7 +195,7 @@ def evaluate(args: argparse.Namespace) -> None:
     print()
     print(
         f"Phase-jitter robustness: {args.episodes} deterministic episodes, "
-        f"start offset ±{args.start_jitter_ms:g} ms"
+        f"start offset ±{args.start_jitter_ms:g} ms around {base_start_s*1000:.0f} ms"
     )
     if args.start_jitter_ms == 0.0 and args.episodes > 1:
         print("  note: zero jitter repeats the same deterministic trajectory")
@@ -201,7 +219,7 @@ def main() -> None:
         "--start-jitter-ms",
         type=float,
         default=100.0,
-        help="uniformly vary chart start time to test cue dependence/generalization",
+        help="uniformly vary chart start time around the checkpoint's training start",
     )
     parser.add_argument("--seed", type=int, default=12345)
     parser.add_argument("--device", default="cpu")
