@@ -48,7 +48,12 @@ def run_episode(
         start_s=start_s,
         pattern=pattern,
     )
-    env = RhythmMotorEnv(targets, same_hand=same_hand, control_dt_s=control_dt)
+    env = RhythmMotorEnv(
+        targets,
+        bpm=bpm,
+        same_hand=same_hand,
+        control_dt_s=control_dt,
+    )
     observation = env.reset()
 
     while True:
@@ -68,12 +73,16 @@ def print_single(label: str, run: EvalRun) -> None:
     p95 = p95_abs(list(run.timing_errors_ms))
     p95_text = "--" if p95 is None else f"{p95:.2f} ms"
     print(label)
-    print(f"  hits:   {stats.hits}/{stats.targets}")
-    print(f"  misses: {stats.misses}")
-    print(f"  stray:  {stats.stray_presses}")
-    print(f"  MAE:    {mae}")
-    print(f"  P95:    {p95_text}")
-    print(f"  reward: {stats.total_reward:.3f}")
+    print(f"  hits:       {stats.hits}/{stats.targets}")
+    print(f"  misses:     {stats.misses}")
+    print(f"  Perfect:    {stats.perfects}")
+    print(f"  E/LPerfect: {stats.early_late_perfects}")
+    print(f"  Early/Late: {stats.early_late_hits}")
+    print(f"  Too Early:  {stats.too_early_presses}")
+    print(f"  overload:   {stats.overload_counter}/6{'  OVERLOAD!' if stats.overloaded else ''}")
+    print(f"  MAE:        {mae}")
+    print(f"  P95:        {p95_text}")
+    print(f"  reward:     {stats.total_reward:.3f}")
 
 
 def evaluate(args: argparse.Namespace) -> None:
@@ -95,12 +104,22 @@ def evaluate(args: argparse.Namespace) -> None:
     control_dt = float(checkpoint.get("control_dt", 0.010))
     same_hand = pattern != "alternate" or bool(checkpoint.get("same_hand", False))
 
+    probe_targets = make_regular_targets(bpm=bpm, count=max(2, notes), start_s=0.750, pattern=pattern)
+    probe_env = RhythmMotorEnv(probe_targets, bpm=bpm, same_hand=same_hand, control_dt_s=control_dt)
+    windows = probe_env.timing_windows
+
     print("=== Deterministic Toy Policy Evaluation ===")
     print(f"checkpoint: {checkpoint_path}")
     print(f"task: {bpm:g} BPM, {notes} notes, pattern={pattern}, control_dt={control_dt*1000:.1f} ms")
     print("action: tanh(actor mean), no sampling / exploration noise")
-    if "format_version" not in checkpoint:
-        print("note: legacy checkpoint; it predates exact pre-update best-policy saving")
+    print(
+        f"Normal timing: Perfect ±{windows.perfect_s*1000:.2f} ms, "
+        f"E/L Perfect ±{windows.early_late_perfect_s*1000:.2f} ms, "
+        f"Pass ±{windows.pass_s*1000:.2f} ms"
+    )
+    print("OVERLOAD: Too Early +2, valid hit -1, fail at 6")
+    if int(checkpoint.get("format_version", 0)) < 2:
+        print("note: checkpoint predates ADOFAI timing/OVERLOAD training; this is an out-of-distribution rules test")
     print()
 
     exact = run_episode(
@@ -137,12 +156,15 @@ def evaluate(args: argparse.Namespace) -> None:
     total_hits = sum(run.stats.hits for run in runs)
     total_targets = sum(run.stats.targets for run in runs)
     total_misses = sum(run.stats.misses for run in runs)
-    total_strays = sum(run.stats.stray_presses for run in runs)
+    total_too_early = sum(run.stats.too_early_presses for run in runs)
+    overloads = sum(run.stats.overloaded for run in runs)
     all_errors = [error for run in runs for error in run.timing_errors_ms]
     full_hits = sum(run.stats.hits == run.stats.targets for run in runs)
-    zero_stray = sum(run.stats.stray_presses == 0 for run in runs)
+    zero_too_early = sum(run.stats.too_early_presses == 0 for run in runs)
     clean_clears = sum(
-        run.stats.hits == run.stats.targets and run.stats.stray_presses == 0
+        run.stats.hits == run.stats.targets
+        and run.stats.too_early_presses == 0
+        and not run.stats.overloaded
         for run in runs
     )
     mean_abs_error = (
@@ -162,9 +184,10 @@ def evaluate(args: argparse.Namespace) -> None:
     print(f"  hit rate:       {total_hits}/{total_targets} = {total_hits/max(total_targets, 1):.4f}")
     print(f"  mean hits:      {total_hits/args.episodes:.3f}/{notes}")
     print(f"  mean misses:    {total_misses/args.episodes:.3f}")
-    print(f"  mean stray:     {total_strays/args.episodes:.3f}")
+    print(f"  mean Too Early: {total_too_early/args.episodes:.3f}")
+    print(f"  OVERLOAD runs:  {overloads}/{args.episodes}")
     print(f"  full-hit runs:  {full_hits}/{args.episodes}")
-    print(f"  zero-stray:     {zero_stray}/{args.episodes}")
+    print(f"  zero Too Early: {zero_too_early}/{args.episodes}")
     print(f"  clean clears:   {clean_clears}/{args.episodes}")
     print(f"  MAE all hits:   {'--' if mean_abs_error is None else f'{mean_abs_error:.2f} ms'}")
     print(f"  P95 abs error:  {'--' if p95 is None else f'{p95:.2f} ms'}")
