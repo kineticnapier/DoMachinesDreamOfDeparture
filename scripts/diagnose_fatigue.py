@@ -9,13 +9,14 @@ from dmdod.simulator import Simulation
 
 
 def calibrated_body() -> BodyConfig:
-    """Current best same-hand calibration, copied from the latest calibration run."""
+    """Recent same-hand calibration, used only as a diagnostic starting point."""
     finger = FingerConfig(
         damping_n_s_m=0.630000,
         max_force_n=1.400000,
         activation_tau_s=0.420000,
         fatigue_gain_s=0.040000,
         fatigue_recovery_s=0.028000,
+        switch_fatigue_per_reversal=0.00025,
     )
     base = BodyConfig(left=finger, right=replace(finger))
     hand = replace(
@@ -39,18 +40,22 @@ def run(rate_hz: float, duration_s: float, *, sample_s: float = 1.0, warmup_s: f
     sample_steps = max(1, round(sample_s / dt))
 
     presses = 0
-    expected = 0.0
     previous_expected = 0.0
     previous_presses = 0
+    reversals = 0
+    previous_command = 0.0
 
     print(f"rate={rate_hz:.2f} KPS  duration={duration_s:.1f}s  warmup={warmup_s:.1f}s")
-    print(" time    actual  expected  ratio    fatigue   activation   position_mm")
-    print("---------------------------------------------------------------------")
+    print(" time    actual  expected  ratio  reversals  fatigue   activation   position_mm")
+    print("----------------------------------------------------------------------------")
 
     total_steps = warmup_steps + measure_steps
     for step in range(total_steps):
         phase = (step // half_steps) % 2
         left = 1.0 if phase == 0 else -1.0
+        if previous_command * left < 0.0:
+            reversals += 1
+        previous_command = left
         result = sim.step(left, 0.0)
 
         if step < warmup_steps:
@@ -67,14 +72,14 @@ def run(rate_hz: float, duration_s: float, *, sample_s: float = 1.0, warmup_s: f
             state = sim.body.left
             print(
                 f"{measure_index*dt:5.1f}s  {window_actual:7d}  {window_expected:8.2f}  "
-                f"{ratio:6.3f}   {state.fatigue:8.5f}   {state.activation:10.5f}   "
-                f"{state.position_m*1000.0:10.4f}"
+                f"{ratio:6.3f}  {reversals:9d}  {state.fatigue:8.5f}   "
+                f"{state.activation:10.5f}   {state.position_m*1000.0:10.4f}"
             )
             previous_presses = presses
             previous_expected = expected
 
     total_expected = duration_s * rate_hz
-    print("---------------------------------------------------------------------")
+    print("----------------------------------------------------------------------------")
     print(f"total: actual={presses}, expected={total_expected:.2f}, ratio={presses/total_expected:.4f}")
 
 
