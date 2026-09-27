@@ -5,7 +5,7 @@ from itertools import product
 from typing import Callable
 
 from .benchmark import find_fastest_sustainable_rate
-from .body import BodyConfig, FingerConfig, HandConfig
+from .body import BodyConfig, FingerConfig
 
 
 @dataclass(frozen=True)
@@ -53,15 +53,21 @@ def _quick_short(config: BodyConfig, targets: CalibrationTargets) -> float:
 
 def _scaled(config: BodyConfig, *, tau: float = 1.0, force: float = 1.0, damping: float = 1.0,
             fatigue: float = 1.0, recovery: float = 1.0, hand_capacity: float = 1.0,
-            hand_fatigue: float = 1.0, hand_recovery: float = 1.0) -> BodyConfig:
+            hand_fatigue: float = 1.0, hand_recovery: float = 1.0,
+            switch_tau: float = 1.0, coordination_floor: float = 1.0) -> BodyConfig:
     def finger(f: FingerConfig) -> FingerConfig:
         return replace(f, activation_tau_s=f.activation_tau_s * tau, max_force_n=f.max_force_n * force,
                        damping_n_s_m=f.damping_n_s_m * damping, fatigue_gain_s=f.fatigue_gain_s * fatigue,
                        fatigue_recovery_s=f.fatigue_recovery_s * recovery)
     h = config.hand
-    hand = replace(h, capacity=max(0.2, h.capacity * hand_capacity),
-                   fatigue_gain_s=h.fatigue_gain_s * hand_fatigue,
-                   fatigue_recovery_s=h.fatigue_recovery_s * hand_recovery)
+    hand = replace(
+        h,
+        capacity=max(0.2, h.capacity * hand_capacity),
+        fatigue_gain_s=h.fatigue_gain_s * hand_fatigue,
+        fatigue_recovery_s=h.fatigue_recovery_s * hand_recovery,
+        switch_tau_s=max(0.001, h.switch_tau_s * switch_tau),
+        coordination_floor=max(0.02, min(1.0, h.coordination_floor * coordination_floor)),
+    )
     return BodyConfig(left=finger(config.left), right=finger(config.right), hand=hand, same_hand=config.same_hand)
 
 
@@ -79,7 +85,6 @@ def fit_body_config(targets: CalibrationTargets = CalibrationTargets(), progress
     say = progress or (lambda _: None)
     base = replace(BodyConfig(), same_hand=same_hand)
 
-    # Wider tau range: the previous fit hit its upper boundary at 0.175 s.
     stage1: list[tuple[float, BodyConfig]] = []
     mechanics = list(product((4.0, 6.0, 8.0, 10.0), (0.45, 0.65, 0.85), (1.0, 1.8)))
     for index, (tau, force, damping) in enumerate(mechanics, 1):
@@ -93,10 +98,24 @@ def fit_body_config(targets: CalibrationTargets = CalibrationTargets(), progress
     stage2_configs: list[BodyConfig] = []
     for config in finalists:
         if same_hand:
-            combinations = product((2.0, 5.0), (0.5, 1.0), (0.55, 0.75, 0.95), (1.0, 3.0))
-            for fatigue, recovery, capacity, hand_fatigue in combinations:
-                stage2_configs.append(_scaled(config, fatigue=fatigue, recovery=recovery,
-                                              hand_capacity=capacity, hand_fatigue=hand_fatigue))
+            # Search hand switching explicitly; keep the grid bounded so the
+            # calibration remains practical on a desktop CPU.
+            combinations = product(
+                (2.0, 5.0),          # finger fatigue
+                (0.5, 1.0),          # finger recovery
+                (0.55, 0.80),        # shared capacity
+                (1.0, 2.5, 5.0),     # switching time constant
+                (0.5, 1.0, 1.8),     # minimum non-selected-finger authority
+            )
+            for fatigue, recovery, capacity, switch_tau, floor in combinations:
+                stage2_configs.append(_scaled(
+                    config,
+                    fatigue=fatigue,
+                    recovery=recovery,
+                    hand_capacity=capacity,
+                    switch_tau=switch_tau,
+                    coordination_floor=floor,
+                ))
         else:
             for fatigue, recovery in product((2.0, 5.0, 9.0), (0.5, 1.0)):
                 stage2_configs.append(_scaled(config, fatigue=fatigue, recovery=recovery))
@@ -104,13 +123,13 @@ def fit_body_config(targets: CalibrationTargets = CalibrationTargets(), progress
     evaluated: list[CalibrationResult] = []
     for index, config in enumerate(stage2_configs, 1):
         evaluated.append(_evaluate(config, targets, alternate_target, profile, final=False))
-        if index % 8 == 0 or index == len(stage2_configs):
+        if index % 12 == 0 or index == len(stage2_configs):
             say(f"stage 2/3: {index}/{len(stage2_configs)}")
     current = min(evaluated, key=lambda result: result.loss).config
 
     names = ["tau", "force", "damping", "fatigue", "recovery"]
     if same_hand:
-        names += ["hand_capacity", "hand_fatigue", "hand_recovery"]
+        names += ["hand_capacity", "hand_fatigue", "hand_recovery", "switch_tau", "coordination_floor"]
     for round_index, scale in enumerate((1.18, 1.08), 1):
         neighborhood = [current]
         for name in names:
