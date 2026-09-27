@@ -1,17 +1,33 @@
+import argparse
+
 from dmdod.fitting import CalibrationTargets, fit_body_config
 
 
 def main() -> None:
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        "--profile",
+        choices=("same-hand", "cross-hand"),
+        default="same-hand",
+        help="same-hand = RI/RM target (12.5 KPS), cross-hand = RI/LI target (16 KPS)",
+    )
+    args = parser.parse_args()
+
     targets = CalibrationTargets()
     print("=== Human Calibration v0.1 ===")
+    print(f"profile: {args.profile}")
     print("Fitting provisional body parameters with staged search...")
     print()
 
-    result = fit_body_config(targets, progress=lambda message: print(f"  {message}", flush=True))
+    result = fit_body_config(
+        targets,
+        progress=lambda message: print(f"  {message}", flush=True),
+        profile=args.profile,
+    )
     rows = (
         ("RI single (short)", targets.short_single_hz, result.short_single_hz),
         ("RI single (20 s)", targets.sustained_single_hz, result.sustained_single_hz),
-        ("2-finger alternation", targets.alternate_hz, result.alternate_hz),
+        (f"2-finger ({result.profile})", result.alternate_target_hz, result.alternate_hz),
     )
 
     print()
@@ -32,6 +48,7 @@ def main() -> None:
     print(f"  fatigue_recovery_s     = {c.left.fatigue_recovery_s:.6f}")
     print(f"  directional_coupling   = {c.left_affected_by_right:.6f}")
     print()
+    print("Measurement excludes the first 1 s warmup.")
     print("These values fit the initial blue-switch calibration profile; they are not universal human constants.")
 
 
