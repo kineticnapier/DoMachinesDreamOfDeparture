@@ -16,6 +16,7 @@ def main() -> None:
     targets = CalibrationTargets()
     print("=== Human Calibration v0.1 ===")
     print(f"profile: {args.profile}")
+    print("controller: key-threshold feedback (DOWN -> release, UP -> press)")
     print("Fitting provisional Finger -> Hand -> Body parameters...")
     print()
 
@@ -41,6 +42,7 @@ def main() -> None:
     print(f"  damping_n_s_m          = {c.left.damping_n_s_m:.6f}")
     print(f"  finger_fatigue_gain_s  = {c.left.fatigue_gain_s:.6f}")
     print(f"  finger_recovery_s      = {c.left.fatigue_recovery_s:.6f}")
+    print(f"  reversal_fatigue       = {c.left.switch_fatigue_per_reversal:.8f}")
     print(f"  same_hand              = {c.same_hand}")
     if c.same_hand:
         print(f"  hand_capacity          = {c.hand.capacity:.6f}")
@@ -50,6 +52,7 @@ def main() -> None:
         print(f"  coordination_floor     = {c.hand.coordination_floor:.6f}")
     print()
     print("Measurement excludes the first 1 s warmup.")
+    print("Speed is produced by threshold feedback, not a fixed 50:50 square wave.")
     print("These values fit the initial blue-switch calibration profile; they are not universal human constants.")
 
 
