@@ -153,6 +153,20 @@ class VisualCueEncoder:
             max(0.0, min(1.0, right)),
         )
 
+    def _advance_sample_clock(self, simulation_time_s: float) -> None:
+        period = self.config.sample_period_s
+        if period <= 0.0:
+            self._next_sample_time_s = simulation_time_s
+            return
+        if self._next_sample_time_s == float("-inf"):
+            self._next_sample_time_s = simulation_time_s + period
+            return
+        # Advance from the ideal sensor clock rather than from the control-step
+        # timestamp. With 10 ms control and a 60 Hz sensor this yields the
+        # expected 20/20/10 ms pattern instead of silently degrading to 50 Hz.
+        while self._next_sample_time_s <= simulation_time_s + 1e-12:
+            self._next_sample_time_s += period
+
     def observe(
         self,
         simulation_time_s: float,
@@ -163,14 +177,17 @@ class VisualCueEncoder:
         # indices, time-to-target nor sampled latency are exposed to the policy.
         signature = None if active_target_indices is None else tuple(active_target_indices)
         sample_period = self.config.sample_period_s
+        target_changed = (
+            self._held_observation is not None
+            and signature != self._held_active_signature
+        )
 
-        # Force a fresh visual sample when the active target changes. This avoids
-        # keeping a resolved tile visible merely because the display sample clock
-        # has not advanced yet.
+        # A target transition forces a fresh frame so a resolved tile cannot be
+        # retained just because the visual sample clock has not ticked yet.
         can_hold = (
             sample_period > 0.0
             and self._held_observation is not None
-            and signature == self._held_active_signature
+            and not target_changed
             and simulation_time_s + 1e-12 < self._next_sample_time_s
         )
         if can_hold:
@@ -182,5 +199,11 @@ class VisualCueEncoder:
         )
         self._held_observation = observation
         self._held_active_signature = signature
-        self._next_sample_time_s = simulation_time_s + sample_period
+
+        if target_changed and self._next_sample_time_s > simulation_time_s + 1e-12:
+            # This is an extra event-driven refresh; keep the regular visual
+            # sampling phase instead of resetting it around the hit.
+            pass
+        else:
+            self._advance_sample_clock(simulation_time_s)
         return observation
