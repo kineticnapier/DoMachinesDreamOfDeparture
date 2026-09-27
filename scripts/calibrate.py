@@ -16,7 +16,10 @@ def main() -> None:
     targets = CalibrationTargets()
     print("=== Human Calibration v0.1 ===")
     print(f"profile: {args.profile}")
-    print("controller: key-threshold feedback (DOWN -> release, UP -> press)")
+    if args.profile == "cross-hand":
+        print("controller: parallel key-threshold feedback, ~180 deg phase offset")
+    else:
+        print("controller: key-threshold feedback (DOWN -> release, UP -> press)")
     print("Fitting provisional Finger -> Hand -> Body parameters...")
     print()
 
@@ -52,7 +55,10 @@ def main() -> None:
         print(f"  coordination_floor     = {c.hand.coordination_floor:.6f}")
     print()
     print("Measurement excludes the first 1 s warmup.")
-    print("Speed is produced by threshold feedback, not a fixed 50:50 square wave.")
+    if args.profile == "cross-hand":
+        print("Cross-hand fingers run parallel feedback loops seeded about 180 degrees apart.")
+    else:
+        print("Speed is produced by threshold feedback, not a fixed 50:50 square wave.")
     print("These values fit the initial blue-switch calibration profile; they are not universal human constants.")
 
 
