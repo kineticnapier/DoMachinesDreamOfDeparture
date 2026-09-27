@@ -1,5 +1,14 @@
 """Do Machines Dream of Departure? simulator package."""
 
+from .adofai_rules import (
+    NORMAL_THRESHOLD_BPM,
+    OVERLOAD_LIMIT,
+    OverloadCounter,
+    TimingJudgement,
+    TimingWindows,
+    classify_normal_timing,
+    normal_timing_windows,
+)
 from .body import (
     BilateralConfig,
     BilateralState,
@@ -36,6 +45,13 @@ from .rhythm_env import (
 from .simulator import Simulation, SimulationConfig, StepResult
 
 __all__ = [
+    "NORMAL_THRESHOLD_BPM",
+    "OVERLOAD_LIMIT",
+    "OverloadCounter",
+    "TimingJudgement",
+    "TimingWindows",
+    "classify_normal_timing",
+    "normal_timing_windows",
     "BilateralConfig",
     "BilateralState",
     "BodyConfig",
