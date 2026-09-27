@@ -4,17 +4,17 @@ from dmdod.fitting import CalibrationTargets, fit_body_config
 def main() -> None:
     targets = CalibrationTargets()
     print("=== Human Calibration v0.1 ===")
-    print("Fitting provisional body parameters...")
-    print("(This can take a while: many deterministic simulations are evaluated.)")
+    print("Fitting provisional body parameters with staged search...")
     print()
 
-    result = fit_body_config(targets)
+    result = fit_body_config(targets, progress=lambda message: print(f"  {message}", flush=True))
     rows = (
         ("RI single (short)", targets.short_single_hz, result.short_single_hz),
         ("RI single (20 s)", targets.sustained_single_hz, result.sustained_single_hz),
         ("2-finger alternation", targets.alternate_hz, result.alternate_hz),
     )
 
+    print()
     print(f"{'Test':28s} {'Human':>9s} {'Sim':>9s} {'Error':>9s}")
     print("-" * 58)
     for name, human_rate, sim_rate in rows:
