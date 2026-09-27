@@ -182,6 +182,17 @@ class RhythmMotorEnv:
             total_reward=self._total_reward,
         )
 
+    @property
+    def timing_errors_ms(self) -> tuple[float, ...]:
+        """Privileged signed timing errors for offline evaluation only.
+
+        This property must not be copied into policy observations.  It exists so
+        deterministic evaluation can report distribution statistics such as P95
+        without weakening the agent/ground-truth separation.
+        """
+
+        return tuple(error * 1000.0 for error in self._errors_s)
+
 
 def make_regular_targets(
     *,
