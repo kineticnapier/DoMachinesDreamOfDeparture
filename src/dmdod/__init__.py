@@ -21,6 +21,7 @@ from .body import (
 )
 from .calibration import INITIAL_RATE_TARGETS, RateTarget
 from .evaluator import EvaluationSummary, Judgement, TargetHit, TimingEvaluator
+from .geometry_rhythm_env import GeometryRhythmEnv, GeometryRhythmObservation, GeometryRhythmStep
 from .keyboard import KeyConfig, KeyEvent, KeyState, TwoKeyKeyboard
 from .motor_env import (
     LeftThresholdReflexPolicy,
@@ -33,6 +34,11 @@ from .motor_env import (
     TimedKeyEvent,
 )
 from .perception import VisualCueConfig, VisualCueEncoder, VisualCueObservation
+from .planet_perception import (
+    PlanetGeometryObservation,
+    PlanetVisionConfig,
+    StraightPlanetGeometryEncoder,
+)
 from .profiles import PERSONAL_BLUE_SWITCH_V0_1_NAME, personal_blue_switch_v0_1
 from .rhythm_env import (
     EpisodeStats,
@@ -83,6 +89,12 @@ __all__ = [
     "VisualCueConfig",
     "VisualCueEncoder",
     "VisualCueObservation",
+    "PlanetGeometryObservation",
+    "PlanetVisionConfig",
+    "StraightPlanetGeometryEncoder",
+    "GeometryRhythmEnv",
+    "GeometryRhythmObservation",
+    "GeometryRhythmStep",
     "EpisodeStats",
     "RewardConfig",
     "RhythmMotorEnv",
