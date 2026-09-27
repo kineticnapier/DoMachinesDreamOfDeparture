@@ -58,7 +58,8 @@ def _evaluate(config: BodyConfig, targets: CalibrationTargets, alternate_target:
 
 def _scaled(config: BodyConfig, *, tau=1.0, force=1.0, damping=1.0, fatigue=1.0, recovery=1.0,
             fatigue_threshold=1.0, switch_fatigue=1.0, hand_capacity=1.0, hand_fatigue=1.0,
-            hand_recovery=1.0, hand_threshold=1.0, switch_tau=1.0, coordination_floor=1.0) -> BodyConfig:
+            hand_recovery=1.0, hand_threshold=1.0, switch_tau=1.0, coordination_floor=1.0,
+            bilateral_switch_tau=1.0, bilateral_floor=1.0) -> BodyConfig:
     def finger(f: FingerConfig) -> FingerConfig:
         return replace(
             f,
@@ -76,7 +77,19 @@ def _scaled(config: BodyConfig, *, tau=1.0, force=1.0, damping=1.0, fatigue=1.0,
                    fatigue_threshold=max(0.05, min(0.95, h.fatigue_threshold*hand_threshold)),
                    switch_tau_s=max(0.001, h.switch_tau_s*switch_tau),
                    coordination_floor=max(0.02, min(1.0, h.coordination_floor*coordination_floor)))
-    return BodyConfig(left=finger(config.left), right=finger(config.right), hand=hand, same_hand=config.same_hand)
+    b = config.bilateral
+    bilateral = replace(
+        b,
+        switch_tau_s=max(0.001, b.switch_tau_s*bilateral_switch_tau),
+        coordination_floor=max(0.02, min(1.0, b.coordination_floor*bilateral_floor)),
+    )
+    return BodyConfig(
+        left=finger(config.left),
+        right=finger(config.right),
+        hand=hand,
+        bilateral=bilateral,
+        same_hand=config.same_hand,
+    )
 
 
 def fit_body_config(targets: CalibrationTargets = CalibrationTargets(), progress: Callable[[str], None] | None = None,
@@ -130,10 +143,24 @@ def fit_body_config(targets: CalibrationTargets = CalibrationTargets(), progress
             score = ((rate-alternate_target)/alternate_target)**2
             coord_results.append((score, c))
             if i % 16 == 0 or i == len(coordination):
-                say(f"stage 3/3 coordination: {i}/{len(coordination)}")
+                say(f"stage 3/3 same-hand coordination: {i}/{len(coordination)}")
         current = min(coord_results, key=lambda x: x[0])[1]
     else:
-        say("stage 3/3 coordination: skipped for cross-hand profile")
+        # Separate hands keep independent force/fatigue budgets.  Only fit a
+        # weak transfer-of-emphasis constraint; there is no hard/global KPS cap.
+        bilateral = list(product(
+            (0.5, 1.0, 2.0, 4.0),
+            (0.60, 0.70, 0.80, 0.90, 1.00),
+        ))
+        bilateral_results = []
+        for i, (switch, floor) in enumerate(bilateral, 1):
+            c = _scaled(current, bilateral_switch_tau=switch, bilateral_floor=floor)
+            rate = _rate(c, mode="alternate", duration_s=10.0)
+            score = ((rate-alternate_target)/alternate_target)**2
+            bilateral_results.append((score, c))
+            if i % 5 == 0 or i == len(bilateral):
+                say(f"stage 3/3 bilateral coordination: {i}/{len(bilateral)}")
+        current = min(bilateral_results, key=lambda x: x[0])[1]
 
     say("final validation: event-driven threshold controller, 5 s / 20 s / 10 s")
     return _evaluate(current, targets, alternate_target, profile)
