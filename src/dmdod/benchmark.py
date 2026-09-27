@@ -21,17 +21,24 @@ def measure_periodic_rate(
     *,
     mode: str = "single",
     body_config: BodyConfig | None = None,
+    warmup_s: float = 1.0,
 ) -> RateResult:
-    """Drive the body periodically and count physical keyboard actuations."""
-    if interval_ms <= 0.0 or duration_s <= 0.0:
-        raise ValueError("interval_ms and duration_s must be positive")
+    """Drive the body periodically and measure steady-state physical key presses.
+
+    The controller runs continuously through warmup and measurement.  Only DOWN
+    events after warmup count, avoiding startup transients in the reported rate.
+    """
+    if interval_ms <= 0.0 or duration_s <= 0.0 or warmup_s < 0.0:
+        raise ValueError("interval_ms/duration_s must be positive and warmup_s non-negative")
     if mode not in {"single", "alternate"}:
         raise ValueError("mode must be 'single' or 'alternate'")
 
     sim = Simulation(body=TwoFingerBody(config=body_config or BodyConfig()))
     dt_ms = sim.config.dt_s * 1000.0
     half_steps = max(1, round((interval_ms / 2.0) / dt_ms))
-    total_steps = round(duration_s / sim.config.dt_s)
+    warmup_steps = round(warmup_s / sim.config.dt_s)
+    measure_steps = round(duration_s / sim.config.dt_s)
+    total_steps = warmup_steps + measure_steps
     presses = 0
 
     for step in range(total_steps):
@@ -44,14 +51,19 @@ def measure_periodic_rate(
             right = -left
 
         result = sim.step(left, right)
-        presses += sum(1 for _, event in result.events if event is KeyEvent.DOWN)
+        if step >= warmup_steps:
+            presses += sum(1 for _, event in result.events if event is KeyEvent.DOWN)
 
     return RateResult(presses / duration_s, presses, duration_s, interval_ms)
 
 
 def _sustainable(result: RateResult, required_fraction: float) -> bool:
-    expected_rate = 1000.0 / result.interval_ms
-    return result.rate_hz >= expected_rate * required_fraction
+    # Expected count is compared with tolerance for one boundary press.  This
+    # avoids short/long tests disagreeing merely because their windows cut a
+    # periodic sequence at different phases.
+    expected = result.duration_s * 1000.0 / result.interval_ms
+    required = max(0.0, expected * required_fraction - 1.0)
+    return result.presses >= required
 
 
 def find_fastest_sustainable_rate(
@@ -63,14 +75,9 @@ def find_fastest_sustainable_rate(
     resolution_ms: float = 1.0,
     required_fraction: float = 0.98,
     body_config: BodyConfig | None = None,
+    warmup_s: float = 1.0,
 ) -> RateResult:
-    """Find the fastest sustainable requested rate using a bounded search.
-
-    The old implementation scanned every interval from 20 to 250 ms.  This
-    version first brackets the transition with an exponential walk and then
-    refines it.  A tiny local scan protects against millisecond quantization and
-    small non-monotonic regions in the simulated keyboard response.
-    """
+    """Find the fastest sustainable requested rate using a bounded search."""
     if min_interval_ms <= 0 or max_interval_ms <= min_interval_ms or resolution_ms <= 0:
         raise ValueError("invalid interval search range")
 
@@ -85,6 +92,7 @@ def find_fastest_sustainable_rate(
                 duration_s,
                 mode=mode,
                 body_config=body_config,
+                warmup_s=warmup_s,
             )
         return cache[interval]
 
@@ -92,7 +100,6 @@ def find_fastest_sustainable_rate(
     if _sustainable(fastest, required_fraction):
         return fastest
 
-    # Exponential bracketing: normally only a handful of full simulations.
     fail = min_interval_ms
     candidate = min_interval_ms
     step = max(8.0 * resolution_ms, 8.0)
@@ -109,7 +116,6 @@ def find_fastest_sustainable_rate(
     if passed is None:
         raise RuntimeError("No sustainable rate found in the requested interval range")
 
-    # Binary refinement to approximately the requested resolution.
     lo, hi = fail, passed
     while hi - lo > resolution_ms:
         mid = (lo + hi) / 2.0
@@ -121,7 +127,6 @@ def find_fastest_sustainable_rate(
         if hi - lo <= resolution_ms:
             break
 
-    # Local scan catches discretization artifacts without restoring the old O(N) scan.
     start = max(min_interval_ms, hi - 3.0 * resolution_ms)
     end = min(max_interval_ms, hi + 3.0 * resolution_ms)
     interval = start
