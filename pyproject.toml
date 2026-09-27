@@ -1,0 +1,12 @@
+[project]
+name = "do-machines-dream-of-departure"
+version = "0.1.0"
+description = "Human-constrained reinforcement-learning experiments for ADOFAI"
+requires-python = ">=3.11"
+
+[project.optional-dependencies]
+dev = ["pytest>=8"]
+
+[tool.pytest.ini_options]
+pythonpath = ["src"]
+testpaths = ["tests"]
