@@ -21,16 +21,19 @@ class FingerConfig:
 
 @dataclass(frozen=True)
 class HandConfig:
-    """Shared capacity for fingers driven by one hand."""
+    """Shared force, fatigue and coordination limits for one hand."""
 
     capacity: float = 1.35
     fatigue_gain_s: float = 0.030
     fatigue_recovery_s: float = 0.25
+    switch_tau_s: float = 0.030
+    coordination_floor: float = 0.20
 
 
 @dataclass
 class HandState:
     fatigue: float = 0.0
+    coordination: float = 0.0
 
 
 @dataclass(frozen=True)
@@ -87,12 +90,11 @@ class TwoFingerBody:
             fatigue = self._clamp(fatigue, 0.0, 1.0)
             updated.append(FingerState(state.position_m, state.velocity_m_s, activation, fatigue))
 
-        # Same-hand fingers compete for a shared movement budget.  Separate-hand
-        # fingers retain independent hand budgets, so RI/LI can exceed RI/RM.
         hand_scale = [1.0, 1.0]
+        coordination_scale = [1.0, 1.0]
         if self.config.same_hand:
-            demand = abs(updated[0].activation) + abs(updated[1].activation)
             hand_cfg = self.config.hand
+            demand = abs(updated[0].activation) + abs(updated[1].activation)
             hand_fatigue = self.shared_hand.fatigue + (
                 hand_cfg.fatigue_gain_s * min(demand, 2.0)
                 - hand_cfg.fatigue_recovery_s * self.shared_hand.fatigue
@@ -103,6 +105,28 @@ class TwoFingerBody:
                 scale = usable_capacity / demand
                 hand_scale = [scale, scale]
 
+            # Coordination is a low-pass hand-selection state: +1 favours the
+            # left simulated finger, -1 favours the right.  Rapid RI<->RM
+            # alternation cannot teleport this state between fingers.
+            positive_left = max(0.0, updated[0].activation)
+            positive_right = max(0.0, updated[1].activation)
+            press_demand = positive_left + positive_right
+            if press_demand > 1e-9:
+                target = (positive_left - positive_right) / press_demand
+                tau = max(hand_cfg.switch_tau_s, dt_s)
+                self.shared_hand.coordination += (
+                    target - self.shared_hand.coordination
+                ) * dt_s / tau
+                self.shared_hand.coordination = self._clamp(self.shared_hand.coordination, -1.0, 1.0)
+
+                floor = self._clamp(hand_cfg.coordination_floor, 0.0, 1.0)
+                left_affinity = 0.5 * (1.0 + self.shared_hand.coordination)
+                right_affinity = 1.0 - left_affinity
+                coordination_scale = [
+                    floor + (1.0 - floor) * left_affinity,
+                    floor + (1.0 - floor) * right_affinity,
+                ]
+
         next_states: list[FingerState] = []
         for index, (state, cfg) in enumerate(zip(updated, configs)):
             muscle_force = (
@@ -110,6 +134,7 @@ class TwoFingerBody:
                 * (1.0 - state.fatigue)
                 * state.activation
                 * hand_scale[index]
+                * coordination_scale[index]
             )
             spring_force = -cfg.spring_n_m * (state.position_m - cfg.rest_position_m)
             damping_force = -cfg.damping_n_s_m * state.velocity_m_s
