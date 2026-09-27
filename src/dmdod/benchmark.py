@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
+from .body import BodyConfig, TwoFingerBody
 from .keyboard import KeyEvent
 from .simulator import Simulation
 
@@ -14,32 +15,20 @@ class RateResult:
     interval_ms: float
 
 
-def _count_down(sim: Simulation, left: float, right: float, steps: int) -> int:
-    count = 0
-    for _ in range(steps):
-        result = sim.step(left, right)
-        count += sum(1 for _, event in result.events if event is KeyEvent.DOWN)
-    return count
-
-
 def measure_periodic_rate(
     interval_ms: float,
     duration_s: float,
     *,
     mode: str = "single",
+    body_config: BodyConfig | None = None,
 ) -> RateResult:
-    """Drive the body with a square-wave motor command and count real key actuations.
-
-    interval_ms is the requested time between digital presses.  The benchmark
-    never counts requested actions: only keyboard DOWN events produced by the
-    physical model count.
-    """
+    """Drive the body periodically and count physical keyboard actuations."""
     if interval_ms <= 0.0 or duration_s <= 0.0:
         raise ValueError("interval_ms and duration_s must be positive")
     if mode not in {"single", "alternate"}:
         raise ValueError("mode must be 'single' or 'alternate'")
 
-    sim = Simulation()
+    sim = Simulation(body=TwoFingerBody(config=body_config or BodyConfig()))
     dt_ms = sim.config.dt_s * 1000.0
     half_steps = max(1, round((interval_ms / 2.0) / dt_ms))
     total_steps = round(duration_s / sim.config.dt_s)
@@ -68,16 +57,17 @@ def find_fastest_sustainable_rate(
     max_interval_ms: float = 250.0,
     resolution_ms: float = 1.0,
     required_fraction: float = 0.98,
+    body_config: BodyConfig | None = None,
 ) -> RateResult:
-    """Find the fastest requested rate the body can physically sustain.
-
-    A candidate passes when at least required_fraction of its expected presses
-    become real keyboard DOWN events.  Search proceeds from fast to slow so the
-    first passing candidate is the physical limit under this controller.
-    """
+    """Find the fastest requested rate the configured body can sustain."""
     interval = min_interval_ms
     while interval <= max_interval_ms + 1e-9:
-        result = measure_periodic_rate(interval, duration_s, mode=mode)
+        result = measure_periodic_rate(
+            interval,
+            duration_s,
+            mode=mode,
+            body_config=body_config,
+        )
         expected_rate = 1000.0 / interval
         if result.rate_hz >= expected_rate * required_fraction:
             return result
