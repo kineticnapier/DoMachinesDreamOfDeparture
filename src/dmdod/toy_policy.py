@@ -36,7 +36,12 @@ def observation_tensor(observation: RhythmObservation, device: torch.device) -> 
 class ActorCritic(nn.Module):
     """Small continuous-action actor-critic used by the first toy RL task."""
 
-    def __init__(self, input_dim: int = 8, hidden_dim: int = 64) -> None:
+    def __init__(
+        self,
+        input_dim: int = 8,
+        hidden_dim: int = 64,
+        initial_log_std: float = -1.20,
+    ) -> None:
         super().__init__()
         self.backbone = nn.Sequential(
             nn.Linear(input_dim, hidden_dim),
@@ -46,7 +51,11 @@ class ActorCritic(nn.Module):
         )
         self.actor_mean = nn.Linear(hidden_dim, 2)
         self.critic = nn.Linear(hidden_dim, 1)
-        self.log_std = nn.Parameter(torch.full((2,), -0.35))
+        # The first version started at log_std=-0.35 (sigma ~= 0.70), which
+        # produced so much random motion that many episodes hit OVERLOAD before
+        # the first cue.  Start at sigma ~= 0.30 instead; log_std remains
+        # learnable and entropy regularization may still increase exploration.
+        self.log_std = nn.Parameter(torch.full((2,), float(initial_log_std)))
 
     def forward(self, x: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
         h = self.backbone(x)
