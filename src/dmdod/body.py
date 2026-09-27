@@ -17,6 +17,10 @@ class FingerConfig:
     fatigue_recovery_s: float = 0.35
     fatigue_threshold: float = 0.45
     fatigue_exponent: float = 2.0
+    # Extra cost paid when the requested movement direction reverses.  This is
+    # deliberately separate from |activation| because fast +/- commands can
+    # average activation near zero while still requiring repeated effort.
+    switch_fatigue_per_reversal: float = 0.00025
     min_position_m: float = -0.001
     max_position_m: float = 0.006
 
@@ -54,9 +58,16 @@ class FingerState:
     velocity_m_s: float = 0.0
     activation: float = 0.0
     fatigue: float = 0.0
+    last_command: float = 0.0
 
     def copy(self) -> "FingerState":
-        return FingerState(self.position_m, self.velocity_m_s, self.activation, self.fatigue)
+        return FingerState(
+            self.position_m,
+            self.velocity_m_s,
+            self.activation,
+            self.fatigue,
+            self.last_command,
+        )
 
 
 @dataclass
@@ -90,10 +101,20 @@ class TwoFingerBody:
         for state, command, cfg in zip(old, commands, configs):
             activation = state.activation + (command - state.activation) * dt_s / cfg.activation_tau_s
             activation = self._clamp(activation, -1.0, 1.0)
+
+            # Continuous load handles sustained high activation.  A separate
+            # per-reversal term handles rapid alternating commands that keep
+            # activation numerically close to zero.
             load = self._fatigue_load(abs(activation), cfg.fatigue_threshold, cfg.fatigue_exponent)
-            fatigue = state.fatigue + (cfg.fatigue_gain_s * load - cfg.fatigue_recovery_s * state.fatigue) * dt_s
+            reversed_direction = state.last_command * command < 0.0
+            reversal_cost = cfg.switch_fatigue_per_reversal if reversed_direction else 0.0
+            fatigue = (
+                state.fatigue
+                + (cfg.fatigue_gain_s * load - cfg.fatigue_recovery_s * state.fatigue) * dt_s
+                + reversal_cost
+            )
             fatigue = self._clamp(fatigue, 0.0, 1.0)
-            updated.append(FingerState(state.position_m, state.velocity_m_s, activation, fatigue))
+            updated.append(FingerState(state.position_m, state.velocity_m_s, activation, fatigue, command))
 
         hand_scale = [1.0, 1.0]
         coordination_scale = [1.0, 1.0]
@@ -144,7 +165,7 @@ class TwoFingerBody:
                 position = cfg.max_position_m
                 velocity = min(0.0, velocity)
 
-            next_states.append(FingerState(position, velocity, state.activation, state.fatigue))
+            next_states.append(FingerState(position, velocity, state.activation, state.fatigue, state.last_command))
 
         self.left, self.right = next_states
         return self.left.copy(), self.right.copy()
