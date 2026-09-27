@@ -13,7 +13,9 @@ except ImportError as exc:  # pragma: no cover - user-facing dependency message
         'PyTorch is required. Run: uv sync --extra dev --extra rl --inexact'
     ) from exc
 
+from dmdod.adofai_rules import normal_timing_windows
 from dmdod.curriculum import curriculum_start_s, note_curriculum
+from dmdod.perception import VisualCueConfig
 from dmdod.rhythm_env import RhythmMotorEnv, make_regular_targets
 from dmdod.toy_policy import ActorCritic, discounted_returns, observation_tensor
 
@@ -79,6 +81,59 @@ class RetentionSummary:
         return min(probe.clean_clear_rate for _, probe in self.probes)
 
 
+def resolved_bpm_range(args: argparse.Namespace) -> tuple[float, float]:
+    low = args.bpm if args.bpm_min is None else args.bpm_min
+    high = args.bpm if args.bpm_max is None else args.bpm_max
+    return float(low), float(high)
+
+
+def evaluation_bpms(args: argparse.Namespace) -> tuple[float, ...]:
+    low, high = resolved_bpm_range(args)
+    if abs(high - low) < 1e-12:
+        return (low,)
+    count = max(2, args.eval_bpm_points)
+    return tuple(low + (high - low) * i / (count - 1) for i in range(count))
+
+
+def resolved_perception_config(args: argparse.Namespace) -> VisualCueConfig:
+    humanized = args.humanized_perception
+    jitter_ms = args.perception_latency_jitter_ms
+    noise_std = args.perception_noise_std
+    dropout = args.perception_dropout
+    hz = args.perception_hz
+
+    if jitter_ms is None:
+        jitter_ms = 15.0 if humanized else 0.0
+    if noise_std is None:
+        noise_std = 0.03 if humanized else 0.0
+    if dropout is None:
+        dropout = 0.01 if humanized else 0.0
+    if hz is None:
+        hz = 60.0 if humanized else 0.0
+
+    return VisualCueConfig(
+        latency_s=args.perception_latency_ms / 1000.0,
+        width_s=args.perception_width_ms / 1000.0,
+        horizon_s=args.perception_horizon_ms / 1000.0,
+        latency_jitter_s=jitter_ms / 1000.0,
+        sample_period_s=(1.0 / hz if hz > 0.0 else 0.0),
+        amplitude_noise_std=noise_std,
+        dropout_probability=dropout,
+    )
+
+
+def perception_config_dict(config: VisualCueConfig) -> dict[str, float]:
+    return {
+        "latency_s": config.latency_s,
+        "width_s": config.width_s,
+        "horizon_s": config.horizon_s,
+        "latency_jitter_s": config.latency_jitter_s,
+        "sample_period_s": config.sample_period_s,
+        "amplitude_noise_std": config.amplitude_noise_std,
+        "dropout_probability": config.dropout_probability,
+    }
+
+
 def make_env(
     *,
     bpm: float,
@@ -87,6 +142,8 @@ def make_env(
     pattern: str,
     same_hand: bool,
     control_dt: float,
+    cue_config: VisualCueConfig,
+    perception_seed: int,
 ) -> RhythmMotorEnv:
     targets = make_regular_targets(
         bpm=bpm,
@@ -99,6 +156,8 @@ def make_env(
         bpm=bpm,
         same_hand=same_hand,
         control_dt_s=control_dt,
+        cue_config=cue_config,
+        perception_seed=perception_seed,
     )
 
 
@@ -106,16 +165,18 @@ def deterministic_probe(
     model: ActorCritic,
     device: torch.device,
     *,
-    bpm: float,
+    bpms: tuple[float, ...],
     notes: int,
     base_start_s: float,
     pattern: str,
     same_hand: bool,
     control_dt: float,
+    cue_config: VisualCueConfig,
     episodes: int,
     start_jitter_ms: float,
+    seed_base: int,
 ) -> DeterministicProbe:
-    """Evaluate actor means on fixed phase offsets with no exploration noise."""
+    """Evaluate actor means across deterministic phase/BPM/sensor probes."""
 
     if episodes == 1:
         offsets = (0.0,)
@@ -136,7 +197,8 @@ def deterministic_probe(
 
     was_training = model.training
     model.eval()
-    for offset in offsets:
+    for episode_index, offset in enumerate(offsets):
+        bpm = bpms[episode_index % len(bpms)]
         start_s = max(0.050, base_start_s + offset)
         env = make_env(
             bpm=bpm,
@@ -145,6 +207,8 @@ def deterministic_probe(
             pattern=pattern,
             same_hand=same_hand,
             control_dt=control_dt,
+            cue_config=cue_config,
+            perception_seed=seed_base + episode_index * 1009,
         )
         observation = env.reset()
         while True:
@@ -188,23 +252,27 @@ def probe_previous_stages(
     previous_stages: tuple[int, ...],
     args: argparse.Namespace,
     same_hand: bool,
+    bpms: tuple[float, ...],
+    cue_config: VisualCueConfig,
 ) -> RetentionSummary:
     probes: list[tuple[int, DeterministicProbe]] = []
-    for notes in previous_stages:
+    for index, notes in enumerate(previous_stages):
         probes.append(
             (
                 notes,
                 deterministic_probe(
                     model,
                     device,
-                    bpm=args.bpm,
+                    bpms=bpms,
                     notes=notes,
                     base_start_s=(0.750 if args.no_curriculum else curriculum_start_s(notes)),
                     pattern=args.pattern,
                     same_hand=same_hand,
                     control_dt=args.control_dt,
+                    cue_config=cue_config,
                     episodes=args.retention_episodes,
                     start_jitter_ms=args.eval_start_jitter_ms,
+                    seed_base=args.seed * 100000 + index * 10000 + notes,
                 ),
             )
         )
@@ -284,14 +352,19 @@ def save_checkpoint(
     stage_episode: int,
     probe: DeterministicProbe,
     retention: RetentionSummary,
+    bpm_low: float,
+    bpm_high: float,
+    cue_config: VisualCueConfig,
 ) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     torch.save(
         {
-            "format_version": 5,
+            "format_version": 6,
             "model": model.state_dict(),
             "optimizer": optimizer.state_dict(),
             "bpm": args.bpm,
+            "bpm_min": bpm_low,
+            "bpm_max": bpm_high,
             "notes": stage_notes,
             "target_notes": args.notes,
             "pattern": args.pattern,
@@ -304,7 +377,9 @@ def save_checkpoint(
             "initial_log_std": args.initial_log_std,
             "timing_option": "normal",
             "game_rules": "adofai-wiki-v0.1",
-            "perception": "active-next-target-v0.2",
+            "body_rules": "zero-separated-reversal-counted-v0.2",
+            "perception": "active-next-target-sampled-noisy-v0.3",
+            "perception_config": perception_config_dict(cue_config),
             "curriculum": not args.no_curriculum,
             "curriculum_stage_index": stage_index,
             "curriculum_stage_notes": stage_notes,
@@ -334,11 +409,23 @@ def save_checkpoint(
     )
 
 
+def _same_perception_config(saved: object, current: VisualCueConfig) -> bool:
+    if not isinstance(saved, dict):
+        saved = {}
+    expected = perception_config_dict(current)
+    legacy = perception_config_dict(VisualCueConfig())
+    actual = {key: float(saved.get(key, legacy[key])) for key in expected}
+    return all(abs(actual[key] - expected[key]) <= 1e-12 for key in expected)
+
+
 def _validate_resume_checkpoint(
     saved: dict[str, object],
     args: argparse.Namespace,
     *,
     same_hand: bool,
+    bpm_low: float,
+    bpm_high: float,
+    cue_config: VisualCueConfig,
 ) -> None:
     target_notes = int(saved.get("target_notes", saved.get("notes", args.notes)))
     if target_notes != args.notes:
@@ -349,10 +436,15 @@ def _validate_resume_checkpoint(
         raise SystemExit("resume checkpoint pattern does not match --pattern")
     if bool(saved.get("same_hand", same_hand)) != same_hand:
         raise SystemExit("resume checkpoint same_hand setting does not match")
-    if abs(float(saved.get("bpm", args.bpm)) - args.bpm) > 1e-9:
-        raise SystemExit("resume checkpoint BPM does not match --bpm")
+    saved_bpm = float(saved.get("bpm", args.bpm))
+    saved_low = float(saved.get("bpm_min", saved_bpm))
+    saved_high = float(saved.get("bpm_max", saved_bpm))
+    if abs(saved_low - bpm_low) > 1e-9 or abs(saved_high - bpm_high) > 1e-9:
+        raise SystemExit("resume checkpoint BPM domain differs; use --warm-start to change the task")
     if abs(float(saved.get("control_dt", args.control_dt)) - args.control_dt) > 1e-12:
         raise SystemExit("resume checkpoint control_dt does not match --control-dt")
+    if not _same_perception_config(saved.get("perception_config"), cue_config):
+        raise SystemExit("resume checkpoint perception differs; use --warm-start to change the sensor model")
 
 
 def print_probe(prefix: str, probe: DeterministicProbe) -> None:
@@ -383,6 +475,9 @@ def train(args: argparse.Namespace) -> None:
     rng = random.Random(args.seed)
     device = torch.device(args.device)
     same_hand = args.pattern != "alternate" or args.same_hand
+    bpm_low, bpm_high = resolved_bpm_range(args)
+    probe_bpms = evaluation_bpms(args)
+    cue_config = resolved_perception_config(args)
 
     stages = (args.notes,) if args.no_curriculum else note_curriculum(args.notes)
     model = ActorCritic(initial_log_std=args.initial_log_std).to(device)
@@ -393,11 +488,29 @@ def train(args: argparse.Namespace) -> None:
     resume_stage_pos = 0
     resumed = False
 
+    if args.resume and args.warm_start:
+        raise SystemExit("--resume and --warm-start are mutually exclusive")
+
+    if args.warm_start:
+        warm_path = Path(args.warm_start)
+        if not warm_path.exists():
+            raise SystemExit(f"warm-start checkpoint not found: {warm_path}")
+        saved = torch.load(warm_path, map_location=device)
+        model.load_state_dict(saved["model"])
+        print(f"warm-start: loaded policy weights from {warm_path}; optimizer/curriculum restart")
+
     if args.resume:
         if not checkpoint.exists():
             raise SystemExit(f"resume checkpoint not found: {checkpoint}")
         saved = torch.load(checkpoint, map_location=device)
-        _validate_resume_checkpoint(saved, args, same_hand=same_hand)
+        _validate_resume_checkpoint(
+            saved,
+            args,
+            same_hand=same_hand,
+            bpm_low=bpm_low,
+            bpm_high=bpm_high,
+            cue_config=cue_config,
+        )
         model.load_state_dict(saved["model"])
         if "optimizer" in saved:
             optimizer.load_state_dict(saved["optimizer"])
@@ -421,27 +534,32 @@ def train(args: argparse.Namespace) -> None:
             if optimizer_restored
             else "resume: legacy checkpoint has no optimizer state; Adam state starts fresh"
         )
-        if int(saved.get("format_version", 0)) < 5:
-            print("resume: checkpoint predates active-next-target perception/replay; policy will adapt")
 
-    probe_env = make_env(
-        bpm=args.bpm,
-        notes=max(1, stages[resume_stage_pos]),
-        start_s=(0.750 if args.no_curriculum else curriculum_start_s(stages[resume_stage_pos])),
-        pattern=args.pattern,
-        same_hand=same_hand,
-        control_dt=args.control_dt,
-    )
-    windows = probe_env.timing_windows
+    low_windows = normal_timing_windows(bpm_low)
+    high_windows = normal_timing_windows(bpm_high)
 
     print("=== Toy RL with ADOFAI Normal Timing ===")
-    print(
-        f"{args.bpm:g} BPM: Perfect ±{windows.perfect_s*1000:.2f} ms, "
-        f"E/L Perfect ±{windows.early_late_perfect_s*1000:.2f} ms, "
-        f"Pass ±{windows.pass_s*1000:.2f} ms"
-    )
+    if abs(bpm_high - bpm_low) < 1e-12:
+        print(
+            f"{bpm_low:g} BPM: Perfect ±{low_windows.perfect_s*1000:.2f} ms, "
+            f"E/L Perfect ±{low_windows.early_late_perfect_s*1000:.2f} ms, "
+            f"Pass ±{low_windows.pass_s*1000:.2f} ms"
+        )
+    else:
+        print(
+            f"BPM domain: {bpm_low:g}..{bpm_high:g} (uniform training); "
+            f"Pass ±{low_windows.pass_s*1000:.2f}..{high_windows.pass_s*1000:.2f} ms"
+        )
+        print("eval BPM probes: " + ", ".join(f"{bpm:g}" for bpm in probe_bpms))
     print("OVERLOAD: Too Early +2, valid hit -1, fail at 6")
     print("perception: only the next unresolved target remains visible")
+    print(
+        "sensor: "
+        f"latency={cue_config.latency_s*1000:.1f}±{cue_config.latency_jitter_s*1000:.1f} ms, "
+        f"sample={'continuous' if cue_config.sample_period_s <= 0 else f'{1.0/cue_config.sample_period_s:.0f} Hz'}, "
+        f"noise={cue_config.amplitude_noise_std:.3f}, "
+        f"dropout={cue_config.dropout_probability*100:.1f}%"
+    )
     print(
         f"exploration: initial log_std={args.initial_log_std:.2f} "
         f"(current sigma={model.log_std.detach().exp().mean().item():.3f})"
@@ -455,8 +573,8 @@ def train(args: argparse.Namespace) -> None:
             f"retention probes={args.retention_episodes}/stage"
         )
     print(
-        f"deterministic checkpoint eval: every {args.eval_every} episodes, "
-        f"{args.eval_episodes} phase probes ±{args.eval_start_jitter_ms:g} ms"
+        f"deterministic policy eval: every {args.eval_every} episodes, "
+        f"{args.eval_episodes} phase/BPM/sensor probes"
     )
     print(
         f"stage 1 advance: clean>={args.stage1_clean_rate:.2f}; later: "
@@ -485,37 +603,63 @@ def train(args: argparse.Namespace) -> None:
             f"base start={stage_start_s*1000:.0f} ms ---"
         )
 
-        if resumed and stage_offset == 0:
-            baseline = deterministic_probe(
-                model,
-                device,
-                bpm=args.bpm,
-                notes=stage_notes,
-                base_start_s=stage_start_s,
-                pattern=args.pattern,
-                same_hand=same_hand,
-                control_dt=args.control_dt,
-                episodes=args.eval_episodes,
-                start_jitter_ms=args.eval_start_jitter_ms,
-            )
-            retention = probe_previous_stages(
-                model,
-                device,
-                previous_stages=previous_stages,
-                args=args,
-                same_hand=same_hand,
-            )
-            print_probe("  resume baseline: ", baseline)
-            print_retention(retention)
-            stage_best_key = probe_rank_key(baseline, retention)
-            saved_probe = baseline
-            saved_stage_notes = stage_notes
-            if stage_pos < len(stages) - 1 and passes_stage(
-                baseline, retention, args, stage_notes=stage_notes
-            ):
-                print(f"  stage already passed on resume: {stage_criterion_text(args, stage_notes)}")
-                print()
-                continue
+        # Always test the incoming policy before changing it. This lets a strong
+        # warm-start skip easy curriculum stages and avoids one unnecessary
+        # optimizer step destabilizing an already-good policy.
+        baseline = deterministic_probe(
+            model,
+            device,
+            bpms=probe_bpms,
+            notes=stage_notes,
+            base_start_s=stage_start_s,
+            pattern=args.pattern,
+            same_hand=same_hand,
+            control_dt=args.control_dt,
+            cue_config=cue_config,
+            episodes=args.eval_episodes,
+            start_jitter_ms=args.eval_start_jitter_ms,
+            seed_base=args.seed * 1000000 + stage_index * 10000,
+        )
+        retention = probe_previous_stages(
+            model,
+            device,
+            previous_stages=previous_stages,
+            args=args,
+            same_hand=same_hand,
+            bpms=probe_bpms,
+            cue_config=cue_config,
+        )
+        print_probe("  stage baseline: ", baseline)
+        print_retention(retention)
+        stage_best_key = probe_rank_key(baseline, retention)
+        saved_probe = baseline
+        saved_stage_notes = stage_notes
+        save_checkpoint(
+            checkpoint,
+            model,
+            optimizer,
+            args=args,
+            same_hand=same_hand,
+            stage_index=stage_index,
+            stage_notes=stage_notes,
+            stage_start_s=stage_start_s,
+            global_episode=global_episode,
+            stage_episode=0,
+            probe=baseline,
+            retention=retention,
+            bpm_low=bpm_low,
+            bpm_high=bpm_high,
+            cue_config=cue_config,
+        )
+        print(f"  saved stage baseline -> {checkpoint}")
+
+        if passes_stage(baseline, retention, args, stage_notes=stage_notes):
+            stage_passed = True
+            print(f"  stage already passed: {stage_criterion_text(args, stage_notes)}")
+            print()
+            if stage_pos == len(stages) - 1:
+                break
+            continue
 
         for stage_episode in range(1, args.episodes + 1):
             global_episode += 1
@@ -528,13 +672,20 @@ def train(args: argparse.Namespace) -> None:
             rollout_base_start = 0.750 if args.no_curriculum else curriculum_start_s(rollout_notes)
             offset = rng.uniform(-train_jitter_s, train_jitter_s) if train_jitter_s > 0.0 else 0.0
             rollout_start_s = max(0.050, rollout_base_start + offset)
+            rollout_bpm = (
+                bpm_low
+                if abs(bpm_high - bpm_low) < 1e-12
+                else rng.uniform(bpm_low, bpm_high)
+            )
             env = make_env(
-                bpm=args.bpm,
+                bpm=rollout_bpm,
                 notes=rollout_notes,
                 start_s=rollout_start_s,
                 pattern=args.pattern,
                 same_hand=same_hand,
                 control_dt=args.control_dt,
+                cue_config=cue_config,
+                perception_seed=rng.randrange(0, 2**31),
             )
 
             observation = env.reset()
@@ -581,9 +732,10 @@ def train(args: argparse.Namespace) -> None:
                 replay_text = f" replay={rollout_notes}n" if replayed else ""
                 print(
                     f"ep {global_episode:4d}  stage={stage_episode:3d}/{args.episodes}{replay_text}  "
-                    f"reward={stats.total_reward:8.3f}  hits={stats.hits:2d}/{stats.targets:2d}  "
-                    f"miss={stats.misses:2d}  early={stats.too_early_presses:2d}  "
-                    f"{overload_text:8s}  MAE={error_text}  sigma={std:.3f}  loss={loss.item():8.4f}"
+                    f"bpm={rollout_bpm:6.1f}  reward={stats.total_reward:8.3f}  "
+                    f"hits={stats.hits:2d}/{stats.targets:2d}  miss={stats.misses:2d}  "
+                    f"early={stats.too_early_presses:2d}  {overload_text:8s}  "
+                    f"MAE={error_text}  sigma={std:.3f}  loss={loss.item():8.4f}"
                 )
 
             should_probe = (
@@ -597,14 +749,16 @@ def train(args: argparse.Namespace) -> None:
             probe = deterministic_probe(
                 model,
                 device,
-                bpm=args.bpm,
+                bpms=probe_bpms,
                 notes=stage_notes,
                 base_start_s=stage_start_s,
                 pattern=args.pattern,
                 same_hand=same_hand,
                 control_dt=args.control_dt,
+                cue_config=cue_config,
                 episodes=args.eval_episodes,
                 start_jitter_ms=args.eval_start_jitter_ms,
+                seed_base=args.seed * 1000000 + stage_index * 10000,
             )
             retention = probe_previous_stages(
                 model,
@@ -612,6 +766,8 @@ def train(args: argparse.Namespace) -> None:
                 previous_stages=previous_stages,
                 args=args,
                 same_hand=same_hand,
+                bpms=probe_bpms,
+                cue_config=cue_config,
             )
             print_probe("  eval mean-policy: ", probe)
             print_retention(retention)
@@ -634,22 +790,25 @@ def train(args: argparse.Namespace) -> None:
                     stage_episode=stage_episode,
                     probe=probe,
                     retention=retention,
+                    bpm_low=bpm_low,
+                    bpm_high=bpm_high,
+                    cue_config=cue_config,
                 )
                 print(f"  saved deterministic best -> {checkpoint}")
 
-            if stage_pos < len(stages) - 1 and passes_stage(
-                probe, retention, args, stage_notes=stage_notes
-            ):
+            if passes_stage(probe, retention, args, stage_notes=stage_notes):
                 stage_passed = True
                 print(f"  stage passed: {stage_criterion_text(args, stage_notes)}")
                 print()
                 break
 
-        if stage_pos < len(stages) - 1 and not stage_passed:
+        if not stage_passed:
             print(
                 f"curriculum stopped at {stage_notes} note(s): "
                 f"advance criterion was not reached within {args.episodes} episodes"
             )
+            break
+        if stage_pos == len(stages) - 1:
             break
 
     print()
@@ -669,7 +828,10 @@ def train(args: argparse.Namespace) -> None:
 def main() -> None:
     parser = argparse.ArgumentParser(description="Train the toy motor-control rhythm policy.")
     parser.add_argument("--episodes", type=int, default=250, help="maximum episodes per stage")
-    parser.add_argument("--bpm", type=float, default=180.0)
+    parser.add_argument("--bpm", type=float, default=180.0, help="nominal BPM / fixed BPM when no range is given")
+    parser.add_argument("--bpm-min", type=float, default=None, help="uniform training BPM lower bound")
+    parser.add_argument("--bpm-max", type=float, default=None, help="uniform training BPM upper bound")
+    parser.add_argument("--eval-bpm-points", type=int, default=5, help="BPM points spanning the training domain during probes")
     parser.add_argument("--notes", type=int, default=16)
     parser.add_argument("--pattern", choices=("left", "alternate"), default="left")
     parser.add_argument("--same-hand", action="store_true", help="use same-hand body for alternate pattern")
@@ -693,21 +855,49 @@ def main() -> None:
     parser.add_argument("--advance-full-rate", type=float, default=0.80)
     parser.add_argument("--retention-hit-rate", type=float, default=0.70)
     parser.add_argument("--retention-full-rate", type=float, default=0.60)
+    parser.add_argument("--humanized-perception", action="store_true", help="enable 15 ms latency jitter, 60 Hz sampling, 0.03 cue noise and 1% dropout defaults")
+    parser.add_argument("--perception-latency-ms", type=float, default=50.0)
+    parser.add_argument("--perception-width-ms", type=float, default=90.0)
+    parser.add_argument("--perception-horizon-ms", type=float, default=450.0)
+    parser.add_argument("--perception-latency-jitter-ms", type=float, default=None)
+    parser.add_argument("--perception-noise-std", type=float, default=None)
+    parser.add_argument("--perception-dropout", type=float, default=None)
+    parser.add_argument("--perception-hz", type=float, default=None)
     parser.add_argument("--no-curriculum", action="store_true")
     parser.add_argument(
         "--resume",
         action="store_true",
-        help="continue from --checkpoint; older checkpoints resume under current perception/rules",
+        help="continue an identical task from --checkpoint",
+    )
+    parser.add_argument(
+        "--warm-start",
+        default=None,
+        help="load policy weights only from another checkpoint, then restart optimizer/curriculum",
     )
     parser.add_argument("--checkpoint", default="checkpoints/toy_policy.pt")
     args = parser.parse_args()
 
+    bpm_low, bpm_high = resolved_bpm_range(args)
     if args.episodes <= 0 or args.notes <= 0 or args.bpm <= 0.0:
         parser.error("episodes, notes, and bpm must be positive")
+    if bpm_low <= 0.0 or bpm_high <= 0.0 or bpm_low > bpm_high:
+        parser.error("BPM range must satisfy 0 < bpm-min <= bpm-max")
+    if args.eval_bpm_points <= 0:
+        parser.error("eval-bpm-points must be positive")
     if args.eval_every <= 0 or args.eval_episodes <= 0 or args.retention_episodes <= 0 or args.log_every <= 0:
         parser.error("log/eval intervals and probe episode counts must be positive")
     if args.train_start_jitter_ms < 0.0 or args.eval_start_jitter_ms < 0.0:
         parser.error("start jitter values must be non-negative")
+    if args.perception_latency_ms < 0.0 or args.perception_width_ms <= 0.0 or args.perception_horizon_ms <= 0.0:
+        parser.error("perception latency/horizon/width values are invalid")
+    if args.perception_latency_jitter_ms is not None and args.perception_latency_jitter_ms < 0.0:
+        parser.error("perception-latency-jitter-ms must be non-negative")
+    if args.perception_noise_std is not None and args.perception_noise_std < 0.0:
+        parser.error("perception-noise-std must be non-negative")
+    if args.perception_dropout is not None and not 0.0 <= args.perception_dropout <= 1.0:
+        parser.error("perception-dropout must be between 0 and 1")
+    if args.perception_hz is not None and args.perception_hz < 0.0:
+        parser.error("perception-hz must be non-negative")
     for name in (
         "previous_stage_replay",
         "stage1_clean_rate",
