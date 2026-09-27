@@ -59,13 +59,19 @@ def _evaluate(config: BodyConfig, targets: CalibrationTargets, alternate_target:
 
 
 def _scaled(config: BodyConfig, *, tau=1.0, force=1.0, damping=1.0, fatigue=1.0, recovery=1.0,
-            fatigue_threshold=1.0, hand_capacity=1.0, hand_fatigue=1.0, hand_recovery=1.0,
-            hand_threshold=1.0, switch_tau=1.0, coordination_floor=1.0) -> BodyConfig:
+            fatigue_threshold=1.0, switch_fatigue=1.0, hand_capacity=1.0, hand_fatigue=1.0,
+            hand_recovery=1.0, hand_threshold=1.0, switch_tau=1.0, coordination_floor=1.0) -> BodyConfig:
     def finger(f: FingerConfig) -> FingerConfig:
-        return replace(f, activation_tau_s=f.activation_tau_s*tau, max_force_n=f.max_force_n*force,
-                       damping_n_s_m=f.damping_n_s_m*damping, fatigue_gain_s=f.fatigue_gain_s*fatigue,
-                       fatigue_recovery_s=f.fatigue_recovery_s*recovery,
-                       fatigue_threshold=max(0.05, min(0.95, f.fatigue_threshold*fatigue_threshold)))
+        return replace(
+            f,
+            activation_tau_s=f.activation_tau_s*tau,
+            max_force_n=f.max_force_n*force,
+            damping_n_s_m=f.damping_n_s_m*damping,
+            fatigue_gain_s=f.fatigue_gain_s*fatigue,
+            fatigue_recovery_s=f.fatigue_recovery_s*recovery,
+            fatigue_threshold=max(0.05, min(0.95, f.fatigue_threshold*fatigue_threshold)),
+            switch_fatigue_per_reversal=max(0.0, f.switch_fatigue_per_reversal*switch_fatigue),
+        )
     h = config.hand
     hand = replace(h, capacity=max(0.2, h.capacity*hand_capacity), fatigue_gain_s=h.fatigue_gain_s*hand_fatigue,
                    fatigue_recovery_s=h.fatigue_recovery_s*hand_recovery,
@@ -98,20 +104,24 @@ def fit_body_config(targets: CalibrationTargets = CalibrationTargets(), progress
     ranked.sort(key=lambda x: x[0])
     mechanics_finalists = [c for _, c in ranked[:3]]
 
+    # Reversal fatigue is the main rate-sensitive fatigue term for fast +/- tapping.
     fatigue_candidates = []
-    # Include stronger/slower-recovering regimes now that the 5s->20s drop is
-    # explicitly part of the objective rather than an incidental endpoint fit.
-    combos = list(product((2.0, 5.0, 10.0, 18.0, 30.0), (0.08, 0.15, 0.35, 0.7), (0.35, 0.55, 0.8, 1.0)))
+    combos = list(product(
+        (1.0, 2.0, 4.0),       # activation fatigue gain
+        (0.08, 0.2, 0.5),      # recovery
+        (0.5, 1.0, 2.0, 4.0, 8.0),  # reversal cost
+    ))
     total = len(mechanics_finalists) * len(combos)
     i = 0
     for base_c in mechanics_finalists:
-        for gain, recovery, threshold in combos:
+        for gain, recovery, switch_cost in combos:
             i += 1
-            c = _scaled(base_c, fatigue=gain, recovery=recovery, fatigue_threshold=threshold)
+            c = _scaled(base_c, fatigue=gain, recovery=recovery,
+                        fatigue_threshold=0.7, switch_fatigue=switch_cost)
             short = _rate(c, mode="single", duration_s=5.0, resolution_ms=search_resolution)
             sustained = _rate(c, mode="single", duration_s=20.0, resolution_ms=search_resolution)
             fatigue_candidates.append((_single_loss(short, sustained, targets), c))
-            if i % 20 == 0 or i == total:
+            if i % 15 == 0 or i == total:
                 say(f"stage 2/3 fatigue+trend: {i}/{total}")
     current = min(fatigue_candidates, key=lambda x: x[0])[1]
 
