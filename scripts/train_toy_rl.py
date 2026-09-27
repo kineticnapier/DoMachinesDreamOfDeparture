@@ -855,7 +855,11 @@ def main() -> None:
     parser.add_argument("--advance-full-rate", type=float, default=0.80)
     parser.add_argument("--retention-hit-rate", type=float, default=0.70)
     parser.add_argument("--retention-full-rate", type=float, default=0.60)
-    parser.add_argument("--humanized-perception", action="store_true", help="enable 15 ms latency jitter, 60 Hz sampling, 0.03 cue noise and 1% dropout defaults")
+    parser.add_argument(
+        "--humanized-perception",
+        action="store_true",
+        help="enable 15 ms latency jitter, 60 Hz sampling, 0.03 cue noise and dropout probability 0.01 defaults",
+    )
     parser.add_argument("--perception-latency-ms", type=float, default=50.0)
     parser.add_argument("--perception-width-ms", type=float, default=90.0)
     parser.add_argument("--perception-horizon-ms", type=float, default=450.0)
