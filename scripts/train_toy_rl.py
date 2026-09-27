@@ -26,13 +26,30 @@ def train(args: argparse.Namespace) -> None:
         pattern=args.pattern,
     )
     same_hand = args.pattern != "alternate" or args.same_hand
-    env = RhythmMotorEnv(targets, same_hand=same_hand, control_dt_s=args.control_dt)
+    env = RhythmMotorEnv(
+        targets,
+        bpm=args.bpm,
+        same_hand=same_hand,
+        control_dt_s=args.control_dt,
+    )
+
+    windows = env.timing_windows
+    print("=== Toy RL with ADOFAI Normal Timing ===")
+    print(
+        f"{args.bpm:g} BPM: Perfect ±{windows.perfect_s*1000:.2f} ms, "
+        f"E/L Perfect ±{windows.early_late_perfect_s*1000:.2f} ms, "
+        f"Pass ±{windows.pass_s*1000:.2f} ms"
+    )
+    print("OVERLOAD: Too Early +2, valid hit -1, fail at 6")
+    print()
 
     model = ActorCritic().to(device)
     optimizer = torch.optim.Adam(model.parameters(), lr=args.lr)
 
+    best_key: tuple[int, int, int, float] | None = None
     best_hits = -1
     best_error = float("inf")
+    best_too_early = 0
     checkpoint = Path(args.checkpoint)
 
     for episode in range(1, args.episodes + 1):
@@ -57,17 +74,26 @@ def train(args: argparse.Namespace) -> None:
 
         stats = env.stats
         error = stats.mean_abs_error_ms if stats.mean_abs_error_ms is not None else float("inf")
-        is_best = stats.hits > best_hits or (stats.hits == best_hits and error < best_error)
-        if is_best:
-            # Save the exact policy that generated this rollout.  Saving after
-            # optimizer.step() would associate the episode score with a policy
-            # that had never actually produced that trajectory.
+        # OVERLOAD is a failed run, so any non-overloaded policy ranks above an
+        # overloaded one.  Among surviving runs prefer hits, fewer Too Early
+        # presses, then tighter timing.
+        candidate_key = (
+            0 if stats.overloaded else 1,
+            stats.hits,
+            -stats.too_early_presses,
+            -error,
+        )
+        if best_key is None or candidate_key > best_key:
+            best_key = candidate_key
             best_hits = stats.hits
             best_error = error
+            best_too_early = stats.too_early_presses
             checkpoint.parent.mkdir(parents=True, exist_ok=True)
+            # Save the exact policy that generated this rollout, before the
+            # optimizer update changes its parameters.
             torch.save(
                 {
-                    "format_version": 1,
+                    "format_version": 2,
                     "model": model.state_dict(),
                     "bpm": args.bpm,
                     "notes": args.notes,
@@ -76,6 +102,8 @@ def train(args: argparse.Namespace) -> None:
                     "control_dt": args.control_dt,
                     "episode": episode,
                     "hidden_dim": 64,
+                    "timing_option": "normal",
+                    "game_rules": "adofai-wiki-v0.1",
                 },
                 checkpoint,
             )
@@ -101,17 +129,19 @@ def train(args: argparse.Namespace) -> None:
 
         if episode == 1 or episode % args.log_every == 0 or episode == args.episodes:
             error_text = "--" if stats.mean_abs_error_ms is None else f"{stats.mean_abs_error_ms:6.1f}ms"
+            overload_text = "OVERLOAD" if stats.overloaded else f"ovl={stats.overload_counter}"
             print(
                 f"ep {episode:4d}/{args.episodes}  "
                 f"reward={stats.total_reward:8.3f}  "
                 f"hits={stats.hits:2d}/{stats.targets:2d}  "
-                f"miss={stats.misses:2d}  stray={stats.stray_presses:3d}  "
-                f"MAE={error_text}  loss={loss.item():8.4f}"
+                f"miss={stats.misses:2d}  early={stats.too_early_presses:2d}  "
+                f"{overload_text:8s}  MAE={error_text}  loss={loss.item():8.4f}"
             )
 
     print()
     print(f"best checkpoint: {checkpoint}")
     print(f"best hits: {best_hits}/{args.notes}")
+    print(f"best Too Early inputs: {best_too_early}")
     if best_error != float("inf"):
         print(f"best mean abs timing error: {best_error:.2f} ms")
 
