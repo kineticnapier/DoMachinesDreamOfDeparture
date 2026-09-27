@@ -15,6 +15,76 @@ class RateResult:
     interval_ms: float
 
 
+@dataclass(frozen=True)
+class FeedbackRateResult:
+    """Rate produced by the threshold-feedback maximum-speed controller."""
+
+    rate_hz: float
+    presses: int
+    duration_s: float
+
+
+def measure_feedback_rate(
+    duration_s: float,
+    *,
+    mode: str = "single",
+    body_config: BodyConfig | None = None,
+    warmup_s: float = 1.0,
+) -> FeedbackRateResult:
+    """Measure maximum tapping using key DOWN/UP events as controller feedback.
+
+    Unlike the old 50:50 square-wave benchmark, this controller does not impose
+    an arbitrary duty cycle.  A single finger presses until the key actuates,
+    releases until the key resets, and immediately presses again.  In alternate
+    mode the next finger starts as soon as the expected previous finger actuates;
+    a finger that has not reset yet is kept in release until it is ready.
+    """
+    if duration_s <= 0.0 or warmup_s < 0.0:
+        raise ValueError("duration_s must be positive and warmup_s non-negative")
+    if mode not in {"single", "alternate"}:
+        raise ValueError("mode must be 'single' or 'alternate'")
+
+    sim = Simulation(body=TwoFingerBody(config=body_config or BodyConfig()))
+    warmup_steps = round(warmup_s / sim.config.dt_s)
+    measure_steps = round(duration_s / sim.config.dt_s)
+    total_steps = warmup_steps + measure_steps
+    presses = 0
+
+    single_press = True
+    expected = "left"
+
+    for step in range(total_steps):
+        if mode == "single":
+            left_command = 1.0 if single_press else -1.0
+            right_command = 0.0
+        else:
+            # Non-selected finger always releases.  If the selected finger has
+            # not reset from its previous use, release it too until UP occurs.
+            if expected == "left":
+                left_command = -1.0 if sim.keyboard.left.pressed else 1.0
+                right_command = -1.0
+            else:
+                left_command = -1.0
+                right_command = -1.0 if sim.keyboard.right.pressed else 1.0
+
+        result = sim.step(left_command, right_command)
+
+        for finger, event in result.events:
+            if mode == "single" and finger == "left":
+                if event is KeyEvent.DOWN:
+                    single_press = False
+                    if step >= warmup_steps:
+                        presses += 1
+                elif event is KeyEvent.UP:
+                    single_press = True
+            elif mode == "alternate" and event is KeyEvent.DOWN and finger == expected:
+                if step >= warmup_steps:
+                    presses += 1
+                expected = "right" if expected == "left" else "left"
+
+    return FeedbackRateResult(presses / duration_s, presses, duration_s)
+
+
 def measure_periodic_rate(
     interval_ms: float,
     duration_s: float,
@@ -25,8 +95,8 @@ def measure_periodic_rate(
 ) -> RateResult:
     """Drive the body periodically and measure steady-state physical key presses.
 
-    The controller runs continuously through warmup and measurement.  Only DOWN
-    events after warmup count, avoiding startup transients in the reported rate.
+    Retained as a diagnostic for fixed-rate tests. Calibration should normally
+    use measure_feedback_rate so the controller does not define the speed limit.
     """
     if interval_ms <= 0.0 or duration_s <= 0.0 or warmup_s < 0.0:
         raise ValueError("interval_ms/duration_s must be positive and warmup_s non-negative")
@@ -58,9 +128,6 @@ def measure_periodic_rate(
 
 
 def _sustainable(result: RateResult, required_fraction: float) -> bool:
-    # Expected count is compared with tolerance for one boundary press.  This
-    # avoids short/long tests disagreeing merely because their windows cut a
-    # periodic sequence at different phases.
     expected = result.duration_s * 1000.0 / result.interval_ms
     required = max(0.0, expected * required_fraction - 1.0)
     return result.presses >= required
@@ -77,7 +144,7 @@ def find_fastest_sustainable_rate(
     body_config: BodyConfig | None = None,
     warmup_s: float = 1.0,
 ) -> RateResult:
-    """Find the fastest sustainable requested rate using a bounded search."""
+    """Legacy fixed-period search, retained for diagnostics and comparisons."""
     if min_interval_ms <= 0 or max_interval_ms <= min_interval_ms or resolution_ms <= 0:
         raise ValueError("invalid interval search range")
 
