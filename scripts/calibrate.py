@@ -46,6 +46,8 @@ def main() -> None:
         print(f"  hand_capacity          = {c.hand.capacity:.6f}")
         print(f"  hand_fatigue_gain_s    = {c.hand.fatigue_gain_s:.6f}")
         print(f"  hand_recovery_s        = {c.hand.fatigue_recovery_s:.6f}")
+        print(f"  hand_switch_tau_s      = {c.hand.switch_tau_s:.6f}")
+        print(f"  coordination_floor     = {c.hand.coordination_floor:.6f}")
     print()
     print("Measurement excludes the first 1 s warmup.")
     print("These values fit the initial blue-switch calibration profile; they are not universal human constants.")
