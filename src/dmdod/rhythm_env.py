@@ -80,9 +80,14 @@ class RhythmMotorEnv:
     """Toy rhythm task around MotorEnv using ADOFAI Normal timing mechanics.
 
     Exact target timestamps remain private. The policy receives only body state
-    and smooth visual cues. Timing judgements use the Normal timing option:
-    30 degree Perfect, 45 degree E/L Perfect, 60 degree Pass, with the timing
-    window tightening with BPM until 310 BPM and staying fixed above it.
+    and a cue for the next unresolved target. Once a tile is hit or missed, its
+    cue disappears and perception advances to the following target. This keeps
+    the toy observation closer to ADOFAI's progressing current/next-tile state
+    instead of blending already-resolved notes with future notes.
+
+    Timing judgements use the Normal timing option: 30 degree Perfect, 45 degree
+    E/L Perfect, 60 degree Pass, with the timing window tightening with BPM until
+    310 BPM and staying fixed above it.
 
     Too Early inputs update the overload counter (+2); valid tile hits reduce it
     by 1 without going below zero; reaching 6 ends the episode with OVERLOAD.
@@ -152,7 +157,18 @@ class RhythmMotorEnv:
         self._total_reward = 0.0
         self._done = False
         self._failed_on_miss = False
-        return RhythmObservation(motor_observation, self._cue_encoder.observe(0.0))
+        return RhythmObservation(motor_observation, self._cue_observation(0.0))
+
+    def _next_unresolved_target_index(self) -> int | None:
+        for i, (used, missed) in enumerate(zip(self._used, self._missed)):
+            if not used and not missed:
+                return i
+        return None
+
+    def _cue_observation(self, now_s: float) -> VisualCueObservation:
+        target_index = self._next_unresolved_target_index()
+        active = () if target_index is None else (target_index,)
+        return self._cue_encoder.observe(now_s, active_target_indices=active)
 
     def _next_target_index(self, key: str) -> int | None:
         for i, target in enumerate(self._targets):
@@ -183,8 +199,6 @@ class RhythmMotorEnv:
             return reward
 
         if judgement is TimingJudgement.TOO_LATE:
-            # Normally this target has already expired before event scoring.
-            # Keep this branch for boundary/sub-step cases.
             if not self._missed[target_index]:
                 self._missed[target_index] = True
                 self._misses += 1
@@ -215,10 +229,8 @@ class RhythmMotorEnv:
         return reward
 
     def observe(self) -> RhythmObservation:
-        # Simulation time is deliberately consumed only inside the perception
-        # module; it is not stored in RhythmObservation.
         now = self.motor.diagnostics().time_s
-        return RhythmObservation(self.motor.observe(), self._cue_encoder.observe(now))
+        return RhythmObservation(self.motor.observe(), self._cue_observation(now))
 
     def step(self, action: MotorAction) -> RhythmStep:
         if self._done:
@@ -227,8 +239,6 @@ class RhythmMotorEnv:
         transition = self.motor.step(action)
         reward = 0.0
         for event in transition.evaluator_events:
-            # Expire targets at the precise physical event time before deciding
-            # whether the key-down can belong to the next unresolved tile.
             reward += self._expire_misses(event.time_s)
             if self._failed_on_miss:
                 break
@@ -252,7 +262,7 @@ class RhythmMotorEnv:
             reward += self._expire_misses(float("inf"))
 
         self._total_reward += reward
-        observation = RhythmObservation(transition.observation, self._cue_encoder.observe(now))
+        observation = RhythmObservation(transition.observation, self._cue_observation(now))
         return RhythmStep(observation, reward, self._done)
 
     @property
