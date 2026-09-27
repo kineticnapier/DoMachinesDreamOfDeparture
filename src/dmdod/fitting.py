@@ -33,18 +33,20 @@ def _loss(short: float, sustained: float, alternate: float, targets: Calibration
             + ((alternate-alternate_target)/alternate_target)**2)
 
 
-def _evaluate(config: BodyConfig, targets: CalibrationTargets, alternate_target: float, profile: str, *, final: bool) -> CalibrationResult:
-    resolution = 1.0 if final else 4.0
-    short = find_fastest_sustainable_rate(mode="single", duration_s=5.0 if final else 2.0, resolution_ms=resolution, body_config=config).rate_hz
-    sustained = find_fastest_sustainable_rate(mode="single", duration_s=20.0 if final else 5.0, resolution_ms=resolution, body_config=config).rate_hz
-    alternate = find_fastest_sustainable_rate(mode="alternate", duration_s=10.0 if final else 3.0, resolution_ms=resolution, body_config=config).rate_hz
-    return CalibrationResult(config, _loss(short, sustained, alternate, targets, alternate_target), short, sustained, alternate, alternate_target, profile)
+def _rate(config: BodyConfig, *, mode: str, duration_s: float, resolution_ms: float) -> float:
+    # Simulation.dt_s remains 1 ms everywhere. resolution_ms only controls the
+    # interval-search precision; it never changes the physical integration step.
+    return find_fastest_sustainable_rate(mode=mode, duration_s=duration_s,
+                                         resolution_ms=resolution_ms, body_config=config).rate_hz
 
 
-def _single_rates(config: BodyConfig) -> tuple[float, float]:
-    short = find_fastest_sustainable_rate(mode="single", duration_s=2.0, resolution_ms=4.0, body_config=config).rate_hz
-    sustained = find_fastest_sustainable_rate(mode="single", duration_s=5.0, resolution_ms=4.0, body_config=config).rate_hz
-    return short, sustained
+def _evaluate(config: BodyConfig, targets: CalibrationTargets, alternate_target: float, profile: str,
+              *, resolution_ms: float = 1.0) -> CalibrationResult:
+    short = _rate(config, mode="single", duration_s=5.0, resolution_ms=resolution_ms)
+    sustained = _rate(config, mode="single", duration_s=20.0, resolution_ms=resolution_ms)
+    alternate = _rate(config, mode="alternate", duration_s=10.0, resolution_ms=resolution_ms)
+    return CalibrationResult(config, _loss(short, sustained, alternate, targets, alternate_target),
+                             short, sustained, alternate, alternate_target, profile)
 
 
 def _scaled(config: BodyConfig, *, tau=1.0, force=1.0, damping=1.0, fatigue=1.0, recovery=1.0,
@@ -75,46 +77,50 @@ def fit_body_config(targets: CalibrationTargets = CalibrationTargets(), progress
     say = progress or (lambda _: None)
     base = replace(BodyConfig(), same_hand=same_hand)
 
-    # Stage 1: mechanics. Only the short single-finger limit matters here.
-    mechanics = list(product((4.0, 6.0, 8.0, 10.0), (0.45, 0.65, 0.85), (1.0, 1.8)))
+    # All stages use the same measurement durations as final validation.
+    # Search resolution may be coarser, but the underlying physics is always 1 ms.
+    search_resolution = 2.0
+
+    mechanics = list(product((4.0, 6.0, 8.0, 10.0, 12.0), (0.35, 0.45, 0.65, 0.85), (1.0, 1.8)))
     ranked = []
     for i, (tau, force, damping) in enumerate(mechanics, 1):
         c = _scaled(base, tau=tau, force=force, damping=damping)
-        rate = find_fastest_sustainable_rate(mode="single", duration_s=1.5, resolution_ms=5.0, body_config=c).rate_hz
+        rate = _rate(c, mode="single", duration_s=5.0, resolution_ms=search_resolution)
         ranked.append((abs(rate-targets.short_single_hz), c))
-        if i % 4 == 0: say(f"stage 1/3 mechanics: {i}/{len(mechanics)}")
+        if i % 8 == 0 or i == len(mechanics):
+            say(f"stage 1/3 mechanics: {i}/{len(mechanics)}")
     ranked.sort(key=lambda x: x[0])
     mechanics_finalists = [c for _, c in ranked[:3]]
 
-    # Stage 2: fatigue only. No coordination Cartesian product.
     fatigue_candidates = []
-    combos = list(product((2.0, 5.0, 10.0), (0.35, 0.7, 1.0), (0.55, 0.8, 1.05)))
+    combos = list(product((2.0, 5.0, 10.0, 18.0), (0.15, 0.35, 0.7), (0.45, 0.7, 1.0)))
     total = len(mechanics_finalists) * len(combos)
     i = 0
     for base_c in mechanics_finalists:
         for gain, recovery, threshold in combos:
             i += 1
             c = _scaled(base_c, fatigue=gain, recovery=recovery, fatigue_threshold=threshold)
-            short, sustained = _single_rates(c)
+            short = _rate(c, mode="single", duration_s=5.0, resolution_ms=search_resolution)
+            sustained = _rate(c, mode="single", duration_s=20.0, resolution_ms=search_resolution)
             score = ((short-targets.short_single_hz)/targets.short_single_hz)**2 + ((sustained-targets.sustained_single_hz)/targets.sustained_single_hz)**2
             fatigue_candidates.append((score, c))
-            if i % 9 == 0 or i == total: say(f"stage 2/3 fatigue: {i}/{total}")
-    fatigue_candidates.sort(key=lambda x: x[0])
-    current = fatigue_candidates[0][1]
+            if i % 12 == 0 or i == total:
+                say(f"stage 2/3 fatigue: {i}/{total}")
+    current = min(fatigue_candidates, key=lambda x: x[0])[1]
 
-    # Stage 3: coordination only for same-hand. Cross-hand has no shared switch.
     if same_hand:
-        coordination = list(product((0.45, 0.65, 0.85), (0.6, 1.0, 1.8, 3.0), (0.35, 0.6, 1.0)))
+        coordination = list(product((0.35, 0.5, 0.65, 0.8), (0.6, 1.0, 1.8, 3.0), (0.25, 0.5, 0.8, 1.0)))
         coord_results = []
         for i, (capacity, switch, floor) in enumerate(coordination, 1):
             c = _scaled(current, hand_capacity=capacity, switch_tau=switch, coordination_floor=floor)
-            rate = find_fastest_sustainable_rate(mode="alternate", duration_s=3.0, resolution_ms=4.0, body_config=c).rate_hz
+            rate = _rate(c, mode="alternate", duration_s=10.0, resolution_ms=search_resolution)
             score = ((rate-alternate_target)/alternate_target)**2
             coord_results.append((score, c))
-            if i % 9 == 0 or i == len(coordination): say(f"stage 3/3 coordination: {i}/{len(coordination)}")
+            if i % 16 == 0 or i == len(coordination):
+                say(f"stage 3/3 coordination: {i}/{len(coordination)}")
         current = min(coord_results, key=lambda x: x[0])[1]
     else:
         say("stage 3/3 coordination: skipped for cross-hand profile")
 
-    say("final validation: 1 s warmup + 5 s / 20 s / 10 s measurement")
-    return _evaluate(current, targets, alternate_target, profile, final=True)
+    say("final validation: same 5 s / 20 s / 10 s tests at 1 ms search resolution")
+    return _evaluate(current, targets, alternate_target, profile, resolution_ms=1.0)
