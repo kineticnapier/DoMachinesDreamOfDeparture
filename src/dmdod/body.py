@@ -27,7 +27,7 @@ class FingerConfig:
 
 @dataclass(frozen=True)
 class HandConfig:
-    """Shared force, fatigue and coordination limits for one hand."""
+    """Shared force, fatigue and coordination limits for two fingers on one hand."""
 
     capacity: float = 1.35
     fatigue_gain_s: float = 0.030
@@ -38,9 +38,27 @@ class HandConfig:
     coordination_floor: float = 0.20
 
 
+@dataclass(frozen=True)
+class BilateralConfig:
+    """Weak left/right motor-coordination constraint for cross-hand alternation.
+
+    This is intentionally not a global KPS ceiling or a shared muscle-force
+    budget.  It only models finite transfer of motor emphasis between hands.
+    A floor of 1.0 disables the constraint.
+    """
+
+    switch_tau_s: float = 0.020
+    coordination_floor: float = 1.0
+
+
 @dataclass
 class HandState:
     fatigue: float = 0.0
+    coordination: float = 0.0
+
+
+@dataclass
+class BilateralState:
     coordination: float = 0.0
 
 
@@ -49,6 +67,7 @@ class BodyConfig:
     left: FingerConfig = field(default_factory=FingerConfig)
     right: FingerConfig = field(default_factory=FingerConfig)
     hand: HandConfig = field(default_factory=HandConfig)
+    bilateral: BilateralConfig = field(default_factory=BilateralConfig)
     same_hand: bool = True
 
 
@@ -76,11 +95,13 @@ class TwoFingerBody:
     left: FingerState = field(default_factory=FingerState)
     right: FingerState = field(default_factory=FingerState)
     shared_hand: HandState = field(default_factory=HandState)
+    bilateral_state: BilateralState = field(default_factory=BilateralState)
 
     def reset(self) -> None:
         self.left = FingerState(position_m=self.config.left.rest_position_m)
         self.right = FingerState(position_m=self.config.right.rest_position_m)
         self.shared_hand = HandState()
+        self.bilateral_state = BilateralState()
 
     @staticmethod
     def _fatigue_load(effort: float, threshold: float, exponent: float) -> float:
@@ -88,6 +109,16 @@ class TwoFingerBody:
         threshold = max(0.0, min(0.99, threshold))
         normalized = max(0.0, effort - threshold) / (1.0 - threshold)
         return normalized ** max(1.0, exponent)
+
+    @staticmethod
+    def _coordination_scales(coordination: float, floor: float) -> list[float]:
+        floor = max(0.0, min(1.0, floor))
+        left_affinity = 0.5 * (1.0 + coordination)
+        right_affinity = 1.0 - left_affinity
+        return [
+            floor + (1.0 - floor) * left_affinity,
+            floor + (1.0 - floor) * right_affinity,
+        ]
 
     def step(self, left_command: float, right_command: float, dt_s: float) -> tuple[FingerState, FingerState]:
         if dt_s <= 0.0:
@@ -102,9 +133,6 @@ class TwoFingerBody:
             activation = state.activation + (command - state.activation) * dt_s / cfg.activation_tau_s
             activation = self._clamp(activation, -1.0, 1.0)
 
-            # Continuous load handles sustained high activation.  A separate
-            # per-reversal term handles rapid alternating commands that keep
-            # activation numerically close to zero.
             load = self._fatigue_load(abs(activation), cfg.fatigue_threshold, cfg.fatigue_exponent)
             reversed_direction = state.last_command * command < 0.0
             reversal_cost = cfg.switch_fatigue_per_reversal if reversed_direction else 0.0
@@ -118,6 +146,10 @@ class TwoFingerBody:
 
         hand_scale = [1.0, 1.0]
         coordination_scale = [1.0, 1.0]
+        positive_left = max(0.0, updated[0].activation)
+        positive_right = max(0.0, updated[1].activation)
+        press_demand = positive_left + positive_right
+
         if self.config.same_hand:
             hand_cfg = self.config.hand
             demand = abs(updated[0].activation) + abs(updated[1].activation)
@@ -132,26 +164,42 @@ class TwoFingerBody:
                 scale = usable_capacity / demand
                 hand_scale = [scale, scale]
 
-            positive_left = max(0.0, updated[0].activation)
-            positive_right = max(0.0, updated[1].activation)
-            press_demand = positive_left + positive_right
             if press_demand > 1e-9:
                 target = (positive_left - positive_right) / press_demand
                 tau = max(hand_cfg.switch_tau_s, dt_s)
                 self.shared_hand.coordination += (target - self.shared_hand.coordination) * dt_s / tau
                 self.shared_hand.coordination = self._clamp(self.shared_hand.coordination, -1.0, 1.0)
-
-                floor = self._clamp(hand_cfg.coordination_floor, 0.0, 1.0)
-                left_affinity = 0.5 * (1.0 + self.shared_hand.coordination)
-                right_affinity = 1.0 - left_affinity
-                coordination_scale = [
-                    floor + (1.0 - floor) * left_affinity,
-                    floor + (1.0 - floor) * right_affinity,
-                ]
+                coordination_scale = self._coordination_scales(
+                    self.shared_hand.coordination,
+                    hand_cfg.coordination_floor,
+                )
+        elif press_demand > 1e-9:
+            # Cross-hand fingers keep independent force/fatigue budgets.  The
+            # only shared term is a weak, finite-speed transfer of motor emphasis
+            # between left and right hands.
+            bilateral_cfg = self.config.bilateral
+            target = (positive_left - positive_right) / press_demand
+            tau = max(bilateral_cfg.switch_tau_s, dt_s)
+            self.bilateral_state.coordination += (
+                target - self.bilateral_state.coordination
+            ) * dt_s / tau
+            self.bilateral_state.coordination = self._clamp(
+                self.bilateral_state.coordination, -1.0, 1.0
+            )
+            coordination_scale = self._coordination_scales(
+                self.bilateral_state.coordination,
+                bilateral_cfg.coordination_floor,
+            )
 
         next_states: list[FingerState] = []
         for index, (state, cfg) in enumerate(zip(updated, configs)):
-            muscle_force = cfg.max_force_n * (1.0 - state.fatigue) * state.activation * hand_scale[index] * coordination_scale[index]
+            muscle_force = (
+                cfg.max_force_n
+                * (1.0 - state.fatigue)
+                * state.activation
+                * hand_scale[index]
+                * coordination_scale[index]
+            )
             spring_force = -cfg.spring_n_m * (state.position_m - cfg.rest_position_m)
             damping_force = -cfg.damping_n_s_m * state.velocity_m_s
             acceleration = (muscle_force + spring_force + damping_force) / cfg.mass_kg
