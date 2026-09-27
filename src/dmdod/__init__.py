@@ -34,7 +34,6 @@ from .motor_env import (
 )
 from .perception import VisualCueConfig, VisualCueEncoder, VisualCueObservation
 from .profiles import PERSONAL_BLUE_SWITCH_V0_1_NAME, personal_blue_switch_v0_1
-from .recurrent_policy import RecurrentActorCritic
 from .rhythm_env import (
     EpisodeStats,
     RewardConfig,
@@ -84,7 +83,6 @@ __all__ = [
     "VisualCueConfig",
     "VisualCueEncoder",
     "VisualCueObservation",
-    "RecurrentActorCritic",
     "EpisodeStats",
     "RewardConfig",
     "RhythmMotorEnv",
