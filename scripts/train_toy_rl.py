@@ -52,6 +52,33 @@ class DeterministicProbe:
         return sum(abs(value) for value in self.timing_errors_ms) / len(self.timing_errors_ms)
 
 
+@dataclass(frozen=True)
+class RetentionSummary:
+    probes: tuple[tuple[int, DeterministicProbe], ...]
+
+    @property
+    def overload_runs(self) -> int:
+        return sum(probe.overload_runs for _, probe in self.probes)
+
+    @property
+    def min_hit_rate(self) -> float:
+        if not self.probes:
+            return 1.0
+        return min(probe.hit_rate for _, probe in self.probes)
+
+    @property
+    def min_full_rate(self) -> float:
+        if not self.probes:
+            return 1.0
+        return min(probe.full_hit_rate for _, probe in self.probes)
+
+    @property
+    def min_clean_rate(self) -> float:
+        if not self.probes:
+            return 1.0
+        return min(probe.clean_clear_rate for _, probe in self.probes)
+
+
 def make_env(
     *,
     bpm: float,
@@ -88,7 +115,7 @@ def deterministic_probe(
     episodes: int,
     start_jitter_ms: float,
 ) -> DeterministicProbe:
-    """Evaluate actor means on fixed phase offsets, with no exploration noise."""
+    """Evaluate actor means on fixed phase offsets with no exploration noise."""
 
     if episodes == 1:
         offsets = (0.0,)
@@ -154,11 +181,56 @@ def deterministic_probe(
     )
 
 
-def probe_rank_key(probe: DeterministicProbe) -> tuple[float, ...]:
-    """Rank deterministic policies: survive first, then actually hit cues."""
+def probe_previous_stages(
+    model: ActorCritic,
+    device: torch.device,
+    *,
+    previous_stages: tuple[int, ...],
+    args: argparse.Namespace,
+    same_hand: bool,
+) -> RetentionSummary:
+    probes: list[tuple[int, DeterministicProbe]] = []
+    for notes in previous_stages:
+        probes.append(
+            (
+                notes,
+                deterministic_probe(
+                    model,
+                    device,
+                    bpm=args.bpm,
+                    notes=notes,
+                    base_start_s=(0.750 if args.no_curriculum else curriculum_start_s(notes)),
+                    pattern=args.pattern,
+                    same_hand=same_hand,
+                    control_dt=args.control_dt,
+                    episodes=args.retention_episodes,
+                    start_jitter_ms=args.eval_start_jitter_ms,
+                ),
+            )
+        )
+    return RetentionSummary(tuple(probes))
+
+
+def retention_passes(summary: RetentionSummary, args: argparse.Namespace) -> bool:
+    return (
+        summary.overload_runs == 0
+        and summary.min_hit_rate >= args.retention_hit_rate
+        and summary.min_full_rate >= args.retention_full_rate
+    )
+
+
+def probe_rank_key(
+    probe: DeterministicProbe,
+    retention: RetentionSummary,
+) -> tuple[float, ...]:
+    """Prefer retained older skills, then current-stage performance."""
 
     error = probe.mean_abs_error_ms
     return (
+        1.0 if retention.overload_runs == 0 else 0.0,
+        -float(retention.overload_runs),
+        retention.min_hit_rate,
+        retention.min_full_rate,
         1.0 if probe.overload_runs == 0 else 0.0,
         -float(probe.overload_runs),
         probe.hit_rate,
@@ -171,15 +243,14 @@ def probe_rank_key(probe: DeterministicProbe) -> tuple[float, ...]:
 
 def passes_stage(
     probe: DeterministicProbe,
+    retention: RetentionSummary,
     args: argparse.Namespace,
     *,
     stage_notes: int,
 ) -> bool:
-    if probe.overload_runs != 0:
+    if probe.overload_runs != 0 or not retention_passes(retention, args):
         return False
     if stage_notes == 1:
-        # One-note hit/full rates are heavily quantized.  Use the directly
-        # meaningful criterion here: cue-driven clean clears across phase probes.
         return probe.clean_clear_rate >= args.stage1_clean_rate
     return (
         probe.hit_rate >= args.advance_hit_rate
@@ -188,11 +259,14 @@ def passes_stage(
 
 
 def stage_criterion_text(args: argparse.Namespace, stage_notes: int) -> str:
-    if stage_notes == 1:
-        return f"clean>={args.stage1_clean_rate:.2f}, no OVERLOAD"
+    current = (
+        f"clean>={args.stage1_clean_rate:.2f}"
+        if stage_notes == 1
+        else f"hit>={args.advance_hit_rate:.2f}, full>={args.advance_full_rate:.2f}"
+    )
     return (
-        f"hit>={args.advance_hit_rate:.2f}, "
-        f"full>={args.advance_full_rate:.2f}, no OVERLOAD"
+        f"{current}, no OVERLOAD; retention hit>={args.retention_hit_rate:.2f}, "
+        f"full>={args.retention_full_rate:.2f}"
     )
 
 
@@ -209,11 +283,12 @@ def save_checkpoint(
     global_episode: int,
     stage_episode: int,
     probe: DeterministicProbe,
+    retention: RetentionSummary,
 ) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     torch.save(
         {
-            "format_version": 4,
+            "format_version": 5,
             "model": model.state_dict(),
             "optimizer": optimizer.state_dict(),
             "bpm": args.bpm,
@@ -229,9 +304,11 @@ def save_checkpoint(
             "initial_log_std": args.initial_log_std,
             "timing_option": "normal",
             "game_rules": "adofai-wiki-v0.1",
+            "perception": "active-next-target-v0.2",
             "curriculum": not args.no_curriculum,
             "curriculum_stage_index": stage_index,
             "curriculum_stage_notes": stage_notes,
+            "previous_stage_replay": args.previous_stage_replay,
             "deterministic_probe": {
                 "episodes": probe.episodes,
                 "hit_rate": probe.hit_rate,
@@ -241,6 +318,16 @@ def save_checkpoint(
                 "mean_too_early": probe.mean_too_early,
                 "overload_runs": probe.overload_runs,
                 "mean_abs_error_ms": probe.mean_abs_error_ms,
+            },
+            "retention_probe": {
+                str(notes): {
+                    "episodes": old_probe.episodes,
+                    "hit_rate": old_probe.hit_rate,
+                    "full_hit_rate": old_probe.full_hit_rate,
+                    "clean_clear_rate": old_probe.clean_clear_rate,
+                    "overload_runs": old_probe.overload_runs,
+                }
+                for notes, old_probe in retention.probes
             },
         },
         path,
@@ -268,6 +355,29 @@ def _validate_resume_checkpoint(
         raise SystemExit("resume checkpoint control_dt does not match --control-dt")
 
 
+def print_probe(prefix: str, probe: DeterministicProbe) -> None:
+    print(
+        f"{prefix}hit={probe.hit_rate:.3f}  "
+        f"full={probe.full_hit_runs}/{probe.episodes}  "
+        f"clean={probe.clean_clear_runs}/{probe.episodes}  "
+        f"early={probe.mean_too_early:.2f}/run  "
+        f"OVERLOAD={probe.overload_runs}/{probe.episodes}  "
+        f"MAE={'--' if probe.mean_abs_error_ms is None else f'{probe.mean_abs_error_ms:.1f}ms'}"
+    )
+
+
+def print_retention(summary: RetentionSummary) -> None:
+    if not summary.probes:
+        return
+    pieces = []
+    for notes, probe in summary.probes:
+        pieces.append(
+            f"{notes}n hit={probe.hit_rate:.2f} full={probe.full_hit_rate:.2f} "
+            f"ovl={probe.overload_runs}/{probe.episodes}"
+        )
+    print("  retention: " + " | ".join(pieces))
+
+
 def train(args: argparse.Namespace) -> None:
     torch.manual_seed(args.seed)
     rng = random.Random(args.seed)
@@ -282,7 +392,6 @@ def train(args: argparse.Namespace) -> None:
     global_episode = 0
     resume_stage_pos = 0
     resumed = False
-    resume_probe: DeterministicProbe | None = None
 
     if args.resume:
         if not checkpoint.exists():
@@ -307,19 +416,18 @@ def train(args: argparse.Namespace) -> None:
             f"resume: {checkpoint} at {saved_stage_notes} note(s), "
             f"global episode {global_episode}"
         )
-        if optimizer_restored:
-            print("resume: optimizer state restored")
-        else:
-            print("resume: legacy checkpoint has no optimizer state; Adam state starts fresh")
+        print(
+            "resume: optimizer state restored"
+            if optimizer_restored
+            else "resume: legacy checkpoint has no optimizer state; Adam state starts fresh"
+        )
+        if int(saved.get("format_version", 0)) < 5:
+            print("resume: checkpoint predates active-next-target perception/replay; policy will adapt")
 
     probe_env = make_env(
         bpm=args.bpm,
         notes=max(1, stages[resume_stage_pos]),
-        start_s=(
-            0.750
-            if args.no_curriculum
-            else curriculum_start_s(stages[resume_stage_pos])
-        ),
+        start_s=(0.750 if args.no_curriculum else curriculum_start_s(stages[resume_stage_pos])),
         pattern=args.pattern,
         same_hand=same_hand,
         control_dt=args.control_dt,
@@ -333,6 +441,7 @@ def train(args: argparse.Namespace) -> None:
         f"Pass ±{windows.pass_s*1000:.2f} ms"
     )
     print("OVERLOAD: Too Early +2, valid hit -1, fail at 6")
+    print("perception: only the next unresolved target remains visible")
     print(
         f"exploration: initial log_std={args.initial_log_std:.2f} "
         f"(current sigma={model.log_std.detach().exp().mean().item():.3f})"
@@ -341,14 +450,18 @@ def train(args: argparse.Namespace) -> None:
         print(f"curriculum: disabled ({args.notes} notes)")
     else:
         print("curriculum: " + " -> ".join(str(stage) for stage in stages) + " notes")
+        print(
+            f"anti-forgetting: {args.previous_stage_replay*100:.0f}% rollouts replay a random previous stage; "
+            f"retention probes={args.retention_episodes}/stage"
+        )
     print(
         f"deterministic checkpoint eval: every {args.eval_every} episodes, "
         f"{args.eval_episodes} phase probes ±{args.eval_start_jitter_ms:g} ms"
     )
     print(
-        f"stage 1 advance: clean>={args.stage1_clean_rate:.2f}; "
-        f"later stages: hit>={args.advance_hit_rate:.2f}, "
-        f"full>={args.advance_full_rate:.2f}; all require no OVERLOAD"
+        f"stage 1 advance: clean>={args.stage1_clean_rate:.2f}; later: "
+        f"hit>={args.advance_hit_rate:.2f}, full>={args.advance_full_rate:.2f}; "
+        f"retention: hit>={args.retention_hit_rate:.2f}, full>={args.retention_full_rate:.2f}"
     )
     print()
 
@@ -360,9 +473,8 @@ def train(args: argparse.Namespace) -> None:
     for stage_offset, stage_notes in enumerate(active_stages):
         stage_pos = resume_stage_pos + stage_offset
         stage_index = stage_pos + 1
-        stage_start_s = (
-            0.750 if args.no_curriculum else curriculum_start_s(stage_notes)
-        )
+        previous_stages = tuple(stages[:stage_pos])
+        stage_start_s = 0.750 if args.no_curriculum else curriculum_start_s(stage_notes)
         train_jitter_s = args.train_start_jitter_ms / 1000.0
         stage_best_key: tuple[float, ...] | None = None
         stage_passed = False
@@ -374,7 +486,7 @@ def train(args: argparse.Namespace) -> None:
         )
 
         if resumed and stage_offset == 0:
-            resume_probe = deterministic_probe(
+            baseline = deterministic_probe(
                 model,
                 device,
                 bpm=args.bpm,
@@ -386,19 +498,20 @@ def train(args: argparse.Namespace) -> None:
                 episodes=args.eval_episodes,
                 start_jitter_ms=args.eval_start_jitter_ms,
             )
-            stage_best_key = probe_rank_key(resume_probe)
-            saved_probe = resume_probe
-            saved_stage_notes = stage_notes
-            print(
-                f"  resume baseline: hit={resume_probe.hit_rate:.3f}  "
-                f"full={resume_probe.full_hit_runs}/{resume_probe.episodes}  "
-                f"clean={resume_probe.clean_clear_runs}/{resume_probe.episodes}  "
-                f"early={resume_probe.mean_too_early:.2f}/run  "
-                f"OVERLOAD={resume_probe.overload_runs}/{resume_probe.episodes}  "
-                f"MAE={'--' if resume_probe.mean_abs_error_ms is None else f'{resume_probe.mean_abs_error_ms:.1f}ms'}"
+            retention = probe_previous_stages(
+                model,
+                device,
+                previous_stages=previous_stages,
+                args=args,
+                same_hand=same_hand,
             )
+            print_probe("  resume baseline: ", baseline)
+            print_retention(retention)
+            stage_best_key = probe_rank_key(baseline, retention)
+            saved_probe = baseline
+            saved_stage_notes = stage_notes
             if stage_pos < len(stages) - 1 and passes_stage(
-                resume_probe, args, stage_notes=stage_notes
+                baseline, retention, args, stage_notes=stage_notes
             ):
                 print(f"  stage already passed on resume: {stage_criterion_text(args, stage_notes)}")
                 print()
@@ -406,11 +519,18 @@ def train(args: argparse.Namespace) -> None:
 
         for stage_episode in range(1, args.episodes + 1):
             global_episode += 1
+
+            rollout_notes = stage_notes
+            replayed = False
+            if previous_stages and rng.random() < args.previous_stage_replay:
+                rollout_notes = rng.choice(previous_stages)
+                replayed = True
+            rollout_base_start = 0.750 if args.no_curriculum else curriculum_start_s(rollout_notes)
             offset = rng.uniform(-train_jitter_s, train_jitter_s) if train_jitter_s > 0.0 else 0.0
-            rollout_start_s = max(0.050, stage_start_s + offset)
+            rollout_start_s = max(0.050, rollout_base_start + offset)
             env = make_env(
                 bpm=args.bpm,
-                notes=stage_notes,
+                notes=rollout_notes,
                 start_s=rollout_start_s,
                 pattern=args.pattern,
                 same_hand=same_hand,
@@ -427,7 +547,6 @@ def train(args: argparse.Namespace) -> None:
                 x = observation_tensor(observation, device)
                 action, log_prob, value, entropy = model.sample_action(x)
                 transition = env.step(action)
-
                 rewards.append(transition.reward)
                 log_probs.append(log_prob)
                 values.append(value)
@@ -440,7 +559,6 @@ def train(args: argparse.Namespace) -> None:
             values_t = torch.stack(values)
             log_probs_t = torch.stack(log_probs)
             entropy_t = torch.stack(entropies)
-
             advantages = returns - values_t.detach()
             if advantages.numel() > 1:
                 advantages = (advantages - advantages.mean()) / (advantages.std(unbiased=False) + 1e-6)
@@ -460,13 +578,12 @@ def train(args: argparse.Namespace) -> None:
                 error_text = "--" if stats.mean_abs_error_ms is None else f"{stats.mean_abs_error_ms:6.1f}ms"
                 overload_text = "OVERLOAD" if stats.overloaded else f"ovl={stats.overload_counter}"
                 std = model.log_std.detach().exp().mean().item()
+                replay_text = f" replay={rollout_notes}n" if replayed else ""
                 print(
-                    f"ep {global_episode:4d}  stage={stage_episode:3d}/{args.episodes}  "
-                    f"reward={stats.total_reward:8.3f}  "
-                    f"hits={stats.hits:2d}/{stats.targets:2d}  "
+                    f"ep {global_episode:4d}  stage={stage_episode:3d}/{args.episodes}{replay_text}  "
+                    f"reward={stats.total_reward:8.3f}  hits={stats.hits:2d}/{stats.targets:2d}  "
                     f"miss={stats.misses:2d}  early={stats.too_early_presses:2d}  "
-                    f"{overload_text:8s}  MAE={error_text}  "
-                    f"sigma={std:.3f}  loss={loss.item():8.4f}"
+                    f"{overload_text:8s}  MAE={error_text}  sigma={std:.3f}  loss={loss.item():8.4f}"
                 )
 
             should_probe = (
@@ -489,17 +606,17 @@ def train(args: argparse.Namespace) -> None:
                 episodes=args.eval_episodes,
                 start_jitter_ms=args.eval_start_jitter_ms,
             )
-            probe_error = probe.mean_abs_error_ms
-            print(
-                f"  eval mean-policy: hit={probe.hit_rate:.3f}  "
-                f"full={probe.full_hit_runs}/{probe.episodes}  "
-                f"clean={probe.clean_clear_runs}/{probe.episodes}  "
-                f"early={probe.mean_too_early:.2f}/run  "
-                f"OVERLOAD={probe.overload_runs}/{probe.episodes}  "
-                f"MAE={'--' if probe_error is None else f'{probe_error:.1f}ms'}"
+            retention = probe_previous_stages(
+                model,
+                device,
+                previous_stages=previous_stages,
+                args=args,
+                same_hand=same_hand,
             )
+            print_probe("  eval mean-policy: ", probe)
+            print_retention(retention)
 
-            key = probe_rank_key(probe)
+            key = probe_rank_key(probe, retention)
             if stage_best_key is None or key > stage_best_key:
                 stage_best_key = key
                 saved_probe = probe
@@ -516,11 +633,12 @@ def train(args: argparse.Namespace) -> None:
                     global_episode=global_episode,
                     stage_episode=stage_episode,
                     probe=probe,
+                    retention=retention,
                 )
                 print(f"  saved deterministic best -> {checkpoint}")
 
             if stage_pos < len(stages) - 1 and passes_stage(
-                probe, args, stage_notes=stage_notes
+                probe, retention, args, stage_notes=stage_notes
             ):
                 stage_passed = True
                 print(f"  stage passed: {stage_criterion_text(args, stage_notes)}")
@@ -550,12 +668,7 @@ def train(args: argparse.Namespace) -> None:
 
 def main() -> None:
     parser = argparse.ArgumentParser(description="Train the toy motor-control rhythm policy.")
-    parser.add_argument(
-        "--episodes",
-        type=int,
-        default=250,
-        help="maximum training episodes per curriculum stage",
-    )
+    parser.add_argument("--episodes", type=int, default=250, help="maximum episodes per stage")
     parser.add_argument("--bpm", type=float, default=180.0)
     parser.add_argument("--notes", type=int, default=16)
     parser.add_argument("--pattern", choices=("left", "alternate"), default="left")
@@ -571,32 +684,41 @@ def main() -> None:
     parser.add_argument("--log-every", type=int, default=10)
     parser.add_argument("--eval-every", type=int, default=10)
     parser.add_argument("--eval-episodes", type=int, default=20)
+    parser.add_argument("--retention-episodes", type=int, default=10)
     parser.add_argument("--train-start-jitter-ms", type=float, default=100.0)
     parser.add_argument("--eval-start-jitter-ms", type=float, default=100.0)
+    parser.add_argument("--previous-stage-replay", type=float, default=0.20)
     parser.add_argument("--stage1-clean-rate", type=float, default=0.80)
     parser.add_argument("--advance-hit-rate", type=float, default=0.90)
     parser.add_argument("--advance-full-rate", type=float, default=0.80)
+    parser.add_argument("--retention-hit-rate", type=float, default=0.70)
+    parser.add_argument("--retention-full-rate", type=float, default=0.60)
     parser.add_argument("--no-curriculum", action="store_true")
     parser.add_argument(
         "--resume",
         action="store_true",
-        help="continue from --checkpoint; older checkpoints resume with fresh optimizer state",
+        help="continue from --checkpoint; older checkpoints resume under current perception/rules",
     )
     parser.add_argument("--checkpoint", default="checkpoints/toy_policy.pt")
     args = parser.parse_args()
 
     if args.episodes <= 0 or args.notes <= 0 or args.bpm <= 0.0:
         parser.error("episodes, notes, and bpm must be positive")
-    if args.eval_every <= 0 or args.eval_episodes <= 0 or args.log_every <= 0:
-        parser.error("log/eval intervals and eval episodes must be positive")
+    if args.eval_every <= 0 or args.eval_episodes <= 0 or args.retention_episodes <= 0 or args.log_every <= 0:
+        parser.error("log/eval intervals and probe episode counts must be positive")
     if args.train_start_jitter_ms < 0.0 or args.eval_start_jitter_ms < 0.0:
         parser.error("start jitter values must be non-negative")
-    if not 0.0 <= args.stage1_clean_rate <= 1.0:
-        parser.error("stage1-clean-rate must be between 0 and 1")
-    if not 0.0 <= args.advance_hit_rate <= 1.0:
-        parser.error("advance-hit-rate must be between 0 and 1")
-    if not 0.0 <= args.advance_full_rate <= 1.0:
-        parser.error("advance-full-rate must be between 0 and 1")
+    for name in (
+        "previous_stage_replay",
+        "stage1_clean_rate",
+        "advance_hit_rate",
+        "advance_full_rate",
+        "retention_hit_rate",
+        "retention_full_rate",
+    ):
+        value = getattr(args, name)
+        if not 0.0 <= value <= 1.0:
+            parser.error(f"{name.replace('_', '-')} must be between 0 and 1")
     train(args)
 
 
