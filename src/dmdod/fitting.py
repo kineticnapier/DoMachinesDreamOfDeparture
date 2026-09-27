@@ -1,7 +1,8 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, replace
-from math import log
+from itertools import product
+from typing import Callable
 
 from .benchmark import find_fastest_sustainable_rate
 from .body import BodyConfig, FingerConfig
@@ -23,11 +24,19 @@ class CalibrationResult:
     alternate_hz: float
 
 
-def _evaluate(config: BodyConfig, targets: CalibrationTargets, *, coarse: bool) -> CalibrationResult:
-    resolution = 4.0 if coarse else 1.0
-    short_duration = 3.0 if coarse else 5.0
-    long_duration = 8.0 if coarse else 20.0
-    alt_duration = 5.0 if coarse else 10.0
+def _loss(short: float, sustained: float, alternate: float, targets: CalibrationTargets) -> float:
+    return (
+        ((short - targets.short_single_hz) / targets.short_single_hz) ** 2
+        + ((sustained - targets.sustained_single_hz) / targets.sustained_single_hz) ** 2
+        + ((alternate - targets.alternate_hz) / targets.alternate_hz) ** 2
+    )
+
+
+def _evaluate(config: BodyConfig, targets: CalibrationTargets, *, final: bool) -> CalibrationResult:
+    resolution = 1.0 if final else 4.0
+    short_duration = 5.0 if final else 2.0
+    long_duration = 20.0 if final else 5.0
+    alt_duration = 10.0 if final else 3.0
 
     short = find_fastest_sustainable_rate(
         mode="single", duration_s=short_duration, resolution_ms=resolution, body_config=config
@@ -38,18 +47,26 @@ def _evaluate(config: BodyConfig, targets: CalibrationTargets, *, coarse: bool) 
     alternate = find_fastest_sustainable_rate(
         mode="alternate", duration_s=alt_duration, resolution_ms=resolution, body_config=config
     ).rate_hz
-
-    # Relative squared error prevents the larger alternating rate from dominating.
-    loss = (
-        ((short - targets.short_single_hz) / targets.short_single_hz) ** 2
-        + ((sustained - targets.sustained_single_hz) / targets.sustained_single_hz) ** 2
-        + ((alternate - targets.alternate_hz) / targets.alternate_hz) ** 2
-    )
-    return CalibrationResult(config, loss, short, sustained, alternate)
+    return CalibrationResult(config, _loss(short, sustained, alternate, targets), short, sustained, alternate)
 
 
-def _scaled(config: BodyConfig, *, tau: float = 1.0, force: float = 1.0, damping: float = 1.0,
-            fatigue: float = 1.0, recovery: float = 1.0, coupling: float = 1.0) -> BodyConfig:
+def _quick_short(config: BodyConfig, targets: CalibrationTargets) -> float:
+    rate = find_fastest_sustainable_rate(
+        mode="single", duration_s=1.5, resolution_ms=5.0, body_config=config
+    ).rate_hz
+    return abs(rate - targets.short_single_hz) / targets.short_single_hz
+
+
+def _scaled(
+    config: BodyConfig,
+    *,
+    tau: float = 1.0,
+    force: float = 1.0,
+    damping: float = 1.0,
+    fatigue: float = 1.0,
+    recovery: float = 1.0,
+    coupling: float = 1.0,
+) -> BodyConfig:
     def finger(f: FingerConfig) -> FingerConfig:
         return replace(
             f,
@@ -68,40 +85,57 @@ def _scaled(config: BodyConfig, *, tau: float = 1.0, force: float = 1.0, damping
     )
 
 
-def fit_body_config(targets: CalibrationTargets = CalibrationTargets()) -> CalibrationResult:
-    """Fit a provisional two-finger body to the initial human observations.
+def fit_body_config(
+    targets: CalibrationTargets = CalibrationTargets(),
+    progress: Callable[[str], None] | None = None,
+) -> CalibrationResult:
+    """Fit a provisional body with a staged deterministic search.
 
-    This intentionally uses a small deterministic coordinate search rather than
-    a heavy optimizer dependency.  It is calibration of a model, not a claim
-    that the resulting parameters are direct physiological measurements.
+    Stage 1 cheaply identifies plausible short-term mechanics.  Stage 2 only
+    evaluates fatigue/coupling for the best few candidates.  Stage 3 performs a
+    small local refinement, then one full-duration validation.  This avoids the
+    previous tens-of-thousands of full simulation runs.
     """
+    say = progress or (lambda _: None)
     base = BodyConfig()
 
-    # Broad search: response delay is the main rate limiter, while fatigue and
-    # coupling control sustained and two-finger behavior. Force/damping remain
-    # available because the key must still physically cross actuation/reset.
-    candidates: list[BodyConfig] = []
-    for tau in (1.5, 2.0, 2.5, 3.0, 3.5, 4.0):
-        for force in (0.6, 0.8, 1.0):
-            for damping in (1.0, 1.5, 2.0):
-                for fatigue in (1.0, 3.0, 6.0):
-                    for coupling in (1.0, 2.5, 5.0):
-                        candidates.append(
-                            _scaled(base, tau=tau, force=force, damping=damping,
-                                    fatigue=fatigue, coupling=coupling)
-                        )
+    # Stage 1: short-term mechanics only.  36 candidates, one 1.5 s test each.
+    stage1: list[tuple[float, BodyConfig]] = []
+    mechanics = list(product((2.0, 3.0, 4.0, 5.0), (0.55, 0.75, 1.0), (1.0, 1.6, 2.3)))
+    for index, (tau, force, damping) in enumerate(mechanics, 1):
+        config = _scaled(base, tau=tau, force=force, damping=damping)
+        stage1.append((_quick_short(config, targets), config))
+        if index % 6 == 0 or index == len(mechanics):
+            say(f"stage 1/3: {index}/{len(mechanics)}")
+    stage1.sort(key=lambda item: item[0])
+    finalists = [config for _, config in stage1[:4]]
 
-    best = min((_evaluate(c, targets, coarse=True) for c in candidates), key=lambda r: r.loss)
+    # Stage 2: only the four plausible bodies get fatigue/coupling combinations.
+    stage2_configs: list[BodyConfig] = []
+    for config in finalists:
+        for fatigue, recovery, coupling in product((2.0, 5.0, 9.0), (0.5, 1.0), (1.5, 3.5, 6.0)):
+            stage2_configs.append(
+                _scaled(config, fatigue=fatigue, recovery=recovery, coupling=coupling)
+            )
 
-    # Local multiplicative refinement around the best coarse point.
-    current = best.config
-    for scale in (1.25, 1.12, 1.06):
+    evaluated: list[CalibrationResult] = []
+    for index, config in enumerate(stage2_configs, 1):
+        evaluated.append(_evaluate(config, targets, final=False))
+        if index % 8 == 0 or index == len(stage2_configs):
+            say(f"stage 2/3: {index}/{len(stage2_configs)}")
+    evaluated.sort(key=lambda result: result.loss)
+    current = evaluated[0].config
+
+    # Stage 3: small coordinate refinement, no Cartesian explosion.
+    names = ("tau", "force", "damping", "fatigue", "recovery", "coupling")
+    for round_index, scale in enumerate((1.18, 1.08), 1):
         neighborhood = [current]
-        for name in ("tau", "force", "damping", "fatigue", "recovery", "coupling"):
-            for factor in (1.0 / scale, scale):
-                kwargs = {name: factor}
-                neighborhood.append(_scaled(current, **kwargs))
-        refined = min((_evaluate(c, targets, coarse=True) for c in neighborhood), key=lambda r: r.loss)
-        current = refined.config
+        for name in names:
+            neighborhood.append(_scaled(current, **{name: 1.0 / scale}))
+            neighborhood.append(_scaled(current, **{name: scale}))
+        results = [_evaluate(config, targets, final=False) for config in neighborhood]
+        current = min(results, key=lambda result: result.loss).config
+        say(f"stage 3/3: refinement {round_index}/2")
 
-    return _evaluate(current, targets, coarse=False)
+    say("final validation: 5 s / 20 s / 10 s")
+    return _evaluate(current, targets, final=True)
