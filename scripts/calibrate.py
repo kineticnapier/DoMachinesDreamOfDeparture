@@ -1,20 +1,18 @@
-from dmdod.benchmark import find_fastest_sustainable_rate
-from dmdod.calibration import INITIAL_RATE_TARGETS
+from dmdod.fitting import CalibrationTargets, fit_body_config
 
 
 def main() -> None:
+    targets = CalibrationTargets()
     print("=== Human Calibration v0.1 ===")
+    print("Fitting provisional body parameters...")
+    print("(This can take a while: many deterministic simulations are evaluated.)")
     print()
 
-    short_single = find_fastest_sustainable_rate(mode="single", duration_s=5.0)
-    sustained_single = find_fastest_sustainable_rate(mode="single", duration_s=20.0)
-    alternating = find_fastest_sustainable_rate(mode="alternate", duration_s=10.0)
-
-    human = {target.name: target.rate_hz for target in INITIAL_RATE_TARGETS}
+    result = fit_body_config(targets)
     rows = (
-        ("RI single (short)", human["RI single, short"], short_single.rate_hz),
-        ("RI single (20 s)", human["RI single, sustained"], sustained_single.rate_hz),
-        ("2-finger alternation", human["RI/RM same-hand alternation"], alternating.rate_hz),
+        ("RI single (short)", targets.short_single_hz, result.short_single_hz),
+        ("RI single (20 s)", targets.sustained_single_hz, result.sustained_single_hz),
+        ("2-finger alternation", targets.alternate_hz, result.alternate_hz),
     )
 
     print(f"{'Test':28s} {'Human':>9s} {'Sim':>9s} {'Error':>9s}")
@@ -23,10 +21,18 @@ def main() -> None:
         error = sim_rate - human_rate
         print(f"{name:28s} {human_rate:8.2f}K {sim_rate:8.2f}K {error:+8.2f}K")
 
+    c = result.config
     print()
-    print("Controller: periodic square-wave motor command")
-    print("Pass criterion: >= 98% of requested presses become physical key DOWN events")
-    print("Note: this measures the current body under a simple controller; it does not fit parameters yet.")
+    print(f"relative loss: {result.loss:.6f}")
+    print("fitted provisional parameters:")
+    print(f"  activation_tau_s       = {c.left.activation_tau_s:.6f}")
+    print(f"  max_force_n            = {c.left.max_force_n:.6f}")
+    print(f"  damping_n_s_m          = {c.left.damping_n_s_m:.6f}")
+    print(f"  fatigue_gain_s         = {c.left.fatigue_gain_s:.6f}")
+    print(f"  fatigue_recovery_s     = {c.left.fatigue_recovery_s:.6f}")
+    print(f"  directional_coupling   = {c.left_affected_by_right:.6f}")
+    print()
+    print("These values fit the initial blue-switch calibration profile; they are not universal human constants.")
 
 
 if __name__ == "__main__":
