@@ -10,8 +10,9 @@ from .body import (
     HandState,
     TwoFingerBody,
 )
-from .calibration import INITIAL_GLOBAL_RATE_CEILING_HZ, INITIAL_RATE_TARGETS, RateTarget
+from .calibration import INITIAL_RATE_TARGETS, RateTarget
 from .keyboard import KeyConfig, KeyEvent, KeyState, TwoKeyKeyboard
+from .profiles import PERSONAL_BLUE_SWITCH_V0_1_NAME, personal_blue_switch_v0_1
 from .simulator import Simulation, SimulationConfig, StepResult
 
 __all__ = [
@@ -25,7 +26,8 @@ __all__ = [
     "TwoFingerBody",
     "RateTarget",
     "INITIAL_RATE_TARGETS",
-    "INITIAL_GLOBAL_RATE_CEILING_HZ",
+    "PERSONAL_BLUE_SWITCH_V0_1_NAME",
+    "personal_blue_switch_v0_1",
     "KeyConfig",
     "KeyEvent",
     "KeyState",
