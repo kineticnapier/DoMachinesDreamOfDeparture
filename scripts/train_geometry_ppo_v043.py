@@ -173,6 +173,20 @@ def _reset_optimizer_after_bc(optimizer, args) -> None:
         group["lr"] = float(args.lr)
 
 
+def _consume_bc_optimizer_reset(optimizer, args) -> bool:
+    """Apply the pending reset before PPO or checkpointing, whichever comes first."""
+
+    global _BC_OPTIMIZER_RESET_PENDING
+    if not _BC_OPTIMIZER_RESET_PENDING:
+        return False
+    _reset_optimizer_after_bc(optimizer, args)
+    fresh = copy.deepcopy(optimizer.state_dict())
+    v040._GUARD_BEST_OPTIMIZER_STATE = fresh
+    v040._LAST_OPTIMIZER_STATE = copy.deepcopy(fresh)
+    _BC_OPTIMIZER_RESET_PENDING = False
+    return True
+
+
 def _phase_aware_evaluate(
     model,
     device,
@@ -280,14 +294,7 @@ def _phase_aware_evaluate(
 
 
 def _ppo_update(model, optimizer, rollouts, args):
-    global _BC_OPTIMIZER_RESET_PENDING
-
-    if _BC_OPTIMIZER_RESET_PENDING:
-        _reset_optimizer_after_bc(optimizer, args)
-        fresh = copy.deepcopy(optimizer.state_dict())
-        v040._GUARD_BEST_OPTIMIZER_STATE = fresh
-        v040._LAST_OPTIMIZER_STATE = copy.deepcopy(fresh)
-        _BC_OPTIMIZER_RESET_PENDING = False
+    if _consume_bc_optimizer_reset(optimizer, args):
         base._write(f"  PPO optimizer reset after phase BC; lr={args.lr:.2e}")
     return _ORIGINAL_V040_PPO_UPDATE(model, optimizer, rollouts, args)
 
@@ -345,6 +352,12 @@ def save_checkpoint(
     global_update: int,
     probe,
 ) -> None:
+    # A phase may pass immediately after BC without ever entering PPO. Persist a
+    # fresh optimizer in that case so an interrupted/resumed run cannot reload
+    # Adam moments from weights that existed before the supervised adaptation.
+    if _consume_bc_optimizer_reset(optimizer, args):
+        base._write(f"  optimizer reset before BC checkpoint; lr={args.lr:.2e}")
+
     _ORIGINAL_V042_SAVE_CHECKPOINT(
         path,
         model,
