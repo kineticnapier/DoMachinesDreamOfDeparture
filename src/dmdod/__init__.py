@@ -8,6 +8,11 @@ from .adofai_chart import (
     parse_adofai_text,
 )
 from .adofai_geometry import AdoFaiFloorGeometry, build_floor_geometry
+from .adofai_playable import (
+    PlayableChartSegment,
+    PlayableChartTarget,
+    build_playable_segment,
+)
 from .adofai_rules import (
     ABSOLUTE_MIN_S,
     COUNTED_BASE_DEG,
@@ -88,6 +93,12 @@ from .planet_perception import (
     StraightPlanetGeometryEncoder,
 )
 from .profiles import PERSONAL_BLUE_SWITCH_V0_1_NAME, personal_blue_switch_v0_1
+from .real_chart_env import (
+    RealChartMotorEnv,
+    RealChartObservation,
+    RealChartStep,
+    RelativeVisibleFloor,
+)
 from .rhythm_env import (
     EpisodeStats,
     RewardConfig,
@@ -106,6 +117,9 @@ __all__ = [
     "CompiledAdoFaiChart",
     "CompiledChartFloor",
     "VisibleChartFloor",
+    "PlayableChartSegment",
+    "PlayableChartTarget",
+    "build_playable_segment",
     "load_adofai",
     "parse_adofai_bytes",
     "parse_adofai_text",
@@ -186,6 +200,10 @@ __all__ = [
     "PlanetGeometryObservation",
     "PlanetVisionConfig",
     "StraightPlanetGeometryEncoder",
+    "RelativeVisibleFloor",
+    "RealChartObservation",
+    "RealChartStep",
+    "RealChartMotorEnv",
     "EpisodeStats",
     "RewardConfig",
     "RhythmMotorEnv",
