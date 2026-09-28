@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import math
 import random
 import sys
 from pathlib import Path
@@ -48,7 +49,7 @@ def test_sampled_training_window_stays_inside_pool():
     for _ in range(20):
         window = trainer._sample_window(rng, 0.0, 90.0, 30.0)
         assert 0.0 <= window.start_s <= 60.0
-        assert window.end_s - window.start_s == 30.0
+        assert math.isclose(window.end_s - window.start_s, 30.0, rel_tol=0.0, abs_tol=1e-12)
         assert window.end_s <= 90.0
 
 
