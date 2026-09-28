@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
+from .adofai_rules import TimingDifficulty
 from .evaluator import TargetHit
 from .motor_env import MotorAction, MotorObservation
 from .planet_perception import (
@@ -9,7 +10,7 @@ from .planet_perception import (
     PlanetVisionConfig,
     StraightPlanetGeometryEncoder,
 )
-from .rhythm_env import EpisodeStats, RhythmMotorEnv
+from .rhythm_env import EpisodeStats, RewardConfig, RhythmMotorEnv
 
 
 @dataclass(frozen=True)
@@ -30,13 +31,10 @@ class GeometryRhythmStep:
 class GeometryRhythmEnv:
     """Geometry-observation wrapper around the established rhythm evaluator.
 
-    A private ``RhythmMotorEnv`` still owns ADOFAI-like timing/OVERLOAD/reward
-    mechanics. Its Gaussian cue is discarded. The policy instead sees a
-    straight-tile planet renderer derived from the active target and current
+    A private ``RhythmMotorEnv`` owns the DLL-derived timing/OVERLOAD/reward
+    mechanics. Its Gaussian cue is discarded. The policy instead sees visible
+    straight-tile planet geometry derived from the active target and current
     simulation time.
-
-    This keeps scoring identical to the previous toy experiment while changing
-    only what the agent can perceive.
     """
 
     def __init__(
@@ -49,6 +47,13 @@ class GeometryRhythmEnv:
         vision_config: PlanetVisionConfig | None = None,
         perception_seed: int | None = None,
         clockwise: bool = False,
+        reward_config: RewardConfig | None = None,
+        difficulty: TimingDifficulty | str = TimingDifficulty.NORMAL,
+        timing_scale: float = 1.0,
+        controller_speed: float = 1.0,
+        pitch: float = 1.0,
+        speed_trial: float = 1.0,
+        mobile: bool = False,
     ) -> None:
         if not targets:
             raise ValueError("at least one target is required")
@@ -59,6 +64,13 @@ class GeometryRhythmEnv:
             bpm=bpm,
             same_hand=same_hand,
             control_dt_s=control_dt_s,
+            reward_config=reward_config,
+            difficulty=difficulty,
+            timing_scale=timing_scale,
+            controller_speed=controller_speed,
+            pitch=pitch,
+            speed_trial=speed_trial,
+            mobile=mobile,
         )
         self._geometry_encoder = StraightPlanetGeometryEncoder(
             self._targets,
