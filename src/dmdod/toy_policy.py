@@ -11,6 +11,7 @@ except ImportError as exc:  # pragma: no cover - optional RL dependency
     ) from exc
 
 from .geometry_rhythm_env import GeometryRhythmObservation
+from .motion_geometry_env import MotionGeometryObservation
 from .motor_env import MotorAction
 from .pattern_geometry_env import PatternGeometryObservation
 from .rhythm_env import RhythmObservation
@@ -18,11 +19,17 @@ from .rhythm_env import RhythmObservation
 
 GAUSSIAN_INPUT_DIM = 8
 GEOMETRY_INPUT_DIM = 10
+MOTION_GEOMETRY_INPUT_DIM = 14
 PATTERN_GEOMETRY_INPUT_DIM = 22
 
 
 def _motor_values(
-    observation: RhythmObservation | GeometryRhythmObservation | PatternGeometryObservation,
+    observation: (
+        RhythmObservation
+        | GeometryRhythmObservation
+        | MotionGeometryObservation
+        | PatternGeometryObservation
+    ),
 ) -> list[float]:
     m = observation.motor
     # Fixed values here are unit conversions / broad physical scales, not chart
@@ -38,7 +45,12 @@ def _motor_values(
 
 
 def observation_tensor(
-    observation: RhythmObservation | GeometryRhythmObservation | PatternGeometryObservation,
+    observation: (
+        RhythmObservation
+        | GeometryRhythmObservation
+        | MotionGeometryObservation
+        | PatternGeometryObservation
+    ),
     device: torch.device,
 ) -> torch.Tensor:
     """Convert only agent-visible observations into the policy input tensor."""
@@ -62,6 +74,18 @@ def observation_tensor(
                 p.chart_action_left,
                 p.chart_action_right,
                 p.chart_confidence,
+            ]
+        )
+    elif isinstance(observation, MotionGeometryObservation):
+        g = observation.geometry
+        m = observation.motion
+        values.extend([g.orbit_x, g.orbit_y, g.next_x, g.next_y])
+        values.extend(
+            [
+                m.delta_orbit_x,
+                m.delta_orbit_y,
+                m.delta_next_x,
+                m.delta_next_y,
             ]
         )
     elif isinstance(observation, GeometryRhythmObservation):
