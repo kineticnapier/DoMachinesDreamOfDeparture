@@ -58,7 +58,11 @@ def parse_adofai_bytes(data: bytes, *, source_path: str = "<memory>") -> AdoFaiC
 
 
 def parse_adofai_text(text: str, *, source_path: str = "<memory>") -> AdoFaiChart:
-    root = json.loads(_normalize_loose_json(text))
+    # ADOFAI files in the wild are not reliably strict JSON.  In addition to
+    # comments/trailing commas handled by _normalize_loose_json, metadata strings
+    # can contain literal control characters such as tabs/newlines.  Python's
+    # decoder accepts those only with strict=False.
+    root = json.loads(_normalize_loose_json(text), strict=False)
     if not isinstance(root, dict):
         raise ValueError("ADOFAI root must be a JSON object")
 
