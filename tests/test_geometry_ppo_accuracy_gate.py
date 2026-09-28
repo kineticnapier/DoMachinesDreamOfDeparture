@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import random
 import sys
 from pathlib import Path
 from types import SimpleNamespace
@@ -162,3 +163,43 @@ def test_pp_gate_can_be_raised_to_true_pp(monkeypatch: pytest.MonkeyPatch):
 
     assert not trainer.precision_passes(almost, _args(), notes=16)
     assert trainer.precision_passes(pp, _args(), notes=16)
+
+
+def test_weak_bpm_selector_tracks_both_bad_edges(monkeypatch: pytest.MonkeyPatch):
+    monkeypatch.setattr(trainer, "WORST_BPM_COUNT", 2)
+    probe = _probe(
+        xacc=92.0,
+        pp=0.70,
+        slices=(
+            _slice(120.0, xacc=72.0, pp=0.0),
+            _slice(165.0, xacc=100.0, pp=1.0),
+            _slice(210.0, xacc=100.0, pp=1.0),
+            _slice(255.0, xacc=100.0, pp=1.0),
+            _slice(300.0, xacc=78.0, pp=0.10),
+        ),
+    )
+
+    assert trainer.weak_bpms(probe) == (120.0, 300.0)
+
+
+def test_focused_schedule_reserves_rollouts_for_weak_bpms():
+    phase = trainer.core.CurriculumPhase(
+        "test",
+        1,
+        120.0,
+        300.0,
+        0.0,
+        0.0,
+        trainer.core.clean_vision_config(),
+    )
+    schedule = trainer.focused_training_bpm_schedule(
+        phase,
+        episodes=16,
+        points=5,
+        rng=random.Random(1),
+        focus_bpms=(120.0, 300.0),
+        focus_fraction=0.50,
+    )
+
+    assert len(schedule) == 16
+    assert sum(bpm in {120.0, 300.0} for bpm in schedule) >= 8
