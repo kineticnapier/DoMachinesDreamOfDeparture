@@ -5,10 +5,12 @@ from math import exp
 
 from .adofai_rules import (
     OverloadCounter,
+    TimingDifficulty,
     TimingJudgement,
     TimingWindows,
-    classify_normal_timing,
-    normal_timing_windows,
+    classify_timing,
+    timing_windows,
+    x_accuracy_weight,
 )
 from .evaluator import TargetHit
 from .keyboard import KeyEvent
@@ -26,15 +28,22 @@ class RhythmObservation:
 
 @dataclass(frozen=True)
 class RewardConfig:
-    """RL reward shaping layered on top of ADOFAI-like game mechanics.
+    """Accuracy-first learning reward on top of ADOFAI-like mechanics.
 
-    Timing categories and overload are structural game rules. These numeric
-    rewards are only learning signals and are not ADOFAI score/accuracy values.
+    The main quality term uses ADOFAI's X-Accuracy judgement weights. A smaller
+    continuous center bonus breaks the otherwise-flat Perfect plateau so the
+    policy still benefits from moving toward the middle of Perfect.
+
+    These are RL reward magnitudes, not ADOFAI score values.
     """
 
-    timing_sigma_s: float = 0.045
-    hit_reward: float = 1.0
-    timing_bonus: float = 1.0
+    hit_reward: float = 0.20
+    xacc_reward: float = 1.80
+    timing_bonus: float = 0.50
+    perfect_sigma_fraction: float = 0.35
+    # Optional compatibility override. When None, sigma follows the current
+    # DLL-derived Perfect window instead of using a fixed number of milliseconds.
+    timing_sigma_s: float | None = None
     miss_penalty: float = 1.0
     too_early_penalty: float = 0.20
     overload_penalty: float = 4.0
@@ -42,8 +51,12 @@ class RewardConfig:
     fail_on_miss: bool = False
 
     def __post_init__(self) -> None:
-        if self.timing_sigma_s <= 0.0:
-            raise ValueError("timing_sigma_s must be positive")
+        if self.timing_sigma_s is not None and self.timing_sigma_s <= 0.0:
+            raise ValueError("timing_sigma_s must be positive when supplied")
+        if self.perfect_sigma_fraction <= 0.0:
+            raise ValueError("perfect_sigma_fraction must be positive")
+        if self.xacc_reward < 0.0 or self.timing_bonus < 0.0:
+            raise ValueError("accuracy rewards must be non-negative")
         if self.overload_penalty < 0.0:
             raise ValueError("overload_penalty must be non-negative")
 
@@ -60,6 +73,8 @@ class EpisodeStats:
     early_late_perfects: int
     early_late_hits: int
     mean_abs_error_ms: float | None
+    x_accuracy_percent: float
+    perfect_rate: float
     total_reward: float
 
     @property
@@ -77,21 +92,14 @@ class RhythmStep:
 
 
 class RhythmMotorEnv:
-    """Toy rhythm task around MotorEnv using ADOFAI Normal timing mechanics.
+    """Rhythm task around MotorEnv with DLL-derived ADOFAI timing windows.
 
     Exact target timestamps remain private. The policy receives only body state
-    and a cue for the next unresolved target. Once a tile is hit or missed, its
-    cue disappears and perception advances to the following target.
+    and a cue for the next unresolved target. Timing classification supports
+    Lenient/Normal/Strict, ScaleMargin (``timing_scale``), speed, pitch,
+    speed-trial adjustment, and the DLL's mobile timing minima.
 
-    Timing judgements use the Normal timing option: 30 degree Perfect, 45 degree
-    E/L Perfect, 60 degree Pass, with the timing window tightening with BPM until
-    310 BPM and staying fixed above it.
-
-    Too Early inputs update the overload counter (+2); valid tile hits reduce it
-    by 1 without going below zero; reaching 6 ends the episode with OVERLOAD.
-    ``fail_on_miss`` stays configurable because early toy-RL curriculum benefits
-    from continuing after misses, while a later gameplay environment can enable
-    real fail-on-miss semantics.
+    The default remains desktop Normal at 100% margin and 1x speed/pitch.
     """
 
     def __init__(
@@ -105,6 +113,12 @@ class RhythmMotorEnv:
         cue_config: VisualCueConfig | None = None,
         perception_seed: int | None = None,
         tail_s: float = 0.400,
+        difficulty: TimingDifficulty | str = TimingDifficulty.NORMAL,
+        timing_scale: float = 1.0,
+        controller_speed: float = 1.0,
+        pitch: float = 1.0,
+        speed_trial: float = 1.0,
+        mobile: bool = False,
     ) -> None:
         if not targets:
             raise ValueError("at least one target is required")
@@ -113,7 +127,21 @@ class RhythmMotorEnv:
 
         self._targets = tuple(sorted(targets, key=lambda target: target.time_s))
         self.bpm = self._resolve_bpm(bpm)
-        self.timing_windows = normal_timing_windows(self.bpm)
+        self.difficulty = TimingDifficulty(str(difficulty).lower()) if not isinstance(difficulty, TimingDifficulty) else difficulty
+        self.timing_scale = timing_scale
+        self.controller_speed = controller_speed
+        self.pitch = pitch
+        self.speed_trial = speed_trial
+        self.mobile = mobile
+        self.timing_windows = timing_windows(
+            self.bpm,
+            difficulty=self.difficulty,
+            timing_scale=self.timing_scale,
+            controller_speed=self.controller_speed,
+            pitch=self.pitch,
+            speed_trial=self.speed_trial,
+            mobile=self.mobile,
+        )
         self.motor = MotorEnv(same_hand=same_hand, control_dt_s=control_dt_s)
         self.reward_config = reward_config or RewardConfig()
         self._perception_seed = perception_seed
@@ -132,6 +160,7 @@ class RhythmMotorEnv:
         self._too_early = 0
         self._overload = OverloadCounter()
         self._judgement_counts: dict[TimingJudgement, int] = {}
+        self._xacc_sum = 0.0
         self._total_reward = 0.0
         self._done = False
         self._failed_on_miss = False
@@ -158,6 +187,7 @@ class RhythmMotorEnv:
         self._too_early = 0
         self._overload = OverloadCounter()
         self._judgement_counts = {judgement: 0 for judgement in TimingJudgement}
+        self._xacc_sum = 0.0
         self._total_reward = 0.0
         self._done = False
         self._failed_on_miss = False
@@ -182,6 +212,18 @@ class RhythmMotorEnv:
             return i
         return None
 
+    def _classify(self, signed_error: float) -> TimingJudgement:
+        return classify_timing(
+            signed_error,
+            self.bpm,
+            difficulty=self.difficulty,
+            timing_scale=self.timing_scale,
+            controller_speed=self.controller_speed,
+            pitch=self.pitch,
+            speed_trial=self.speed_trial,
+            mobile=self.mobile,
+        )
+
     def _score_event(self, event: TimedKeyEvent) -> float:
         if event.event is not KeyEvent.DOWN:
             return 0.0
@@ -192,7 +234,7 @@ class RhythmMotorEnv:
 
         target = self._targets[target_index]
         signed_error = event.time_s - target.time_s
-        judgement = classify_normal_timing(signed_error, self.bpm)
+        judgement = self._classify(signed_error)
         self._judgement_counts[judgement] += 1
 
         if judgement is TimingJudgement.TOO_EARLY:
@@ -216,8 +258,21 @@ class RhythmMotorEnv:
         self._hits += 1
         self._errors_s.append(signed_error)
         self._overload.record_valid_hit()
-        timing_quality = exp(-0.5 * (signed_error / self.reward_config.timing_sigma_s) ** 2)
-        return self.reward_config.hit_reward + self.reward_config.timing_bonus * timing_quality
+
+        xacc_quality = x_accuracy_weight(judgement)
+        self._xacc_sum += xacc_quality
+        sigma = self.reward_config.timing_sigma_s
+        if sigma is None:
+            sigma = max(
+                1e-6,
+                self.timing_windows.perfect_s * self.reward_config.perfect_sigma_fraction,
+            )
+        center_quality = exp(-0.5 * (signed_error / sigma) ** 2)
+        return (
+            self.reward_config.hit_reward
+            + self.reward_config.xacc_reward * xacc_quality
+            + self.reward_config.timing_bonus * center_quality
+        )
 
     def _expire_misses(self, now_s: float) -> float:
         reward = 0.0
@@ -275,23 +330,27 @@ class RhythmMotorEnv:
         mean_abs_error_ms = None
         if self._errors_s:
             mean_abs_error_ms = sum(abs(error) for error in self._errors_s) / len(self._errors_s) * 1000.0
+        perfects = self._judgement_counts.get(TimingJudgement.PERFECT, 0)
+        target_count = len(self._targets)
         return EpisodeStats(
-            targets=len(self._targets),
+            targets=target_count,
             hits=self._hits,
             misses=self._misses,
             too_early_presses=self._too_early,
             overload_counter=self._overload.value,
             overloaded=self._overload.overloaded,
-            perfects=self._judgement_counts.get(TimingJudgement.PERFECT, 0),
+            perfects=perfects,
             early_late_perfects=(
                 self._judgement_counts.get(TimingJudgement.EARLY_PERFECT, 0)
                 + self._judgement_counts.get(TimingJudgement.LATE_PERFECT, 0)
             ),
             early_late_hits=(
-                self._judgement_counts.get(TimingJudgement.EARLY, 0)
-                + self._judgement_counts.get(TimingJudgement.LATE, 0)
+                self._judgement_counts.get(TimingJudgement.VERY_EARLY, 0)
+                + self._judgement_counts.get(TimingJudgement.VERY_LATE, 0)
             ),
             mean_abs_error_ms=mean_abs_error_ms,
+            x_accuracy_percent=(100.0 * self._xacc_sum / max(1, target_count)),
+            perfect_rate=perfects / max(1, target_count),
             total_reward=self._total_reward,
         )
 
