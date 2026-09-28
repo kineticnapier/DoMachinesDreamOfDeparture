@@ -1,7 +1,7 @@
 from __future__ import annotations
 
+import sys
 from pathlib import Path
-from types import SimpleNamespace
 
 try:
     from . import train_geometry_ppo_v034 as v034
@@ -18,7 +18,11 @@ base = v034.base
 # aggregated probe PP/XAcc with target denominators, which can print impossible
 # combinations such as X=60% / PP=100% after [TooEarly, Perfect].
 TOO_EARLY_PENALTY = 1.0
+VERBOSE_OUTPUT = False
 _ORIGINAL_V034_SAVE_CHECKPOINT = v034.save_checkpoint
+_ORIGINAL_PRINT_PROBE = base._print_probe
+_ORIGINAL_V034_PRINT_GATE = v034._print_gate
+_PENDING_PROBE: tuple[str, base.core.Probe] | None = None
 
 
 def _accuracy_terms(stats) -> tuple[float, int, int, int]:
@@ -206,34 +210,94 @@ def deterministic_probe(
     )
 
 
+def _print_probe(label: str, probe: base.core.Probe) -> None:
+    """Delay compact probe output so gate state can be included on the same line."""
+
+    global _PENDING_PROBE
+    if VERBOSE_OUTPUT:
+        _ORIGINAL_PRINT_PROBE(label, probe)
+        return
+    _PENDING_PROBE = (label, probe)
+
+
+def _worst_slice(probe: base.core.Probe):
+    if not probe.bpm_slices:
+        return None
+    return max(
+        probe.bpm_slices,
+        key=lambda item: (
+            base._slice_deficit(item),
+            100.0 - base._slice_xacc(item),
+            1.0 - base._slice_pp(item),
+        ),
+    )
+
+
+def _print_gate(probe: base.core.Probe, retention: base.core.Retention, args, notes: int) -> None:
+    global _PENDING_PROBE
+    if VERBOSE_OUTPUT:
+        _ORIGINAL_V034_PRINT_GATE(probe, retention, args, notes)
+        return
+
+    label = _PENDING_PROBE[0] if _PENDING_PROBE is not None else "probe"
+    _PENDING_PROBE = None
+    completion = base.completion_passes(probe, retention, args, notes)
+    precision = base.precision_passes(probe, args, notes)
+    worst = _worst_slice(probe)
+    worst_text = ""
+    if worst is not None:
+        worst_text = (
+            f" | worst={worst.bpm:g}:X{base._slice_xacc(worst):.1f} "
+            f"P{base._slice_pp(worst):.0%} E{base._fmt_ms(worst.mean_error_ms, signed=True)}"
+        )
+    verify_candidate = (
+        probe.episodes <= base.QUICK_EVAL_EPISODES
+        and completion
+        and v034.near_precision_passes(probe)
+        and not base.precision_passes(probe, args, notes)
+    )
+    status = (
+        "PASS"
+        if completion and precision
+        else ("VERIFY" if verify_candidate else ("acc" if completion else "clear"))
+    )
+    base._write(
+        f"{label:<9} H={probe.hit_rate:.3f} F={probe.full_rate:.3f} "
+        f"X={base._xacc(probe):.2f}% PP={base._pp(probe):.1%} "
+        f"minX={base._min_xacc(probe):.1f}% minPP={base._min_pp(probe):.0%} "
+        f"[{status}]" + worst_text
+    )
+
+
 def _print_header(args, phases: tuple[base.core.CurriculumPhase, ...], mode: str) -> None:
     base._write("=== DMDOD / Planet Geometry PPO v0.3.5 ===")
     base._write(
-        f"mode={mode}  device={args.device}  seed={args.seed}  checkpoint={args.checkpoint}"
+        f"mode={mode} device={args.device} seed={args.seed} checkpoint={args.checkpoint}"
     )
     base._write(
-        f"task={args.notes} notes  BPM={args.bpm_min:g}..{args.bpm_max:g}  "
-        f"control={args.control_dt*1000:.1f}ms  vision={args.vision_hz:g}Hz/{args.vision_latency_ms:g}ms"
+        f"task={args.notes} BPM={args.bpm_min:g}..{args.bpm_max:g} "
+        f"vision={args.vision_hz:g}Hz/{args.vision_latency_ms:g}ms | "
+        f"gate X={base.PRECISION_OVERALL_XACC:g}%/min{base.PRECISION_MIN_BPM_XACC:g}% "
+        f"PP={base.PRECISION_OVERALL_PP:.0%}/min{base.PRECISION_MIN_BPM_PP:.0%}"
     )
-    base._write(
-        f"accuracy gate: minX>={base.PRECISION_MIN_BPM_XACC:g}% X>={base.PRECISION_OVERALL_XACC:g}% "
-        f"minPP>={base.PRECISION_MIN_BPM_PP:.0%} PP>={base.PRECISION_OVERALL_PP:.0%}"
-    )
-    base._write(
-        f"metric=DLL HitMargin denominator; TooEarly reward penalty={TOO_EARLY_PENALTY:g}"
-    )
-    base._write(
-        f"near-verify: minX>={v034.NEAR_VERIFY_MIN_BPM_XACC:g}% "
-        f"X>={v034.NEAR_VERIFY_OVERALL_XACC:g}% "
-        f"minPP>={v034.NEAR_VERIFY_MIN_BPM_PP:.0%} "
-        f"PP>={v034.NEAR_VERIFY_OVERALL_PP:.0%}"
-    )
-    base._write(
-        f"screen={base.QUICK_EVAL_EPISODES}ep; verify={args.eval_episodes}ep; "
-        f"single-focus={v034.SINGLE_WEAK_BPM_FOCUS:.0%} "
-        f"multi-focus={v034.MULTI_WEAK_BPM_FOCUS:.0%}; phases={len(phases)}"
-    )
-    base._write("visible=motor+planet geometry | hidden=time/BPM/target-angle/error/direction")
+    if VERBOSE_OUTPUT:
+        base._write(
+            f"metric=DLL HitMargin denominator; TooEarly reward penalty={TOO_EARLY_PENALTY:g}"
+        )
+        base._write(
+            f"near-verify: minX>={v034.NEAR_VERIFY_MIN_BPM_XACC:g}% "
+            f"X>={v034.NEAR_VERIFY_OVERALL_XACC:g}% "
+            f"minPP>={v034.NEAR_VERIFY_MIN_BPM_PP:.0%} "
+            f"PP>={v034.NEAR_VERIFY_OVERALL_PP:.0%}"
+        )
+        base._write(
+            f"screen={base.QUICK_EVAL_EPISODES}ep; verify={args.eval_episodes}ep; "
+            f"single-focus={v034.SINGLE_WEAK_BPM_FOCUS:.0%} "
+            f"multi-focus={v034.MULTI_WEAK_BPM_FOCUS:.0%}; phases={len(phases)}"
+        )
+        base._write("visible=motor+planet geometry | hidden=time/BPM/target-angle/error/direction")
+    else:
+        base._write("compact output; use --verbose for per-BPM details")
     base._write()
 
 
@@ -260,7 +324,7 @@ def save_checkpoint(
     )
     saved = base.core.torch.load(path, map_location="cpu")
     saved["format_version"] = 14
-    saved["trainer_ui_version"] = "0.3.5-margin-aware"
+    saved["trainer_ui_version"] = "0.3.5-margin-aware-compact"
     saved["margin_aware_accuracy"] = {
         "xacc_denominator": "HitMargin/dead-tile entries",
         "perfect_denominator": "HitMargin entries",
@@ -270,11 +334,18 @@ def save_checkpoint(
 
 
 def main() -> None:
+    global VERBOSE_OUTPUT
+    if "--verbose" in sys.argv:
+        sys.argv.remove("--verbose")
+        VERBOSE_OUTPUT = True
+
     # Patch the shared implementation before v0.3.4 installs its curriculum
     # hooks. This keeps checkpoint compatibility while fixing the metric/reward
     # mismatch that caused early phases to grind on stray TooEarly presses.
     base.core.make_env = make_env
     base.deterministic_probe = deterministic_probe
+    base._print_probe = _print_probe
+    v034._print_gate = _print_gate
     v034._print_header = _print_header
     v034.save_checkpoint = save_checkpoint
     v034.main()
