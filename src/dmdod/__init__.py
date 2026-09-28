@@ -99,6 +99,14 @@ from .real_chart_env import (
     RealChartStep,
     RelativeVisibleFloor,
 )
+from .real_chart_features import (
+    DEFAULT_REAL_CHART_FEATURE_CONFIG,
+    REAL_CHART_EVENT_MARKERS,
+    REAL_CHART_FLOOR_FEATURE_DIM,
+    REAL_CHART_INPUT_DIM,
+    RealChartFeatureConfig,
+    encode_real_chart_observation,
+)
 from .rhythm_env import (
     EpisodeStats,
     RewardConfig,
@@ -204,6 +212,12 @@ __all__ = [
     "RealChartObservation",
     "RealChartStep",
     "RealChartMotorEnv",
+    "RealChartFeatureConfig",
+    "DEFAULT_REAL_CHART_FEATURE_CONFIG",
+    "REAL_CHART_EVENT_MARKERS",
+    "REAL_CHART_FLOOR_FEATURE_DIM",
+    "REAL_CHART_INPUT_DIM",
+    "encode_real_chart_observation",
     "EpisodeStats",
     "RewardConfig",
     "RhythmMotorEnv",
