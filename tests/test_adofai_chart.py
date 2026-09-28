@@ -41,6 +41,15 @@ def test_parser_accepts_loose_json_numeric_strings_and_utf16():
     assert parse_adofai_bytes(utf16).angles == chart.angles
 
 
+def test_parser_accepts_raw_control_characters_inside_strings():
+    # Real-world ADOFAI files can contain technically-invalid JSON strings,
+    # especially raw tabs/newlines copied into metadata.  Stock/community tools
+    # are tolerant of these, so the simulator importer must be as well.
+    text = '{"angleData":[0],"settings":{"bpm":120,"songFilename":"line1\nline2\t.ogg"},"actions":[]}'
+    chart = parse_adofai_text(text)
+    assert chart.song_filename == "line1\nline2\t.ogg"
+
+
 def test_geometry_matches_extremeeditor_pathbuilder_convention():
     geometry = build_floor_geometry(_chart())
     assert len(geometry) == 4
