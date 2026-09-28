@@ -12,7 +12,10 @@ STRICT_OPTION_MINIMUM_BPM_CUSTOM = 310.0
 # universal timing-window freeze point in the real game.
 NORMAL_THRESHOLD_BPM = STRICT_OPTION_MINIMUM_BPM_CUSTOM
 
-OVERLOAD_LIMIT = 6
+# DLL fail-bar values for the ordinary (non-multipress) overload path.
+OVERLOAD_LIMIT = 1.0
+OVERLOAD_DAMAGE = 0.5
+OVERLOAD_RECOVERY_PER_BEAT = 0.4
 
 # Base angular boundaries used by ADOFAI before minimum-time clamping.
 PERFECT_BASE_DEG = 30.0
@@ -42,10 +45,15 @@ class TimingDifficulty(str, Enum):
 
 
 class TimingJudgement(str, Enum):
-    """ADOFAI timing categories relevant to ordinary tile hits.
+    """ADOFAI HitMargin values used by the simulator's score history.
 
-    The DLL calls the outer counted-hit categories VeryEarly/VeryLate. EARLY
-    and LATE remain aliases so old simulator code keeps working.
+    ``classify_timing`` only produces the ordinary timing categories. Fail
+    margins are added by the environment when a miss expires or an ordinary
+    TooEarly overload crosses the DLL fail-bar threshold.
+
+    Multipress/OverPress are deliberately absent from score history here: in
+    the inspected DLL's ordinary path they are display states rather than
+    ``marginTracker.AddHit`` entries.
     """
 
     PERFECT = "perfect"
@@ -57,6 +65,9 @@ class TimingJudgement(str, Enum):
     LATE = "very_late"
     TOO_EARLY = "too_early"
     TOO_LATE = "too_late"
+    FAIL_MISS = "fail_miss"
+    FAIL_OVERLOAD = "fail_overload"
+    AUTO = "auto"
 
 
 @dataclass(frozen=True)
@@ -233,9 +244,9 @@ def classify_normal_timing(
 
 
 def x_accuracy_weight(judgement: TimingJudgement) -> float:
-    """Per-judgement X-Accuracy weight from scrMistakesManager."""
+    """Per-HitMargin X-Accuracy weight from the inspected DLL."""
 
-    if judgement is TimingJudgement.PERFECT:
+    if judgement in {TimingJudgement.PERFECT, TimingJudgement.AUTO}:
         return 1.0
     if judgement in {TimingJudgement.EARLY_PERFECT, TimingJudgement.LATE_PERFECT}:
         return 0.75
@@ -243,32 +254,114 @@ def x_accuracy_weight(judgement: TimingJudgement) -> float:
         return 0.40
     if judgement in {TimingJudgement.TOO_EARLY, TimingJudgement.TOO_LATE}:
         return 0.20
+    if judgement in {TimingJudgement.FAIL_MISS, TimingJudgement.FAIL_OVERLOAD}:
+        return 0.0
     raise ValueError(f"unsupported timing judgement: {judgement!r}")
 
 
-def x_accuracy_percent(judgements: Iterable[TimingJudgement]) -> float:
-    """Calculate X-Accuracy for a supplied sequence of timing judgements."""
+def x_accuracy_components(
+    judgements: Iterable[TimingJudgement],
+    *,
+    dead_tiles: int = 0,
+) -> tuple[float, int]:
+    """Return the DLL X-Accuracy weighted sum and denominator before checkpoints.
 
+    Dead tiles contribute 0.20 to the numerator and one denominator entry each.
+    FailMiss/FailOverload remain ordinary denominator entries with zero weight.
+    """
+
+    if dead_tiles < 0:
+        raise ValueError("dead_tiles must be non-negative")
     values = [x_accuracy_weight(judgement) for judgement in judgements]
-    if not values:
+    return sum(values) + 0.20 * dead_tiles, len(values) + dead_tiles
+
+
+def x_accuracy_percent(
+    judgements: Iterable[TimingJudgement],
+    *,
+    dead_tiles: int = 0,
+    checkpoints_used: int = 0,
+) -> float:
+    """Calculate DLL-style X-Accuracy for a supplied HitMargin history."""
+
+    if checkpoints_used < 0:
+        raise ValueError("checkpoints_used must be non-negative")
+    weighted_sum, denominator = x_accuracy_components(judgements, dead_tiles=dead_tiles)
+    if denominator == 0:
         return 0.0
-    return 100.0 * sum(values) / len(values)
+    return 100.0 * weighted_sum / denominator * (0.9875**checkpoints_used)
+
+
+def normal_accuracy_percent(
+    judgements: Iterable[TimingJudgement],
+    *,
+    dead_tiles: int = 0,
+) -> float:
+    """Calculate the inspected DLL's ordinary Accuracy percentage.
+
+    FailMiss and FailOverload are already present in ``hitMargins.Count`` and
+    are then added once more to the denominator through the fail count. This
+    intentionally reproduces that double denominator effect.
+    """
+
+    if dead_tiles < 0:
+        raise ValueError("dead_tiles must be non-negative")
+    margins = list(judgements)
+    fail_count = sum(
+        judgement in {TimingJudgement.FAIL_MISS, TimingJudgement.FAIL_OVERLOAD}
+        for judgement in margins
+    )
+    numerator = sum(
+        judgement
+        in {
+            TimingJudgement.PERFECT,
+            TimingJudgement.EARLY_PERFECT,
+            TimingJudgement.LATE_PERFECT,
+            TimingJudgement.AUTO,
+        }
+        for judgement in margins
+    )
+    denominator = len(margins) + fail_count
+    base = numerator / denominator if denominator else 0.0
+    pure_bonus_count = sum(
+        judgement in {TimingJudgement.PERFECT, TimingJudgement.AUTO}
+        for judgement in margins
+    )
+    return 100.0 * (
+        base + 0.0001 * pure_bonus_count - 0.0001 * dead_tiles
+    )
 
 
 @dataclass
 class OverloadCounter:
-    """Toy ADOFAI Too Early overload counter retained by the simulator."""
+    """DLL-style ordinary TooEarly overload state.
 
-    value: int = 0
-    limit: int = OVERLOAD_LIMIT
+    This intentionally models only the ordinary ``overloadCounter`` path.
+    Multipress has separate counters/state in the game and is not folded into
+    this class.
+    """
+
+    value: float = 0.0
+    limit: float = OVERLOAD_LIMIT
+    damage: float = OVERLOAD_DAMAGE
+    recovery_per_beat: float = OVERLOAD_RECOVERY_PER_BEAT
 
     def record_too_early(self) -> bool:
-        self.value += 2
-        return self.value >= self.limit
+        self.value += self.damage
+        return self.overloaded
 
     def record_valid_hit(self) -> None:
-        self.value = max(0, self.value - 1)
+        """Valid hits do not directly heal the DLL overload counter."""
+
+    def advance_beats(self, beat_delta: float) -> None:
+        if beat_delta < 0.0:
+            raise ValueError("beat_delta must be non-negative")
+        self.value = max(0.0, self.value - self.recovery_per_beat * beat_delta)
+
+    def rewind(self) -> None:
+        self.value = 0.0
 
     @property
     def overloaded(self) -> bool:
-        return self.value >= self.limit
+        # The DLL uses a strict > 1.0 comparison, not >=.
+        return self.value > self.limit
