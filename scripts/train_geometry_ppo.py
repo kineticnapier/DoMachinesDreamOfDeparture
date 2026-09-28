@@ -22,14 +22,20 @@ except ImportError:  # direct script execution
 PROGRESS_ENABLED = True
 ALLOW_PRECISION_SKIP = False
 
-# First PP curriculum rung. These are intentionally reachable from the current
-# warm start. They can be raised from the CLI later, all the way to PP=100%.
+# Accuracy curriculum. These can be raised from the CLI later, all the way to PP=100%.
 PRECISION_MIN_BPM_XACC = 90.0
 PRECISION_OVERALL_XACC = 95.0
 PRECISION_MIN_BPM_PP = 0.60
 PRECISION_OVERALL_PP = 0.80
 COMPLETION_MIN_BPM_HIT = 0.95
 COMPLETION_MIN_BPM_FULL = 0.90
+
+# v0.3.3 evaluation/sampling defaults.
+QUICK_EVAL_EPISODES = 20
+QUICK_RETENTION_EPISODES = 5
+LATE_EVAL_EVERY_UPDATES = 4
+WORST_BPM_FOCUS = 0.50
+WORST_BPM_COUNT = 2
 
 _ORIGINAL_SAVE_CHECKPOINT = core.save_checkpoint
 
@@ -48,18 +54,16 @@ class AccuracyProbe(core.Probe):
     @property
     def min_bpm_x_accuracy_percent(self) -> float:
         values = [
-            item.x_accuracy_percent
+            float(getattr(item, "x_accuracy_percent", self.x_accuracy_percent))
             for item in self.bpm_slices
-            if isinstance(item, AccuracyBpmSlice)
         ]
         return min(values, default=self.x_accuracy_percent)
 
     @property
     def min_bpm_perfect_rate(self) -> float:
         values = [
-            item.perfect_rate
+            float(getattr(item, "perfect_rate", self.perfect_rate))
             for item in self.bpm_slices
-            if isinstance(item, AccuracyBpmSlice)
         ]
         return min(values, default=self.perfect_rate)
 
@@ -307,10 +311,10 @@ def rank_key(probe: core.Probe, retention: core.Retention) -> tuple[float, ...]:
         retention.min_full_rate,
         1.0 if probe.overloads == 0 else 0.0,
         -float(probe.overloads),
-        probe.hit_rate,
-        probe.full_rate,
         _min_hit(probe),
         _min_full(probe),
+        probe.hit_rate,
+        probe.full_rate,
         _min_xacc(probe),
         _xacc(probe),
         _min_pp(probe),
@@ -319,6 +323,132 @@ def rank_key(probe: core.Probe, retention: core.Retention) -> tuple[float, ...]:
         -(mae if mae is not None else float("inf")),
         probe.clean_rate,
     )
+
+
+def _slice_xacc(item: core.BpmSlice) -> float:
+    return float(getattr(item, "x_accuracy_percent", 0.0))
+
+
+def _slice_pp(item: core.BpmSlice) -> float:
+    return float(getattr(item, "perfect_rate", 0.0))
+
+
+def _slice_deficit(item: core.BpmSlice) -> float:
+    """Weighted gate deficit used only to decide where to collect more rollouts."""
+
+    return (
+        4.0 * max(0.0, COMPLETION_MIN_BPM_HIT - item.hit_rate)
+        + 4.0 * max(0.0, COMPLETION_MIN_BPM_FULL - item.full_rate)
+        + 2.0 * max(0.0, (PRECISION_MIN_BPM_XACC - _slice_xacc(item)) / 100.0)
+        + 2.0 * max(0.0, PRECISION_MIN_BPM_PP - _slice_pp(item))
+    )
+
+
+def weak_bpms(probe: core.Probe, count: int | None = None) -> tuple[float, ...]:
+    """Return the weakest BPM slices, preferring actual gate deficits."""
+
+    if not probe.bpm_slices:
+        return ()
+    count = WORST_BPM_COUNT if count is None else count
+    ranked = sorted(
+        probe.bpm_slices,
+        key=lambda item: (
+            _slice_deficit(item),
+            100.0 - _slice_xacc(item),
+            1.0 - _slice_pp(item),
+            -item.hit_rate,
+            -item.full_rate,
+        ),
+        reverse=True,
+    )
+    return tuple(item.bpm for item in ranked[: max(1, count)])
+
+
+def focused_training_bpm_schedule(
+    phase: core.CurriculumPhase,
+    *,
+    episodes: int,
+    points: int,
+    rng: random.Random,
+    focus_bpms: tuple[float, ...] = (),
+    focus_fraction: float | None = None,
+) -> list[float]:
+    """Mix stratified coverage with repeated rollouts on the current weak BPMs."""
+
+    fraction = WORST_BPM_FOCUS if focus_fraction is None else focus_fraction
+    if not focus_bpms or fraction <= 0.0:
+        return core.training_bpm_schedule(
+            phase, episodes=episodes, points=points, rng=rng
+        )
+
+    focus_count = min(episodes, max(1, int(round(episodes * fraction))))
+    base_count = episodes - focus_count
+    schedule: list[float] = []
+    if base_count:
+        schedule.extend(
+            core.training_bpm_schedule(
+                phase, episodes=base_count, points=points, rng=rng
+            )
+        )
+    schedule.extend(focus_bpms[i % len(focus_bpms)] for i in range(focus_count))
+    rng.shuffle(schedule)
+    return schedule
+
+
+def _retention_probe(
+    model: core.RecurrentActorCritic,
+    device: core.torch.device,
+    *,
+    previous_notes: tuple[int, ...],
+    args,
+    episodes: int,
+) -> core.Retention:
+    if not previous_notes:
+        return core.Retention(())
+    tuned = copy.copy(args)
+    tuned.retention_episodes = episodes
+    return core.previous_note_probes(
+        model, device, previous_notes=previous_notes, args=tuned
+    )
+
+
+def _evaluate(
+    model: core.RecurrentActorCritic,
+    device: core.torch.device,
+    *,
+    phase: core.CurriculumPhase,
+    previous_notes: tuple[int, ...],
+    args,
+    episodes: int,
+    retention_episodes: int,
+    seed_base: int,
+    label: str,
+) -> tuple[AccuracyProbe, core.Retention]:
+    probe = deterministic_probe(
+        model,
+        device,
+        phase=phase,
+        control_dt=args.control_dt,
+        episodes=episodes,
+        eval_bpm_points=args.eval_bpm_points,
+        seed_base=seed_base,
+    )
+    retention = _retention_probe(
+        model,
+        device,
+        previous_notes=previous_notes,
+        args=args,
+        episodes=retention_episodes,
+    )
+    _print_probe(label, probe)
+    _print_gate(probe, retention, args, phase.notes)
+    return probe, retention
+
+
+def _eval_interval(args, phase_index: int) -> int:
+    if phase_index < 5:
+        return args.eval_every_updates
+    return max(args.eval_every_updates, LATE_EVAL_EVERY_UPDATES)
 
 
 def save_checkpoint(
@@ -332,7 +462,7 @@ def save_checkpoint(
     global_update: int,
     probe: core.Probe,
 ) -> None:
-    """Keep v0.3 checkpoint compatibility while persisting accuracy metrics."""
+    """Keep v0.3 checkpoint compatibility while persisting accuracy metadata."""
 
     _ORIGINAL_SAVE_CHECKPOINT(
         path,
@@ -345,8 +475,8 @@ def save_checkpoint(
         probe=probe,
     )
     saved = core.torch.load(path, map_location="cpu")
-    saved["format_version"] = 11
-    saved["trainer_ui_version"] = "0.3.2-accuracy-gates"
+    saved["format_version"] = 12
+    saved["trainer_ui_version"] = "0.3.3-adaptive-probe"
     saved["accuracy_gate"] = {
         "min_bpm_xacc": PRECISION_MIN_BPM_XACC,
         "overall_xacc": PRECISION_OVERALL_XACC,
@@ -354,6 +484,13 @@ def save_checkpoint(
         "overall_perfect_rate": PRECISION_OVERALL_PP,
         "min_bpm_hit_rate": COMPLETION_MIN_BPM_HIT,
         "min_bpm_full_rate": COMPLETION_MIN_BPM_FULL,
+    }
+    saved["adaptive_probe"] = {
+        "quick_eval_episodes": QUICK_EVAL_EPISODES,
+        "quick_retention_episodes": QUICK_RETENTION_EPISODES,
+        "late_eval_every_updates": LATE_EVAL_EVERY_UPDATES,
+        "worst_bpm_focus": WORST_BPM_FOCUS,
+        "worst_bpm_count": WORST_BPM_COUNT,
     }
     saved.setdefault("probe", {}).update(
         {
@@ -386,8 +523,7 @@ def _print_probe(label: str, probe: core.Probe) -> None:
     for item in probe.bpm_slices:
         pieces.append(
             f"{item.bpm:g}:H{item.hit_rate:.2f} F{item.full_rate:.2f} "
-            f"X{float(getattr(item, 'x_accuracy_percent', 0.0)):.1f} "
-            f"P{float(getattr(item, 'perfect_rate', 0.0)):.0%} "
+            f"X{_slice_xacc(item):.1f} P{_slice_pp(item):.0%} "
             f"E{_fmt_ms(item.mean_error_ms, signed=True)}"
         )
     _write("  BPM  " + " | ".join(pieces))
@@ -410,7 +546,7 @@ def _print_gate(probe: core.Probe, retention: core.Retention, args, notes: int) 
 
 
 def _print_header(args, phases: tuple[core.CurriculumPhase, ...], mode: str) -> None:
-    _write("=== DMDOD / Planet Geometry PPO v0.3.2 ===")
+    _write("=== DMDOD / Planet Geometry PPO v0.3.3 ===")
     _write(
         f"mode={mode}  device={args.device}  seed={args.seed}  checkpoint={args.checkpoint}"
     )
@@ -432,8 +568,13 @@ def _print_header(args, phases: tuple[core.CurriculumPhase, ...], mode: str) -> 
         f"F>={COMPLETION_MIN_BPM_FULL:.2f}; precision-skip={'on' if ALLOW_PRECISION_SKIP else 'off'}"
     )
     _write(
-        f"probe={args.eval_episodes} ep x {args.eval_bpm_points} BPM  "
-        f"rollback={args.rollback_drop:.2f}  phases={len(phases)}"
+        f"screen={QUICK_EVAL_EPISODES}ep retention={QUICK_RETENTION_EPISODES}ep; "
+        f"verify={args.eval_episodes}ep retention={args.retention_episodes}ep; "
+        f"P5+ eval every {LATE_EVAL_EVERY_UPDATES} upd"
+    )
+    _write(
+        f"weak-BPM focus={WORST_BPM_FOCUS:.0%} on worst {WORST_BPM_COUNT}; "
+        f"rollback={args.rollback_drop:.2f}; phases={len(phases)}"
     )
     _write("visible=motor+planet geometry | hidden=time/BPM/target-angle/error/direction")
     _write()
@@ -480,6 +621,7 @@ def train_ui(args) -> None:
     phase_bar = _bar(
         total=len(phases), initial=resume_phase, desc="curriculum", unit="phase", position=0
     )
+
     try:
         for phase_pos in range(resume_phase, len(phases)):
             phase = phases[phase_pos]
@@ -496,52 +638,55 @@ def train_ui(args) -> None:
                 f"jitter=+/-{phase.train_phase_jitter_ms:g}ms"
             )
 
-            baseline = deterministic_probe(
+            quick_seed = args.seed * 1000000 + phase_index * 10000
+            full_seed = quick_seed + 500000
+            baseline, baseline_retention = _evaluate(
                 model,
                 device,
                 phase=phase,
-                control_dt=args.control_dt,
-                episodes=args.eval_episodes,
-                eval_bpm_points=args.eval_bpm_points,
-                seed_base=args.seed * 1000000 + phase_index * 10000,
+                previous_notes=previous_notes,
+                args=args,
+                episodes=QUICK_EVAL_EPISODES,
+                retention_episodes=QUICK_RETENTION_EPISODES,
+                seed_base=quick_seed,
+                label="screen 00",
             )
-            retention = core.previous_note_probes(
-                model, device, previous_notes=previous_notes, args=args
-            )
-            _print_probe("baseline", baseline)
-            _print_gate(baseline, retention, args, phase.notes)
 
-            if passes(baseline, retention, args, phase.notes):
-                _write("  status: already passed")
-                save_checkpoint(
-                    checkpoint,
+            if passes(baseline, baseline_retention, args, phase.notes):
+                verified, verified_retention = _evaluate(
                     model,
-                    optimizer,
-                    args=args,
-                    phase_index=phase_index,
+                    device,
                     phase=phase,
-                    global_update=global_update,
-                    probe=baseline,
+                    previous_notes=previous_notes,
+                    args=args,
+                    episodes=args.eval_episodes,
+                    retention_episodes=args.retention_episodes,
+                    seed_base=full_seed,
+                    label="verify",
                 )
-                phase_bar.update(1)
-                continue
+                if passes(verified, verified_retention, args, phase.notes):
+                    _write("  status: already passed (verified)")
+                    save_checkpoint(
+                        checkpoint,
+                        model,
+                        optimizer,
+                        args=args,
+                        phase_index=phase_index,
+                        phase=phase,
+                        global_update=global_update,
+                        probe=verified,
+                    )
+                    phase_bar.update(1)
+                    continue
 
             best_probe = baseline
-            best_retention = retention
-            best_key = rank_key(baseline, retention)
+            best_retention = baseline_retention
+            best_key = rank_key(baseline, baseline_retention)
             best_model = copy.deepcopy(model.state_dict())
             best_optimizer = copy.deepcopy(optimizer.state_dict())
-            save_checkpoint(
-                checkpoint,
-                model,
-                optimizer,
-                args=args,
-                phase_index=phase_index,
-                phase=phase,
-                global_update=global_update,
-                probe=baseline,
-            )
+            focus = weak_bpms(baseline)
             phase_passed = False
+            eval_every = _eval_interval(args, phase_index)
 
             update_bar = _bar(
                 range(1, args.updates_per_phase + 1),
@@ -554,11 +699,12 @@ def train_ui(args) -> None:
             for phase_update in update_bar:
                 global_update += 1
                 rollouts: list[core.Rollout] = []
-                bpm_schedule = core.training_bpm_schedule(
+                bpm_schedule = focused_training_bpm_schedule(
                     phase,
                     episodes=args.rollout_episodes,
                     points=args.train_bpm_points,
                     rng=rng,
+                    focus_bpms=focus,
                 )
                 rollout_iter = _bar(
                     range(args.rollout_episodes),
@@ -586,7 +732,7 @@ def train_ui(args) -> None:
                         )
                     )
 
-                policy_loss, value_loss, entropy, approx_kl, epochs_done = core.ppo_update(
+                _, _, _, approx_kl, epochs_done = core.ppo_update(
                     model, optimizer, rollouts, args
                 )
                 rollout_hit = sum(r.hits for r in rollouts) / max(
@@ -594,33 +740,28 @@ def train_ui(args) -> None:
                 )
                 rollout_reward = sum(r.reward for r in rollouts) / len(rollouts)
                 rollout_overload = sum(int(r.overloaded) for r in rollouts)
+                focus_text = "/".join(f"{b:g}" for b in focus) or "-"
                 update_bar.set_postfix_str(
                     f"H={rollout_hit:.3f} R={rollout_reward:+.2f} O={rollout_overload} "
-                    f"sig={model.log_std.detach().exp().mean().item():.3f} "
-                    f"KL={approx_kl:.4f} e={epochs_done}",
+                    f"focus={focus_text} KL={approx_kl:.4f} e={epochs_done}",
                     refresh=True,
                 )
 
-                if (
-                    phase_update % args.eval_every_updates != 0
-                    and phase_update != args.updates_per_phase
-                ):
+                if phase_update % eval_every != 0 and phase_update != args.updates_per_phase:
                     continue
 
-                probe = deterministic_probe(
+                probe, retention = _evaluate(
                     model,
                     device,
                     phase=phase,
-                    control_dt=args.control_dt,
-                    episodes=args.eval_episodes,
-                    eval_bpm_points=args.eval_bpm_points,
-                    seed_base=args.seed * 1000000 + phase_index * 10000,
+                    previous_notes=previous_notes,
+                    args=args,
+                    episodes=QUICK_EVAL_EPISODES,
+                    retention_episodes=QUICK_RETENTION_EPISODES,
+                    seed_base=quick_seed,
+                    label=f"screen {phase_update:02d}",
                 )
-                retention = core.previous_note_probes(
-                    model, device, previous_notes=previous_notes, args=args
-                )
-                _print_probe(f"eval {phase_update:02d}", probe)
-                _print_gate(probe, retention, args, phase.notes)
+                focus = weak_bpms(probe)
                 key = rank_key(probe, retention)
 
                 if key > best_key:
@@ -629,29 +770,22 @@ def train_ui(args) -> None:
                     best_retention = retention
                     best_model = copy.deepcopy(model.state_dict())
                     best_optimizer = copy.deepcopy(optimizer.state_dict())
-                    save_checkpoint(
-                        checkpoint,
-                        model,
-                        optimizer,
-                        args=args,
-                        phase_index=phase_index,
-                        phase=phase,
-                        global_update=global_update,
-                        probe=probe,
-                    )
                     _write(
-                        f"  saved best X={_xacc(probe):.2f}% PP={_pp(probe):.1%} "
+                        f"  best screen X={_xacc(probe):.2f}% PP={_pp(probe):.1%} "
                         f"minX={_min_xacc(probe):.1f}% minPP={_min_pp(probe):.0%}"
                     )
 
                 catastrophic = (
                     probe.hit_rate < best_probe.hit_rate - args.rollback_drop
                     or probe.full_rate < best_probe.full_rate - args.rollback_drop
+                    or _min_hit(probe) < _min_hit(best_probe) - args.rollback_drop
+                    or _min_full(probe) < _min_full(best_probe) - args.rollback_drop
                     or (best_probe.overloads == 0 and probe.overloads > 0)
                 )
                 if catastrophic:
                     model.load_state_dict(best_model)
                     optimizer.load_state_dict(best_optimizer)
+                    focus = weak_bpms(best_probe)
                     for group in optimizer.param_groups:
                         group["lr"] = max(
                             args.min_lr, float(group["lr"]) * args.rollback_lr_factor
@@ -663,29 +797,79 @@ def train_ui(args) -> None:
                     continue
 
                 if passes(probe, retention, args, phase.notes):
-                    phase_passed = True
-                    _write("  status: PASS (clear + accuracy)")
-                    break
+                    verified, verified_retention = _evaluate(
+                        model,
+                        device,
+                        phase=phase,
+                        previous_notes=previous_notes,
+                        args=args,
+                        episodes=args.eval_episodes,
+                        retention_episodes=args.retention_episodes,
+                        seed_base=full_seed,
+                        label="verify",
+                    )
+                    if passes(verified, verified_retention, args, phase.notes):
+                        save_checkpoint(
+                            checkpoint,
+                            model,
+                            optimizer,
+                            args=args,
+                            phase_index=phase_index,
+                            phase=phase,
+                            global_update=global_update,
+                            probe=verified,
+                        )
+                        phase_passed = True
+                        _write("  status: PASS (full verification)")
+                        break
+                    _write("  verify failed; continue training")
 
             update_bar.close()
+
             if not phase_passed:
                 model.load_state_dict(best_model)
                 optimizer.load_state_dict(best_optimizer)
+                verified, verified_retention = _evaluate(
+                    model,
+                    device,
+                    phase=phase,
+                    previous_notes=previous_notes,
+                    args=args,
+                    episodes=args.eval_episodes,
+                    retention_episodes=args.retention_episodes,
+                    seed_base=full_seed,
+                    label="final",
+                )
+                save_checkpoint(
+                    checkpoint,
+                    model,
+                    optimizer,
+                    args=args,
+                    phase_index=phase_index,
+                    phase=phase,
+                    global_update=global_update,
+                    probe=verified,
+                )
+
+                if passes(verified, verified_retention, args, phase.notes):
+                    _write("  status: PASS at final verification")
+                    phase_bar.update(1)
+                    continue
                 if ALLOW_PRECISION_SKIP and completion_passes(
-                    best_probe, best_retention, args, phase.notes
+                    verified, verified_retention, args, phase.notes
                 ):
                     _write(
                         "  status: precision skip "
-                        f"X={_xacc(best_probe):.2f}% PP={_pp(best_probe):.1%} "
-                        f"minX={_min_xacc(best_probe):.1f}% minPP={_min_pp(best_probe):.0%}"
+                        f"X={_xacc(verified):.2f}% PP={_pp(verified):.1%} "
+                        f"minX={_min_xacc(verified):.1f}% minPP={_min_pp(verified):.0%}"
                     )
                     phase_bar.update(1)
                     continue
                 _write(
                     "  status: STOP accuracy target unmet "
-                    f"H={best_probe.hit_rate:.3f} F={best_probe.full_rate:.3f} "
-                    f"X={_xacc(best_probe):.2f}% PP={_pp(best_probe):.1%} "
-                    f"minX={_min_xacc(best_probe):.1f}% minPP={_min_pp(best_probe):.0%}"
+                    f"H={verified.hit_rate:.3f} F={verified.full_rate:.3f} "
+                    f"X={_xacc(verified):.2f}% PP={_pp(verified):.1%} "
+                    f"minX={_min_xacc(verified):.1f}% minPP={_min_pp(verified):.0%}"
                 )
                 break
 
@@ -712,11 +896,17 @@ def _pop_float_arg(name: str, default: float) -> float:
     return default
 
 
+def _pop_int_arg(name: str, default: int) -> int:
+    return int(_pop_float_arg(name, float(default)))
+
+
 def _read_ui_args() -> None:
     global PROGRESS_ENABLED, ALLOW_PRECISION_SKIP
     global PRECISION_MIN_BPM_XACC, PRECISION_OVERALL_XACC
     global PRECISION_MIN_BPM_PP, PRECISION_OVERALL_PP
     global COMPLETION_MIN_BPM_HIT, COMPLETION_MIN_BPM_FULL
+    global QUICK_EVAL_EPISODES, QUICK_RETENTION_EPISODES, LATE_EVAL_EVERY_UPDATES
+    global WORST_BPM_FOCUS, WORST_BPM_COUNT
 
     if "--no-progress" in sys.argv:
         sys.argv.remove("--no-progress")
@@ -742,6 +932,15 @@ def _read_ui_args() -> None:
     COMPLETION_MIN_BPM_FULL = _pop_float_arg(
         "--completion-min-bpm-full", COMPLETION_MIN_BPM_FULL
     )
+    QUICK_EVAL_EPISODES = _pop_int_arg("--quick-eval-episodes", QUICK_EVAL_EPISODES)
+    QUICK_RETENTION_EPISODES = _pop_int_arg(
+        "--quick-retention-episodes", QUICK_RETENTION_EPISODES
+    )
+    LATE_EVAL_EVERY_UPDATES = _pop_int_arg(
+        "--late-eval-every-updates", LATE_EVAL_EVERY_UPDATES
+    )
+    WORST_BPM_FOCUS = _pop_float_arg("--worst-bpm-focus", WORST_BPM_FOCUS)
+    WORST_BPM_COUNT = _pop_int_arg("--worst-bpm-count", WORST_BPM_COUNT)
 
     if not 0.0 <= PRECISION_MIN_BPM_XACC <= 100.0:
         raise SystemExit("--precision-min-bpm-xacc must be in [0, 100]")
@@ -752,16 +951,25 @@ def _read_ui_args() -> None:
         ("--precision-overall-pp", PRECISION_OVERALL_PP),
         ("--completion-min-bpm-hit", COMPLETION_MIN_BPM_HIT),
         ("--completion-min-bpm-full", COMPLETION_MIN_BPM_FULL),
+        ("--worst-bpm-focus", WORST_BPM_FOCUS),
     ):
         if not 0.0 <= value <= 1.0:
             raise SystemExit(f"{name} must be in [0, 1]")
+    for name, value in (
+        ("--quick-eval-episodes", QUICK_EVAL_EPISODES),
+        ("--quick-retention-episodes", QUICK_RETENTION_EPISODES),
+        ("--late-eval-every-updates", LATE_EVAL_EVERY_UPDATES),
+        ("--worst-bpm-count", WORST_BPM_COUNT),
+    ):
+        if value <= 0:
+            raise SystemExit(f"{name} must be positive")
 
 
 def main() -> None:
     _read_ui_args()
 
     # The core keeps optimizer/checkpoint/CLI compatibility. The frontend owns
-    # accuracy metrics, gates, ranking, progress UI, and checkpoint metadata.
+    # accuracy metrics, gates, ranking, adaptive probing, sampling, and progress UI.
     core.deterministic_probe = deterministic_probe
     core.completion_passes = completion_passes
     core.precision_passes = precision_passes
