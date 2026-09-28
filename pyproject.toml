@@ -13,6 +13,7 @@ dev = ["pytest>=8"]
 rl = [
     "numpy>=2.0",
     "torch>=2.3",
+    "tqdm>=4.67",
 ]
 
 [tool.hatch.build.targets.wheel]
