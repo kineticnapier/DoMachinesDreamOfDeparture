@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import copy
-from pathlib import Path
 
 try:
     from . import train_geometry_ppo_v039 as v039
@@ -15,9 +14,9 @@ v035 = v039.v035
 base = v039.base
 
 # v0.4.0 protects a good imitation/bootstrap policy while PPO adapts it to
-# wider BPM bands.  v0.3.9 showed that PPO could trade a tiny clear-rate gain
+# wider BPM bands. v0.3.9 showed that PPO could trade a tiny clear-rate gain
 # for a very large XAcc/Perfect regression, then keep the damaged policy as the
-# phase best.  This frontend changes only fine-tuning/selection, not game rules.
+# phase best. This frontend changes only fine-tuning/selection, not game rules.
 ANCHOR_COEF_START = 0.50
 ANCHOR_DECAY_UPDATES = 16
 PRECISION_ROLLBACK_XACC_DROP = 4.0
@@ -26,11 +25,11 @@ PRECISION_ROLLBACK_PP_DROP = 0.10
 PRECISION_ROLLBACK_MIN_PP_DROP = 0.15
 
 _ORIGINAL_V036_EVALUATE = v036._evaluate
-_ORIGINAL_V039_HEADER = v039._print_header
 _ORIGINAL_V039_SAVE_CHECKPOINT = v039.save_checkpoint
 
 _PHASE_KEY: tuple[object, ...] | None = None
 _GUARD_BEST_PROBE = None
+_GUARD_BEST_RETENTION = None
 _GUARD_BEST_MODEL_STATE = None
 _GUARD_BEST_OPTIMIZER_STATE = None
 _LAST_OPTIMIZER_STATE = None
@@ -60,11 +59,11 @@ def _completion_deficits(probe, retention) -> tuple[float, ...]:
 
 
 def rank_key(probe, retention) -> tuple[float, ...]:
-    """Rank by distance to *all* gates instead of clear-rate lexicography.
+    """Rank by distance to all gates instead of clear-rate lexicography.
 
     A one-hit improvement must not outrank a large collapse in Perfect/XAcc.
     The worst normalized gate deficit is minimized first, then the sum of all
-    deficits.  Raw precision and completion metrics are only tie breakers.
+    deficits. Raw precision and completion metrics are only tie breakers.
     """
 
     deficits = _completion_deficits(probe, retention) + _precision_deficits(probe)
@@ -112,12 +111,13 @@ def _set_anchor_from_model(model) -> None:
 
 
 def _reset_phase_guard(model, phase) -> None:
-    global _PHASE_KEY, _GUARD_BEST_PROBE, _GUARD_BEST_MODEL_STATE
-    global _GUARD_BEST_OPTIMIZER_STATE, _LAST_OPTIMIZER_STATE
-    global _ROLLBACK_PENDING, _PHASE_PPO_UPDATES
+    global _PHASE_KEY, _GUARD_BEST_PROBE, _GUARD_BEST_RETENTION
+    global _GUARD_BEST_MODEL_STATE, _GUARD_BEST_OPTIMIZER_STATE
+    global _LAST_OPTIMIZER_STATE, _ROLLBACK_PENDING, _PHASE_PPO_UPDATES
 
     _PHASE_KEY = v036._phase_identity(phase)
     _GUARD_BEST_PROBE = None
+    _GUARD_BEST_RETENTION = None
     _GUARD_BEST_MODEL_STATE = copy.deepcopy(model.state_dict())
     _GUARD_BEST_OPTIMIZER_STATE = None
     _LAST_OPTIMIZER_STATE = None
@@ -140,8 +140,9 @@ def _evaluate(
 ):
     """Evaluate, update the best-policy anchor, and undo precision collapses."""
 
-    global _GUARD_BEST_PROBE, _GUARD_BEST_MODEL_STATE
-    global _GUARD_BEST_OPTIMIZER_STATE, _ROLLBACK_PENDING
+    global _GUARD_BEST_PROBE, _GUARD_BEST_RETENTION
+    global _GUARD_BEST_MODEL_STATE, _GUARD_BEST_OPTIMIZER_STATE
+    global _ROLLBACK_PENDING
 
     phase_key = v036._phase_identity(phase)
     if phase_key != _PHASE_KEY:
@@ -160,12 +161,12 @@ def _evaluate(
     )
 
     # Full verification/final probes are measurements, not training screens.
-    is_training_screen = label.startswith("screen ")
-    if not is_training_screen:
+    if not label.startswith("screen "):
         return probe, retention
 
     if _GUARD_BEST_PROBE is None:
         _GUARD_BEST_PROBE = probe
+        _GUARD_BEST_RETENTION = retention
         _GUARD_BEST_MODEL_STATE = copy.deepcopy(model.state_dict())
         if _LAST_OPTIMIZER_STATE is not None:
             _GUARD_BEST_OPTIMIZER_STATE = copy.deepcopy(_LAST_OPTIMIZER_STATE)
@@ -188,8 +189,10 @@ def _evaluate(
 
     # Keep the behavioral anchor synchronized with the same ranking used by the
     # base trainer's best-model selection.
-    if rank_key(probe, retention) > rank_key(_GUARD_BEST_PROBE, retention):
+    assert _GUARD_BEST_RETENTION is not None
+    if rank_key(probe, retention) > rank_key(_GUARD_BEST_PROBE, _GUARD_BEST_RETENTION):
         _GUARD_BEST_PROBE = probe
+        _GUARD_BEST_RETENTION = retention
         _GUARD_BEST_MODEL_STATE = copy.deepcopy(model.state_dict())
         if _LAST_OPTIMIZER_STATE is not None:
             _GUARD_BEST_OPTIMIZER_STATE = copy.deepcopy(_LAST_OPTIMIZER_STATE)
@@ -211,22 +214,28 @@ def _sequence_actions(model, observations):
 def _anchor_coef() -> float:
     if ANCHOR_DECAY_UPDATES <= 0:
         return 0.0
-    progress = min(1.0, _PHASE_PPO_UPDATES / float(ANCHOR_DECAY_UPDATES))
+    completed_before_this_update = max(0, _PHASE_PPO_UPDATES - 1)
+    progress = min(1.0, completed_before_this_update / float(ANCHOR_DECAY_UPDATES))
     return ANCHOR_COEF_START * (1.0 - progress)
 
 
 def ppo_update(model, optimizer, rollouts, args):
     """v0.3.8 PPO + prediction loss + decaying best-policy behavior anchor."""
 
-    global _LAST_OPTIMIZER_STATE, _ROLLBACK_PENDING, _PHASE_PPO_UPDATES
+    global _LAST_OPTIMIZER_STATE, _GUARD_BEST_OPTIMIZER_STATE
+    global _ROLLBACK_PENDING, _PHASE_PPO_UPDATES
     global _LAST_ANCHOR_LOSS, _LAST_ANCHOR_COEF
 
     torch = base.core.torch
     nn = base.core.nn
 
+    # Capture the phase-baseline optimizer before the first PPO step. If screen
+    # 02 already regresses, both model and optimizer can return to screen 00.
+    if _GUARD_BEST_OPTIMIZER_STATE is None:
+        _GUARD_BEST_OPTIMIZER_STATE = copy.deepcopy(optimizer.state_dict())
+
     if _ROLLBACK_PENDING:
-        if _GUARD_BEST_OPTIMIZER_STATE is not None:
-            optimizer.load_state_dict(copy.deepcopy(_GUARD_BEST_OPTIMIZER_STATE))
+        optimizer.load_state_dict(copy.deepcopy(_GUARD_BEST_OPTIMIZER_STATE))
         for group in optimizer.param_groups:
             group["lr"] = max(
                 args.min_lr,
@@ -350,18 +359,51 @@ def ppo_update(model, optimizer, rollouts, args):
 
 
 def _print_header(args, phases, mode: str) -> None:
-    _ORIGINAL_V039_HEADER(args, phases, mode)
+    base._write("=== DMDOD / Planet Geometry PPO v0.4.0 ===")
     base._write(
-        f"v0.4.0 precision guard: rank=max/sum gate deficit; "
-        f"rollback X-{PRECISION_ROLLBACK_XACC_DROP:g} minX-{PRECISION_ROLLBACK_MIN_XACC_DROP:g} "
-        f"PP-{PRECISION_ROLLBACK_PP_DROP:.0%} minPP-{PRECISION_ROLLBACK_MIN_PP_DROP:.0%}; "
-        f"anchor={ANCHOR_COEF_START:g}->0/{ANCHOR_DECAY_UPDATES}upd"
+        f"mode={mode} device={args.device} seed={args.seed} checkpoint={args.checkpoint}"
     )
+    base._write(
+        f"task={args.notes} BPM={args.bpm_min:g}..{args.bpm_max:g} "
+        f"vision={args.vision_hz:g}Hz/{args.vision_latency_ms:g}ms | "
+        f"gate X={base.PRECISION_OVERALL_XACC:g}%/min{base.PRECISION_MIN_BPM_XACC:g}% "
+        f"PP={base.PRECISION_OVERALL_PP:.0%}/min{base.PRECISION_MIN_BPM_PP:.0%}"
+    )
+    lead = v039._IMITATION_STATE.get("teacher_lead_s")
+    bc_loss = v039._IMITATION_STATE.get("bc_final_loss")
+    probe = v039._IMITATION_STATE.get("student_probe")
+    probe145 = probe.get("edge_145_error_ms") if isinstance(probe, dict) else None
+    probe240 = probe.get("edge_240_error_ms") if isinstance(probe, dict) else None
+    base._write(
+        f"input=14D visible motion | imitation={int(v039._IMITATION_STATE.get('episodes', 0))}ep/"
+        f"{int(v039._IMITATION_STATE.get('epochs', 0))}epochs "
+        f"lead={(float(lead)*1000 if lead is not None else float('nan')):.1f}ms "
+        f"BC={(float(bc_loss) if bc_loss is not None else float('nan')):.5f} "
+        f"probe145={v039._fmt_optional(probe145)}ms "
+        f"probe240={v039._fmt_optional(probe240)}ms"
+    )
+    base._write(
+        f"PPO+next-delta coef={v038.PREDICTION_COEF:g} | "
+        f"precision guard X-{PRECISION_ROLLBACK_XACC_DROP:g} "
+        f"minX-{PRECISION_ROLLBACK_MIN_XACC_DROP:g} "
+        f"PP-{PRECISION_ROLLBACK_PP_DROP:.0%} "
+        f"minPP-{PRECISION_ROLLBACK_MIN_PP_DROP:.0%}"
+    )
+    base._write(
+        f"best-policy anchor={ANCHOR_COEF_START:g}->0/{ANCHOR_DECAY_UPDATES}upd | "
+        f"focus EMA={v036.FOCUS_EMA_ALPHA:.2f} hold={v036.FOCUS_CLEAR_SCREENS} screens"
+    )
+    if v035.VERBOSE_OUTPUT:
+        base._write(
+            "teacher target time is BC-only; fine-tuning policy sees motor+visible geometry/delta"
+        )
+    else:
+        base._write("compact output; use --verbose for per-BPM details")
     base._write()
 
 
 def save_checkpoint(
-    path: Path,
+    path,
     model,
     optimizer,
     *,
@@ -399,7 +441,7 @@ def save_checkpoint(
 
 
 def main() -> None:
-    # Patch module globals that the inherited frontends resolve at runtime.
+    # Patch module globals that inherited frontends resolve at runtime.
     base.rank_key = rank_key
     v036._evaluate = _evaluate
     v038.ppo_update = ppo_update
