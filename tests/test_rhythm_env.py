@@ -1,4 +1,12 @@
-from dmdod import MotorAction, RhythmMotorEnv, TargetHit, TimingJudgement, make_regular_targets
+from dmdod import (
+    KeyEvent,
+    MotorAction,
+    RhythmMotorEnv,
+    TargetHit,
+    TimedKeyEvent,
+    TimingJudgement,
+    make_regular_targets,
+)
 
 
 def test_rhythm_observation_does_not_expose_exact_time():
@@ -40,24 +48,27 @@ def test_rhythm_episode_finishes_and_accounts_for_targets():
     )
 
 
-def test_repeated_too_early_inputs_trigger_overload():
-    # Put the first target far enough away that a threshold-reflex spammer can
-    # produce TooEarly inputs before any legitimate hit window begins.
+def test_third_undecayed_too_early_is_replaced_by_fail_overload():
     env = RhythmMotorEnv([TargetHit(3.0, "left")], bpm=180.0, control_dt_s=0.010)
-    observation = env.reset()
+    env.reset()
 
-    transition = None
-    for _ in range(300):
-        action = MotorAction(-1.0 if observation.motor.left_pressed else 1.0, 0.0)
-        transition = env.step(action)
-        observation = transition.observation
-        if transition.done:
-            break
+    # Feed three simultaneous privileged evaluator events directly so the test
+    # isolates DLL fail-bar semantics from body press/release timing. At 0.0 s
+    # all three are unambiguously TooEarly and no song-time recovery occurs.
+    event = TimedKeyEvent(0.0, "left", KeyEvent.DOWN)
+    assert env._score_event(event) < 0.0
+    assert env._score_event(event) < 0.0
+    assert env._score_event(event) < 0.0
 
-    assert transition is not None and transition.done
     stats = env.stats
     assert stats.overloaded
-    assert stats.overload_counter > 1.0
-    assert stats.too_early_presses >= 3
+    assert stats.overload_counter == 1.5
+    assert stats.too_early_presses == 3
     assert stats.fail_overloads == 1
-    assert env.hit_margins[-1] is TimingJudgement.FAIL_OVERLOAD
+    assert env.hit_margins == (
+        TimingJudgement.TOO_EARLY,
+        TimingJudgement.TOO_EARLY,
+        TimingJudgement.FAIL_OVERLOAD,
+    )
+    # XAcc: (0.2 + 0.2 + 0.0) / 3.
+    assert stats.x_accuracy_percent == 100.0 * 0.4 / 3.0
