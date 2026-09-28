@@ -170,3 +170,31 @@ def test_overload_decay_can_prevent_a_later_too_early_from_failing():
     assert overload.value == pytest.approx(0.2)
     assert not overload.record_too_early()
     assert overload.value == pytest.approx(0.7)
+
+
+def test_multipress_fail_bar_uses_separate_damage_decay_and_six_beat_reset():
+    overload = OverloadCounter()
+
+    assert not overload.record_multipress()
+    assert overload.multipress_value == pytest.approx(0.35)
+    overload.advance_beats(0.5)
+    assert overload.multipress_value == pytest.approx(0.25)
+    assert overload.multipress_reset_beats == pytest.approx(0.5)
+
+    # Applying new Multipress damage restarts the full-reset cooldown.
+    assert not overload.record_multipress()
+    assert overload.multipress_value == pytest.approx(0.60)
+    assert overload.multipress_reset_beats == pytest.approx(0.0)
+
+    overload.advance_beats(6.01)
+    assert overload.multipress_value == pytest.approx(0.0)
+    assert overload.multipress_reset_beats == pytest.approx(0.0)
+
+
+def test_multipress_counter_also_uses_strict_greater_than_one_fail_condition():
+    overload = OverloadCounter()
+    assert not overload.record_multipress()  # 0.35
+    assert not overload.record_multipress()  # 0.70
+    assert overload.record_multipress()      # 1.05
+    assert overload.multipress_value == pytest.approx(1.05)
+    assert overload.overloaded
