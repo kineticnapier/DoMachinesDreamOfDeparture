@@ -1,5 +1,13 @@
 """Do Machines Dream of Departure? simulator package."""
 
+from .adofai_chart import (
+    AdoFaiAction,
+    AdoFaiChart,
+    load_adofai,
+    parse_adofai_bytes,
+    parse_adofai_text,
+)
+from .adofai_geometry import AdoFaiFloorGeometry, build_floor_geometry
 from .adofai_rules import (
     ABSOLUTE_MIN_S,
     COUNTED_BASE_DEG,
@@ -34,6 +42,15 @@ from .adofai_rules import (
     x_accuracy_components,
     x_accuracy_percent,
     x_accuracy_weight,
+)
+from .adofai_timing import (
+    AdoFaiFloorTiming,
+    CompiledAdoFaiChart,
+    CompiledChartFloor,
+    VisibleChartFloor,
+    build_stock_timing,
+    compile_adofai,
+    load_compiled_adofai,
 )
 from .body import (
     BilateralConfig,
@@ -82,6 +99,20 @@ from .rhythm_env import (
 from .simulator import Simulation, SimulationConfig, StepResult
 
 __all__ = [
+    "AdoFaiAction",
+    "AdoFaiChart",
+    "AdoFaiFloorGeometry",
+    "AdoFaiFloorTiming",
+    "CompiledAdoFaiChart",
+    "CompiledChartFloor",
+    "VisibleChartFloor",
+    "load_adofai",
+    "parse_adofai_bytes",
+    "parse_adofai_text",
+    "build_floor_geometry",
+    "build_stock_timing",
+    "compile_adofai",
+    "load_compiled_adofai",
     "ABSOLUTE_MIN_S",
     "COUNTED_BASE_DEG",
     "EARLY_LATE_PERFECT_BASE_DEG",
