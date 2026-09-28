@@ -6,8 +6,10 @@ from dmdod import (
     TimingJudgement,
     classify_normal_timing,
     classify_timing,
+    normal_accuracy_percent,
     normal_timing_windows,
     timing_windows,
+    x_accuracy_components,
     x_accuracy_percent,
     x_accuracy_weight,
 )
@@ -101,12 +103,15 @@ def test_difficulty_changes_classification_at_high_bpm():
 
 def test_x_accuracy_weights_match_dll_values():
     assert x_accuracy_weight(TimingJudgement.PERFECT) == pytest.approx(1.0)
+    assert x_accuracy_weight(TimingJudgement.AUTO) == pytest.approx(1.0)
     assert x_accuracy_weight(TimingJudgement.EARLY_PERFECT) == pytest.approx(0.75)
     assert x_accuracy_weight(TimingJudgement.LATE_PERFECT) == pytest.approx(0.75)
     assert x_accuracy_weight(TimingJudgement.VERY_EARLY) == pytest.approx(0.40)
     assert x_accuracy_weight(TimingJudgement.VERY_LATE) == pytest.approx(0.40)
     assert x_accuracy_weight(TimingJudgement.TOO_EARLY) == pytest.approx(0.20)
     assert x_accuracy_weight(TimingJudgement.TOO_LATE) == pytest.approx(0.20)
+    assert x_accuracy_weight(TimingJudgement.FAIL_MISS) == pytest.approx(0.0)
+    assert x_accuracy_weight(TimingJudgement.FAIL_OVERLOAD) == pytest.approx(0.0)
 
     value = x_accuracy_percent(
         [
@@ -119,21 +124,49 @@ def test_x_accuracy_weights_match_dll_values():
     assert value == pytest.approx(58.75)
 
 
-def test_overload_counter_matches_too_early_rule():
+def test_x_accuracy_fail_is_one_zero_weight_denominator_entry():
+    margins = [TimingJudgement.PERFECT, TimingJudgement.FAIL_MISS]
+    points, denominator = x_accuracy_components(margins)
+    assert points == pytest.approx(1.0)
+    assert denominator == 2
+    assert x_accuracy_percent(margins) == pytest.approx(50.0)
+
+    # Checkpoint penalty is applied after the weighted fraction.
+    assert x_accuracy_percent(margins, checkpoints_used=1) == pytest.approx(49.375)
+
+
+def test_normal_accuracy_double_counts_fail_in_denominator():
+    margins = [TimingJudgement.PERFECT, TimingJudgement.FAIL_OVERLOAD]
+    # N=2 and F=1, so base=1/3. One pure Perfect also adds +0.0001.
+    assert normal_accuracy_percent(margins) == pytest.approx(
+        100.0 * (1.0 / 3.0 + 0.0001)
+    )
+
+
+def test_overload_counter_matches_dll_damage_strict_limit_and_decay():
     overload = OverloadCounter()
+
     assert not overload.record_too_early()
-    assert overload.value == 2
+    assert overload.value == pytest.approx(0.5)
     assert not overload.record_too_early()
-    assert overload.value == 4
+    assert overload.value == pytest.approx(1.0)
+    assert not overload.overloaded  # DLL uses > 1.0, not >= 1.0.
 
     overload.record_valid_hit()
-    assert overload.value == 3
+    assert overload.value == pytest.approx(1.0)  # valid hits do not heal it
 
-    assert not overload.record_too_early()
-    assert overload.value == 5
+    overload.advance_beats(0.5)
+    assert overload.value == pytest.approx(0.8)
     assert overload.record_too_early()
-    assert overload.value == 7
+    assert overload.value == pytest.approx(1.3)
     assert overload.overloaded
 
-    overload.record_valid_hit()
-    assert overload.value == 6
+
+def test_overload_decay_can_prevent_a_later_too_early_from_failing():
+    overload = OverloadCounter()
+    overload.record_too_early()
+    overload.record_too_early()
+    overload.advance_beats(2.0)
+    assert overload.value == pytest.approx(0.2)
+    assert not overload.record_too_early()
+    assert overload.value == pytest.approx(0.7)
