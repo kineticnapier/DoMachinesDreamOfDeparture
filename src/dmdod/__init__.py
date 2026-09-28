@@ -58,6 +58,12 @@ from .motor_env import (
     MotorTransition,
     TimedKeyEvent,
 )
+from .pattern_geometry_env import (
+    PatternGeometryObservation,
+    PatternGeometryStep,
+    PatternMemoryGeometryEnv,
+)
+from .pattern_memory import PatternMemory, PatternMemoryEntry, PatternMemoryFeatures
 from .perception import VisualCueConfig, VisualCueEncoder, VisualCueObservation
 from .planet_perception import (
     PlanetGeometryObservation,
@@ -137,6 +143,12 @@ __all__ = [
     "MotorPolicy",
     "MotorEnv",
     "LeftThresholdReflexPolicy",
+    "PatternMemory",
+    "PatternMemoryEntry",
+    "PatternMemoryFeatures",
+    "PatternMemoryGeometryEnv",
+    "PatternGeometryObservation",
+    "PatternGeometryStep",
     "VisualCueConfig",
     "VisualCueEncoder",
     "VisualCueObservation",
