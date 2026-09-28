@@ -1,3 +1,5 @@
+import pytest
+
 from dmdod import (
     KeyEvent,
     MotorAction,
@@ -41,7 +43,7 @@ def test_rhythm_episode_finishes_and_accounts_for_targets():
     assert not stats.overloaded
     assert stats.fail_misses == 2
     assert stats.hit_margin_count == 2
-    assert stats.x_accuracy_percent == 0.0
+    assert stats.x_accuracy_percent == pytest.approx(0.0)
     assert env.hit_margins == (
         TimingJudgement.FAIL_MISS,
         TimingJudgement.FAIL_MISS,
@@ -62,7 +64,7 @@ def test_third_undecayed_too_early_is_replaced_by_fail_overload():
 
     stats = env.stats
     assert stats.overloaded
-    assert stats.overload_counter == 1.5
+    assert stats.overload_counter == pytest.approx(1.5)
     assert stats.too_early_presses == 3
     assert stats.fail_overloads == 1
     assert env.hit_margins == (
@@ -71,4 +73,4 @@ def test_third_undecayed_too_early_is_replaced_by_fail_overload():
         TimingJudgement.FAIL_OVERLOAD,
     )
     # XAcc: (0.2 + 0.2 + 0.0) / 3.
-    assert stats.x_accuracy_percent == 100.0 * 0.4 / 3.0
+    assert stats.x_accuracy_percent == pytest.approx(100.0 * 0.4 / 3.0)
