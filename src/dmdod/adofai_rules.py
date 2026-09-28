@@ -12,10 +12,14 @@ STRICT_OPTION_MINIMUM_BPM_CUSTOM = 310.0
 # universal timing-window freeze point in the real game.
 NORMAL_THRESHOLD_BPM = STRICT_OPTION_MINIMUM_BPM_CUSTOM
 
-# DLL fail-bar values for the ordinary (non-multipress) overload path.
+# DLL fail-bar values. Multipress detection itself lives outside the fail bar;
+# these constants model the counters once damage is applied.
 OVERLOAD_LIMIT = 1.0
 OVERLOAD_DAMAGE = 0.5
 OVERLOAD_RECOVERY_PER_BEAT = 0.4
+MULTIPRESS_DAMAGE = 0.35
+MULTIPRESS_RECOVERY_PER_BEAT = 0.2
+MULTIPRESS_RESET_AFTER_BEATS = 6.0
 
 # Base angular boundaries used by ADOFAI before minimum-time clamping.
 PERFECT_BASE_DEG = 30.0
@@ -334,34 +338,55 @@ def normal_accuracy_percent(
 
 @dataclass
 class OverloadCounter:
-    """DLL-style ordinary TooEarly overload state.
+    """DLL fail-bar counters used by ordinary overload and future Multipress logic.
 
-    This intentionally models only the ordinary ``overloadCounter`` path.
-    Multipress has separate counters/state in the game and is not folded into
-    this class.
+    The environment currently applies ordinary TooEarly damage. Multipress
+    detection/queue semantics are intentionally left for the separate input
+    state-machine work, but its fail-bar counter, decay, and six-beat reset are
+    already represented here so the fail-bar model matches the DLL.
     """
 
     value: float = 0.0
+    multipress_value: float = 0.0
+    multipress_reset_beats: float = 0.0
     limit: float = OVERLOAD_LIMIT
     damage: float = OVERLOAD_DAMAGE
     recovery_per_beat: float = OVERLOAD_RECOVERY_PER_BEAT
+    multipress_damage: float = MULTIPRESS_DAMAGE
+    multipress_recovery_per_beat: float = MULTIPRESS_RECOVERY_PER_BEAT
+    multipress_reset_after_beats: float = MULTIPRESS_RESET_AFTER_BEATS
 
     def record_too_early(self) -> bool:
         self.value += self.damage
         return self.overloaded
 
+    def record_multipress(self) -> bool:
+        self.multipress_value += self.multipress_damage
+        self.multipress_reset_beats = 0.0
+        return self.overloaded
+
     def record_valid_hit(self) -> None:
-        """Valid hits do not directly heal the DLL overload counter."""
+        """Valid hits do not directly heal either DLL fail-bar counter."""
 
     def advance_beats(self, beat_delta: float) -> None:
         if beat_delta < 0.0:
             raise ValueError("beat_delta must be non-negative")
         self.value = max(0.0, self.value - self.recovery_per_beat * beat_delta)
+        self.multipress_value = max(
+            0.0,
+            self.multipress_value - self.multipress_recovery_per_beat * beat_delta,
+        )
+        self.multipress_reset_beats += beat_delta
+        if self.multipress_reset_beats > self.multipress_reset_after_beats:
+            self.multipress_value = 0.0
+            self.multipress_reset_beats = 0.0
 
     def rewind(self) -> None:
         self.value = 0.0
+        self.multipress_value = 0.0
+        self.multipress_reset_beats = 0.0
 
     @property
     def overloaded(self) -> bool:
-        # The DLL uses a strict > 1.0 comparison, not >=.
-        return self.value > self.limit
+        # The DLL uses strict > 1.0 comparisons, not >=.
+        return self.value > self.limit or self.multipress_value > self.limit
