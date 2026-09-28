@@ -1,4 +1,4 @@
-from dmdod import MotorAction, RhythmMotorEnv, TargetHit, make_regular_targets
+from dmdod import MotorAction, RhythmMotorEnv, TargetHit, TimingJudgement, make_regular_targets
 
 
 def test_rhythm_observation_does_not_expose_exact_time():
@@ -31,11 +31,18 @@ def test_rhythm_episode_finishes_and_accounts_for_targets():
     assert stats.targets == 2
     assert stats.hits + stats.misses == 2
     assert not stats.overloaded
+    assert stats.fail_misses == 2
+    assert stats.hit_margin_count == 2
+    assert stats.x_accuracy_percent == 0.0
+    assert env.hit_margins == (
+        TimingJudgement.FAIL_MISS,
+        TimingJudgement.FAIL_MISS,
+    )
 
 
 def test_repeated_too_early_inputs_trigger_overload():
     # Put the first target far enough away that a threshold-reflex spammer can
-    # generate three Too Early presses before any legitimate hit window begins.
+    # produce TooEarly inputs before any legitimate hit window begins.
     env = RhythmMotorEnv([TargetHit(3.0, "left")], bpm=180.0, control_dt_s=0.010)
     observation = env.reset()
 
@@ -50,5 +57,7 @@ def test_repeated_too_early_inputs_trigger_overload():
     assert transition is not None and transition.done
     stats = env.stats
     assert stats.overloaded
-    assert stats.overload_counter >= 6
+    assert stats.overload_counter > 1.0
     assert stats.too_early_presses >= 3
+    assert stats.fail_overloads == 1
+    assert env.hit_margins[-1] is TimingJudgement.FAIL_OVERLOAD
