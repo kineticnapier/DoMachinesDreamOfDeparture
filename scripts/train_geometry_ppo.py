@@ -49,6 +49,41 @@ class Rollout:
 
 
 @dataclass(frozen=True)
+class BpmSlice:
+    bpm: float
+    episodes: int
+    hits: int
+    targets: int
+    full: int
+    clean: int
+    errors_ms: tuple[float, ...]
+
+    @property
+    def hit_rate(self) -> float:
+        return self.hits / max(1, self.targets)
+
+    @property
+    def full_rate(self) -> float:
+        return self.full / max(1, self.episodes)
+
+    @property
+    def clean_rate(self) -> float:
+        return self.clean / max(1, self.episodes)
+
+    @property
+    def mean_error_ms(self) -> float | None:
+        if not self.errors_ms:
+            return None
+        return sum(self.errors_ms) / len(self.errors_ms)
+
+    @property
+    def mae_ms(self) -> float | None:
+        if not self.errors_ms:
+            return None
+        return sum(abs(x) for x in self.errors_ms) / len(self.errors_ms)
+
+
+@dataclass(frozen=True)
 class Probe:
     episodes: int
     hits: int
@@ -58,6 +93,7 @@ class Probe:
     overloads: int
     too_early: int
     errors_ms: tuple[float, ...]
+    bpm_slices: tuple[BpmSlice, ...] = ()
 
     @property
     def hit_rate(self) -> float:
@@ -76,6 +112,21 @@ class Probe:
         if not self.errors_ms:
             return None
         return sum(abs(x) for x in self.errors_ms) / len(self.errors_ms)
+
+    @property
+    def mean_error_ms(self) -> float | None:
+        if not self.errors_ms:
+            return None
+        return sum(self.errors_ms) / len(self.errors_ms)
+
+    @property
+    def max_abs_bpm_bias_ms(self) -> float | None:
+        values = [
+            abs(value)
+            for item in self.bpm_slices
+            if (value := item.mean_error_ms) is not None
+        ]
+        return max(values) if values else None
 
 
 @dataclass(frozen=True)
@@ -154,9 +205,6 @@ def build_curriculum(args: argparse.Namespace) -> tuple[CurriculumPhase, ...]:
     sampled = sampled_vision_config(args)
     final = final_vision_config(args)
     anchor = min(max(180.0, args.bpm_min), args.bpm_max)
-
-    # Keep the successful v0.2 central band, then widen in small steps instead
-    # of jumping directly from roughly 159..222 to 120..300.
     bands = (
         (anchor, anchor, 0.0, "motion-180-clean"),
         (*_bounded_range(args, 159.0, 222.0), 50.0, "bpm-159-222-clean"),
@@ -226,6 +274,23 @@ def bpm_points(low: float, high: float, count: int) -> tuple[float, ...]:
     return tuple(low + (high - low) * i / (count - 1) for i in range(count))
 
 
+def training_bpm_schedule(
+    phase: CurriculumPhase,
+    *,
+    episodes: int,
+    points: int,
+    rng: random.Random,
+) -> list[float]:
+    """Stratify rollouts and deliberately revisit both BPM edges."""
+
+    anchors = list(bpm_points(phase.bpm_min, phase.bpm_max, points))
+    if len(anchors) > 1:
+        anchors = [anchors[0], *anchors, anchors[-1]]
+    schedule = [anchors[i % len(anchors)] for i in range(episodes)]
+    rng.shuffle(schedule)
+    return schedule
+
+
 def make_env(
     *,
     bpm: float,
@@ -262,14 +327,20 @@ def deterministic_probe(
         else tuple(-jitter_s + 2.0 * jitter_s * i / (episodes - 1) for i in range(episodes))
     )
     bpms = bpm_points(phase.bpm_min, phase.bpm_max, eval_bpm_points)
+    buckets: dict[float, dict[str, object]] = {
+        bpm: {"episodes": 0, "hits": 0, "targets": 0, "full": 0, "clean": 0, "errors": []}
+        for bpm in bpms
+    }
+
     hits = targets = full = clean = overloads = too_early = 0
     errors: list[float] = []
     was_training = model.training
     model.eval()
 
     for i, offset in enumerate(offsets):
+        bpm = bpms[i % len(bpms)]
         env = make_env(
-            bpm=bpms[i % len(bpms)],
+            bpm=bpm,
             notes=phase.notes,
             start_s=max(0.050, curriculum_start_s(phase.notes) + offset),
             control_dt=control_dt,
@@ -290,17 +361,52 @@ def deterministic_probe(
         stats = env.stats
         is_full = stats.hits == stats.targets and not stats.overloaded
         is_clean = is_full and stats.too_early_presses == 0
+        episode_errors = env.timing_errors_ms
+
         hits += stats.hits
         targets += stats.targets
         full += int(is_full)
         clean += int(is_clean)
         overloads += int(stats.overloaded)
         too_early += stats.too_early_presses
-        errors.extend(env.timing_errors_ms)
+        errors.extend(episode_errors)
+
+        bucket = buckets[bpm]
+        bucket["episodes"] = int(bucket["episodes"]) + 1
+        bucket["hits"] = int(bucket["hits"]) + stats.hits
+        bucket["targets"] = int(bucket["targets"]) + stats.targets
+        bucket["full"] = int(bucket["full"]) + int(is_full)
+        bucket["clean"] = int(bucket["clean"]) + int(is_clean)
+        bucket_errors = bucket["errors"]
+        assert isinstance(bucket_errors, list)
+        bucket_errors.extend(episode_errors)
 
     if was_training:
         model.train()
-    return Probe(episodes, hits, targets, full, clean, overloads, too_early, tuple(errors))
+
+    slices = tuple(
+        BpmSlice(
+            bpm=bpm,
+            episodes=int(bucket["episodes"]),
+            hits=int(bucket["hits"]),
+            targets=int(bucket["targets"]),
+            full=int(bucket["full"]),
+            clean=int(bucket["clean"]),
+            errors_ms=tuple(float(x) for x in bucket["errors"]),
+        )
+        for bpm, bucket in buckets.items()
+    )
+    return Probe(
+        episodes,
+        hits,
+        targets,
+        full,
+        clean,
+        overloads,
+        too_early,
+        tuple(errors),
+        slices,
+    )
 
 
 def full_vision_phase(args: argparse.Namespace, notes: int) -> CurriculumPhase:
@@ -341,7 +447,12 @@ def previous_note_probes(
     return Retention(tuple(result))
 
 
-def passes(probe: Probe, retention: Retention, args: argparse.Namespace, notes: int) -> bool:
+def completion_passes(
+    probe: Probe,
+    retention: Retention,
+    args: argparse.Namespace,
+    notes: int,
+) -> bool:
     if probe.overloads or retention.overloads:
         return False
     if retention.min_hit_rate < args.retention_hit_rate:
@@ -349,12 +460,28 @@ def passes(probe: Probe, retention: Retention, args: argparse.Namespace, notes: 
     if retention.min_full_rate < args.retention_full_rate:
         return False
     if notes == 1:
-        return probe.clean_rate >= args.stage1_clean_rate
+        return probe.hit_rate >= args.stage1_hit_rate and probe.full_rate >= args.stage1_full_rate
     return probe.hit_rate >= args.advance_hit_rate and probe.full_rate >= args.advance_full_rate
+
+
+def precision_passes(probe: Probe, args: argparse.Namespace, notes: int) -> bool:
+    if notes != 1:
+        return True
+    if probe.clean_rate < args.stage1_clean_rate:
+        return False
+    bias = probe.max_abs_bpm_bias_ms
+    if bias is not None and bias > args.precision_max_bpm_bias_ms:
+        return False
+    return True
+
+
+def passes(probe: Probe, retention: Retention, args: argparse.Namespace, notes: int) -> bool:
+    return completion_passes(probe, retention, args, notes) and precision_passes(probe, args, notes)
 
 
 def rank_key(probe: Probe, retention: Retention) -> tuple[float, ...]:
     mae = probe.mae_ms
+    bias = probe.max_abs_bpm_bias_ms
     return (
         1.0 if retention.overloads == 0 else 0.0,
         -float(retention.overloads),
@@ -363,10 +490,17 @@ def rank_key(probe: Probe, retention: Retention) -> tuple[float, ...]:
         1.0 if probe.overloads == 0 else 0.0,
         -float(probe.overloads),
         probe.hit_rate,
-        probe.clean_rate,
         probe.full_rate,
+        probe.clean_rate,
+        -(bias if bias is not None else float("inf")),
         -(mae if mae is not None else float("inf")),
     )
+
+
+def _fmt_ms(value: float | None, *, signed: bool = False) -> str:
+    if value is None:
+        return "--"
+    return f"{value:+.1f}" if signed else f"{value:.1f}"
 
 
 def print_probe(label: str, probe: Probe) -> None:
@@ -374,8 +508,38 @@ def print_probe(label: str, probe: Probe) -> None:
         f"{label}hit={probe.hit_rate:.3f} full={probe.full}/{probe.episodes} "
         f"clean={probe.clean}/{probe.episodes} ovl={probe.overloads}/{probe.episodes} "
         f"early={probe.too_early/max(1, probe.episodes):.2f}/run "
-        f"MAE={'--' if probe.mae_ms is None else f'{probe.mae_ms:.1f}ms'}"
+        f"meanErr={_fmt_ms(probe.mean_error_ms, signed=True)}ms "
+        f"MAE={_fmt_ms(probe.mae_ms)}ms"
     )
+    if probe.bpm_slices:
+        print(
+            "      BPM: "
+            + " | ".join(
+                f"{item.bpm:g} hit={item.hit_rate:.2f} full={item.full_rate:.2f} "
+                f"err={_fmt_ms(item.mean_error_ms, signed=True)}ms"
+                for item in probe.bpm_slices
+            )
+        )
+
+
+def print_gate_status(
+    probe: Probe,
+    retention: Retention,
+    args: argparse.Namespace,
+    notes: int,
+) -> None:
+    completion = completion_passes(probe, retention, args, notes)
+    precision = precision_passes(probe, args, notes)
+    bias = probe.max_abs_bpm_bias_ms
+    if notes == 1:
+        print(
+            f"      gates: completion={'PASS' if completion else 'pending'} "
+            f"precision={'PASS' if precision else 'pending'} "
+            f"clean={probe.clean_rate:.3f}/{args.stage1_clean_rate:.3f} "
+            f"maxBpmBias={_fmt_ms(bias)}ms/{args.precision_max_bpm_bias_ms:.1f}ms"
+        )
+    else:
+        print(f"      gate: completion={'PASS' if completion else 'pending'}")
 
 
 def collect_rollout(
@@ -386,11 +550,16 @@ def collect_rollout(
     control_dt: float,
     gamma: float,
     rng: random.Random,
+    bpm_override: float | None = None,
 ) -> Rollout:
     bpm = (
-        phase.bpm_min
-        if abs(phase.bpm_max - phase.bpm_min) < 1e-12
-        else rng.uniform(phase.bpm_min, phase.bpm_max)
+        bpm_override
+        if bpm_override is not None
+        else (
+            phase.bpm_min
+            if abs(phase.bpm_max - phase.bpm_min) < 1e-12
+            else rng.uniform(phase.bpm_min, phase.bpm_max)
+        )
     )
     start_s = max(
         0.050,
@@ -484,11 +653,7 @@ def ppo_update(
         advantages = torch.cat(normalized_advantages)
         ratios = torch.exp(new_log_probs - old_log_probs)
         unclipped = ratios * advantages
-        clipped = torch.clamp(
-            ratios,
-            1.0 - args.ppo_clip,
-            1.0 + args.ppo_clip,
-        ) * advantages
+        clipped = torch.clamp(ratios, 1.0 - args.ppo_clip, 1.0 + args.ppo_clip) * advantages
         policy_loss = -torch.minimum(unclipped, clipped).mean()
         value_loss = ((new_values - returns) ** 2).mean()
         entropy = entropies.mean()
@@ -520,16 +685,14 @@ def warm_start(
     saved = torch.load(checkpoint, map_location=device)
     source = saved["model"]
     target = model.state_dict()
-    copied: list[str] = []
 
-    if saved.get("experiment") == "planet-geometry-sequence-v0.2":
+    if saved.get("experiment") in {"planet-geometry-sequence-v0.2", "planet-geometry-ppo-v0.3"}:
         compatible = all(name in source and source[name].shape == value.shape for name, value in target.items())
         if compatible:
             model.load_state_dict(source)
-            return "all recurrent v0.2 weights"
+            return "all recurrent weights"
 
-    # Fallback for the old Gaussian feed-forward checkpoint: carry motor/action
-    # skill, but never transplant its cue columns into geometry inputs.
+    copied: list[str] = []
     first = source.get("backbone.0.weight")
     if first is not None and first.shape[0] == target["input_layer.weight"].shape[0]:
         columns = min(6, first.shape[1], target["input_layer.weight"].shape[1])
@@ -567,7 +730,7 @@ def save_checkpoint(
     path.parent.mkdir(parents=True, exist_ok=True)
     torch.save(
         {
-            "format_version": 9,
+            "format_version": 10,
             "experiment": "planet-geometry-ppo-v0.3",
             "model": model.state_dict(),
             "optimizer": optimizer.state_dict(),
@@ -596,6 +759,7 @@ def save_checkpoint(
                 "clip": args.ppo_clip,
                 "target_kl": args.target_kl,
                 "rollback_drop": args.rollback_drop,
+                "train_bpm_points": args.train_bpm_points,
             },
             "probe": {
                 "episodes": probe.episodes,
@@ -603,7 +767,9 @@ def save_checkpoint(
                 "full_rate": probe.full_rate,
                 "clean_rate": probe.clean_rate,
                 "overloads": probe.overloads,
+                "mean_error_ms": probe.mean_error_ms,
                 "mae_ms": probe.mae_ms,
+                "max_abs_bpm_bias_ms": probe.max_abs_bpm_bias_ms,
             },
         },
         path,
@@ -645,7 +811,7 @@ def train(args: argparse.Namespace) -> None:
         resume_phase = int(saved.get("curriculum_phase_index", 1)) - 1
         global_update = int(saved.get("global_update", 0))
 
-    print("=== Planet Geometry Recurrent PPO v0.3 ===")
+    print("=== Planet Geometry Recurrent PPO v0.3.1 ===")
     print("policy: GRU; PPO uses complete episode sequences")
     print("agent-visible: motor + orbit(x,y) + next-tile vector(x,y)")
     print("hidden: timestamp, BPM, target angle, angle error, rotation-direction flag")
@@ -654,8 +820,15 @@ def train(args: argparse.Namespace) -> None:
         f"clip={args.ppo_clip:.2f}, target-KL={args.target_kl:.3f}, lr={args.lr:g}"
     )
     print(
-        f"catastrophic rollback: restore best if hit rate drops by >{args.rollback_drop:.2f}"
+        f"probe: {args.eval_episodes} episodes, {args.eval_bpm_points} BPM points; "
+        f"training: {args.train_bpm_points} stratified BPM points with edge oversampling"
     )
+    print(
+        f"one-note gates: hit>={args.stage1_hit_rate:.2f}, full>={args.stage1_full_rate:.2f}; "
+        f"precision clean>={args.stage1_clean_rate:.2f}, "
+        f"max BPM bias<={args.precision_max_bpm_bias_ms:.0f}ms"
+    )
+    print(f"catastrophic rollback: restore best if hit/full drops by >{args.rollback_drop:.2f}")
     print("curriculum: " + " -> ".join(phase.name for phase in phases))
     print()
 
@@ -669,8 +842,7 @@ def train(args: argparse.Namespace) -> None:
         )
         print(
             f"--- phase {phase_index}/{len(phases)} {phase.name}: {phase.notes} note(s), "
-            f"BPM={phase.bpm_min:g}..{phase.bpm_max:g}, "
-            f"jitter=±{phase.train_phase_jitter_ms:g}ms ---"
+            f"BPM={phase.bpm_min:g}..{phase.bpm_max:g}, jitter=±{phase.train_phase_jitter_ms:g}ms ---"
         )
         baseline = deterministic_probe(
             model,
@@ -681,10 +853,9 @@ def train(args: argparse.Namespace) -> None:
             eval_bpm_points=args.eval_bpm_points,
             seed_base=args.seed * 1000000 + phase_index * 10000,
         )
-        retention = previous_note_probes(
-            model, device, previous_notes=previous_notes, args=args
-        )
+        retention = previous_note_probes(model, device, previous_notes=previous_notes, args=args)
         print_probe("  baseline: ", baseline)
+        print_gate_status(baseline, retention, args, phase.notes)
         if passes(baseline, retention, args, phase.notes):
             print("  phase already passed")
             save_checkpoint(
@@ -720,10 +891,18 @@ def train(args: argparse.Namespace) -> None:
         for phase_update in range(1, args.updates_per_phase + 1):
             global_update += 1
             rollouts: list[Rollout] = []
-            for _ in range(args.rollout_episodes):
+            bpm_schedule = training_bpm_schedule(
+                phase,
+                episodes=args.rollout_episodes,
+                points=args.train_bpm_points,
+                rng=rng,
+            )
+            for rollout_index in range(args.rollout_episodes):
                 rollout_phase = phase
+                bpm_override: float | None = bpm_schedule[rollout_index]
                 if previous_notes and rng.random() < args.previous_stage_replay:
                     rollout_phase = full_vision_phase(args, rng.choice(previous_notes))
+                    bpm_override = None
                 rollouts.append(
                     collect_rollout(
                         model,
@@ -732,6 +911,7 @@ def train(args: argparse.Namespace) -> None:
                         control_dt=args.control_dt,
                         gamma=args.gamma,
                         rng=rng,
+                        bpm_override=bpm_override,
                     )
                 )
 
@@ -744,7 +924,8 @@ def train(args: argparse.Namespace) -> None:
             print(
                 f"  upd {phase_update:3d}/{args.updates_per_phase} global={global_update:4d} "
                 f"rollout-hit={rollout_hit:.3f} reward={rollout_reward:+.3f} "
-                f"ovl={rollout_overload}/{len(rollouts)} sigma={model.log_std.detach().exp().mean().item():.3f} "
+                f"ovl={rollout_overload}/{len(rollouts)} "
+                f"sigma={model.log_std.detach().exp().mean().item():.3f} "
                 f"pi={policy_loss:+.4f} v={value_loss:.4f} H={entropy:.3f} "
                 f"KL={approx_kl:.4f} epochs={epochs_done}"
             )
@@ -761,10 +942,9 @@ def train(args: argparse.Namespace) -> None:
                 eval_bpm_points=args.eval_bpm_points,
                 seed_base=args.seed * 1000000 + phase_index * 10000,
             )
-            retention = previous_note_probes(
-                model, device, previous_notes=previous_notes, args=args
-            )
+            retention = previous_note_probes(model, device, previous_notes=previous_notes, args=args)
             print_probe("    eval: ", probe)
+            print_gate_status(probe, retention, args, phase.notes)
             key = rank_key(probe, retention)
 
             if key > best_key:
@@ -787,6 +967,7 @@ def train(args: argparse.Namespace) -> None:
 
             catastrophic = (
                 probe.hit_rate < best_probe.hit_rate - args.rollback_drop
+                or probe.full_rate < best_probe.full_rate - args.rollback_drop
                 or (best_probe.overloads == 0 and probe.overloads > 0)
             )
             if catastrophic:
@@ -795,20 +976,28 @@ def train(args: argparse.Namespace) -> None:
                 for group in optimizer.param_groups:
                     group["lr"] = max(args.min_lr, float(group["lr"]) * args.rollback_lr_factor)
                 print(
-                    f"    rollback -> best hit={best_probe.hit_rate:.3f}; "
-                    f"lr={optimizer.param_groups[0]['lr']:.2e}"
+                    f"    rollback -> best hit={best_probe.hit_rate:.3f} "
+                    f"full={best_probe.full_rate:.3f}; lr={optimizer.param_groups[0]['lr']:.2e}"
                 )
                 continue
 
             if passes(probe, retention, args, phase.notes):
                 phase_passed = True
-                print("    phase passed")
+                print("    phase passed (completion + precision)")
                 print()
                 break
 
         if not phase_passed:
             model.load_state_dict(best_model)
             optimizer.load_state_dict(best_optimizer)
+            if completion_passes(best_probe, best_retention, args, phase.notes):
+                print(
+                    f"precision target not fully met at {phase.name}; advancing on stable completion gate "
+                    f"(hit={best_probe.hit_rate:.3f}, full={best_probe.full_rate:.3f}, "
+                    f"clean={best_probe.clean_rate:.3f}, maxBias={_fmt_ms(best_probe.max_abs_bpm_bias_ms)}ms)"
+                )
+                print()
+                continue
             print(
                 f"curriculum stopped at {phase.name}; best hit={best_probe.hit_rate:.3f}, "
                 f"full={best_probe.full_rate:.3f}"
@@ -844,14 +1033,18 @@ def main() -> None:
     parser.add_argument("--rollback-drop", type=float, default=0.20)
     parser.add_argument("--rollback-lr-factor", type=float, default=0.70)
     parser.add_argument("--initial-log-std", type=float, default=-0.70)
-    parser.add_argument("--eval-every-updates", type=int, default=1)
-    parser.add_argument("--eval-episodes", type=int, default=20)
+    parser.add_argument("--eval-every-updates", type=int, default=2)
+    parser.add_argument("--eval-episodes", type=int, default=50)
     parser.add_argument("--eval-bpm-points", type=int, default=5)
-    parser.add_argument("--retention-episodes", type=int, default=10)
+    parser.add_argument("--train-bpm-points", type=int, default=5)
+    parser.add_argument("--retention-episodes", type=int, default=20)
     parser.add_argument("--train-phase-jitter-ms", type=float, default=100.0)
     parser.add_argument("--eval-phase-jitter-ms", type=float, default=100.0)
     parser.add_argument("--previous-stage-replay", type=float, default=0.20)
+    parser.add_argument("--stage1-hit-rate", type=float, default=0.95)
+    parser.add_argument("--stage1-full-rate", type=float, default=0.95)
     parser.add_argument("--stage1-clean-rate", type=float, default=0.80)
+    parser.add_argument("--precision-max-bpm-bias-ms", type=float, default=60.0)
     parser.add_argument("--advance-hit-rate", type=float, default=0.90)
     parser.add_argument("--advance-full-rate", type=float, default=0.80)
     parser.add_argument("--retention-hit-rate", type=float, default=0.70)
@@ -871,14 +1064,35 @@ def main() -> None:
         parser.error("BPM domain must satisfy 0 < bpm-min <= bpm-max")
     if args.ppo_epochs <= 0 or not 0.0 < args.ppo_clip < 1.0:
         parser.error("invalid PPO epoch/clip settings")
-    if args.eval_every_updates <= 0 or args.eval_episodes <= 0 or args.eval_bpm_points <= 0:
-        parser.error("evaluation settings must be positive")
+    if (
+        args.eval_every_updates <= 0
+        or args.eval_episodes <= 0
+        or args.eval_bpm_points <= 0
+        or args.train_bpm_points <= 0
+    ):
+        parser.error("evaluation/training BPM settings must be positive")
+    if args.retention_episodes <= 0:
+        parser.error("retention-episodes must be positive")
     if not 0.0 <= args.previous_stage_replay <= 1.0:
         parser.error("previous-stage-replay must be between 0 and 1")
     if not 0.0 <= args.vision_dropout <= 1.0:
         parser.error("vision-dropout must be between 0 and 1")
     if args.rollback_drop < 0.0 or not 0.0 < args.rollback_lr_factor <= 1.0:
         parser.error("invalid rollback settings")
+    if args.precision_max_bpm_bias_ms <= 0.0:
+        parser.error("precision-max-bpm-bias-ms must be positive")
+    for name in (
+        "stage1_hit_rate",
+        "stage1_full_rate",
+        "stage1_clean_rate",
+        "advance_hit_rate",
+        "advance_full_rate",
+        "retention_hit_rate",
+        "retention_full_rate",
+    ):
+        if not 0.0 <= getattr(args, name) <= 1.0:
+            parser.error(f"{name.replace('_', '-')} must be between 0 and 1")
+
     train(args)
 
 
