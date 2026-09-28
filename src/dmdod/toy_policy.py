@@ -12,14 +12,18 @@ except ImportError as exc:  # pragma: no cover - optional RL dependency
 
 from .geometry_rhythm_env import GeometryRhythmObservation
 from .motor_env import MotorAction
+from .pattern_geometry_env import PatternGeometryObservation
 from .rhythm_env import RhythmObservation
 
 
 GAUSSIAN_INPUT_DIM = 8
 GEOMETRY_INPUT_DIM = 10
+PATTERN_GEOMETRY_INPUT_DIM = 22
 
 
-def _motor_values(observation: RhythmObservation | GeometryRhythmObservation) -> list[float]:
+def _motor_values(
+    observation: RhythmObservation | GeometryRhythmObservation | PatternGeometryObservation,
+) -> list[float]:
     m = observation.motor
     # Fixed values here are unit conversions / broad physical scales, not chart
     # timing information. Exact simulator/chart time remains unavailable.
@@ -34,13 +38,33 @@ def _motor_values(observation: RhythmObservation | GeometryRhythmObservation) ->
 
 
 def observation_tensor(
-    observation: RhythmObservation | GeometryRhythmObservation,
+    observation: RhythmObservation | GeometryRhythmObservation | PatternGeometryObservation,
     device: torch.device,
 ) -> torch.Tensor:
     """Convert only agent-visible observations into the policy input tensor."""
 
     values = _motor_values(observation)
-    if isinstance(observation, GeometryRhythmObservation):
+    if isinstance(observation, PatternGeometryObservation):
+        g = observation.geometry
+        p = observation.pattern
+        values.extend([g.orbit_x, g.orbit_y, g.next_x, g.next_y])
+        values.extend(
+            [
+                p.delta_orbit_x,
+                p.delta_orbit_y,
+                p.delta_next_x,
+                p.delta_next_y,
+                p.shared_timing_correction,
+                p.shared_action_left,
+                p.shared_action_right,
+                p.shared_confidence,
+                p.chart_timing_correction,
+                p.chart_action_left,
+                p.chart_action_right,
+                p.chart_confidence,
+            ]
+        )
+    elif isinstance(observation, GeometryRhythmObservation):
         g = observation.geometry
         values.extend([g.orbit_x, g.orbit_y, g.next_x, g.next_y])
     else:
