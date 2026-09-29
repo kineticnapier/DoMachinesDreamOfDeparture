@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import io
 import sys
 from pathlib import Path
 
@@ -11,6 +12,18 @@ if str(SCRIPTS) not in sys.path:
     sys.path.insert(0, str(SCRIPTS))
 
 import train_real_chart_v090 as v090
+
+
+def test_console_stream_escapes_characters_missing_from_cp932() -> None:
+    raw = io.BytesIO()
+    stream = io.TextIOWrapper(raw, encoding="cp932", errors="strict")
+
+    v090._configure_text_stream(stream)
+    stream.write("집")
+    stream.flush()
+
+    assert stream.errors == "backslashreplace"
+    assert raw.getvalue() == b"\\uc9d1"
 
 
 def test_imminent_press_mask_looks_back_from_teacher_press() -> None:
