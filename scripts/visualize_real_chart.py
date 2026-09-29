@@ -11,6 +11,7 @@ import torch
 import eval_real_chart as evaluator
 import eval_real_chart_v070 as v070_eval
 import train_real_chart_v054 as v054
+from fatal_diagnostics import FatalTrackingMixin, fatal_summary, format_fatal_summary
 from dmdod.adofai_playable import build_playable_segment
 from dmdod.adofai_timing import load_compiled_adofai
 from dmdod.keyboard import KeyEvent
@@ -62,11 +63,11 @@ class _ReplayRecorderMixin:
         return reward
 
 
-class ReplayRealChartEnv(_ReplayRecorderMixin, v054.DiagnosticRealChartMotorEnv):
+class ReplayRealChartEnv(_ReplayRecorderMixin, FatalTrackingMixin, v054.DiagnosticRealChartMotorEnv):
     """Replay recorder for the legacy 233D observation."""
 
 
-class ReplayHudRealChartEnv(_ReplayRecorderMixin, DiagnosticHudRealChartMotorEnv):
+class ReplayHudRealChartEnv(_ReplayRecorderMixin, FatalTrackingMixin, DiagnosticHudRealChartMotorEnv):
     """Replay recorder for the v0.7+ 245D human-visible HUD observation."""
 
 
@@ -113,7 +114,7 @@ def _collect_replay(
     device: torch.device,
     env_cls=ReplayRealChartEnv,
     encoder=encode_real_chart_observation,
-) -> tuple[dict, object]:
+) -> tuple[dict, object, object]:
     env = env_cls(
         segment,
         same_hand=same_hand,
@@ -154,6 +155,7 @@ def _collect_replay(
         for floor in segment.chart.floors
     ]
     stats = env.stats
+    fatal = fatal_summary(env)
     data = {
         "frames": frames,
         "floors": floors,
@@ -173,9 +175,14 @@ def _collect_replay(
             "early": int(stats.too_early_presses),
             "overload": bool(stats.overloaded),
             "keydowns": int(env.physical_keydowns),
+            "clear": bool(fatal["clear"]),
+            "fatal_reason": fatal["fatal_reason"],
+            "fatal_floor": fatal["fatal_floor"],
+            "fatal_time_s": None if fatal["fatal_time_s"] is None else _finite(fatal["fatal_time_s"], 4),
+            "survived_targets": int(fatal["survived_targets"]),
         },
     }
-    return data, v054.StudentEvalResult(stats, env.physical_keydowns)
+    return data, v054.StudentEvalResult(stats, env.physical_keydowns), env
 
 
 def _json_for_script(value: object) -> str:
@@ -267,7 +274,8 @@ let idx=0, playing=false, lastWall=0, replayClock=F.length?F[0][0]:0;
 scrub.max=Math.max(0,F.length-1);
 document.getElementById('source').textContent=M.chart+'  ←  '+M.checkpoint;
 const r=D.result;
-document.getElementById('final').textContent=`FINAL: H=${{r.hits}}/${{D.segment.targets}}  X=${{r.xacc.toFixed(2)}}%  PP=${{r.pp.toFixed(1)}}%  MAE=${{r.mae===null?'—':r.mae.toFixed(2)+'ms'}}  early=${{r.early}}  overload=${{r.overload}}  keydowns=${{r.keydowns}}`;
+const fatal=r.clear?'clear=True':`clear=False fatal=${{r.fatal_reason}} floor=${{r.fatal_floor}} t=${{r.fatal_time_s.toFixed(3)}}s survived=${{r.survived_targets}}/${{D.segment.targets}}`;
+document.getElementById('final').textContent=`FINAL: H=${{r.hits}}/${{D.segment.targets}}  X=${{r.xacc.toFixed(2)}}%  PP=${{r.pp.toFixed(1)}}%  MAE=${{r.mae===null?'—':r.mae.toFixed(2)+'ms'}}  early=${{r.early}}  overload=${{r.overload}}  keydowns=${{r.keydowns}} | ADOFAI-style ${{fatal}}`;
 function setBar(pos,neg,v){{ const a=Math.min(1,Math.abs(v))*50; pos.style.width=(v>=0?a:0)+'%'; neg.style.width=(v<0?a:0)+'%'; }}
 function eventText(e){{ const delta=e.target_t===null?'':` Δ=${{((e.t-e.target_t)*1000).toFixed(1)}}ms`; return `${{e.t.toFixed(3)}}s ${{e.key}} floor=${{e.floor??'—'}} ${{e.judgement??'NO_TARGET'}}${{delta}}`; }}
 function draw(){{
@@ -367,7 +375,7 @@ def main() -> None:
         f"body={'same-hand' if same_hand else 'cross-hand'}({hand_source}) "
         f"control={control_dt_s * 1000.0:.1f}ms({control_source}) training=DISABLED"
     )
-    data, result = _collect_replay(
+    data, result, env = _collect_replay(
         model,
         segment,
         same_hand=same_hand,
@@ -377,6 +385,7 @@ def main() -> None:
         encoder=encoder,
     )
     print(v054._format_eval("replay eval", result))
+    print(format_fatal_summary(env))
 
     output = Path(args.output)
     output.parent.mkdir(parents=True, exist_ok=True)
