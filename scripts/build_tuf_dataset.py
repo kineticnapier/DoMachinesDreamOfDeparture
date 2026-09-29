@@ -4,7 +4,8 @@ import argparse
 from collections import Counter
 from pathlib import Path
 
-from dmdod.tuf_dataset import build_dataset, fetch_candidates, select_dataset
+from dmdod.tuf_dataset import build_dataset, select_dataset
+from dmdod.tuf_dataset_parallel import fetch_candidates_parallel
 
 
 def _print_selection(role: str, items) -> None:
@@ -55,9 +56,20 @@ def main() -> None:
         default=0,
         help="Metadata rows to scan; 0 scans the complete public TUF level database.",
     )
-    parser.add_argument("--page-size", type=int, default=100)
+    parser.add_argument(
+        "--page-size",
+        type=int,
+        default=500,
+        help="Requested first-page size. TUF may clamp it; the actual returned size becomes the stride.",
+    )
+    parser.add_argument(
+        "--workers",
+        type=int,
+        default=6,
+        help="Concurrent metadata page requests after the first page.",
+    )
     parser.add_argument("--min-unique-clears", type=int, default=0)
-    parser.add_argument("--request-delay", type=float, default=0.10)
+    parser.add_argument("--request-delay", type=float, default=0.02)
     parser.add_argument("--download-delay", type=float, default=0.15)
     parser.add_argument("--timeout", type=float, default=60.0)
     parser.add_argument("--dry-run", action="store_true")
@@ -67,15 +79,18 @@ def main() -> None:
         raise SystemExit("--train and --validation must be positive")
     if args.scan_limit < 0 or args.min_unique_clears < 0:
         raise SystemExit("--scan-limit and --min-unique-clears must be non-negative")
-    if args.page_size <= 0 or args.request_delay < 0.0 or args.download_delay < 0.0:
-        raise SystemExit("page size must be positive and delays must be non-negative")
+    if args.page_size <= 0 or args.workers <= 0:
+        raise SystemExit("--page-size and --workers must be positive")
+    if args.request_delay < 0.0 or args.download_delay < 0.0:
+        raise SystemExit("delays must be non-negative")
     if args.timeout <= 0.0:
         raise SystemExit("--timeout must be positive")
 
     print("=== DMDOD TUF Dataset Builder ===")
     print(
         f"scan={'ALL' if args.scan_limit == 0 else args.scan_limit} "
-        f"page={args.page_size} minUniqueClears={args.min_unique_clears} "
+        f"page-request={args.page_size} workers={args.workers} "
+        f"minUniqueClears={args.min_unique_clears} "
         f"target=Train{args.train}+Validation{args.validation}"
     )
 
@@ -89,8 +104,9 @@ def main() -> None:
             total_text = "?" if total is None else str(total)
             print(f"scan: {scanned}/{total_text} rows, eligible={eligible}")
 
-    candidates = fetch_candidates(
+    candidates = fetch_candidates_parallel(
         page_size=args.page_size,
+        workers=args.workers,
         scan_limit=args.scan_limit,
         min_unique_clears=args.min_unique_clears,
         request_delay_s=args.request_delay,
@@ -126,7 +142,8 @@ def main() -> None:
     output = Path(args.output)
     metadata = {
         "scan_limit": args.scan_limit,
-        "page_size": args.page_size,
+        "page_size_requested": args.page_size,
+        "scan_workers": args.workers,
         "min_unique_clears": args.min_unique_clears,
         "candidate_count": len(candidates),
         "curated_candidate_count": curated_count,
