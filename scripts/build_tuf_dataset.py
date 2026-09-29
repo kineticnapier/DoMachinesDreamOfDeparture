@@ -5,7 +5,8 @@ from collections import Counter
 from pathlib import Path
 
 from dmdod.tuf_dataset import build_dataset, select_dataset
-from dmdod.tuf_dataset_parallel import MAX_P_DIFFICULTY, fetch_candidates_parallel
+from dmdod.tuf_dataset_parallel import fetch_candidates_parallel
+from dmdod.tuf_dataset_preflight import select_parser_compatible_dataset
 
 
 def _print_selection(role: str, items) -> None:
@@ -38,8 +39,8 @@ def main() -> None:
     parser = argparse.ArgumentParser(
         description=(
             "Build a DMDOD Train/Validation dataset from public TUF levels. "
-            "The v0.9 curriculum accepts only P1-P6, then prioritizes curation "
-            "and clear evidence while spreading BPM, length, density, songs, and creators."
+            "Selection prioritizes curation and clear evidence, then spreads BPM, "
+            "length, density, difficulty, songs, and creators."
         )
     )
     parser.add_argument("--output", default="data/DMDOD-v090-tuf")
@@ -90,8 +91,7 @@ def main() -> None:
     print(
         f"scan={'ALL' if args.scan_limit == 0 else args.scan_limit} "
         f"page-request={args.page_size} workers={args.workers} "
-        f"difficulty=P1-P{MAX_P_DIFFICULTY} "
-        f"minUniqueClears={args.min_unique_clears} "
+        f"minUniqueClears={args.min_unique_clears} difficulty=P1-P6 "
         f"target=Train{args.train}+Validation{args.validation}"
     )
 
@@ -120,15 +120,29 @@ def main() -> None:
         )
 
     curated_count = sum(item.curated for item in candidates)
-    print(
-        f"candidate pool: {len(candidates)} usable P1-P{MAX_P_DIFFICULTY}, "
-        f"curated={curated_count}"
-    )
-    selection = select_dataset(
-        candidates,
-        train_count=args.train,
-        validation_count=args.validation,
-    )
+    print(f"candidate pool: {len(candidates)} usable, curated={curated_count}")
+
+    rejected: tuple[tuple[int, str], ...] = ()
+    if args.dry_run:
+        selection = select_dataset(
+            candidates,
+            train_count=args.train,
+            validation_count=args.validation,
+        )
+        print("NOTE: dry-run does not download charts; pathData/parser compatibility is checked on real build")
+    else:
+        preflight = select_parser_compatible_dataset(
+            candidates,
+            train_count=args.train,
+            validation_count=args.validation,
+            timeout_s=args.timeout,
+            progress=print,
+        )
+        selection = preflight.selection
+        rejected = preflight.rejected
+        if rejected:
+            print(f"preflight: rejected {len(rejected)} incompatible chart(s); replacements selected")
+
     if selection.relaxed_creator_overlap:
         print("WARNING: creator-disjoint Train/Validation was impossible; creator split was relaxed")
     else:
@@ -148,11 +162,13 @@ def main() -> None:
         "scan_limit": args.scan_limit,
         "page_size_requested": args.page_size,
         "scan_workers": args.workers,
-        "difficulty_band": f"P1-P{MAX_P_DIFFICULTY}",
-        "max_p_difficulty": MAX_P_DIFFICULTY,
         "min_unique_clears": args.min_unique_clears,
+        "difficulty_gate": "P1-P6",
         "candidate_count": len(candidates),
         "curated_candidate_count": curated_count,
+        "parser_preflight_rejected": [
+            {"level_id": level_id, "reason": reason} for level_id, reason in rejected
+        ],
     }
     built = build_dataset(
         selection,
