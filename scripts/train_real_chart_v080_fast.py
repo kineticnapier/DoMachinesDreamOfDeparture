@@ -36,6 +36,15 @@ _VALIDATION_FAILURE_COUNTS: dict[tuple, int] = {}
 _ANCHOR_FAILURE_COUNTS: dict[tuple, int] = {}
 
 
+def _anchor_batches(items: list, size: int = DEFAULT_ANCHOR_BATCH_SIZE):
+    """Yield ordered (start, batch) pairs; retained for test/API compatibility."""
+
+    if size <= 0:
+        raise ValueError("anchor batch size must be positive")
+    for start in range(0, len(items), size):
+        yield start, items[start : start + size]
+
+
 def _cached_direct_evaluate_student(
     model,
     segment,
