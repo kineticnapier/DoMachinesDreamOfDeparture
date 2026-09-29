@@ -1,11 +1,28 @@
 from __future__ import annotations
 
+import re
 import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from typing import Callable
 from urllib.parse import urlencode
 
 from .tuf_dataset import LEVELS_URL, TufCandidate, _request_json, candidate_from_api
+
+
+MAX_P_DIFFICULTY = 6
+_P_DIFFICULTY_RE = re.compile(r"^P([1-9][0-9]*)$", re.IGNORECASE)
+
+
+def is_v090_difficulty_eligible(candidate: TufCandidate) -> bool:
+    """Return whether a TUF chart is in the v0.9 curriculum band.
+
+    v0.9 intentionally trains only on ordinary P difficulties up through P6.
+    G/U/special/unranked charts and P7+ are excluded before quality/diversity
+    selection so extreme charts cannot consume training slots just for novelty.
+    """
+
+    match = _P_DIFFICULTY_RE.fullmatch(candidate.difficulty_name.strip())
+    return match is not None and 1 <= int(match.group(1)) <= MAX_P_DIFFICULTY
 
 
 def _rows_from_payload(payload: dict) -> list[dict]:
@@ -35,11 +52,14 @@ def fetch_candidates_parallel(
 ) -> list[TufCandidate]:
     """Fetch TUF level metadata concurrently while respecting server page clamps.
 
-    The first request is intentionally oversized.  TUF currently clamps large
+    The first request is intentionally oversized. TUF currently clamps large
     ``limit`` values, so the actual number of rows returned by that request is
-    treated as the effective page size.  Remaining offsets are then fetched in
-    parallel.  Selection still happens locally because server-side sort/facet
+    treated as the effective page size. Remaining offsets are then fetched in
+    parallel. Selection still happens locally because server-side sort/facet
     parameters are not reliable enough for dataset construction.
+
+    Only P1-P6 charts enter the returned candidate pool. This curriculum gate is
+    applied before clear-count and curation ranking.
     """
 
     if page_size <= 0:
@@ -63,7 +83,7 @@ def fetch_candidates_parallel(
         return []
 
     # If TUF clamps limit=500/1000 to 100, len(first_rows) tells us the real
-    # stride.  Using the requested limit here would skip most of the database.
+    # stride. Using the requested limit here would skip most of the database.
     effective_page_size = len(first_rows)
     if server_total is None:
         target_total = scan_limit if scan_limit else effective_page_size
@@ -82,6 +102,8 @@ def fetch_candidates_parallel(
             scanned += 1
             candidate = candidate_from_api(raw)
             if candidate is None or candidate.level_id in seen_ids:
+                continue
+            if not is_v090_difficulty_eligible(candidate):
                 continue
             if candidate.unique_clears < min_unique_clears:
                 continue
@@ -110,7 +132,7 @@ def fetch_candidates_parallel(
     with ThreadPoolExecutor(max_workers=workers, thread_name_prefix="tuf-scan") as executor:
         futures = {executor.submit(fetch_page, offset): offset for offset in offsets}
         for future in as_completed(futures):
-            offset, rows = future.result()
+            _offset, rows = future.result()
             remaining = max(0, target_total - scanned)
             if remaining == 0:
                 continue
