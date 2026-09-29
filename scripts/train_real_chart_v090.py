@@ -61,6 +61,10 @@ def _press_persistence_loss(
     positive.  The previous-action commitment mask is detached deliberately:
     the auxiliary term should teach "finish a press you already started", not
     encourage the network to evade the penalty by reducing the preceding action.
+
+    The auxiliary loss is averaged over actual hold-margin violations only.
+    Successful persistence frames must not dilute the cost of one abrupt
+    cancellation, otherwise the legacy BC term can still prefer cancelling.
     """
 
     base = _ORIGINAL_ACTUATION_LOSS(predicted, target)
@@ -70,13 +74,18 @@ def _press_persistence_loss(
         return base
 
     imminent = _imminent_press_mask(target, lookahead_frames)
-    committed_prev = (predicted[:-1].detach() >= float(commit_threshold))
+    committed_prev = predicted[:-1].detach() >= float(commit_threshold)
     should_hold = committed_prev & imminent[1:]
     if not bool(should_hold.any()):
         return base
 
-    cancellation_gap = torch.relu(float(hold_margin) - predicted[1:]).square()
-    persistence = (cancellation_gap * should_hold).sum() / should_hold.sum().clamp_min(1)
+    next_action = predicted[1:]
+    cancellation_gap = torch.relu(float(hold_margin) - next_action).square()
+    violations = should_hold & (next_action < float(hold_margin))
+    if not bool(violations.any()):
+        return base
+
+    persistence = cancellation_gap[violations].mean()
     return base + float(coef) * persistence
 
 
