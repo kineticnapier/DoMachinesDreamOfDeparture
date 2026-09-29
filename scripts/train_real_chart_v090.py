@@ -27,6 +27,31 @@ DEFAULT_HOLD_MARGIN = 0.20
 _ORIGINAL_ACTUATION_LOSS = v054._actuation_loss
 
 
+def _configure_text_stream(stream) -> None:
+    """Keep redirected Windows output alive when chart names exceed CP932.
+
+    PowerShell pipelines can make Python choose CP932 for stdout/stderr.  TUF
+    chart names legitimately contain Korean and other characters outside that
+    code page.  Preserve the active encoding but escape only unencodable
+    characters instead of aborting a long training run with UnicodeEncodeError.
+    """
+
+    reconfigure = getattr(stream, "reconfigure", None)
+    if not callable(reconfigure):
+        return
+    try:
+        reconfigure(errors="backslashreplace")
+    except (OSError, ValueError):
+        # Some wrapped/test streams cannot be reconfigured after I/O.  In that
+        # case retain their existing behavior rather than making startup fail.
+        pass
+
+
+def _configure_console_output() -> None:
+    _configure_text_stream(sys.stdout)
+    _configure_text_stream(sys.stderr)
+
+
 def _imminent_press_mask(target: torch.Tensor, lookahead_frames: int) -> torch.Tensor:
     """Return [T,2] mask: this finger is commanded to press very soon.
 
@@ -130,6 +155,7 @@ def _consume_v090_args(argv: list[str]) -> tuple[argparse.Namespace, list[str]]:
 
 
 def main() -> None:
+    _configure_console_output()
     args, remaining = _consume_v090_args(sys.argv[1:])
     _install_press_persistence(
         coef=args.press_persistence_coef,
