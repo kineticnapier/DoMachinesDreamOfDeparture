@@ -180,8 +180,21 @@ def _choose_adofai_name(candidates: list[str]) -> str:
     ]
     if len(preferred) == 1:
         return preferred[0]
+
+    # Many published ADOFAI chart packages ship one playable chart plus an
+    # editor backup. If exactly one non-backup file remains, that is the chart
+    # the game/editor would normally present to the player.
+    non_backup = [
+        name
+        for name in candidates
+        if "backup" not in Path(name).stem.casefold()
+        and "autosave" not in Path(name).stem.casefold()
+    ]
+    if len(non_backup) == 1:
+        return non_backup[0]
+
     raise ValueError(
-        "chart source contains multiple .adofai files and no unique main.adofai/level.adofai: "
+        "chart source contains multiple .adofai files and no unique playable candidate: "
         + ", ".join(candidates)
     )
 
