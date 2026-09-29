@@ -9,21 +9,28 @@ from pathlib import Path
 import torch
 
 import eval_real_chart as evaluator
+import eval_real_chart_v070 as v070_eval
 import train_real_chart_v054 as v054
 from dmdod.adofai_playable import build_playable_segment
 from dmdod.adofai_timing import load_compiled_adofai
 from dmdod.keyboard import KeyEvent
 from dmdod.real_chart_features import (
     DEFAULT_REAL_CHART_FEATURE_CONFIG,
+    REAL_CHART_INPUT_DIM,
     encode_real_chart_observation,
+)
+from dmdod.real_chart_hud import DiagnosticHudRealChartMotorEnv
+from dmdod.real_chart_hud_features import (
+    HUD_REAL_CHART_INPUT_DIM,
+    encode_hud_real_chart_observation,
 )
 
 
 DEFAULT_OUTPUT = "artifacts/real_chart_replay.html"
 
 
-class ReplayRealChartEnv(v054.DiagnosticRealChartMotorEnv):
-    """Evaluation-only environment that records physical KeyDown judgements."""
+class _ReplayRecorderMixin:
+    """Record physical KeyDown judgements without changing environment semantics."""
 
     def __init__(self, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
@@ -55,6 +62,14 @@ class ReplayRealChartEnv(v054.DiagnosticRealChartMotorEnv):
         return reward
 
 
+class ReplayRealChartEnv(_ReplayRecorderMixin, v054.DiagnosticRealChartMotorEnv):
+    """Replay recorder for the legacy 233D observation."""
+
+
+class ReplayHudRealChartEnv(_ReplayRecorderMixin, DiagnosticHudRealChartMotorEnv):
+    """Replay recorder for the v0.7+ 245D human-visible HUD observation."""
+
+
 def _finite(value: float, digits: int = 6) -> float:
     value = float(value)
     if not math.isfinite(value):
@@ -62,7 +77,7 @@ def _finite(value: float, digits: int = 6) -> float:
     return round(value, digits)
 
 
-def _record_frame(env: ReplayRealChartEnv, observation, action_left: float, action_right: float) -> list:
+def _record_frame(env, observation, action_left: float, action_right: float) -> list:
     now = env.privileged_episode_time_s()
     chart_time = env.segment.chart_time_from_episode(now)
     floor_index = env._floor_index_at_chart_time(chart_time)
@@ -89,8 +104,17 @@ def _record_frame(env: ReplayRealChartEnv, observation, action_left: float, acti
     ]
 
 
-def _collect_replay(model, segment, *, same_hand: bool, control_dt_s: float, device: torch.device) -> tuple[dict, object]:
-    env = ReplayRealChartEnv(
+def _collect_replay(
+    model,
+    segment,
+    *,
+    same_hand: bool,
+    control_dt_s: float,
+    device: torch.device,
+    env_cls=ReplayRealChartEnv,
+    encoder=encode_real_chart_observation,
+) -> tuple[dict, object]:
+    env = env_cls(
         segment,
         same_hand=same_hand,
         control_dt_s=control_dt_s,
@@ -105,7 +129,7 @@ def _collect_replay(model, segment, *, same_hand: bool, control_dt_s: float, dev
     with torch.no_grad():
         for _ in range(max_steps):
             x = torch.tensor(
-                encode_real_chart_observation(observation),
+                encoder(observation),
                 dtype=torch.float32,
                 device=device,
             )
@@ -276,6 +300,28 @@ draw();
 </main></body></html>"""
 
 
+def _load_visualizer_backend(payload: dict, *, device: torch.device):
+    input_dim = int(payload.get("input_dim", -1))
+    if input_dim == HUD_REAL_CHART_INPUT_DIM:
+        return (
+            v070_eval._load_hud_model(payload, device=device),
+            ReplayHudRealChartEnv,
+            encode_hud_real_chart_observation,
+            f"HUD {HUD_REAL_CHART_INPUT_DIM}D",
+        )
+    if input_dim == REAL_CHART_INPUT_DIM:
+        return (
+            evaluator._load_model(payload, device=device),
+            ReplayRealChartEnv,
+            encode_real_chart_observation,
+            f"legacy {REAL_CHART_INPUT_DIM}D",
+        )
+    raise SystemExit(
+        f"checkpoint input dimension {input_dim} is unsupported by visualizer "
+        f"({REAL_CHART_INPUT_DIM}D legacy / {HUD_REAL_CHART_INPUT_DIM}D HUD)"
+    )
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(
         description="Generate a self-contained browser replay of a DMDOD real-chart checkpoint."
@@ -300,7 +346,7 @@ def main() -> None:
     payload = torch.load(checkpoint_path, map_location=device)
     if not isinstance(payload, dict):
         raise SystemExit("checkpoint payload is not a dictionary")
-    model = evaluator._load_model(payload, device=device)
+    model, env_cls, encoder, observation_label = _load_visualizer_backend(payload, device=device)
     same_hand, control_dt_s, hand_source, control_source = evaluator._resolve_eval_config(
         payload,
         same_hand_override=args.same_hand_override,
@@ -317,6 +363,7 @@ def main() -> None:
     print(f"checkpoint={checkpoint_path} chart={args.chart}")
     print(
         f"segment={start_s:g}..{end_s:g}s targets={len(segment.targets)} "
+        f"observation={observation_label} "
         f"body={'same-hand' if same_hand else 'cross-hand'}({hand_source}) "
         f"control={control_dt_s * 1000.0:.1f}ms({control_source}) training=DISABLED"
     )
@@ -326,6 +373,8 @@ def main() -> None:
         same_hand=same_hand,
         control_dt_s=control_dt_s,
         device=device,
+        env_cls=env_cls,
+        encoder=encoder,
     )
     print(v054._format_eval("replay eval", result))
 
