@@ -142,3 +142,18 @@ def test_train_proposal_cache_distinguishes_sequence_order(monkeypatch):
         )
 
     assert calls["count"] == 2
+
+
+def test_parallel_eval_defaults_to_physical_core_guess_and_allows_override(monkeypatch):
+    monkeypatch.delenv("DMDOD_EVAL_WORKERS", raising=False)
+    monkeypatch.setattr(trainer.os, "cpu_count", lambda: 12)
+    assert trainer._configured_eval_workers() == 6
+
+    monkeypatch.setenv("DMDOD_EVAL_WORKERS", "3")
+    assert trainer._configured_eval_workers() == 3
+
+
+def test_parallel_eval_worker_count_rejects_invalid_override(monkeypatch):
+    monkeypatch.setenv("DMDOD_EVAL_WORKERS", "wat")
+    with pytest.raises(SystemExit, match="DMDOD_EVAL_WORKERS"):
+        trainer._configured_eval_workers()
