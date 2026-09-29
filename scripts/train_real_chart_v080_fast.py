@@ -8,38 +8,32 @@ Only evaluation scheduling changes:
 
 * bootstrap evaluates anchors + validation in one shared process-pool wave;
 * direct serial student evaluation is cached by exact state + segment identity;
-* validation guards are evaluated one segment at a time and stop dead candidates;
-* anchor guards are evaluated in small batches and stop dead candidates;
-* anchors that historically reject more candidates are tried earlier, while a
-  fully accepted candidate is restored to the canonical anchor order.
+* validation guards short-circuit and try historically selective segments first;
+* anchor guards short-circuit and try historically selective segments first;
+* one state + multiple segments is sent as one worker job inside each guard wave;
+* line-search state digests are computed once and reused across all stages;
+* fully accepted candidates are restored to canonical validation/anchor order.
 
 This wrapper is intentionally resume-compatible with format-15 checkpoints
 created by ``train_real_chart_v080.py``.
 """
 
 import copy
-from typing import Iterable
 
 import torch
 
 import train_real_chart_v080 as v080
 
 
-FAST_EVAL_VERSION = "v080-exact-eval-pruning-v2"
+FAST_EVAL_VERSION = "v080-grouped-state-batches-v3"
 DEFAULT_ANCHOR_BATCH_SIZE = 2
 
 _ORIGINAL_EVALUATE_STUDENT = v080.v054._evaluate_student
 _DIRECT_EVAL_CACHE: dict[tuple, tuple[object, object]] = {}
 _DIRECT_EVAL_CACHE_HITS = 0
 _DIRECT_EVAL_CACHE_MISSES = 0
+_VALIDATION_FAILURE_COUNTS: dict[tuple, int] = {}
 _ANCHOR_FAILURE_COUNTS: dict[tuple, int] = {}
-
-
-def _anchor_batches(items: list, size: int = DEFAULT_ANCHOR_BATCH_SIZE) -> Iterable[tuple[int, list]]:
-    if size <= 0:
-        raise ValueError("anchor batch size must be positive")
-    for start in range(0, len(items), size):
-        yield start, items[start : start + size]
 
 
 def _cached_direct_evaluate_student(
@@ -50,14 +44,7 @@ def _cached_direct_evaluate_student(
     control_dt_s: float,
     device,
 ):
-    """Cache exact serial evaluations used for round base/final train metrics.
-
-    The segment object itself is retained in the cache value so Python cannot
-    recycle its id and accidentally produce a false cache hit later in the run.
-    HUD globals installed by v0.7 are still resolved by the original evaluator
-    at call time, so this wrapper changes only whether an identical simulation
-    is repeated.
-    """
+    """Cache exact serial evaluations used for round base/final train metrics."""
 
     global _DIRECT_EVAL_CACHE_HITS, _DIRECT_EVAL_CACHE_MISSES
 
@@ -84,6 +71,94 @@ def _cached_direct_evaluate_student(
     _DIRECT_EVAL_CACHE[key] = (segment, evaluated)
     _DIRECT_EVAL_CACHE_MISSES += 1
     return evaluated
+
+
+def _evaluate_state_segment_groups(
+    model,
+    states,
+    segments,
+    *,
+    same_hand: bool,
+    control_dt_s: float,
+    digests=None,
+):
+    """Evaluate each state on all cache-missing segments in one worker job.
+
+    The underlying cache remains state-digest x segment, so changing the grouping
+    cannot change results. Grouping only avoids repeatedly serializing/loading the
+    same state for every segment in the current validation/anchor wave.
+    """
+
+    if not segments:
+        return {}
+
+    global_hits = 0
+    global_misses = 0
+    result = {}
+    if digests is None:
+        digests = {alpha: v080.v065._state_digest(state) for alpha, state in states.items()}
+
+    pending_by_alpha = {}
+    for alpha, state in states.items():
+        digest = digests[alpha]
+        pending = []
+        for named in segments:
+            cache_key = v080._eval_cache_key(digest, named)
+            cached = v080._EVAL_CACHE.get(cache_key)
+            if cached is not None:
+                result[(alpha, named.key)] = cached
+                global_hits += 1
+            else:
+                pending.append((named, cache_key))
+        if pending:
+            pending_by_alpha[alpha] = (state, pending)
+
+    if pending_by_alpha:
+        if v080._configured_workers() <= 1:
+            for alpha, (state, pending) in pending_by_alpha.items():
+                raw_items = v080.v070.evaluate_hud_state_on_segments(
+                    state,
+                    int(model.hidden_dim),
+                    tuple(named.segment for named, _ in pending),
+                    bool(same_hand),
+                    float(control_dt_s),
+                )
+                for (named, cache_key), raw in zip(pending, raw_items):
+                    evaluated = v080.v054.StudentEvalResult(raw[0], raw[1])
+                    result[(alpha, named.key)] = evaluated
+                    v080._EVAL_CACHE[cache_key] = evaluated
+                    global_misses += 1
+        else:
+            pool = v080._get_pool()
+            futures = {
+                alpha: (
+                    pool.submit(
+                        v080.v070.evaluate_hud_state_on_segments,
+                        state,
+                        int(model.hidden_dim),
+                        tuple(named.segment for named, _ in pending),
+                        bool(same_hand),
+                        float(control_dt_s),
+                    ),
+                    pending,
+                )
+                for alpha, (state, pending) in pending_by_alpha.items()
+            }
+            for alpha, (future, pending) in futures.items():
+                raw_items = future.result()
+                if len(raw_items) != len(pending):
+                    raise RuntimeError(
+                        f"grouped evaluator returned {len(raw_items)} results; expected {len(pending)}"
+                    )
+                for (named, cache_key), raw in zip(pending, raw_items):
+                    evaluated = v080.v054.StudentEvalResult(raw[0], raw[1])
+                    result[(alpha, named.key)] = evaluated
+                    v080._EVAL_CACHE[cache_key] = evaluated
+                    global_misses += 1
+
+    v080._EVAL_CACHE_HITS += global_hits
+    v080._EVAL_CACHE_MISSES += global_misses
+    return result
 
 
 def _evaluate_bootstrap_state(
@@ -195,12 +270,10 @@ def _fast_bootstrap(
     return best_state, best_anchors, best_validations, history
 
 
-def _ordered_anchor_indices(anchor_segments) -> list[int]:
-    """Try historically selective anchors first, keeping deterministic ties."""
-
+def _ordered_indices(segments, failure_counts) -> list[int]:
     return sorted(
-        range(len(anchor_segments)),
-        key=lambda index: (-_ANCHOR_FAILURE_COUNTS.get(anchor_segments[index].key, 0), index),
+        range(len(segments)),
+        key=lambda index: (-failure_counts.get(segments[index].key, 0), index),
     )
 
 
@@ -223,20 +296,25 @@ def _fast_line_search(
     control_dt_s: float,
     label: str,
 ):
-    """Exact v0.8.0 line search with incremental validation/anchor pruning."""
+    """Exact v0.8.0 line search with grouped IPC and guard short-circuiting."""
 
     states = {
         float(alpha): v080.v058._interpolate_state(base_state, proposal_state, float(alpha))
         for alpha in v080.v058.DEFAULT_TRUST_ALPHAS
     }
+    state_digests = {
+        alpha: v080.v065._state_digest(state)
+        for alpha, state in states.items()
+    }
 
-    # Stage 1: current train window.
-    train_raw = v080._evaluate_states_on_segments(
+    # Stage 1: current train window. Digest values are already known and reused.
+    train_raw = _evaluate_state_segment_groups(
         model,
         states,
         [train_segment],
         same_hand=same_hand,
         control_dt_s=control_dt_s,
+        digests=state_digests,
     )
     train_evals = {alpha: train_raw[(alpha, train_segment.key)] for alpha in states}
     train_decisions = {
@@ -245,19 +323,23 @@ def _fast_line_search(
     }
     validation_alive = [alpha for alpha in states if train_decisions[alpha].accepted]
 
-    # Stage 2: validation one segment at a time. A failed guard is a conjunctive
-    # rejection, so evaluating later validation segments cannot revive it.
+    # Stage 2: try the validation segment that historically rejects most often
+    # first. Results for complete candidates are restored to canonical order.
     validation_eval_maps = {alpha: {} for alpha in validation_alive}
     validation_decision_maps = {alpha: {} for alpha in validation_alive}
-    for index, (segment, reference) in enumerate(zip(validation_segments, validation_references)):
+    validation_order = _ordered_indices(validation_segments, _VALIDATION_FAILURE_COUNTS)
+    for index in validation_order:
         if not validation_alive:
             break
-        raw = v080._evaluate_states_on_segments(
+        segment = validation_segments[index]
+        reference = validation_references[index]
+        raw = _evaluate_state_segment_groups(
             model,
             {alpha: states[alpha] for alpha in validation_alive},
             [segment],
             same_hand=same_hand,
             control_dt_s=control_dt_s,
+            digests={alpha: state_digests[alpha] for alpha in validation_alive},
         )
         next_alive: list[float] = []
         for alpha in validation_alive:
@@ -267,28 +349,32 @@ def _fast_line_search(
             validation_decision_maps[alpha][index] = decision
             if decision.accepted:
                 next_alive.append(alpha)
+            else:
+                _VALIDATION_FAILURE_COUNTS[segment.key] = (
+                    _VALIDATION_FAILURE_COUNTS.get(segment.key, 0) + 1
+                )
         validation_alive = next_alive
 
     anchor_survivors = list(validation_alive)
 
-    # Stage 3: evaluate the most failure-prone anchors first. The adaptive order
-    # affects execution only. For a fully surviving candidate, results are put
-    # back into canonical anchor order before reference updates/candidate ranking.
+    # Stage 3: most selective anchors first. Each surviving state is sent once
+    # per anchor batch, rather than once per state x segment pair.
     anchor_eval_maps = {alpha: {} for alpha in anchor_survivors}
     anchor_decision_maps = {alpha: {} for alpha in anchor_survivors}
     alive = list(anchor_survivors)
-    ordered_indices = _ordered_anchor_indices(anchor_segments)
+    ordered_indices = _ordered_indices(anchor_segments, _ANCHOR_FAILURE_COUNTS)
     for batch_start in range(0, len(ordered_indices), DEFAULT_ANCHOR_BATCH_SIZE):
         if not alive:
             break
         batch_indices = ordered_indices[batch_start : batch_start + DEFAULT_ANCHOR_BATCH_SIZE]
         batch = [anchor_segments[index] for index in batch_indices]
-        raw = v080._evaluate_states_on_segments(
+        raw = _evaluate_state_segment_groups(
             model,
             {alpha: states[alpha] for alpha in alive},
             batch,
             same_hand=same_hand,
             control_dt_s=control_dt_s,
+            digests={alpha: state_digests[alpha] for alpha in alive},
         )
         next_alive: list[float] = []
         for alpha in alive:
@@ -354,7 +440,8 @@ def main() -> None:
     print("=== DMDOD v0.8.0 Fast Eval Wrapper ===")
     print(
         f"fast-eval={FAST_EVAL_VERSION} | bootstrap=combined anchors+validation | "
-        f"validation=segment-short-circuit | anchor-guard batches={DEFAULT_ANCHOR_BATCH_SIZE} adaptive-order"
+        f"validation=adaptive-short-circuit | anchor-batch={DEFAULT_ANCHOR_BATCH_SIZE} "
+        "grouped-state-jobs | digest=reused"
     )
     print("checkpoint/signature/model/training semantics=v0.8.0 unchanged")
     v080.main()
