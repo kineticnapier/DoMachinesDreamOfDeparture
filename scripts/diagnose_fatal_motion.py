@@ -182,7 +182,7 @@ def main() -> None:
     if not segment.targets:
         raise SystemExit("diagnostic segment contains no playable targets")
 
-    data, result = visualizer._collect_replay(
+    data, result, _env = visualizer._collect_replay(
         model,
         segment,
         same_hand=same_hand,
