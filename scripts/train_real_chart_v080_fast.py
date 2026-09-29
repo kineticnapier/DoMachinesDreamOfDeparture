@@ -7,8 +7,11 @@ guards, candidate ranking, and Final split semantics stay exactly v0.8.0.
 Only evaluation scheduling changes:
 
 * bootstrap evaluates anchors + validation in one shared process-pool wave;
-* anchor guards are evaluated in small batches and stop evaluating a candidate
-  after its first failed batch, because a failed conjunct can never recover.
+* direct serial student evaluation is cached by exact state + segment identity;
+* validation guards are evaluated one segment at a time and stop dead candidates;
+* anchor guards are evaluated in small batches and stop dead candidates;
+* anchors that historically reject more candidates are tried earlier, while a
+  fully accepted candidate is restored to the canonical anchor order.
 
 This wrapper is intentionally resume-compatible with format-15 checkpoints
 created by ``train_real_chart_v080.py``.
@@ -22,8 +25,14 @@ import torch
 import train_real_chart_v080 as v080
 
 
-FAST_EVAL_VERSION = "v080-combined-bootstrap-anchor-batches-v1"
+FAST_EVAL_VERSION = "v080-exact-eval-pruning-v2"
 DEFAULT_ANCHOR_BATCH_SIZE = 2
+
+_ORIGINAL_EVALUATE_STUDENT = v080.v054._evaluate_student
+_DIRECT_EVAL_CACHE: dict[tuple, tuple[object, object]] = {}
+_DIRECT_EVAL_CACHE_HITS = 0
+_DIRECT_EVAL_CACHE_MISSES = 0
+_ANCHOR_FAILURE_COUNTS: dict[tuple, int] = {}
 
 
 def _anchor_batches(items: list, size: int = DEFAULT_ANCHOR_BATCH_SIZE) -> Iterable[tuple[int, list]]:
@@ -31,6 +40,50 @@ def _anchor_batches(items: list, size: int = DEFAULT_ANCHOR_BATCH_SIZE) -> Itera
         raise ValueError("anchor batch size must be positive")
     for start in range(0, len(items), size):
         yield start, items[start : start + size]
+
+
+def _cached_direct_evaluate_student(
+    model,
+    segment,
+    *,
+    same_hand: bool,
+    control_dt_s: float,
+    device,
+):
+    """Cache exact serial evaluations used for round base/final train metrics.
+
+    The segment object itself is retained in the cache value so Python cannot
+    recycle its id and accidentally produce a false cache hit later in the run.
+    HUD globals installed by v0.7 are still resolved by the original evaluator
+    at call time, so this wrapper changes only whether an identical simulation
+    is repeated.
+    """
+
+    global _DIRECT_EVAL_CACHE_HITS, _DIRECT_EVAL_CACHE_MISSES
+
+    key = (
+        v080.v065._state_digest(model.state_dict()),
+        id(segment),
+        bool(same_hand),
+        float(control_dt_s),
+        str(device),
+        int(model.hidden_dim),
+    )
+    cached = _DIRECT_EVAL_CACHE.get(key)
+    if cached is not None and cached[0] is segment:
+        _DIRECT_EVAL_CACHE_HITS += 1
+        return cached[1]
+
+    evaluated = _ORIGINAL_EVALUATE_STUDENT(
+        model,
+        segment,
+        same_hand=same_hand,
+        control_dt_s=control_dt_s,
+        device=device,
+    )
+    _DIRECT_EVAL_CACHE[key] = (segment, evaluated)
+    _DIRECT_EVAL_CACHE_MISSES += 1
+    return evaluated
 
 
 def _evaluate_bootstrap_state(
@@ -142,6 +195,19 @@ def _fast_bootstrap(
     return best_state, best_anchors, best_validations, history
 
 
+def _ordered_anchor_indices(anchor_segments) -> list[int]:
+    """Try historically selective anchors first, keeping deterministic ties."""
+
+    return sorted(
+        range(len(anchor_segments)),
+        key=lambda index: (-_ANCHOR_FAILURE_COUNTS.get(anchor_segments[index].key, 0), index),
+    )
+
+
+def _indexed_tuple(values: dict[int, object]) -> tuple:
+    return tuple(values[index] for index in sorted(values))
+
+
 def _fast_line_search(
     model,
     *,
@@ -157,14 +223,14 @@ def _fast_line_search(
     control_dt_s: float,
     label: str,
 ):
-    """Exact v0.8.0 line search with incremental anchor-guard pruning."""
+    """Exact v0.8.0 line search with incremental validation/anchor pruning."""
 
     states = {
         float(alpha): v080.v058._interpolate_state(base_state, proposal_state, float(alpha))
         for alpha in v080.v058.DEFAULT_TRUST_ALPHAS
     }
 
-    # Stage 1: current train window. This is identical to v0.8.0.
+    # Stage 1: current train window.
     train_raw = v080._evaluate_states_on_segments(
         model,
         states,
@@ -177,41 +243,46 @@ def _fast_line_search(
         alpha: v080.v063.v062.v061._safety_guard(base_train_eval, train_evals[alpha])
         for alpha in states
     }
-    validation_survivors = [alpha for alpha in states if train_decisions[alpha].accepted]
+    validation_alive = [alpha for alpha in states if train_decisions[alpha].accepted]
 
-    # Stage 2: both validation charts. There are only two in the intended v0.8
-    # dataset, so one wave already fills the pool efficiently.
-    validation_evals_by_alpha = {}
-    validation_decisions_by_alpha = {}
-    anchor_survivors: list[float] = []
-    if validation_survivors:
-        val_raw = v080._evaluate_states_on_segments(
+    # Stage 2: validation one segment at a time. A failed guard is a conjunctive
+    # rejection, so evaluating later validation segments cannot revive it.
+    validation_eval_maps = {alpha: {} for alpha in validation_alive}
+    validation_decision_maps = {alpha: {} for alpha in validation_alive}
+    for index, (segment, reference) in enumerate(zip(validation_segments, validation_references)):
+        if not validation_alive:
+            break
+        raw = v080._evaluate_states_on_segments(
             model,
-            {alpha: states[alpha] for alpha in validation_survivors},
-            validation_segments,
+            {alpha: states[alpha] for alpha in validation_alive},
+            [segment],
             same_hand=same_hand,
             control_dt_s=control_dt_s,
         )
-        for alpha in validation_survivors:
-            evaluations = tuple(val_raw[(alpha, segment.key)] for segment in validation_segments)
-            decisions = tuple(
-                v080.v062._validation_guard(reference, evaluation)
-                for reference, evaluation in zip(validation_references, evaluations)
-            )
-            validation_evals_by_alpha[alpha] = evaluations
-            validation_decisions_by_alpha[alpha] = decisions
-            if all(decision.accepted for decision in decisions):
-                anchor_survivors.append(alpha)
+        next_alive: list[float] = []
+        for alpha in validation_alive:
+            evaluation = raw[(alpha, segment.key)]
+            decision = v080.v062._validation_guard(reference, evaluation)
+            validation_eval_maps[alpha][index] = evaluation
+            validation_decision_maps[alpha][index] = decision
+            if decision.accepted:
+                next_alive.append(alpha)
+        validation_alive = next_alive
 
-    # Stage 3: anchors in two-segment waves. With six trust alphas this exposes
-    # up to 12 worker tasks per wave. A candidate that fails any anchor guard is
-    # permanently dead, so later anchors for it are provably unnecessary.
-    anchor_evals_lists = {alpha: [] for alpha in anchor_survivors}
-    anchor_decision_lists = {alpha: [] for alpha in anchor_survivors}
+    anchor_survivors = list(validation_alive)
+
+    # Stage 3: evaluate the most failure-prone anchors first. The adaptive order
+    # affects execution only. For a fully surviving candidate, results are put
+    # back into canonical anchor order before reference updates/candidate ranking.
+    anchor_eval_maps = {alpha: {} for alpha in anchor_survivors}
+    anchor_decision_maps = {alpha: {} for alpha in anchor_survivors}
     alive = list(anchor_survivors)
-    for start, batch in _anchor_batches(anchor_segments):
+    ordered_indices = _ordered_anchor_indices(anchor_segments)
+    for batch_start in range(0, len(ordered_indices), DEFAULT_ANCHOR_BATCH_SIZE):
         if not alive:
             break
+        batch_indices = ordered_indices[batch_start : batch_start + DEFAULT_ANCHOR_BATCH_SIZE]
+        batch = [anchor_segments[index] for index in batch_indices]
         raw = v080._evaluate_states_on_segments(
             model,
             {alpha: states[alpha] for alpha in alive},
@@ -219,26 +290,22 @@ def _fast_line_search(
             same_hand=same_hand,
             control_dt_s=control_dt_s,
         )
-        batch_references = anchor_references[start : start + len(batch)]
         next_alive: list[float] = []
         for alpha in alive:
-            evaluations = [raw[(alpha, segment.key)] for segment in batch]
-            decisions = [
-                v080.v064._anchor_guard(reference, evaluation)
-                for reference, evaluation in zip(batch_references, evaluations)
-            ]
-            anchor_evals_lists[alpha].extend(evaluations)
-            anchor_decision_lists[alpha].extend(decisions)
-            if all(decision.accepted for decision in decisions):
+            survived_batch = True
+            for index, segment in zip(batch_indices, batch):
+                evaluation = raw[(alpha, segment.key)]
+                decision = v080.v064._anchor_guard(anchor_references[index], evaluation)
+                anchor_eval_maps[alpha][index] = evaluation
+                anchor_decision_maps[alpha][index] = decision
+                if not decision.accepted:
+                    _ANCHOR_FAILURE_COUNTS[segment.key] = (
+                        _ANCHOR_FAILURE_COUNTS.get(segment.key, 0) + 1
+                    )
+                    survived_batch = False
+            if survived_batch:
                 next_alive.append(alpha)
         alive = next_alive
-
-    anchor_evals_by_alpha = {
-        alpha: tuple(evaluations) for alpha, evaluations in anchor_evals_lists.items()
-    }
-    anchor_decisions_by_alpha = {
-        alpha: tuple(decisions) for alpha, decisions in anchor_decision_lists.items()
-    }
 
     candidates = []
     for alpha in states:
@@ -246,10 +313,10 @@ def _fast_line_search(
             alpha=alpha,
             train_eval=train_evals[alpha],
             train_decision=train_decisions[alpha],
-            validation_evals=validation_evals_by_alpha.get(alpha, ()),
-            validation_decisions=validation_decisions_by_alpha.get(alpha, ()),
-            anchor_evals=anchor_evals_by_alpha.get(alpha, ()),
-            anchor_decisions=anchor_decisions_by_alpha.get(alpha, ()),
+            validation_evals=_indexed_tuple(validation_eval_maps.get(alpha, {})),
+            validation_decisions=_indexed_tuple(validation_decision_maps.get(alpha, {})),
+            anchor_evals=_indexed_tuple(anchor_eval_maps.get(alpha, {})),
+            anchor_decisions=_indexed_tuple(anchor_decision_maps.get(alpha, {})),
         )
         candidates.append(candidate)
 
@@ -279,6 +346,7 @@ def _fast_line_search(
 def _install_fast_path() -> None:
     v080._bootstrap = _fast_bootstrap
     v080._line_search = _fast_line_search
+    v080.v054._evaluate_student = _cached_direct_evaluate_student
 
 
 def main() -> None:
@@ -286,10 +354,14 @@ def main() -> None:
     print("=== DMDOD v0.8.0 Fast Eval Wrapper ===")
     print(
         f"fast-eval={FAST_EVAL_VERSION} | bootstrap=combined anchors+validation | "
-        f"anchor-guard batches={DEFAULT_ANCHOR_BATCH_SIZE}"
+        f"validation=segment-short-circuit | anchor-guard batches={DEFAULT_ANCHOR_BATCH_SIZE} adaptive-order"
     )
     print("checkpoint/signature/model/training semantics=v0.8.0 unchanged")
     v080.main()
+    print(
+        f"direct-eval-cache: hits={_DIRECT_EVAL_CACHE_HITS} "
+        f"misses={_DIRECT_EVAL_CACHE_MISSES}"
+    )
 
 
 if __name__ == "__main__":
