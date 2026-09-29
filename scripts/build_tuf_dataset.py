@@ -5,7 +5,7 @@ from collections import Counter
 from pathlib import Path
 
 from dmdod.tuf_dataset import build_dataset, select_dataset
-from dmdod.tuf_dataset_parallel import fetch_candidates_parallel
+from dmdod.tuf_dataset_parallel import MAX_P_DIFFICULTY, fetch_candidates_parallel
 
 
 def _print_selection(role: str, items) -> None:
@@ -38,8 +38,8 @@ def main() -> None:
     parser = argparse.ArgumentParser(
         description=(
             "Build a DMDOD Train/Validation dataset from public TUF levels. "
-            "Selection prioritizes curation and clear evidence, then spreads BPM, "
-            "length, density, difficulty, songs, and creators."
+            "The v0.9 curriculum accepts only P1-P6, then prioritizes curation "
+            "and clear evidence while spreading BPM, length, density, songs, and creators."
         )
     )
     parser.add_argument("--output", default="data/DMDOD-v090-tuf")
@@ -90,6 +90,7 @@ def main() -> None:
     print(
         f"scan={'ALL' if args.scan_limit == 0 else args.scan_limit} "
         f"page-request={args.page_size} workers={args.workers} "
+        f"difficulty=P1-P{MAX_P_DIFFICULTY} "
         f"minUniqueClears={args.min_unique_clears} "
         f"target=Train{args.train}+Validation{args.validation}"
     )
@@ -119,7 +120,10 @@ def main() -> None:
         )
 
     curated_count = sum(item.curated for item in candidates)
-    print(f"candidate pool: {len(candidates)} usable, curated={curated_count}")
+    print(
+        f"candidate pool: {len(candidates)} usable P1-P{MAX_P_DIFFICULTY}, "
+        f"curated={curated_count}"
+    )
     selection = select_dataset(
         candidates,
         train_count=args.train,
@@ -144,6 +148,8 @@ def main() -> None:
         "scan_limit": args.scan_limit,
         "page_size_requested": args.page_size,
         "scan_workers": args.workers,
+        "difficulty_band": f"P1-P{MAX_P_DIFFICULTY}",
+        "max_p_difficulty": MAX_P_DIFFICULTY,
         "min_unique_clears": args.min_unique_clears,
         "candidate_count": len(candidates),
         "curated_candidate_count": curated_count,
