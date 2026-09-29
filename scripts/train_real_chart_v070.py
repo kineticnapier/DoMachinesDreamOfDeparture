@@ -8,6 +8,7 @@ feedback are appended to the previous 233D visible geometry/motor vector.
 """
 
 import train_real_chart_v054 as v054
+import train_real_chart_v055 as v055
 import train_real_chart_v060 as v060
 import train_real_chart_v062 as v062
 import train_real_chart_v063 as v063
@@ -33,6 +34,17 @@ _PARENT_CHECKPOINT_PAYLOAD = None
 _PARENT_LOAD_PROGRESS = None
 
 
+def _install_dagger_input_dimension() -> None:
+    """Make legacy DAggerSequence validate the v0.7 HUD vector width.
+
+    DAggerSequence.__post_init__ reads v0.5.5's module-global
+    REAL_CHART_INPUT_DIM at runtime. v0.7 changes the encoder from 233D to 245D,
+    so that legacy validator must be updated in the v0.7 training process too.
+    """
+
+    v055.REAL_CHART_INPUT_DIM = HUD_REAL_CHART_INPUT_DIM
+
+
 def _install_v070() -> None:
     global _INSTALLED, _PARENT_RUN_SIGNATURE, _PARENT_CHECKPOINT_PAYLOAD, _PARENT_LOAD_PROGRESS
     if _INSTALLED:
@@ -52,6 +64,11 @@ def _install_v070() -> None:
     v054.DiagnosticRealChartMotorEnv = DiagnosticHudRealChartMotorEnv
     v054.encode_real_chart_observation = encode_hud_real_chart_observation
     v054.REAL_CHART_INPUT_DIM = HUD_REAL_CHART_INPUT_DIM
+
+    # v0.6.0 constructs v0.5.5 DAggerSequence objects. Its shape validator
+    # still uses the v0.5.5 module-global input dimension, so patch that runtime
+    # constant as part of the HUD process as well.
+    _install_dagger_input_dimension()
 
     v060.encode_real_chart_observation = encode_hud_real_chart_observation
     v060.REAL_CHART_INPUT_DIM = HUD_REAL_CHART_INPUT_DIM
