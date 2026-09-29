@@ -35,6 +35,14 @@ def _chart_zip(bpm: float, filename: str = "level.adofai") -> bytes:
     return stream.getvalue()
 
 
+def _backup_plus_named_chart_zip() -> bytes:
+    stream = io.BytesIO()
+    with zipfile.ZipFile(stream, "w") as archive:
+        archive.writestr("backup.adofai", _chart_bytes(90.0))
+        archive.writestr("the_chart.adofai", _chart_bytes(123.0))
+    return stream.getvalue()
+
+
 def test_directory_dataset_discovers_train_validation_final_zip_charts(tmp_path: Path):
     for role in ("Train", "Validation", "Final"):
         (tmp_path / role).mkdir()
@@ -62,6 +70,18 @@ def test_bundle_zip_supports_nested_chart_zips(tmp_path: Path):
     assert [item.name for item in dataset.train] == ["A"]
     assert [item.name for item in dataset.validation] == ["V"]
     assert [item.name for item in dataset.final] == ["F"]
+
+
+def test_chart_zip_prefers_unique_non_backup_when_no_main_or_level(tmp_path: Path):
+    for role in ("Train", "Validation", "Final"):
+        (tmp_path / role).mkdir()
+    (tmp_path / "Train" / "named.zip").write_bytes(_backup_plus_named_chart_zip())
+    (tmp_path / "Validation" / "V.zip").write_bytes(_chart_zip(160.0))
+    (tmp_path / "Final" / "F.zip").write_bytes(_chart_zip(200.0))
+
+    dataset = discover_multichart_dataset(tmp_path)
+    selected = Path(dataset.train[0].resolved_path).read_text(encoding="utf-8")
+    assert '"bpm": 123.0' in selected
 
 
 def test_dataset_rejects_same_chart_in_multiple_roles(tmp_path: Path):
