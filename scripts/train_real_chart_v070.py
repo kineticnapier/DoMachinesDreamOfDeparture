@@ -7,8 +7,11 @@ Only the observation interface changes: Tile BPM, Real BPM, and transient timing
 feedback are appended to the previous 233D visible geometry/motor vector.
 """
 
+import copy
+
 import train_real_chart_v054 as v054
 import train_real_chart_v055 as v055
+import train_real_chart_v057 as v057
 import train_real_chart_v060 as v060
 import train_real_chart_v062 as v062
 import train_real_chart_v063 as v063
@@ -27,11 +30,17 @@ TRAINER_VERSION = "0.7.0-human-visible-hud"
 CHECKPOINT_FORMAT_VERSION = 14
 DEFAULT_CHECKPOINT = "checkpoints/real_chart_v070_hud.pt"
 HUD_OBSERVATION_VERSION = HUD_FEATURE_VERSION
+TRAIN_PROPOSAL_CACHE_VERSION = "exact-fresh-adam-v1"
 
 _INSTALLED = False
 _PARENT_RUN_SIGNATURE = None
 _PARENT_CHECKPOINT_PAYLOAD = None
 _PARENT_LOAD_PROGRESS = None
+_ORIGINAL_TRAIN_ONE_EPOCH = None
+_TRAIN_PROPOSAL_CACHE: dict[tuple, tuple[float, dict]] = {}
+_SEQUENCE_SIGNATURE_CACHE: dict[int, tuple[object, tuple]] = {}
+_TRAIN_PROPOSAL_CACHE_HITS = 0
+_TRAIN_PROPOSAL_CACHE_MISSES = 0
 
 
 def _install_dagger_input_dimension() -> None:
@@ -45,8 +54,99 @@ def _install_dagger_input_dimension() -> None:
     v055.REAL_CHART_INPUT_DIM = HUD_REAL_CHART_INPUT_DIM
 
 
+def _optimizer_signature(optimizer) -> tuple:
+    """Return the optimizer settings that affect one fresh Adam proposal."""
+
+    groups = []
+    for group in optimizer.param_groups:
+        groups.append(
+            (
+                float(group.get("lr", 0.0)),
+                tuple(float(value) for value in group.get("betas", (0.9, 0.999))),
+                float(group.get("eps", 1e-8)),
+                float(group.get("weight_decay", 0.0)),
+                bool(group.get("amsgrad", False)),
+                bool(group.get("maximize", False)),
+            )
+        )
+    return tuple(groups)
+
+
+def _stable_sequence_signature(stable) -> tuple:
+    """Hash one immutable StableSequence once per process.
+
+    Exact tensor digests avoid relying only on object identity. Holding the
+    object in the cache entry also prevents Python id reuse from producing a
+    false match later in a long training run.
+    """
+
+    cache_key = id(stable)
+    cached = _SEQUENCE_SIGNATURE_CACHE.get(cache_key)
+    if cached is not None and cached[0] is stable:
+        return cached[1]
+
+    sequence = stable.sequence
+    signature = (
+        str(sequence.source),
+        int(sequence.frames),
+        v065._tensor_digest(sequence.observations),
+        v065._tensor_digest(sequence.teacher_actions),
+        v065._tensor_digest(stable.loss_weights),
+    )
+    _SEQUENCE_SIGNATURE_CACHE[cache_key] = (stable, signature)
+    return signature
+
+
+def _cached_train_one_epoch(
+    model,
+    sequences,
+    *,
+    optimizer,
+    chunk_steps: int,
+    reverse_order: bool,
+) -> float:
+    """Reuse an exactly repeated one-epoch BC proposal.
+
+    v0.6.4 intentionally creates a brand-new Adam optimizer for every epoch.
+    After a rollback, the trusted model is restored. With the same trajectory
+    order, the next odd/even epoch therefore computes byte-identical weights.
+    Reusing that final proposal state is execution-only caching: accepted model
+    states, guards, and checkpoint semantics are unchanged.
+    """
+
+    global _TRAIN_PROPOSAL_CACHE_HITS, _TRAIN_PROPOSAL_CACHE_MISSES
+    assert _ORIGINAL_TRAIN_ONE_EPOCH is not None
+
+    key = (
+        TRAIN_PROPOSAL_CACHE_VERSION,
+        v065._state_digest(model.state_dict()),
+        tuple(_stable_sequence_signature(stable) for stable in sequences),
+        _optimizer_signature(optimizer),
+        int(chunk_steps),
+        bool(reverse_order),
+    )
+    cached = _TRAIN_PROPOSAL_CACHE.get(key)
+    if cached is not None:
+        loss, state = cached
+        model.load_state_dict(state)
+        _TRAIN_PROPOSAL_CACHE_HITS += 1
+        return loss
+
+    loss = _ORIGINAL_TRAIN_ONE_EPOCH(
+        model,
+        sequences,
+        optimizer=optimizer,
+        chunk_steps=chunk_steps,
+        reverse_order=reverse_order,
+    )
+    _TRAIN_PROPOSAL_CACHE[key] = (float(loss), copy.deepcopy(model.state_dict()))
+    _TRAIN_PROPOSAL_CACHE_MISSES += 1
+    return float(loss)
+
+
 def _install_v070() -> None:
     global _INSTALLED, _PARENT_RUN_SIGNATURE, _PARENT_CHECKPOINT_PAYLOAD, _PARENT_LOAD_PROGRESS
+    global _ORIGINAL_TRAIN_ONE_EPOCH
     if _INSTALLED:
         return
 
@@ -57,6 +157,7 @@ def _install_v070() -> None:
     _PARENT_RUN_SIGNATURE = v064._run_signature
     _PARENT_CHECKPOINT_PAYLOAD = v064._checkpoint_payload
     _PARENT_LOAD_PROGRESS = v064._load_progress
+    _ORIGINAL_TRAIN_ONE_EPOCH = v057._train_one_epoch
 
     # v0.5.4 owns the shared evaluator. v0.6.0 owns expert/DAgger collection.
     # Both resolve these module globals at runtime, so swapping them here keeps
@@ -78,6 +179,11 @@ def _install_v070() -> None:
     v062.REAL_CHART_INPUT_DIM = HUD_REAL_CHART_INPUT_DIM
     v063.REAL_CHART_INPUT_DIM = HUD_REAL_CHART_INPUT_DIM
     v064.REAL_CHART_INPUT_DIM = HUD_REAL_CHART_INPUT_DIM
+
+    # v0.6.4 creates a fresh Adam proposal on every epoch. Cache exact repeats
+    # before v0.6.5's line-search cache so repeated odd/even rollback epochs skip
+    # both the BC pass and the expensive gameplay evaluations.
+    v057._train_one_epoch = _cached_train_one_epoch
 
     v064.TRAINER_VERSION = TRAINER_VERSION
     v064.CHECKPOINT_FORMAT_VERSION = CHECKPOINT_FORMAT_VERSION
@@ -126,6 +232,10 @@ def _hud_checkpoint_payload(**kwargs) -> dict:
             "fatigue",
         ],
     }
+    # Proposal caches are process-local execution optimizations. They are not
+    # part of the run signature, so checkpoints created before this optimization
+    # remain exactly resumable.
+    payload["train_proposal_cache"] = TRAIN_PROPOSAL_CACHE_VERSION
     return payload
 
 
@@ -155,11 +265,18 @@ def main() -> None:
         f"feedback-hold={DEFAULT_FEEDBACK_HOLD_S:.2f}s | "
         "XAcc/progress/KV/attempt/internal timing truth remain hidden"
     )
-    print("backend=v0.6.4 anchor guard + v0.6.5 exact proposal cache")
+    print(
+        "backend=v0.6.4 anchor guard + v0.6.5 exact line-search cache + "
+        "exact repeated-BC proposal cache"
+    )
     v064.main()
     print(
         f"proposal-cache: hits={v065._PROPOSAL_CACHE.hits} misses={v065._PROPOSAL_CACHE.misses} "
         f"saved-line-searches={v065._PROPOSAL_CACHE.hits}"
+    )
+    print(
+        f"train-proposal-cache: hits={_TRAIN_PROPOSAL_CACHE_HITS} "
+        f"misses={_TRAIN_PROPOSAL_CACHE_MISSES} saved-bc-epochs={_TRAIN_PROPOSAL_CACHE_HITS}"
     )
 
 
