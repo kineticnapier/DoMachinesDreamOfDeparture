@@ -116,6 +116,9 @@ Reduce per-round Behavioral Cloning (BC) cost in the v0.9 press-persistence trai
 9. The CUDA test produced a cuDNN warning that GRU weights were not stored in one contiguous chunk. The backend was changed to use a temporary packed `nn.GRU` to avoid repeated repacking while leaving checkpoint/state-dict structure unchanged.
 10. Benchmarked the packed-GRU CUDA backend in production round 37. Reverse BC completed 1516 chunks in 11.29 seconds (setup 0.18 s, train 11.11 s, copyback 0.00 s). This first measurement had 0 CUDA sequence-cache hits and 96 misses.
 11. In the same run, the CPU forward prefix miss took 88.52 seconds, while the next forward prefix hit after round 37 took 2.34 seconds. The 2m26s total time for round 37 was therefore dominated by rebuilding the forward prefix cache after process restart.
+12. From round 38 onward, the CUDA sequence cache behaved as expected at 94 hits / 2 misses. Reverse BC took 10.42 s in round 38, 11.89 s in round 39, and 11.04 s in round 40.
+13. The three steady-state cache-hit reverse BC measurements average about 11.12 seconds, approximately **8.38× faster** than the 93.15-second CPU baseline.
+14. With light Guard evaluation, rounds 38 and 40 completed in 18 s and 19 s respectively. Round 39 remained at 1m35s because Guard consumed 50.06 s + 31.68 s.
 
 ### Results
 
@@ -123,14 +126,16 @@ Reduce per-round Behavioral Cloning (BC) cost in the v0.9 press-persistence trai
 - CPU profile: approximately 65% of reverse BC time is backward and 27% is forward.
 - CUDA backend: CPU/CUDA numerical-closeness test passed.
 - Packed-GRU CUDA production benchmark: reverse BC 93.15 s → 11.29 s, approximately **8.25× faster**.
-- The first CUDA measurement reached 11.29 seconds even with all sequence-cache entries missing, leaving room for further reduction once the fixed trajectories hit the cache.
+- After CUDA sequence-cache warm-up: 10.42 s / 11.89 s / 11.04 s, averaging about 11.12 s; approximately **8.38× faster** than the 93.15-second CPU baseline.
+- With a light Guard, total round time fell to about 18–19 seconds.
 
 ### Observations
 
 - After removing the Python frame loop, `other` time fell to about 1.55 seconds, so further C++-only loop migration is unlikely to provide a large gain.
 - Forward BC falls to roughly 1.8–2.3 seconds when the immutable expert-prefix cache hits.
 - Reverse BC starts with round-local sequences, so the same fixed-prefix cache cannot be applied directly.
-- On difficult rounds, Guard can rise to roughly 35–50 seconds and becomes the second major bottleneck outside BC.
-- The first CUDA production measurement was `seq-cache=0hit/96miss`. Later rounds are expected to reuse the 94 fixed trajectories; record the cache-hit timing separately when observed.
+- The CUDA sequence cache reuses the 94 fixed trajectories within a process and reaches `94hit/2miss` in steady state.
+- After CUDA acceleration, BC is no longer the dominant cost. On difficult rounds, Guard grows into the 30–50 second range and is now the primary bottleneck.
+- In round 39, forward BC was 1.93 s and reverse CUDA BC 11.90 s, while Guard totaled 81.74 s. Guard evaluation is the next optimization target.
 
 [日本語](実験記録.md)
