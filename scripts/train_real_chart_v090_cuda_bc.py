@@ -1,11 +1,11 @@
 from __future__ import annotations
 
-"""Execution-only CUDA backend for the expensive reverse BC proposal.
+"""Execution-only CUDA backend for expensive round BC proposals.
 
-The simulator, guards, checkpoints, and trusted policy remain on CPU. Reverse
-BC is trained on a CUDA copy of the trusted model and only committed back to the
-CPU model after the complete epoch succeeds. A CUDA failure therefore leaves
-the caller's model untouched and permits an exact CPU fallback.
+The simulator, guards, checkpoints, and trusted policy remain on CPU. BC is
+trained on a CUDA copy of the trusted model and only committed back to the CPU
+model after the complete epoch succeeds. A CUDA failure therefore leaves the
+caller's model untouched and permits an exact CPU fallback.
 
 Training semantics stay the same at the algorithm level: sequence order, chunk
 boundaries, recurrent-state detach points, weighted loss, gradient clipping,
@@ -27,7 +27,7 @@ import train_real_chart_v070 as v070
 from dmdod.training_progress import emit_progress
 
 
-CUDA_BC_VERSION = "v090-reverse-bc-cuda-v2-packed-gru"
+CUDA_BC_VERSION = "v090-bidir-bc-cuda-v3-packed-gru"
 CUDA_PROGRESS_LOSS_EVERY = 32
 CUDA_ENV = "DMDOD_BC_CUDA"
 
@@ -55,7 +55,7 @@ _SEQUENCE_CACHE_MISSES = 0
 
 
 def cuda_requested() -> bool:
-    """Return whether the reverse CUDA backend should be attempted."""
+    """Return whether the CUDA BC backend should be attempted."""
 
     raw = os.environ.get(CUDA_ENV, "auto").strip().lower()
     if raw in {"0", "false", "off", "no", "cpu"}:
@@ -94,15 +94,7 @@ def _device_sequence(stable, device: torch.device) -> _DeviceStableSequence:
 
 
 def _packed_sequence_gru(model, device: torch.device) -> torch.nn.GRU:
-    """Create a local packed cuDNN GRU initialized from the model's GRUCell.
-
-    ``RecurrentActorCritic`` stores an ``nn.GRUCell`` for step-wise simulation.
-    Calling the internal fused sequence operator directly with those four
-    separately allocated tensors makes cuDNN repack them on every chunk. For
-    CUDA BC only, use a temporary standard ``nn.GRU`` whose weights live in one
-    cuDNN-compatible packed buffer. It is not attached to ``model``, so the
-    checkpoint/state-dict schema remains unchanged.
-    """
+    """Create a local packed cuDNN GRU initialized from the model's GRUCell."""
 
     gru = torch.nn.GRU(
         model.hidden_dim,
@@ -190,14 +182,15 @@ def _fresh_cuda_optimizer(
     return optimizer
 
 
-def train_reverse_on_cuda(
+def train_on_cuda(
     model,
     sequences,
     *,
     optimizer,
     chunk_steps: int,
+    reverse_order: bool,
 ) -> float:
-    """Train one reverse-order BC epoch on CUDA, committing only on success."""
+    """Train one BC epoch on CUDA in the requested sequence order."""
 
     if not sequences:
         raise ValueError("at least one stable DAgger sequence is required")
@@ -219,7 +212,9 @@ def train_reverse_on_cuda(
     cache_hits_before = _SEQUENCE_CACHE_HITS
     cache_misses_before = _SEQUENCE_CACHE_MISSES
     device_sequences = [_device_sequence(stable, device) for stable in sequences]
-    ordered_pairs = list(zip(reversed(sequences), reversed(device_sequences)))
+    cpu_order = list(reversed(sequences)) if reverse_order else list(sequences)
+    device_order = list(reversed(device_sequences)) if reverse_order else device_sequences
+    ordered_pairs = list(zip(cpu_order, device_order))
 
     torch.cuda.synchronize(device)
     setup_seconds = time.perf_counter() - total_started
@@ -232,11 +227,9 @@ def train_reverse_on_cuda(
         "bc_start",
         sequences=len(ordered_pairs),
         chunks=total_chunks,
-        reverse=True,
+        reverse=bool(reverse_order),
     )
 
-    # Keep CUDA math in FP32 rather than allowing Ampere TF32. This narrows the
-    # expected CPU/GPU numerical drift without changing the trainer's dtype.
     old_matmul_tf32 = torch.backends.cuda.matmul.allow_tf32
     old_cudnn_tf32 = torch.backends.cudnn.allow_tf32
     torch.backends.cuda.matmul.allow_tf32 = False
@@ -263,7 +256,7 @@ def train_reverse_on_cuda(
                 chunks=sequence_chunks,
                 frames=int(cpu_sequence.frames),
                 source=source,
-                reverse=True,
+                reverse=bool(reverse_order),
             )
 
             state = cuda_model.initial_state(device)
@@ -288,8 +281,6 @@ def train_reverse_on_cuda(
                 torch.nn.utils.clip_grad_norm_(parameters, 1.0)
                 cuda_optimizer.step()
 
-                # The reporting denominator is read from the original CPU
-                # weights, avoiding a GPU synchronization on every chunk.
                 cpu_weights = cpu_stable.loss_weights[start:end]
                 weight = max(float(cpu_weights.sum().item()), 1.0)
                 weighted_loss.add_(loss.detach() * weight)
@@ -314,7 +305,7 @@ def train_reverse_on_cuda(
                     global_total=total_chunks,
                     loss=displayed_loss,
                     source=source,
-                    reverse=True,
+                    reverse=bool(reverse_order),
                 )
 
             emit_progress(
@@ -328,8 +319,6 @@ def train_reverse_on_cuda(
         train_seconds = time.perf_counter() - train_started
         final_loss = float((weighted_loss / max(1.0, weighted_elements)).item())
 
-        # The temporary GRU owns the updated recurrent parameters; commit them
-        # back into the CUDA model before producing the ordinary CPU state dict.
         _copy_packed_gru_back(cuda_model, sequence_gru)
         copy_started = time.perf_counter()
         cpu_state = {
@@ -345,14 +334,34 @@ def train_reverse_on_cuda(
     total_seconds = time.perf_counter() - total_started
     cache_hits = _SEQUENCE_CACHE_HITS - cache_hits_before
     cache_misses = _SEQUENCE_CACHE_MISSES - cache_misses_before
+    parity = "rev" if reverse_order else "fwd"
     print(
-        f"bc-cuda: version={CUDA_BC_VERSION} device={torch.cuda.get_device_name(device)} "
-        f"total={total_seconds:.2f}s setup={setup_seconds:.2f}s train={train_seconds:.2f}s "
+        f"bc-cuda: version={CUDA_BC_VERSION} parity={parity} "
+        f"device={torch.cuda.get_device_name(device)} total={total_seconds:.2f}s "
+        f"setup={setup_seconds:.2f}s train={train_seconds:.2f}s "
         f"copyback={copy_seconds:.2f}s chunks={global_chunk} "
         f"seq-cache={cache_hits}hit/{cache_misses}miss"
     )
-    emit_progress("bc_done", loss=final_loss, reverse=True)
+    emit_progress("bc_done", loss=final_loss, reverse=bool(reverse_order))
     return final_loss
+
+
+def train_reverse_on_cuda(
+    model,
+    sequences,
+    *,
+    optimizer,
+    chunk_steps: int,
+) -> float:
+    """Backward-compatible wrapper for the original reverse-only API."""
+
+    return train_on_cuda(
+        model,
+        sequences,
+        optimizer=optimizer,
+        chunk_steps=chunk_steps,
+        reverse_order=True,
+    )
 
 
 def stats() -> dict[str, int]:
