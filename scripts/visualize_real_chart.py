@@ -299,7 +299,7 @@ function draw(){{
   const visible=events.filter(e=>e.t<=f[0]+1e-9).slice(-12); const box=document.getElementById('events'); box.innerHTML=''; visible.forEach((e,j)=>{{const d=document.createElement('div');d.textContent=eventText(e);if(j===visible.length-1)d.className='event-current';box.appendChild(d);}});
   scrub.value=idx;
 }}
-function seekByTime(t){{ let lo=0,hi=F.length-1; while(lo<hi){{const m=(lo+hi+1)>>1;if(F[m][0]<=t)lo=m;else hi=m-1;}} idx=lo; replayClock=F[idx][0]; draw(); }}
+function seekByTime(t){{ let lo=0,hi=F.length-1; while(lo<hi){{const m=(lo+hi+1)>>1;if(F[m][0]<=t)lo=m;else hi=m-1;}} idx=lo; draw(); }}
 function tick(now){{ if(!playing)return; if(!lastWall)lastWall=now; const dt=(now-lastWall)/1000*Number(speed.value);lastWall=now;replayClock+=dt; if(replayClock>=F[F.length-1][0]){{idx=F.length-1;playing=false;play.textContent='▶ Play';draw();return;}} seekByTime(replayClock); requestAnimationFrame(tick); }}
 play.addEventListener('click',()=>{{playing=!playing;play.textContent=playing?'⏸ Pause':'▶ Play';lastWall=0;if(playing){{if(idx>=F.length-1){{idx=0;replayClock=F[0][0];}}requestAnimationFrame(tick);}}}});
 scrub.addEventListener('input',()=>{{idx=Number(scrub.value);replayClock=F[idx][0];lastWall=0;draw();}});
