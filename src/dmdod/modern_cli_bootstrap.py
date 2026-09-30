@@ -8,7 +8,7 @@ from .modern_cli_live import LiveModernTrainerConsole
 
 
 class BootstrapLiveModernTrainerConsole(LiveModernTrainerConsole):
-    """Show turbo bootstrap candidate evaluation instead of an idle outer bar."""
+    """Show turbo bootstrap evaluation and keep fast BC on one compact bar."""
 
     def __init__(self, **kwargs: Any) -> None:
         super().__init__(**kwargs)
@@ -19,6 +19,55 @@ class BootstrapLiveModernTrainerConsole(LiveModernTrainerConsole):
             return
         values = event.values
         kind = event.kind
+
+        # BC sequences are short enough that a second per-sequence tqdm bar is
+        # mostly terminal churn. Keep the global chunk bar and surface the
+        # current sequence/source/loss in its postfix instead.
+        if kind == "bc_start":
+            chunks = int(values.get("chunks", 1))
+            self._new_stage(total=chunks, desc="BC", colour="blue")
+            parity = "rev" if values.get("reverse") else "fwd"
+            self._stage.set_postfix_str(
+                f"{parity} seq=0/{int(values.get('sequences', 0))}"
+            )
+            return
+
+        if kind == "bc_sequence_start":
+            if self._stage is not None:
+                index = int(values.get("index", 0))
+                total = int(values.get("total", 0))
+                parity = "rev" if values.get("reverse") else "fwd"
+                source = self._short(values.get("source", ""), 28)
+                self._stage.set_postfix_str(
+                    f"{parity} seq={index}/{total} {source}".rstrip()
+                )
+            return
+
+        if kind == "bc_chunk":
+            if self._stage is not None:
+                self._advance_to(self._stage, int(values.get("global_chunk", 0)))
+                parity = "rev" if values.get("reverse") else "fwd"
+                source = self._short(values.get("source", ""), 24)
+                self._stage.set_postfix_str(
+                    f"{parity} seq={int(values.get('sequence', 0))}/"
+                    f"{int(values.get('sequence_total', 0))} "
+                    f"{source} loss={float(values.get('loss', 0.0)):.4f}".strip()
+                )
+            return
+
+        if kind == "bc_sequence_done":
+            # Deliberately no separate sequence bar to close.
+            return
+
+        if kind == "bc_done":
+            if self._stage is not None:
+                self._advance_to(self._stage, int(self._stage.total))
+                self._stage.set_postfix_str(
+                    f"loss={float(values.get('loss', 0.0)):.4f}"
+                )
+            self._close_live("_detail")
+            self._close_live("_stage")
+            return
 
         if kind == "bootstrap_eval_start":
             self._bootstrap_eval_active = True
@@ -61,7 +110,7 @@ class BootstrapLiveModernTrainerConsole(LiveModernTrainerConsole):
             return
 
         # The wrapped evaluator may itself emit generic eval events for each
-        # worker-sized wave.  Hide those while the bootstrap-specific bar owns
+        # worker-sized wave. Hide those while the bootstrap-specific bar owns
         # the display, otherwise the bar would reset on every wave.
         if self._bootstrap_eval_active and kind in {"eval_start", "eval_step", "eval_done"}:
             return
