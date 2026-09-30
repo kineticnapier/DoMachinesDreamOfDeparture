@@ -8,15 +8,11 @@ Three optimizations are installed before the v0.9 fast/turbo stack starts:
   surviving policy states to occupy the worker pool; when only a few states are
   alive, evaluation is flattened across state x segment so spare CPU cores work
   on different chart segments.
-* Forward-BC prefix cache: round training always consists of the immutable
-  anchor expert set followed by the current round expert and rollout.  With a
-  fresh Adam optimizer, the immutable prefix is byte-for-byte repeatable from an
-  identical trusted model state.  Cache both model and Adam state after that
-  prefix, then train only the two round-local suffix sequences on a cache hit.
-* Reverse-BC CUDA dispatch: reverse order cannot reuse the immutable prefix, so
-  when CUDA is available the full reverse proposal is trained on a GPU copy and
-  committed back to the CPU model only after success. CUDA/CPU floating-point
-  kernels are numerically close but not bit-identical.
+* Whole-proposal BC cache: repeated proposals from the exact same trusted state
+  still bypass training entirely.
+* Bidirectional CUDA BC dispatch: both forward and reverse round proposals are
+  trained on a GPU copy when CUDA is available. The older CPU fixed-prefix cache
+  remains only as a fallback when CUDA is disabled or unavailable.
 
 Sequence order, chunk boundaries, optimizer-step count, trust alphas, guards,
 and checkpoint/run signatures are unchanged.
@@ -32,7 +28,7 @@ import train_real_chart_v080_fast as v080_fast
 import train_real_chart_v090_cuda_bc as cuda_bc
 
 
-ROUND_ACCEL_VERSION = "v090-hybrid-guard-prefix-bc-cuda-v2"
+ROUND_ACCEL_VERSION = "v090-hybrid-guard-bidir-bc-cuda-v3"
 PREFIX_CACHE_VERSION = "forward-fixed-expert-prefix-v1"
 ROUND_LOCAL_SEQUENCE_COUNT = 2
 
@@ -80,8 +76,6 @@ def _hybrid_evaluate_state_segment_groups(
 
     workers = v080._configured_workers()
     if _should_flatten(states, segments, workers):
-        # v0.8's flat evaluator uses the same exact state/segment cache and the
-        # same deterministic worker implementation; only task scheduling differs.
         _HYBRID_FLAT_CALLS += 1
         return v080._evaluate_states_on_segments(
             model,
@@ -131,12 +125,10 @@ def _prefix_cached_train_one_epoch(
     chunk_steps: int,
     reverse_order: bool,
 ) -> float:
-    """Whole-proposal cache, forward prefix reuse, and reverse CUDA dispatch."""
+    """Whole-proposal cache, bidirectional CUDA, then CPU fallback paths."""
 
     global _PREFIX_CACHE_HITS, _PREFIX_CACHE_MISSES
 
-    # Preserve v0.7's complete-proposal cache first. This is cheaper than either
-    # prefix reuse or launching a CUDA proposal when the whole step repeats.
     whole_key = _whole_proposal_key(model, sequences, optimizer, chunk_steps, reverse_order)
     cached = v070._TRAIN_PROPOSAL_CACHE.get(whole_key)
     if cached is not None:
@@ -146,30 +138,33 @@ def _prefix_cached_train_one_epoch(
         print(f"bc-perf: full-cache hit loss={float(loss):.6f}")
         return float(loss)
 
-    # Reverse order starts with the two round-local sequences, so the immutable
-    # anchor corpus is a suffix and cannot be prefix-cached. Train that proposal
-    # on CUDA when possible. The CUDA routine trains a deep copy, so any failure
-    # leaves the CPU model untouched and can safely fall through to CPU.
-    if reverse_order and cuda_bc.cuda_requested():
+    # Both parities are expensive when the trusted model changes after an ACCEPT.
+    # The old forward-prefix cache only helps when the exact prefix start state
+    # repeats, so prefer CUDA for every uncached proposal when available.
+    if cuda_bc.cuda_requested():
         started = time.perf_counter()
         try:
-            loss = cuda_bc.train_reverse_on_cuda(
+            loss = cuda_bc.train_on_cuda(
                 model,
                 sequences,
                 optimizer=optimizer,
                 chunk_steps=chunk_steps,
+                reverse_order=reverse_order,
             )
         except Exception as exc:
-            print(f"bc-cuda: fallback CPU ({type(exc).__name__}: {exc})")
+            parity = "rev" if reverse_order else "fwd"
+            print(f"bc-cuda: parity={parity} fallback CPU ({type(exc).__name__}: {exc})")
         else:
             v070._TRAIN_PROPOSAL_CACHE[whole_key] = (
                 float(loss),
                 copy.deepcopy(model.state_dict()),
             )
             v070._TRAIN_PROPOSAL_CACHE_MISSES += 1
-            print(f"bc-perf: parity=rev cuda={time.perf_counter() - started:.2f}s")
+            parity = "rev" if reverse_order else "fwd"
+            print(f"bc-perf: parity={parity} cuda={time.perf_counter() - started:.2f}s")
             return float(loss)
 
+    # CPU fallback retains the existing forward-prefix optimization.
     if reverse_order or len(sequences) <= ROUND_LOCAL_SEQUENCE_COUNT:
         started = time.perf_counter()
         loss = _ORIGINAL_CACHED_TRAIN_ONE_EPOCH(
@@ -184,7 +179,6 @@ def _prefix_cached_train_one_epoch(
 
     original_train = v070._ORIGINAL_TRAIN_ONE_EPOCH
     if original_train is None:
-        # Defensive fallback for direct unit use before v0.7 installation.
         return _ORIGINAL_CACHED_TRAIN_ONE_EPOCH(
             model,
             sequences,
@@ -240,7 +234,6 @@ def _prefix_cached_train_one_epoch(
         prefix_loss * prefix_weight + suffix_loss * suffix_weight
     ) / max(1.0, total_weight)
 
-    # Populate the original whole-proposal cache exactly as v0.7 would.
     v070._TRAIN_PROPOSAL_CACHE[whole_key] = (float(loss), copy.deepcopy(model.state_dict()))
     v070._TRAIN_PROPOSAL_CACHE_MISSES += 1
     elapsed = time.perf_counter() - started
@@ -273,16 +266,14 @@ def install_round_acceleration() -> None:
     v080_fast._evaluate_state_segment_groups = _hybrid_evaluate_state_segment_groups
     v080_fast._fast_line_search = _timed_fast_line_search
 
-    # v0.7's installer later assigns v057._train_one_epoch from this module
-    # global, so replacing it now composes with whole-proposal caching.
     v070._cached_train_one_epoch = _prefix_cached_train_one_epoch
     _INSTALLED = True
 
     print(
         f"round-accel={ROUND_ACCEL_VERSION} workers={workers} "
         f"anchor-wave={v080_fast.DEFAULT_ANCHOR_BATCH_SIZE} "
-        f"bc-prefix-cache=on reverse-cuda={'on' if cuda_bc.cuda_requested() else 'off'} "
-        "hybrid-guard=on"
+        f"bc-cuda-bidir={'on' if cuda_bc.cuda_requested() else 'off'} "
+        "cpu-prefix-fallback=on hybrid-guard=on"
     )
 
 
