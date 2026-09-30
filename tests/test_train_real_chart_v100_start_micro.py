@@ -86,18 +86,41 @@ def test_augmented_anchors_keep_existing_and_add_one_micro_per_chart(monkeypatch
     assert [item.end_s for item in created] == [1.9, 1.7]
 
 
-def test_install_start_micro_updates_turbo_builder_and_checkpoint_identity(monkeypatch):
+def test_bootstrap_order_prioritizes_start_micro_then_failure_history(monkeypatch):
+    segments = [
+        SimpleNamespace(role="anchor-1", key=("base", "hot")),
+        SimpleNamespace(role="start-micro-4", key=("micro", "a")),
+        SimpleNamespace(role="validation", key=("validation", 1)),
+        SimpleNamespace(role="start-micro-4", key=("micro", "b")),
+    ]
+    monkeypatch.setattr(
+        v100.turbo,
+        "_BOOTSTRAP_FAILURE_COUNTS",
+        {
+            ("base", "hot"): 99,
+            ("micro", "a"): 2,
+            ("micro", "b"): 7,
+        },
+    )
+
+    assert v100._bootstrap_segment_order_start_micro_first(segments) == [3, 1, 0, 2]
+
+
+def test_install_start_micro_updates_turbo_builder_order_and_checkpoint_identity(monkeypatch):
     old_builder = v100.turbo._ORIGINAL_BUILD_ANCHOR_SEGMENTS
+    old_order = v100.turbo._bootstrap_segment_order
     old_version = v100.v080.TRAINER_VERSION
     old_checkpoint = v100.v080.DEFAULT_CHECKPOINT
     try:
         v100.install_start_micro(target_count=5)
         assert v100._START_MICRO_TARGETS == 5
         assert v100.turbo._ORIGINAL_BUILD_ANCHOR_SEGMENTS is v100._build_anchor_segments_with_start_micro
+        assert v100.turbo._bootstrap_segment_order is v100._bootstrap_segment_order_start_micro_first
         assert v100.v080.TRAINER_VERSION == v100.TRAINER_VERSION
         assert v100.v080.DEFAULT_CHECKPOINT == v100.DEFAULT_CHECKPOINT
     finally:
         monkeypatch.setattr(v100.turbo, "_ORIGINAL_BUILD_ANCHOR_SEGMENTS", old_builder)
+        monkeypatch.setattr(v100.turbo, "_bootstrap_segment_order", old_order)
         monkeypatch.setattr(v100.v080, "TRAINER_VERSION", old_version)
         monkeypatch.setattr(v100.v080, "DEFAULT_CHECKPOINT", old_checkpoint)
 
