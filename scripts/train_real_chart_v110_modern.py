@@ -1,0 +1,25 @@
+from __future__ import annotations
+
+"""Modern live frontend for the v1.1 start-gate trainer."""
+
+import sys
+
+from dmdod.modern_cli_bootstrap import BootstrapLiveModernTrainerConsole
+import train_real_chart_v090_chunk_gru as chunk_gru
+import train_real_chart_v090_progress as progress
+import train_real_chart_v090_round_accel as round_accel
+import train_real_chart_v100_bootstrap_progress as bootstrap_progress
+import train_real_chart_v110_start_gate as v110
+
+
+def main() -> None:
+    with BootstrapLiveModernTrainerConsole.from_argv(sys.argv[1:]):
+        round_accel.install_round_acceleration()
+        progress.install_progress_instrumentation()
+        chunk_gru.install_chunk_gru_acceleration()
+        bootstrap_progress.install_bootstrap_progress()
+        v110.main()
+
+
+if __name__ == "__main__":
+    main()
