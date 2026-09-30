@@ -20,6 +20,8 @@ from dmdod.recurrent_policy import RecurrentActorCritic
 def _stable_sequence(*, frames: int = 11, input_dim: int = 5):
     observations = torch.randn(frames, input_dim)
     teacher_actions = torch.tanh(torch.randn(frames, 2))
+    per_frame = torch.linspace(0.5, 1.5, frames).unsqueeze(1)
+    loss_weights = per_frame.expand(-1, 2).clone()
     return SimpleNamespace(
         sequence=SimpleNamespace(
             observations=observations,
@@ -27,7 +29,7 @@ def _stable_sequence(*, frames: int = 11, input_dim: int = 5):
             frames=frames,
             source="test-sequence",
         ),
-        loss_weights=torch.linspace(0.5, 1.5, frames),
+        loss_weights=loss_weights,
     )
 
 
