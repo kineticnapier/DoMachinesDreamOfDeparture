@@ -9,6 +9,10 @@ from dmdod.tuf_dataset_parallel import fetch_candidates_parallel
 from dmdod.tuf_dataset_preflight import select_parser_compatible_dataset
 
 
+def _difficulty_label(min_p: int, max_p: int) -> str:
+    return f"P{min_p}" if min_p == max_p else f"P{min_p}-P{max_p}"
+
+
 def _print_selection(role: str, items) -> None:
     print(f"\n=== {role} ({len(items)}) ===")
     for item in items:
@@ -52,6 +56,18 @@ def main() -> None:
     parser.add_argument("--train", type=int, default=48)
     parser.add_argument("--validation", type=int, default=10)
     parser.add_argument(
+        "--min-p-difficulty",
+        type=int,
+        default=1,
+        help="Lowest ordinary P difficulty to include (default: 1).",
+    )
+    parser.add_argument(
+        "--max-p-difficulty",
+        type=int,
+        default=6,
+        help="Highest ordinary P difficulty to include (default: 6).",
+    )
+    parser.add_argument(
         "--scan-limit",
         type=int,
         default=0,
@@ -78,6 +94,8 @@ def main() -> None:
 
     if args.train <= 0 or args.validation <= 0:
         raise SystemExit("--train and --validation must be positive")
+    if args.min_p_difficulty <= 0 or args.max_p_difficulty < args.min_p_difficulty:
+        raise SystemExit("P difficulty range must satisfy 1 <= min <= max")
     if args.scan_limit < 0 or args.min_unique_clears < 0:
         raise SystemExit("--scan-limit and --min-unique-clears must be non-negative")
     if args.page_size <= 0 or args.workers <= 0:
@@ -87,11 +105,13 @@ def main() -> None:
     if args.timeout <= 0.0:
         raise SystemExit("--timeout must be positive")
 
+    difficulty_label = _difficulty_label(args.min_p_difficulty, args.max_p_difficulty)
+
     print("=== DMDOD TUF Dataset Builder ===")
     print(
         f"scan={'ALL' if args.scan_limit == 0 else args.scan_limit} "
         f"page-request={args.page_size} workers={args.workers} "
-        f"minUniqueClears={args.min_unique_clears} difficulty=P1-P6 "
+        f"minUniqueClears={args.min_unique_clears} difficulty={difficulty_label} "
         f"target=Train{args.train}+Validation{args.validation}"
     )
 
@@ -110,6 +130,8 @@ def main() -> None:
         workers=args.workers,
         scan_limit=args.scan_limit,
         min_unique_clears=args.min_unique_clears,
+        min_p_difficulty=args.min_p_difficulty,
+        max_p_difficulty=args.max_p_difficulty,
         request_delay_s=args.request_delay,
         timeout_s=args.timeout,
         progress=scan_progress,
@@ -163,7 +185,9 @@ def main() -> None:
         "page_size_requested": args.page_size,
         "scan_workers": args.workers,
         "min_unique_clears": args.min_unique_clears,
-        "difficulty_gate": "P1-P6",
+        "difficulty_gate": difficulty_label,
+        "min_p_difficulty": args.min_p_difficulty,
+        "max_p_difficulty": args.max_p_difficulty,
         "candidate_count": len(candidates),
         "curated_candidate_count": curated_count,
         "parser_preflight_rejected": [
