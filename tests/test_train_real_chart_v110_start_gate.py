@@ -145,3 +145,48 @@ def test_aggregate_pruning_resumes_after_clean_best(monkeypatch) -> None:
 
     assert reason == "completion"
     assert seen == (1, 0.99, 99.0, 0.99, 0)
+
+
+def test_partial_gate_prunes_when_early_already_exceeds_dirty_best() -> None:
+    combined = [_named("start-micro-4"), _named("start-micro-4"), _named("anchor-1")]
+    results = {0: _eval(2), 1: _eval(2)}
+    dirty_best = (1, 0, -3, 0.99, 99.0, 0.99, -3)
+
+    reason = v110._bootstrap_partial_prune_start_gate(
+        dirty_best,
+        combined=combined,
+        results=results,
+        any_overloaded=False,
+    )
+
+    assert reason == "start-early"
+
+
+def test_partial_gate_prunes_first_early_after_clean_best() -> None:
+    combined = [_named("start-micro-4"), _named("anchor-1")]
+    results = {0: _eval(1)}
+    clean_best = (1, 1, 0, 0.99, 99.0, 0.99, 0)
+
+    reason = v110._bootstrap_partial_prune_start_gate(
+        clean_best,
+        combined=combined,
+        results=results,
+        any_overloaded=False,
+    )
+
+    assert reason == "start-dirty"
+
+
+def test_partial_gate_does_not_prune_candidate_that_can_finish_safer() -> None:
+    combined = [_named("start-micro-4")]
+    results = {0: _eval(99)}
+    unsafe_best = (0, 1, 0, 0.99, 99.0, 0.99, 0)
+
+    reason = v110._bootstrap_partial_prune_start_gate(
+        unsafe_best,
+        combined=combined,
+        results=results,
+        any_overloaded=False,
+    )
+
+    assert reason is None
