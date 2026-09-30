@@ -7,7 +7,7 @@ from pathlib import Path
 import torch
 
 import eval_real_chart as evaluator
-import train_real_chart_v053 as v053
+import train_real_chart_v060 as v060
 import visualize_real_chart as visualizer
 from dmdod.adofai_playable import build_playable_segment
 from dmdod.adofai_timing import load_compiled_adofai
@@ -48,7 +48,8 @@ def _collect_teacher(segment, *, env_cls, same_hand: bool, control_dt_s: float, 
     frames = [visualizer._record_frame(env, observation, 0.0, 0.0)]
     max_steps = int((segment.duration_s + 2.0) / control_dt_s) + 200
     for _ in range(max_steps):
-        action = v053._teacher_action(env, observation, lead_s)
+        # Use the exact finger-agnostic teacher family used by v1.0 training.
+        action = v060._teacher_action(env, observation, lead_s)
         step = env.step(action)
         observation = step.observation
         frames.append(visualizer._record_frame(env, observation, action.left, action.right))
@@ -96,15 +97,81 @@ def _frame_dict(frame: list, segment) -> dict:
     return row
 
 
+def _analysis_window(
+    *,
+    miss_t: float | None,
+    last_t: float,
+    before_s: float,
+    after_s: float,
+    start_duration_s: float | None,
+) -> tuple[float, float, str]:
+    if start_duration_s is not None:
+        if start_duration_s <= 0.0:
+            raise ValueError("start_duration_s must be positive")
+        return 0.0, min(float(last_t), float(start_duration_s)), "chart-start"
+    center = float(last_t) if miss_t is None else float(miss_t)
+    return (
+        center - max(0.0, float(before_s)),
+        center + max(0.0, float(after_s)),
+        "first-miss",
+    )
+
+
+def _events_in_window(events: list[dict], lo: float, hi: float) -> list[dict]:
+    return [event for event in events if lo <= float(event.get("t", -1.0)) <= hi]
+
+
+def _pressed_text(row: dict | None) -> str:
+    if row is None:
+        return "--"
+    return ("L" if row["left_pressed"] else "-") + ("R" if row["right_pressed"] else "-")
+
+
+def _print_rows(rows: list[dict]) -> None:
+    print(
+        "t(ms) | student action L/R | teacher action L/R | "
+        "student pos L/R(mm) | teacher pos L/R(mm) | keys S/T"
+    )
+    for row in rows:
+        student = row["student"]
+        teacher = row["teacher"]
+        if teacher is None:
+            teacher_action = "       --/--"
+            teacher_pos = "        --/--"
+        else:
+            teacher_action = f"{teacher['action_left']:+7.4f}/{teacher['action_right']:+7.4f}"
+            teacher_pos = f"{teacher['left_pos_mm']:+7.4f}/{teacher['right_pos_mm']:+7.4f}"
+        print(
+            f"{row['t_s'] * 1000.0:5.0f} | "
+            f"{student['action_left']:+7.4f}/{student['action_right']:+7.4f} | "
+            f"{teacher_action} | "
+            f"{student['left_pos_mm']:+7.4f}/{student['right_pos_mm']:+7.4f} | "
+            f"{teacher_pos} | {_pressed_text(student)}/{_pressed_text(teacher)}"
+        )
+
+
 def main() -> None:
-    parser = argparse.ArgumentParser(description="Compare privileged teacher and student motion around the student's first miss.")
+    parser = argparse.ArgumentParser(
+        description=(
+            "Compare the exact v1.0 training teacher and student motion either around "
+            "the student's first miss or directly from chart start."
+        )
+    )
     parser.add_argument("checkpoint")
     parser.add_argument("chart")
     parser.add_argument("--before", type=float, default=1.0)
     parser.add_argument("--after", type=float, default=0.5)
+    parser.add_argument(
+        "--start-duration",
+        type=float,
+        default=None,
+        help="compare 0..N seconds from chart start instead of centering on the first miss",
+    )
     parser.add_argument("--output", default=DEFAULT_OUTPUT)
     parser.add_argument("--control-dt", type=float, default=None)
     args = parser.parse_args()
+    if args.start_duration is not None and args.start_duration <= 0.0:
+        raise SystemExit("--start-duration must be positive")
 
     device = torch.device("cpu")
     checkpoint_path = Path(args.checkpoint)
@@ -131,10 +198,6 @@ def main() -> None:
         encoder=encoder,
     )
     miss_t = _first_miss_time(student_data)
-    if miss_t is None:
-        center = float(student_data["frames"][-1][0])
-    else:
-        center = miss_t
 
     calibration = calibrate_single_press_lead(control_dt_s=control_dt_s, same_hand=same_hand)
     teacher_data = _collect_teacher(
@@ -145,8 +208,14 @@ def main() -> None:
         lead_s=calibration.lead_s,
     )
 
-    lo = center - max(0.0, args.before)
-    hi = center + max(0.0, args.after)
+    last_t = float(student_data["frames"][-1][0])
+    lo, hi, mode = _analysis_window(
+        miss_t=miss_t,
+        last_t=last_t,
+        before_s=args.before,
+        after_s=args.after,
+        start_duration_s=args.start_duration,
+    )
     student_frames = [f for f in student_data["frames"] if lo <= float(f[0]) <= hi]
     teacher_frames = [f for f in teacher_data["frames"] if lo <= float(f[0]) <= hi]
     teacher_by_tick = {round(float(f[0]) / control_dt_s): f for f in teacher_frames}
@@ -177,6 +246,8 @@ def main() -> None:
             }
         rows.append(row)
 
+    student_events = _events_in_window(student_data["events"], lo, hi)
+    teacher_events = _events_in_window(teacher_data["events"], lo, hi)
     output = {
         "meta": {
             "checkpoint": str(checkpoint_path),
@@ -184,10 +255,12 @@ def main() -> None:
             "observation": observation_label,
             "same_hand": same_hand,
             "control_dt_ms": control_dt_s * 1000.0,
+            "teacher": "v060-finger-agnostic",
             "teacher_lead_ms": calibration.lead_s * 1000.0,
             "student_first_miss_time_s": miss_t,
-            "window_before_s": args.before,
-            "window_after_s": args.after,
+            "window_mode": mode,
+            "window_start_s": lo,
+            "window_end_s": hi,
         },
         "student_result": student_data["result"],
         "teacher_result": {
@@ -197,14 +270,21 @@ def main() -> None:
             "early": int(teacher_data["stats"].too_early_presses),
             "overload": bool(teacher_data["stats"].overloaded),
         },
+        "student_events": student_events,
+        "teacher_events": teacher_events,
         "rows": rows,
     }
 
     out = Path(args.output)
     out.parent.mkdir(parents=True, exist_ok=True)
     out.write_text(json.dumps(output, ensure_ascii=False, indent=2), encoding="utf-8")
+    print(f"mode={mode} window={lo:.3f}..{hi:.3f}s")
     print(f"student_first_miss={miss_t}")
-    print(f"teacher_lead={calibration.lead_s * 1000.0:.1f}ms")
+    print(f"teacher=v060-finger-agnostic lead={calibration.lead_s * 1000.0:.1f}ms")
+    if mode == "chart-start":
+        _print_rows(rows)
+        print(f"student_keydowns={student_events}")
+        print(f"teacher_keydowns={teacher_events}")
     print(f"rows={len(rows)}")
     print(f"output={out.resolve()}")
 
