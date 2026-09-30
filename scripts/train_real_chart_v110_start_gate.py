@@ -6,12 +6,14 @@ v1.0 adds short start-micro expert/guard segments, but the ordinary bootstrap
 key still aggregates their few targets with thousands of normal anchor targets.
 That can preserve a model which physically presses during the countdown.  v1.1
 keeps v1.0 training/gameplay semantics and changes bootstrap model selection so
-start-micro TooEarly presses are considered before the normal aggregate key.
+start-micro TooEarly presses are considered immediately after the existing
+absolute overload-safety criterion and before aggregate completion/accuracy.
 
 A completely clean start (zero TooEarly presses across all start-micro anchors)
-is the primary criterion.  While no clean candidate exists, fewer start-micro
-TooEarly presses is the fallback ordering so bootstrap can still make monotonic
-progress toward the hard gate instead of silently retaining a worse warm start.
+is the next hard priority after safety.  While no clean safe candidate exists,
+fewer start-micro TooEarly presses is the fallback ordering so bootstrap can
+still make monotonic progress toward the gate instead of silently retaining a
+worse warm start.
 """
 
 import sys
@@ -53,21 +55,26 @@ def _start_micro_early(anchors) -> int:
 
 
 def _bootstrap_key_start_gate(anchors, validations) -> tuple:
-    """Rank clean start-micro behavior before the legacy aggregate bootstrap key."""
+    """Rank safety, then clean starts, then the legacy aggregate metrics."""
 
     start_early = _start_micro_early(anchors)
     base = _BASE_BOOTSTRAP_KEY(anchors, validations)
-    return int(start_early == 0), -int(start_early), *base
+    if len(base) < 2:
+        raise RuntimeError("legacy bootstrap key is unexpectedly short")
+    # Legacy: (safety, completion, meanX, meanPP, -early)
+    # v1.1:   (safety, start-clean, -start-early, completion, meanX, meanPP, -early)
+    return base[0], int(start_early == 0), -int(start_early), *base[1:]
 
 
 def _base_key(gated_key: tuple) -> tuple:
-    if len(gated_key) < 3:
+    if len(gated_key) < 4:
         raise ValueError("v1.1 bootstrap key is missing the legacy suffix")
-    return tuple(gated_key[2:])
+    return gated_key[0], *gated_key[3:]
 
 
-def _key_fields(gated_key: tuple) -> tuple[bool, int, tuple]:
-    return bool(gated_key[0]), -int(gated_key[1]), _base_key(gated_key)
+def _key_fields(gated_key: tuple) -> tuple[bool, bool, int, tuple]:
+    base = _base_key(gated_key)
+    return bool(base[0]), bool(gated_key[1]), -int(gated_key[2]), base
 
 
 def _bootstrap_prune_reason_start_gate(
@@ -78,16 +85,23 @@ def _bootstrap_prune_reason_start_gate(
     evaluated_targets: int,
     total_targets: int,
 ) -> str | None:
-    """Keep optimistic pruning exact under the start-clean priority.
+    """Keep optimistic pruning exact under safety -> start-clean ordering.
 
-    Until the current best is start-clean, a candidate with worse aggregate
-    completion could still win by becoming clean, so aggregate pruning is not
-    sound.  Once the best is clean, both candidates can score at most equally on
-    the start gate and the legacy safety/completion upper bound is sound again.
+    Safety remains absolute and can always prune an already-overloaded candidate
+    against a safe best.  If safety can still tie but the best is start-dirty,
+    aggregate completion pruning is not sound: a candidate with worse aggregate
+    completion could still win by becoming start-clean.  Once the best is both
+    equally safe and start-clean, the legacy safety/completion upper bound is
+    sound again.
     """
 
-    best_clean = bool(best_key[0])
-    if not best_clean:
+    best_safety = int(best_key[0])
+    safety_upper = 0 if any_overloaded else 1
+    if safety_upper < best_safety:
+        return "safety"
+    if safety_upper > best_safety:
+        return None
+    if not bool(best_key[1]):
         return None
     return _BASE_BOOTSTRAP_PRUNE_REASON(
         _base_key(best_key),
@@ -110,7 +124,7 @@ def _turbo_bootstrap_start_gate(
     same_hand: bool,
     control_dt_s: float,
 ):
-    """Turbo bootstrap with v1.1 start-micro-first candidate ordering."""
+    """Turbo bootstrap with v1.1 safety -> start-micro -> legacy ordering."""
 
     optimizer = torch.optim.Adam(v080.v057._policy_parameters(model), lr=learning_rate)
 
@@ -130,11 +144,10 @@ def _turbo_bootstrap_start_gate(
     best_epoch = 0
     history: list[dict] = []
 
-    clean, start_early, base = _key_fields(best_key)
+    safe, clean, start_early, base = _key_fields(best_key)
     print(
-        f"bootstrap 00: start-clean={clean} start-early={start_early} "
-        f"safe={bool(base[0])} completion={base[1] * 100.0:.1f}% "
-        f"meanX={base[2]:.1f}%"
+        f"bootstrap 00: safe={safe} start-clean={clean} start-early={start_early} "
+        f"completion={base[1] * 100.0:.1f}% meanX={base[2]:.1f}%"
     )
 
     for epoch in range(1, epochs + 1):
@@ -172,12 +185,11 @@ def _turbo_bootstrap_start_gate(
         if keep or epoch == 1 or epoch == epochs or epoch % 4 == 0:
             if pruned is None:
                 assert key is not None
-                clean, start_early, base = _key_fields(key)
+                safe, clean, start_early, base = _key_fields(key)
                 print(
-                    f"bootstrap {epoch:02d}: loss={loss:.6f} "
+                    f"bootstrap {epoch:02d}: loss={loss:.6f} safe={safe} "
                     f"start-clean={clean} start-early={start_early} "
-                    f"safe={bool(base[0])} completion={base[1] * 100.0:.1f}% "
-                    f"meanX={base[2]:.1f}%"
+                    f"completion={base[1] * 100.0:.1f}% meanX={base[2]:.1f}%"
                     + (" KEEP" if keep else "")
                 )
             else:
@@ -188,8 +200,9 @@ def _turbo_bootstrap_start_gate(
 
         if pruned is None:
             assert key is not None
-            clean, start_early, base = _key_fields(key)
+            safe, clean, start_early, base = _key_fields(key)
         else:
+            safe = False
             clean = False
             start_early = -1
             base = ()
@@ -197,9 +210,9 @@ def _turbo_bootstrap_start_gate(
             {
                 "epoch": epoch,
                 "loss": loss,
+                "safe": None if pruned is not None else safe,
                 "start_clean": None if pruned is not None else clean,
                 "start_early": None if pruned is not None else start_early,
-                "safe": None if pruned is not None else bool(base[0]),
                 "completion": None if pruned is not None else base[1],
                 "mean_xacc": None if pruned is not None else base[2],
                 "kept": keep,
@@ -211,12 +224,11 @@ def _turbo_bootstrap_start_gate(
         )
 
     model.load_state_dict(best_state)
-    clean, start_early, base = _key_fields(best_key)
+    safe, clean, start_early, base = _key_fields(best_key)
     print(
-        f"bootstrap selected: epoch={best_epoch} start-clean={clean} "
-        f"start-early={start_early} safe={bool(base[0])} "
-        f"completion={base[1] * 100.0:.1f}% meanX={base[2]:.1f}% "
-        f"pruned={turbo._BOOTSTRAP_PRUNES}/{epochs}"
+        f"bootstrap selected: epoch={best_epoch} safe={safe} start-clean={clean} "
+        f"start-early={start_early} completion={base[1] * 100.0:.1f}% "
+        f"meanX={base[2]:.1f}% pruned={turbo._BOOTSTRAP_PRUNES}/{epochs}"
     )
     return best_state, best_anchors, best_validations, history
 
@@ -249,7 +261,7 @@ def main() -> None:
     print("=== DMDOD v1.1.0 Start Gate ===")
     print(
         f"start-gate={START_GATE_VERSION} | start-micro targets={start_args.start_micro_targets} | "
-        "bootstrap priority=start-clean -> fewer-start-early -> legacy-key"
+        "bootstrap priority=safety -> start-clean -> fewer-start-early -> legacy-quality"
     )
     print(
         f"press-persistence coef={press_args.press_persistence_coef:g} "
