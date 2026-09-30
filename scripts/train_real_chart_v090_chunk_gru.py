@@ -9,6 +9,8 @@ with ``RecurrentActorCritic.forward_sequence`` so PyTorch executes the recurrent
 chunk in its native GRU kernel.
 """
 
+import time
+
 import torch
 
 import train_real_chart_v056 as v056
@@ -46,6 +48,12 @@ def _batched_progress_train_one_epoch(
         reverse=bool(reverse_order),
     )
 
+    epoch_started = time.perf_counter()
+    forward_seconds = 0.0
+    loss_seconds = 0.0
+    backward_seconds = 0.0
+    optimizer_seconds = 0.0
+
     loss_sum = 0.0
     weighted_elements = 0.0
     global_chunk = 0
@@ -70,19 +78,29 @@ def _batched_progress_train_one_epoch(
             end = min(sequence.frames, start + chunk_steps)
             state = state.detach()
 
+            phase_started = time.perf_counter()
             means, _values, state = model.forward_sequence(
                 sequence.observations[start:end],
                 state,
             )
             predicted = torch.tanh(means)
+            forward_seconds += time.perf_counter() - phase_started
+
+            phase_started = time.perf_counter()
             target = sequence.teacher_actions[start:end]
             weights = stable.loss_weights[start:end]
             loss = v056._weighted_actuation_loss(predicted, target, weights)
+            loss_seconds += time.perf_counter() - phase_started
 
+            phase_started = time.perf_counter()
             optimizer.zero_grad(set_to_none=True)
             loss.backward()
+            backward_seconds += time.perf_counter() - phase_started
+
+            phase_started = time.perf_counter()
             torch.nn.utils.clip_grad_norm_(parameters, 1.0)
             optimizer.step()
+            optimizer_seconds += time.perf_counter() - phase_started
 
             weight = max(float(weights.sum().item()), 1.0)
             loss_value = float(loss.detach().item())
@@ -111,6 +129,16 @@ def _batched_progress_train_one_epoch(
         )
 
     final_loss = loss_sum / max(1.0, weighted_elements)
+    elapsed = time.perf_counter() - epoch_started
+    accounted = forward_seconds + loss_seconds + backward_seconds + optimizer_seconds
+    other_seconds = max(0.0, elapsed - accounted)
+    parity = "rev" if reverse_order else "fwd"
+    print(
+        f"bc-kernel: parity={parity} total={elapsed:.2f}s chunks={global_chunk} "
+        f"forward={forward_seconds:.2f}s loss={loss_seconds:.2f}s "
+        f"backward={backward_seconds:.2f}s optimizer={optimizer_seconds:.2f}s "
+        f"other={other_seconds:.2f}s"
+    )
     emit_progress("bc_done", loss=final_loss, reverse=bool(reverse_order))
     return final_loss
 
