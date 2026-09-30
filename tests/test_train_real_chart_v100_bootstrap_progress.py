@@ -21,6 +21,7 @@ def _named(role: str, key: str, *, hits: int, targets: int, overloaded: bool = F
             hits=hits,
             targets=targets,
             overloaded=overloaded,
+            too_early_presses=0,
         ),
     )
 
@@ -118,3 +119,38 @@ def test_bootstrap_progress_reports_early_prune(monkeypatch):
     assert events[-1][1]["status"] == "PRUNE"
     assert events[-1][1]["reason"] == "safety"
     assert events[-1][1]["current"] == 2
+
+
+def test_bootstrap_progress_honors_partial_prune_hook(monkeypatch):
+    events = []
+    _install_fake_eval(monkeypatch, events)
+    monkeypatch.setattr(bp.turbo, "_bootstrap_prune_reason", lambda *args, **kwargs: None)
+    monkeypatch.setattr(
+        bp.turbo,
+        "_bootstrap_partial_prune_reason",
+        lambda *args, **kwargs: "start-early",
+    )
+
+    anchors = [
+        _named("start-micro-4", "a", hits=4, targets=4),
+        _named("start-micro-4", "b", hits=4, targets=4),
+        _named("anchor-1", "c", hits=10, targets=10),
+    ]
+
+    got_anchors, got_validations, key, pruned = bp._evaluate_bootstrap_candidate_with_progress(
+        object(),
+        {},
+        anchors,
+        [],
+        best_key=(1, 0.50, 0.0, 0.0, 0),
+        same_hand=True,
+        control_dt_s=0.010,
+    )
+
+    assert got_anchors is None
+    assert got_validations is None
+    assert key is None
+    assert pruned is not None and pruned["reason"] == "start-early"
+    assert pruned["evaluated"] == 2
+    assert events[-1][0] == "bootstrap_eval_done"
+    assert events[-1][1]["reason"] == "start-early"
