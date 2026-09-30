@@ -9,6 +9,29 @@ from .modern_cli import ModernTrainerConsole
 from .training_progress import TrainingProgressEvent, subscribe, unsubscribe
 
 
+# BC is normally much shorter than guard/evaluation.  This share is only a UI
+# interpolation weight so parent tqdm bars can update their built-in ETA while
+# a child stage is running; it never affects training semantics.
+_BC_PARENT_SHARE = 0.10
+_INTEGER_COUNT_BAR_FORMAT = (
+    "{l_bar}{bar}| {display_n_fmt}/{total_fmt} "
+    "[{elapsed}<{remaining}, {rate_fmt}{postfix}]"
+)
+
+
+if base.tqdm is not None:
+    class _IntegerCountTqdm(base.tqdm):
+        """tqdm that may track fractional work while displaying whole units."""
+
+        @property
+        def format_dict(self):
+            values = super().format_dict
+            values["display_n_fmt"] = str(int(float(self.n) + 1e-12))
+            return values
+else:  # pragma: no cover - modern TTY mode is disabled without tqdm
+    _IntegerCountTqdm = None
+
+
 class LiveModernTrainerConsole(ModernTrainerConsole):
     """Add current-stage and current-detail bars fed by trainer callbacks."""
 
@@ -18,9 +41,28 @@ class LiveModernTrainerConsole(ModernTrainerConsole):
         self._detail = None
         self._detail_phase: str | None = None
         self._guard_active = False
+        self._fraction_parent_name: str | None = None
+        self._fraction_parent_base = 0.0
+
+    def _bar(self, *, total: int, desc: str, colour: str, position: int):
+        assert _IntegerCountTqdm is not None
+        return _IntegerCountTqdm(
+            total=max(1, int(total)),
+            desc=desc,
+            unit="step",
+            dynamic_ncols=True,
+            leave=True,
+            colour=colour,
+            position=position,
+            file=self.stream,
+            mininterval=0.10,
+            miniters=0,
+            bar_format=_INTEGER_COUNT_BAR_FORMAT,
+        )
 
     def _live_bar(self, *, total: int, desc: str, colour: str, position: int):
-        return base.tqdm(
+        assert _IntegerCountTqdm is not None
+        return _IntegerCountTqdm(
             total=max(1, int(total)),
             desc=desc,
             unit="step",
@@ -30,7 +72,21 @@ class LiveModernTrainerConsole(ModernTrainerConsole):
             position=position,
             file=self.stream,
             mininterval=0.10,
+            miniters=0,
+            bar_format=_INTEGER_COUNT_BAR_FORMAT,
         )
+
+    @staticmethod
+    def _advance_to(bar, value: float) -> None:
+        """Advance a tqdm to an exact (possibly fractional) logical position."""
+
+        target = max(0.0, min(float(value), float(bar.total)))
+        delta = target - float(bar.n)
+        if delta > 1e-12:
+            bar.update(delta)
+        elif delta < -1e-12:
+            bar.n = target
+            bar.refresh()
 
     def _close_live(self, name: str) -> None:
         bar = getattr(self, name)
@@ -54,6 +110,65 @@ class LiveModernTrainerConsole(ModernTrainerConsole):
     def _short(text: object, width: int = 34) -> str:
         value = str(text)
         return value if len(value) <= width else value[-width:]
+
+    def _begin_fractional_parent_unit(self) -> None:
+        """Capture the integer base of the current bootstrap/round epoch."""
+
+        if self._epoch is not None:
+            self._fraction_parent_name = "_epoch"
+            self._fraction_parent_base = float(int(float(self._epoch.n) + 1e-9))
+            return
+
+        # Bootstrap progress lines are only printed after a candidate finishes,
+        # so create the outer bar as soon as the first BC phase begins.
+        if self._bootstrap is None and self._current_round == 0 and self.bootstrap_epochs > 0:
+            self._bootstrap = self._bar(
+                total=self.bootstrap_epochs,
+                desc="Bootstrap",
+                colour="blue",
+                position=0,
+            )
+        if self._bootstrap is not None:
+            self._fraction_parent_name = "_bootstrap"
+            self._fraction_parent_base = float(int(float(self._bootstrap.n) + 1e-9))
+            return
+
+        self._fraction_parent_name = None
+        self._fraction_parent_base = 0.0
+
+    def _sync_round_from_epoch(self) -> None:
+        if self._round is None or self._epoch is None or self._current_round <= 0:
+            return
+        round_target = (
+            float(self._current_round - 1)
+            + float(self._epoch.n) / max(1.0, float(self.round_epochs))
+        )
+        self._advance_to(self._round, round_target)
+
+    def _set_fractional_parent_progress(self, fraction: float) -> None:
+        """Set progress inside the current parent unit and bubble it upward."""
+
+        if self._fraction_parent_name is None:
+            return
+        parent = getattr(self, self._fraction_parent_name, None)
+        if parent is None:
+            return
+        fraction = max(0.0, min(1.0, float(fraction)))
+        self._advance_to(parent, self._fraction_parent_base + fraction)
+        if self._fraction_parent_name == "_epoch":
+            self._sync_round_from_epoch()
+
+    def _set_bc_parent_progress(self, fraction: float) -> None:
+        self._set_fractional_parent_progress(_BC_PARENT_SHARE * max(0.0, min(1.0, fraction)))
+
+    def _set_second_phase_parent_progress(self, fraction: float) -> None:
+        fraction = max(0.0, min(1.0, fraction))
+        self._set_fractional_parent_progress(
+            _BC_PARENT_SHARE + (1.0 - _BC_PARENT_SHARE) * fraction
+        )
+
+    def _finish_fractional_parent_unit(self) -> None:
+        self._set_fractional_parent_progress(1.0)
 
     def _on_progress(self, event: TrainingProgressEvent) -> None:
         if not self.enabled:
@@ -86,6 +201,8 @@ class LiveModernTrainerConsole(ModernTrainerConsole):
         # current sequence/source/loss in its postfix instead.
         if kind == "bc_start":
             chunks = int(values.get("chunks", 1))
+            self._begin_fractional_parent_unit()
+            self._set_bc_parent_progress(0.0)
             self._new_stage(total=chunks, desc="BC", colour="blue")
             parity = "rev" if values.get("reverse") else "fwd"
             self._stage.set_postfix_str(
@@ -106,7 +223,10 @@ class LiveModernTrainerConsole(ModernTrainerConsole):
 
         if kind == "bc_chunk":
             if self._stage is not None:
-                self._advance_to(self._stage, int(values.get("global_chunk", 0)))
+                current = int(values.get("global_chunk", 0))
+                total = max(1, int(values.get("global_total", self._stage.total)))
+                self._advance_to(self._stage, current)
+                self._set_bc_parent_progress(current / total)
                 parity = "rev" if values.get("reverse") else "fwd"
                 source = self._short(values.get("source", ""), 24)
                 self._stage.set_postfix_str(
@@ -121,8 +241,9 @@ class LiveModernTrainerConsole(ModernTrainerConsole):
             return
 
         if kind == "bc_done":
+            self._set_bc_parent_progress(1.0)
             if self._stage is not None:
-                self._advance_to(self._stage, int(self._stage.total))
+                self._advance_to(self._stage, float(self._stage.total))
                 self._stage.set_postfix_str(f"loss={float(values.get('loss', 0.0)):.4f}")
             self._close_live("_detail")
             self._close_live("_stage")
@@ -130,6 +251,11 @@ class LiveModernTrainerConsole(ModernTrainerConsole):
 
         if kind == "guard_start":
             self._guard_active = True
+            # Continue the same epoch that BC started.  If instrumentation ever
+            # enters Guard without BC, still establish a sane parent base.
+            if self._fraction_parent_name != "_epoch":
+                self._begin_fractional_parent_unit()
+            self._set_second_phase_parent_progress(0.0)
             self._new_stage(total=3, desc="Guard", colour="yellow")
             self._stage.set_postfix_str(
                 f"alphas={int(values.get('alphas', 0))} "
@@ -140,7 +266,8 @@ class LiveModernTrainerConsole(ModernTrainerConsole):
 
         if kind == "guard_phase_start":
             phase = str(values.get("phase", "eval"))
-            total = int(values.get("total", 1))
+            total = max(1, int(values.get("total", 1)))
+            current = int(values.get("current", 0))
             if self._detail is None or self._detail_phase != phase:
                 labels = {
                     "train": ("Train α", "yellow"),
@@ -149,24 +276,32 @@ class LiveModernTrainerConsole(ModernTrainerConsole):
                 }
                 desc, colour = labels.get(phase, (phase.title(), "cyan"))
                 self._new_detail(total=total, desc=desc, colour=colour, phase=phase)
-            self._advance_to(self._detail, int(values.get("current", 0)))
+            self._advance_to(self._detail, current)
             self._detail.set_postfix_str(f"states={int(values.get('states', 0))}")
+            phase_base = {"train": 0.0, "validation": 1.0, "anchor": 2.0}.get(phase)
+            if phase_base is not None and self._stage is not None:
+                stage_target = phase_base + current / total
+                self._advance_to(self._stage, stage_target)
+                self._set_second_phase_parent_progress(stage_target / 3.0)
             return
 
         if kind == "guard_phase_step":
             phase = str(values.get("phase", "eval"))
+            current = int(values.get("current", 0))
+            total = max(1, int(values.get("total", 1)))
             if self._detail is not None and self._detail_phase == phase:
-                self._advance_to(self._detail, int(values.get("current", 0)))
+                self._advance_to(self._detail, current)
                 self._detail.set_postfix_str(f"states={int(values.get('states', 0))}")
-            phase_index = {"train": 1, "validation": 2, "anchor": 3}.get(phase)
-            if phase_index is not None and self._stage is not None:
-                if int(values.get("current", 0)) >= int(values.get("total", 1)):
-                    self._advance_to(self._stage, phase_index)
+            phase_base = {"train": 0.0, "validation": 1.0, "anchor": 2.0}.get(phase)
+            if phase_base is not None and self._stage is not None:
+                stage_target = phase_base + current / total
+                self._advance_to(self._stage, stage_target)
+                self._set_second_phase_parent_progress(stage_target / 3.0)
             return
 
         if kind == "guard_done":
             if self._stage is not None:
-                self._advance_to(self._stage, 3)
+                self._advance_to(self._stage, 3.0)
                 if values.get("accepted"):
                     alpha = values.get("alpha")
                     self._stage.set_postfix_str(
@@ -174,6 +309,7 @@ class LiveModernTrainerConsole(ModernTrainerConsole):
                     )
                 else:
                     self._stage.set_postfix_str("ROLLBACK")
+            self._finish_fractional_parent_unit()
             self._close_live("_detail")
             self._close_live("_stage")
             self._guard_active = False
@@ -203,7 +339,27 @@ class LiveModernTrainerConsole(ModernTrainerConsole):
         if event.kind in {"round_done", "checkpoint_final", "final"}:
             self._close_live("_detail")
             self._close_live("_stage")
-        return super()._handle(event, raw)
+
+        handled = super()._handle(event, raw)
+
+        # Plain trainer lines remain the source of truth for completed integer
+        # work.  Re-sync the fractional hierarchy to those exact boundaries.
+        if event.kind == "round_start":
+            self._fraction_parent_name = None
+            self._fraction_parent_base = 0.0
+            self._sync_round_from_epoch()
+        elif event.kind == "epoch_step":
+            self._sync_round_from_epoch()
+        elif event.kind == "epoch_skip":
+            self._sync_round_from_epoch()
+        elif event.kind == "round_done":
+            self._fraction_parent_name = None
+            self._fraction_parent_base = 0.0
+        elif event.kind == "bootstrap_step" and self._bootstrap is not None:
+            self._fraction_parent_name = None
+            self._fraction_parent_base = 0.0
+
+        return handled
 
     def __enter__(self):
         super().__enter__()
