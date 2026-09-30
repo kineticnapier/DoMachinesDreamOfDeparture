@@ -35,74 +35,74 @@ def _console() -> BootstrapLiveModernTrainerConsole:
     return console
 
 
-def test_bc_uses_single_global_bar_without_sequence_detail() -> None:
+def test_bootstrap_eval_owns_single_stage_bar() -> None:
     console = _console()
 
     console._on_progress(
         TrainingProgressEvent(
-            "bc_start",
-            {"sequences": 142, "chunks": 500, "reverse": False},
+            "bootstrap_eval_start",
+            {
+                "total": 152,
+                "waves": 13,
+                "start_micro": 48,
+                "batch_size": 12,
+            },
         )
     )
+    assert console._bootstrap_eval_active
     assert console._stage is not None
-    assert console._detail is None
-    assert console._stage.total == 500
+    assert console._stage.total == 152
+    assert "wave=0/13" in console._stage.postfix
+    assert "start=48" in console._stage.postfix
 
     console._on_progress(
         TrainingProgressEvent(
-            "bc_sequence_start",
+            "bootstrap_eval_step",
             {
-                "index": 12,
-                "total": 142,
-                "source": "Example Very Long Chart Name",
-                "reverse": False,
+                "current": 24,
+                "total": 152,
+                "wave": 2,
+                "waves": 13,
+                "phase": "start-micro",
+                "evaluated_targets": 96,
+                "total_targets": 2000,
+                "overloaded": False,
             },
         )
     )
-    assert console._detail is None
-    assert "seq=12/142" in console._stage.postfix
-    assert "Example Very Long Chart Name" in console._stage.postfix
-
-    console._on_progress(
-        TrainingProgressEvent(
-            "bc_chunk",
-            {
-                "global_chunk": 123,
-                "sequence": 12,
-                "sequence_total": 142,
-                "loss": 0.01234,
-                "source": "Example Very Long Chart Name",
-                "reverse": False,
-            },
-        )
-    )
-    assert console._stage.n == 123
-    assert console._detail is None
-    assert "seq=12/142" in console._stage.postfix
-    assert "loss=0.0123" in console._stage.postfix
+    assert console._stage.n == 24
+    assert "wave=2/13" in console._stage.postfix
+    assert "start-micro" in console._stage.postfix
+    assert "targets=96/2000" in console._stage.postfix
 
 
-def test_bc_done_closes_single_bar() -> None:
+def test_bootstrap_eval_suppresses_generic_eval_and_closes_on_done() -> None:
     console = _console()
     console._on_progress(
         TrainingProgressEvent(
-            "bc_start",
-            {"sequences": 2, "chunks": 10, "reverse": True},
+            "bootstrap_eval_start",
+            {"total": 24, "waves": 2, "start_micro": 12, "batch_size": 12},
         )
     )
     bar = console._stage
     assert bar is not None
 
     console._on_progress(
-        TrainingProgressEvent("bc_sequence_done", {"index": 1, "total": 2})
+        TrainingProgressEvent(
+            "eval_start",
+            {"total": 12, "current": 0, "label": "Eval", "cached": 0, "workers": 12},
+        )
     )
     assert console._stage is bar
-    assert console._detail is None
+    assert console._stage.total == 24
 
     console._on_progress(
-        TrainingProgressEvent("bc_done", {"loss": 0.0042, "reverse": True})
+        TrainingProgressEvent(
+            "bootstrap_eval_done",
+            {"current": 12, "total": 24, "status": "PRUNE", "reason": "safety"},
+        )
     )
-    assert bar.n == 10
+    assert bar.n == 12
     assert bar.closed
     assert console._stage is None
-    assert console._detail is None
+    assert not console._bootstrap_eval_active
