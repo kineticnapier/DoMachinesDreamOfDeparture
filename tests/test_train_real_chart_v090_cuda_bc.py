@@ -47,7 +47,7 @@ def test_cuda_requested_auto_tracks_torch(monkeypatch) -> None:
 
 
 @pytest.mark.skipif(not torch.cuda.is_available(), reason="CUDA is not available")
-def test_reverse_cuda_bc_matches_cpu_training_closely() -> None:
+def test_reverse_cuda_bc_matches_cpu_training_closely(recwarn) -> None:
     torch.manual_seed(20260930)
     stable = _stable_sequence()
 
@@ -87,3 +87,10 @@ def test_reverse_cuda_bc_matches_cpu_training_closely() -> None:
             atol=5e-5,
             msg=lambda message, key=key: f"{key}: {message}",
         )
+
+    repack_warnings = [
+        warning
+        for warning in recwarn
+        if "not part of single contiguous chunk of memory" in str(warning.message)
+    ]
+    assert not repack_warnings
