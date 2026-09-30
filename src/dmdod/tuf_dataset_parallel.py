@@ -9,20 +9,32 @@ from urllib.parse import urlencode
 from .tuf_dataset import LEVELS_URL, TufCandidate, _request_json, candidate_from_api
 
 
-MAX_P_DIFFICULTY = 6
+DEFAULT_MIN_P_DIFFICULTY = 1
+DEFAULT_MAX_P_DIFFICULTY = 6
 _P_DIFFICULTY_RE = re.compile(r"^P([1-9][0-9]*)$", re.IGNORECASE)
 
 
-def is_v090_difficulty_eligible(candidate: TufCandidate) -> bool:
-    """Return whether a TUF chart is in the v0.9 curriculum band.
+def is_p_difficulty_eligible(
+    candidate: TufCandidate,
+    *,
+    min_p_difficulty: int = DEFAULT_MIN_P_DIFFICULTY,
+    max_p_difficulty: int = DEFAULT_MAX_P_DIFFICULTY,
+) -> bool:
+    """Return whether a chart is inside the requested ordinary P band."""
 
-    v0.9 intentionally trains only on ordinary P difficulties up through P6.
-    G/U/special/unranked charts and P7+ are excluded before quality/diversity
-    selection so extreme charts cannot consume training slots just for novelty.
-    """
-
+    if min_p_difficulty <= 0 or max_p_difficulty < min_p_difficulty:
+        raise ValueError("P difficulty range must satisfy 1 <= min <= max")
     match = _P_DIFFICULTY_RE.fullmatch(candidate.difficulty_name.strip())
-    return match is not None and 1 <= int(match.group(1)) <= MAX_P_DIFFICULTY
+    if match is None:
+        return False
+    value = int(match.group(1))
+    return min_p_difficulty <= value <= max_p_difficulty
+
+
+def is_v090_difficulty_eligible(candidate: TufCandidate) -> bool:
+    """Backward-compatible v0.9 curriculum gate: ordinary P1-P6 only."""
+
+    return is_p_difficulty_eligible(candidate)
 
 
 def _rows_from_payload(payload: dict) -> list[dict]:
@@ -46,6 +58,8 @@ def fetch_candidates_parallel(
     workers: int = 6,
     scan_limit: int = 0,
     min_unique_clears: int = 0,
+    min_p_difficulty: int = DEFAULT_MIN_P_DIFFICULTY,
+    max_p_difficulty: int = DEFAULT_MAX_P_DIFFICULTY,
     request_delay_s: float = 0.02,
     timeout_s: float = 30.0,
     progress: Callable[[int, int | None, int], None] | None = None,
@@ -58,8 +72,8 @@ def fetch_candidates_parallel(
     parallel. Selection still happens locally because server-side sort/facet
     parameters are not reliable enough for dataset construction.
 
-    Only P1-P6 charts enter the returned candidate pool. This curriculum gate is
-    applied before clear-count and curation ranking.
+    Only ordinary P charts inside ``min_p_difficulty..max_p_difficulty`` enter
+    the returned candidate pool. The default remains the v0.9 P1-P6 curriculum.
     """
 
     if page_size <= 0:
@@ -68,6 +82,8 @@ def fetch_candidates_parallel(
         raise ValueError("workers must be positive")
     if scan_limit < 0 or min_unique_clears < 0:
         raise ValueError("scan_limit/min_unique_clears must be non-negative")
+    if min_p_difficulty <= 0 or max_p_difficulty < min_p_difficulty:
+        raise ValueError("P difficulty range must satisfy 1 <= min <= max")
     if request_delay_s < 0.0:
         raise ValueError("request_delay_s must be non-negative")
 
@@ -103,7 +119,11 @@ def fetch_candidates_parallel(
             candidate = candidate_from_api(raw)
             if candidate is None or candidate.level_id in seen_ids:
                 continue
-            if not is_v090_difficulty_eligible(candidate):
+            if not is_p_difficulty_eligible(
+                candidate,
+                min_p_difficulty=min_p_difficulty,
+                max_p_difficulty=max_p_difficulty,
+            ):
                 continue
             if candidate.unique_clears < min_unique_clears:
                 continue
