@@ -3,6 +3,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Protocol
 
+from .fast_motor import step_held_exact
 from .keyboard import KeyEvent
 from .profiles import personal_blue_switch_v0_1
 from .simulator import Simulation
@@ -77,9 +78,9 @@ class MotorEnv:
     """RL-facing motor wrapper around the 1 kHz physical simulator.
 
     Policies act at ``control_dt_s`` while physics remains at the simulator's
-    fixed 1 ms step.  The command is held between policy decisions.  The
-    default 10 ms control interval is provisional and intentionally configurable;
-    it is not claimed as a human physiological constant.
+    fixed 1 ms step.  The command is held between policy decisions.  The exact
+    fast path integrates all held-command substeps without allocating public
+    simulator result objects for every 1 ms tick.
     """
 
     def __init__(self, *, same_hand: bool = True, control_dt_s: float = 0.010) -> None:
@@ -123,14 +124,17 @@ class MotorEnv:
     def step(self, action: MotorAction) -> MotorTransition:
         left = max(-1.0, min(1.0, action.left))
         right = max(-1.0, min(1.0, action.right))
-        events: list[TimedKeyEvent] = []
-
-        for _ in range(self.physics_substeps):
-            result = self.sim.step(left, right)
-            for key, event in result.events:
-                events.append(TimedKeyEvent(result.time_s, key, event))
-
-        return MotorTransition(self.observe(), tuple(events), self.diagnostics())
+        raw_events = step_held_exact(
+            self.sim,
+            left,
+            right,
+            self.physics_substeps,
+        )
+        events = tuple(
+            TimedKeyEvent(time_s, key, event)
+            for time_s, key, event in raw_events
+        )
+        return MotorTransition(self.observe(), events, self.diagnostics())
 
 
 class LeftThresholdReflexPolicy:
