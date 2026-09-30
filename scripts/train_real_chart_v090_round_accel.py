@@ -2,7 +2,7 @@ from __future__ import annotations
 
 """Execution-only round acceleration for v0.9 multi-chart training.
 
-Two exact optimizations are installed before the v0.9 fast/turbo stack starts:
+Three optimizations are installed before the v0.9 fast/turbo stack starts:
 
 * Hybrid guard evaluation: grouped state jobs are retained when there are enough
   surviving policy states to occupy the worker pool; when only a few states are
@@ -13,8 +13,12 @@ Two exact optimizations are installed before the v0.9 fast/turbo stack starts:
   fresh Adam optimizer, the immutable prefix is byte-for-byte repeatable from an
   identical trusted model state.  Cache both model and Adam state after that
   prefix, then train only the two round-local suffix sequences on a cache hit.
+* Reverse-BC CUDA dispatch: reverse order cannot reuse the immutable prefix, so
+  when CUDA is available the full reverse proposal is trained on a GPU copy and
+  committed back to the CPU model only after success. CUDA/CPU floating-point
+  kernels are numerically close but not bit-identical.
 
-The loss, sequence order, optimizer steps, trust alphas, guards, accepted states,
+Sequence order, chunk boundaries, optimizer-step count, trust alphas, guards,
 and checkpoint/run signatures are unchanged.
 """
 
@@ -25,9 +29,10 @@ import train_real_chart_v065 as v065
 import train_real_chart_v070 as v070
 import train_real_chart_v080 as v080
 import train_real_chart_v080_fast as v080_fast
+import train_real_chart_v090_cuda_bc as cuda_bc
 
 
-ROUND_ACCEL_VERSION = "v090-hybrid-guard-prefix-bc-v1"
+ROUND_ACCEL_VERSION = "v090-hybrid-guard-prefix-bc-cuda-v2"
 PREFIX_CACHE_VERSION = "forward-fixed-expert-prefix-v1"
 ROUND_LOCAL_SEQUENCE_COUNT = 2
 
@@ -126,12 +131,12 @@ def _prefix_cached_train_one_epoch(
     chunk_steps: int,
     reverse_order: bool,
 ) -> float:
-    """Exact v0.7 proposal cache plus reusable immutable forward prefix."""
+    """Whole-proposal cache, forward prefix reuse, and reverse CUDA dispatch."""
 
     global _PREFIX_CACHE_HITS, _PREFIX_CACHE_MISSES
 
-    # Preserve v0.7's complete-proposal cache first.  This is even cheaper than
-    # prefix reuse when the entire round proposal repeats exactly.
+    # Preserve v0.7's complete-proposal cache first. This is cheaper than either
+    # prefix reuse or launching a CUDA proposal when the whole step repeats.
     whole_key = _whole_proposal_key(model, sequences, optimizer, chunk_steps, reverse_order)
     cached = v070._TRAIN_PROPOSAL_CACHE.get(whole_key)
     if cached is not None:
@@ -142,8 +147,29 @@ def _prefix_cached_train_one_epoch(
         return float(loss)
 
     # Reverse order starts with the two round-local sequences, so the immutable
-    # anchor corpus is a suffix and cannot be reused independently of them.
-    # Fall back to the proven v0.7 implementation for that parity.
+    # anchor corpus is a suffix and cannot be prefix-cached. Train that proposal
+    # on CUDA when possible. The CUDA routine trains a deep copy, so any failure
+    # leaves the CPU model untouched and can safely fall through to CPU.
+    if reverse_order and cuda_bc.cuda_requested():
+        started = time.perf_counter()
+        try:
+            loss = cuda_bc.train_reverse_on_cuda(
+                model,
+                sequences,
+                optimizer=optimizer,
+                chunk_steps=chunk_steps,
+            )
+        except Exception as exc:
+            print(f"bc-cuda: fallback CPU ({type(exc).__name__}: {exc})")
+        else:
+            v070._TRAIN_PROPOSAL_CACHE[whole_key] = (
+                float(loss),
+                copy.deepcopy(model.state_dict()),
+            )
+            v070._TRAIN_PROPOSAL_CACHE_MISSES += 1
+            print(f"bc-perf: parity=rev cuda={time.perf_counter() - started:.2f}s")
+            return float(loss)
+
     if reverse_order or len(sequences) <= ROUND_LOCAL_SEQUENCE_COUNT:
         started = time.perf_counter()
         loss = _ORIGINAL_CACHED_TRAIN_ONE_EPOCH(
@@ -236,7 +262,7 @@ def _timed_fast_line_search(*args, **kwargs):
 
 
 def install_round_acceleration() -> None:
-    """Install exact round scheduling/cache optimizations before trainer setup."""
+    """Install round scheduling/cache/CUDA optimizations before trainer setup."""
 
     global _INSTALLED
     if _INSTALLED:
@@ -248,15 +274,15 @@ def install_round_acceleration() -> None:
     v080_fast._fast_line_search = _timed_fast_line_search
 
     # v0.7's installer later assigns v057._train_one_epoch from this module
-    # global, so replacing it now makes the prefix cache compose naturally with
-    # the existing exact whole-proposal cache.
+    # global, so replacing it now composes with whole-proposal caching.
     v070._cached_train_one_epoch = _prefix_cached_train_one_epoch
     _INSTALLED = True
 
     print(
         f"round-accel={ROUND_ACCEL_VERSION} workers={workers} "
         f"anchor-wave={v080_fast.DEFAULT_ANCHOR_BATCH_SIZE} "
-        "bc-prefix-cache=on hybrid-guard=on"
+        f"bc-prefix-cache=on reverse-cuda={'on' if cuda_bc.cuda_requested() else 'off'} "
+        "hybrid-guard=on"
     )
 
 
