@@ -9,10 +9,17 @@ per training chart containing only the countdown plus the first few playable
 targets.  The micro anchor is used both as expert BC data and as an anti-
 forgetting guard, so an early first press becomes a large completion regression
 instead of roughly a 1/N error inside a 30-second window.
+
+``--warm-start`` deliberately imports only model weights.  New v1.0 anchor and
+validation references are rebuilt by the ordinary fresh-bootstrap path, so an
+old v0.9 checkpoint cannot smuggle its 94-anchor guard baseline into v1.0.
 """
 
 import argparse
 import sys
+from pathlib import Path
+
+import torch
 
 import train_real_chart_v080 as v080
 import train_real_chart_v080_fast as v080_fast
@@ -27,7 +34,9 @@ DEFAULT_START_MICRO_TARGETS = 4
 START_MICRO_VERSION = "v100-countdown-first-targets-v1"
 
 _BASE_BUILD_ANCHOR_SEGMENTS = turbo._ORIGINAL_BUILD_ANCHOR_SEGMENTS
+_BASE_POLICY_CLASS = v080.RecurrentActorCritic
 _START_MICRO_TARGETS = DEFAULT_START_MICRO_TARGETS
+_WARM_START_PATH: Path | None = None
 
 
 def _playable_target_times(runtime) -> list[float]:
@@ -100,6 +109,46 @@ def install_start_micro(*, target_count: int = DEFAULT_START_MICRO_TARGETS) -> N
     v080.DEFAULT_CHECKPOINT = DEFAULT_CHECKPOINT
 
 
+def _load_warm_start_into(model, path: Path) -> dict:
+    payload = torch.load(path, map_location="cpu")
+    if not isinstance(payload, dict):
+        raise SystemExit("warm-start checkpoint payload is not a dictionary")
+    if int(payload.get("input_dim", -1)) != v080.v070.HUD_REAL_CHART_INPUT_DIM:
+        raise SystemExit("warm-start checkpoint input dimension does not match the 245D HUD")
+    if int(payload.get("hidden_dim", -1)) != int(model.hidden_dim):
+        raise SystemExit("warm-start checkpoint hidden size does not match --hidden")
+    state = payload.get("model_state")
+    if not isinstance(state, dict):
+        raise SystemExit("warm-start checkpoint has no model_state")
+    model.load_state_dict(state)
+    return payload
+
+
+def install_warm_start(path: str | Path) -> None:
+    global _WARM_START_PATH
+    warm_path = Path(path)
+    if not warm_path.exists():
+        raise SystemExit(f"warm-start checkpoint not found: {warm_path}")
+    _WARM_START_PATH = warm_path
+
+    class WarmStartedRecurrentActorCritic(_BASE_POLICY_CLASS):
+        def __init__(self, *args, **kwargs) -> None:
+            super().__init__(*args, **kwargs)
+            assert _WARM_START_PATH is not None
+            payload = _load_warm_start_into(self, _WARM_START_PATH)
+            print(
+                f"warm-start={_WARM_START_PATH} weights-only "
+                f"source-trainer={payload.get('trainer_version', '?')} "
+                f"source-round={int(payload.get('completed_round', 0))} "
+                f"finalized={bool(payload.get('finalized', False))}"
+            )
+
+    # v0.8 constructs exactly one policy in main().  Replacing only that symbol
+    # keeps checkpoint parsing/resume code untouched while making the fresh
+    # bootstrap start from the imported weights.
+    v080.RecurrentActorCritic = WarmStartedRecurrentActorCritic
+
+
 def _consume_v100_args(argv: list[str]) -> tuple[argparse.Namespace, list[str]]:
     parser = argparse.ArgumentParser(add_help=False)
     parser.add_argument(
@@ -107,9 +156,12 @@ def _consume_v100_args(argv: list[str]) -> tuple[argparse.Namespace, list[str]]:
         type=int,
         default=DEFAULT_START_MICRO_TARGETS,
     )
+    parser.add_argument("--warm-start", default=None)
     args, remaining = parser.parse_known_args(argv)
     if args.start_micro_targets <= 0:
         raise SystemExit("--start-micro-targets must be positive")
+    if args.warm_start is not None and "--resume" in remaining:
+        raise SystemExit("--warm-start and --resume are mutually exclusive")
     return args, remaining
 
 
@@ -125,6 +177,8 @@ def main() -> None:
         hold_margin=press_args.press_hold_margin,
     )
     install_start_micro(target_count=start_args.start_micro_targets)
+    if start_args.warm_start is not None:
+        install_warm_start(start_args.warm_start)
     turbo._install_turbo_path()
 
     print("=== DMDOD v1.0.0 Start Micro ===")
