@@ -103,3 +103,28 @@ def test_parallel_scan_filters_extreme_difficulties_before_selection(monkeypatch
     )
 
     assert [(item.level_id, item.difficulty_name) for item in result] == [(1, "P5"), (2, "P6")]
+
+
+def test_parallel_scan_can_select_p7_only(monkeypatch) -> None:
+    rows = [
+        _row(1, difficulty_name="P6", difficulty_id=6),
+        _row(2, difficulty_name="P7", difficulty_id=7),
+        _row(3, difficulty_name="p7", difficulty_id=7),
+        _row(4, difficulty_name="P8", difficulty_id=8),
+        _row(5, difficulty_name="G1", difficulty_id=21),
+    ]
+
+    def fake_request_json(url: str, *, timeout_s: float = 30.0, retries: int = 4) -> dict:
+        return {"results": rows, "total": len(rows), "hasMore": False}
+
+    monkeypatch.setattr(parallel, "_request_json", fake_request_json)
+
+    result = parallel.fetch_candidates_parallel(
+        page_size=500,
+        workers=2,
+        min_p_difficulty=7,
+        max_p_difficulty=7,
+        request_delay_s=0.0,
+    )
+
+    assert [(item.level_id, item.difficulty_name) for item in result] == [(2, "P7"), (3, "p7")]
