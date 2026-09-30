@@ -30,7 +30,7 @@ import train_real_chart_v100_start_micro as v100
 
 TRAINER_VERSION = "1.1.0-start-gate"
 DEFAULT_CHECKPOINT = "checkpoints/real_chart_v110_start_gate.pt"
-START_GATE_VERSION = "v110-bootstrap-start-micro-early-gate-v1"
+START_GATE_VERSION = "v110-bootstrap-start-micro-early-gate-v2"
 
 _BASE_BOOTSTRAP_KEY = v080._bootstrap_key
 _BASE_BOOTSTRAP_PRUNE_REASON = turbo._bootstrap_prune_reason
@@ -110,6 +110,38 @@ def _bootstrap_prune_reason_start_gate(
         evaluated_targets=evaluated_targets,
         total_targets=total_targets,
     )
+
+
+def _bootstrap_partial_prune_start_gate(
+    best_key: tuple,
+    *,
+    combined,
+    results,
+    any_overloaded: bool,
+) -> str | None:
+    """Prune as soon as accumulated start-micro Early can no longer beat best.
+
+    TooEarly counts are monotone as more start-micro segments are evaluated.
+    Once the partial count exceeds the best candidate's complete start-micro
+    count, no unevaluated segment can recover that ordering.  Safety still has
+    absolute priority: if the candidate can still finish safer than the current
+    best, the start gate is not allowed to prune it.
+    """
+
+    best_safety = int(best_key[0])
+    safety_upper = 0 if any_overloaded else 1
+    if safety_upper != best_safety:
+        return None
+
+    partial_start_early = sum(
+        int(evaluation.stats.too_early_presses)
+        for index, evaluation in results.items()
+        if _is_start_micro(combined[index])
+    )
+    best_start_early = -int(best_key[2])
+    if partial_start_early <= best_start_early:
+        return None
+    return "start-dirty" if best_start_early == 0 else "start-early"
 
 
 def _turbo_bootstrap_start_gate(
@@ -236,6 +268,7 @@ def _turbo_bootstrap_start_gate(
 def install_start_gate() -> None:
     v080._bootstrap_key = _bootstrap_key_start_gate
     turbo._bootstrap_prune_reason = _bootstrap_prune_reason_start_gate
+    turbo._BOOTSTRAP_PARTIAL_PRUNE_HOOK = _bootstrap_partial_prune_start_gate
     turbo._turbo_bootstrap = _turbo_bootstrap_start_gate
 
 
@@ -271,7 +304,7 @@ def main() -> None:
     )
     print(
         f"turbo={turbo.TURBO_VERSION} | fast-eval={v080_fast.FAST_EVAL_VERSION} | "
-        "start-micro=train+guard bootstrap-hard-priority"
+        "start-micro=train+guard bootstrap-hard-priority+gate-prune"
     )
 
     sys.argv = [sys.argv[0], *remaining]
