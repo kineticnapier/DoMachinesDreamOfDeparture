@@ -5,6 +5,7 @@ from __future__ import annotations
 import sys
 
 from dmdod.modern_cli_live import LiveModernTrainerConsole
+import train_real_chart_v090_chunk_gru as chunk_gru
 import train_real_chart_v090_progress as progress
 import train_real_chart_v090_round_accel as round_accel
 import train_real_chart_v090_turbo as turbo
@@ -12,10 +13,13 @@ import train_real_chart_v090_turbo as turbo
 
 def main() -> None:
     with LiveModernTrainerConsole.from_argv(sys.argv[1:]):
-        # Install scheduling first so progress wraps the final accelerated hot
-        # paths, then let the turbo trainer install its v0.9/v0.8 runtime hooks.
+        # Install scheduling first, then observational progress, then replace
+        # only the BC chunk's per-frame Python loop with the native GRU kernel.
+        # v0.7 captures the final _train_one_epoch implementation when turbo
+        # installs the mature training stack.
         round_accel.install_round_acceleration()
         progress.install_progress_instrumentation()
+        chunk_gru.install_chunk_gru_acceleration()
         turbo.main()
 
 
