@@ -114,20 +114,23 @@ Reduce per-round Behavioral Cloning (BC) cost in the v0.9 press-persistence trai
 7. Added a CUDA backend for reverse BC only. The trusted CPU model is not mutated directly; training occurs on a CUDA copy and is committed back only after the epoch succeeds, allowing CPU fallback after CUDA failure.
 8. The initial environment had `torch 2.14.0+cpu` and `torch.cuda.is_available() == False`, so the CUDA hardware test was skipped. After installing a CUDA-enabled wheel, the CUDA comparison test reported 3 passed.
 9. The CUDA test produced a cuDNN warning that GRU weights were not stored in one contiguous chunk. The backend was changed to use a temporary packed `nn.GRU` to avoid repeated repacking while leaving checkpoint/state-dict structure unchanged.
+10. Benchmarked the packed-GRU CUDA backend in production round 37. Reverse BC completed 1516 chunks in 11.29 seconds (setup 0.18 s, train 11.11 s, copyback 0.00 s). This first measurement had 0 CUDA sequence-cache hits and 96 misses.
+11. In the same run, the CPU forward prefix miss took 88.52 seconds, while the next forward prefix hit after round 37 took 2.34 seconds. The 2m26s total time for round 37 was therefore dominated by rebuilding the forward prefix cache after process restart.
 
 ### Results
 
 - Batched-GRU CPU path: effective; reverse BC is stable at roughly 88–93 seconds.
 - CPU profile: approximately 65% of reverse BC time is backward and 27% is forward.
 - CUDA backend: CPU/CUDA numerical-closeness test passed.
-- Production speed after the packed-GRU warning fix: **not measured yet**.
+- Packed-GRU CUDA production benchmark: reverse BC 93.15 s → 11.29 s, approximately **8.25× faster**.
+- The first CUDA measurement reached 11.29 seconds even with all sequence-cache entries missing, leaving room for further reduction once the fixed trajectories hit the cache.
 
 ### Observations
 
 - After removing the Python frame loop, `other` time fell to about 1.55 seconds, so further C++-only loop migration is unlikely to provide a large gain.
-- Forward BC falls to roughly 1.8–2.0 seconds when the immutable expert-prefix cache hits.
+- Forward BC falls to roughly 1.8–2.3 seconds when the immutable expert-prefix cache hits.
 - Reverse BC starts with round-local sequences, so the same fixed-prefix cache cannot be applied directly.
 - On difficult rounds, Guard can rise to roughly 35–50 seconds and becomes the second major bottleneck outside BC.
-- Re-measure production CUDA speed after the packed-GRU change and append the result here.
+- The first CUDA production measurement was `seq-cache=0hit/96miss`. Later rounds are expected to reuse the 94 fixed trajectories; record the cache-hit timing separately when observed.
 
 [日本語](実験記録.md)
