@@ -4,6 +4,9 @@ import sys
 from pathlib import Path
 from types import SimpleNamespace
 
+import pytest
+import torch
+
 
 SCRIPTS = Path(__file__).resolve().parents[1] / "scripts"
 if str(SCRIPTS) not in sys.path:
@@ -97,3 +100,47 @@ def test_install_start_micro_updates_turbo_builder_and_checkpoint_identity(monke
         monkeypatch.setattr(v100.turbo, "_ORIGINAL_BUILD_ANCHOR_SEGMENTS", old_builder)
         monkeypatch.setattr(v100.v080, "TRAINER_VERSION", old_version)
         monkeypatch.setattr(v100.v080, "DEFAULT_CHECKPOINT", old_checkpoint)
+
+
+def test_warm_start_loads_only_compatible_model_weights(tmp_path):
+    source = v100._BASE_POLICY_CLASS(
+        input_dim=v100.v080.v070.HUD_REAL_CHART_INPUT_DIM,
+        hidden_dim=8,
+        initial_log_std=-1.20,
+    )
+    with torch.no_grad():
+        for index, parameter in enumerate(source.parameters(), 1):
+            parameter.fill_(index * 0.01)
+
+    path = tmp_path / "v090.pt"
+    torch.save(
+        {
+            "format_version": 15,
+            "trainer_version": "0.9.0-press-persistence",
+            "input_dim": v100.v080.v070.HUD_REAL_CHART_INPUT_DIM,
+            "hidden_dim": 8,
+            "model_state": source.state_dict(),
+            "completed_round": 48,
+            "finalized": True,
+            # Deliberately incompatible old guard data: warm-start must ignore it.
+            "anchor_references": ["old-anchor"],
+            "validation_references": ["old-validation"],
+        },
+        path,
+    )
+
+    target = v100._BASE_POLICY_CLASS(
+        input_dim=v100.v080.v070.HUD_REAL_CHART_INPUT_DIM,
+        hidden_dim=8,
+        initial_log_std=-1.20,
+    )
+    payload = v100._load_warm_start_into(target, path)
+
+    assert payload["trainer_version"] == "0.9.0-press-persistence"
+    for key, value in source.state_dict().items():
+        assert torch.equal(target.state_dict()[key], value)
+
+
+def test_warm_start_and_resume_are_mutually_exclusive():
+    with pytest.raises(SystemExit, match="mutually exclusive"):
+        v100._consume_v100_args(["--warm-start", "old.pt", "--resume"])
