@@ -125,6 +125,13 @@ def _evaluate_bootstrap_candidate_with_progress(
             evaluated_targets=evaluated_targets,
             total_targets=total_targets,
         )
+        if reason is None:
+            reason = turbo._bootstrap_partial_prune_reason(
+                best_key,
+                combined=combined,
+                results=results,
+                any_overloaded=any_overloaded,
+            )
         if reason is not None and len(results) < len(combined):
             emit_progress(
                 "bootstrap_eval_done",
