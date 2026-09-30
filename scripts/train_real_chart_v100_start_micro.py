@@ -96,15 +96,39 @@ def _build_anchor_segments_with_start_micro(
     return result
 
 
+def _bootstrap_segment_order_start_micro_first(segments) -> list[int]:
+    """Evaluate cheap chart-start guards first without changing bootstrap semantics.
+
+    Turbo already remembers which segments rejected previous bootstrap candidates.
+    Keep that adaptive failure ordering inside each priority class, but always run
+    ``start-micro`` anchors before the long 30-second anchors and validation.  A
+    candidate that regresses the countdown/first press can then be pruned after a
+    small wave instead of simulating most of the 142-anchor corpus first.
+    """
+
+    return sorted(
+        range(len(segments)),
+        key=lambda index: (
+            0
+            if str(getattr(segments[index], "role", "")).startswith("start-micro-")
+            else 1,
+            -turbo._BOOTSTRAP_FAILURE_COUNTS.get(segments[index].key, 0),
+            index,
+        ),
+    )
+
+
 def install_start_micro(*, target_count: int = DEFAULT_START_MICRO_TARGETS) -> None:
     global _START_MICRO_TARGETS
     if int(target_count) <= 0:
         raise ValueError("target_count must be positive")
     _START_MICRO_TARGETS = int(target_count)
 
-    # Turbo captures anchors by calling this stored builder.  Point that capture
-    # at the augmented builder while leaving v0.8 itself untouched.
+    # Turbo captures anchors by calling this stored builder. Point that capture
+    # at the augmented builder and make bootstrap inspect the short start guards
+    # first. Only evaluation order changes; candidate scoring/selection does not.
     turbo._ORIGINAL_BUILD_ANCHOR_SEGMENTS = _build_anchor_segments_with_start_micro
+    turbo._bootstrap_segment_order = _bootstrap_segment_order_start_micro_first
     v080.TRAINER_VERSION = TRAINER_VERSION
     v080.DEFAULT_CHECKPOINT = DEFAULT_CHECKPOINT
 
@@ -191,7 +215,7 @@ def main() -> None:
     )
     print(
         f"turbo={turbo.TURBO_VERSION} | fast-eval={v080_fast.FAST_EVAL_VERSION} | "
-        "start-micro=train+guard"
+        "start-micro=train+guard bootstrap-first"
     )
 
     sys.argv = [sys.argv[0], *remaining]
