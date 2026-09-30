@@ -55,6 +55,59 @@ class RecurrentActorCritic(nn.Module):
         std = self.log_std.exp().clamp(0.08, 1.5)
         return mean, std, value, next_state
 
+    def forward_sequence(
+        self,
+        observations: torch.Tensor,
+        initial_state: torch.Tensor,
+    ) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
+        """Run a complete observation sequence through the existing GRUCell weights.
+
+        This is mathematically the same recurrent transition as repeated
+        :meth:`forward_step` calls, but delegates the temporal recurrence to
+        PyTorch's fused GRU operator so the Python frame loop can be removed from
+        hot training paths. No extra module or parameters are registered, keeping
+        checkpoint/state-dict compatibility unchanged.
+        """
+
+        if observations.ndim != 2 or observations.shape[1] != self.input_dim:
+            raise ValueError(
+                f"observations must have shape [T, {self.input_dim}], got "
+                f"{tuple(observations.shape)}"
+            )
+        if initial_state.ndim != 1 or initial_state.shape[0] != self.hidden_dim:
+            raise ValueError(
+                f"initial_state must have shape [{self.hidden_dim}], got "
+                f"{tuple(initial_state.shape)}"
+            )
+        if observations.shape[0] == 0:
+            empty_means = observations.new_empty((0, 2))
+            empty_values = observations.new_empty((0,))
+            return empty_means, empty_values, initial_state
+
+        encoded = torch.tanh(self.input_layer(observations)).unsqueeze(1)
+        hx = initial_state.reshape(1, 1, self.hidden_dim)
+        recurrent, final_state = torch._VF.gru(
+            encoded,
+            hx,
+            [
+                self.gru.weight_ih,
+                self.gru.weight_hh,
+                self.gru.bias_ih,
+                self.gru.bias_hh,
+            ],
+            True,
+            1,
+            0.0,
+            self.training,
+            False,
+            False,
+        )
+        recurrent = recurrent.squeeze(1)
+        features = torch.tanh(self.post(recurrent))
+        means = self.actor_mean(features)
+        values = self.critic(features).squeeze(-1)
+        return means, values, final_state.reshape(self.hidden_dim)
+
     @staticmethod
     def _latent_log_prob(dist: Normal, latent: torch.Tensor) -> torch.Tensor:
         squashed = torch.tanh(latent)
