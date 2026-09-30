@@ -36,6 +36,7 @@ _TEACHER_CACHE_HITS = 0
 _TEACHER_CACHE_MISSES = 0
 _BOOTSTRAP_FAILURE_COUNTS: dict[tuple, int] = {}
 _BOOTSTRAP_PRUNES = 0
+_BOOTSTRAP_PARTIAL_PRUNE_HOOK = None
 
 
 def _teacher_cache_dir() -> Path:
@@ -232,6 +233,26 @@ def _bootstrap_prune_reason(
     return None
 
 
+def _bootstrap_partial_prune_reason(
+    best_key: tuple,
+    *,
+    combined,
+    results,
+    any_overloaded: bool,
+) -> str | None:
+    """Run an optional version-specific exact partial-candidate prune hook."""
+
+    hook = _BOOTSTRAP_PARTIAL_PRUNE_HOOK
+    if hook is None:
+        return None
+    return hook(
+        best_key,
+        combined=combined,
+        results=results,
+        any_overloaded=any_overloaded,
+    )
+
+
 def _bootstrap_segment_order(segments) -> list[int]:
     return sorted(
         range(len(segments)),
@@ -292,6 +313,13 @@ def _evaluate_bootstrap_candidate(
             evaluated_targets=evaluated_targets,
             total_targets=total_targets,
         )
+        if reason is None:
+            reason = _bootstrap_partial_prune_reason(
+                best_key,
+                combined=combined,
+                results=results,
+                any_overloaded=any_overloaded,
+            )
         if reason is not None and len(results) < len(combined):
             return None, None, None, {
                 "reason": reason,
