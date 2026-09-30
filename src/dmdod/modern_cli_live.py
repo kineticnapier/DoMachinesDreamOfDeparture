@@ -81,42 +81,43 @@ class LiveModernTrainerConsole(ModernTrainerConsole):
             self._close_live("_stage")
             return
 
+        # BC sequences are short enough that a second per-sequence tqdm bar is
+        # mostly terminal churn. Keep one global chunk bar and surface the
+        # current sequence/source/loss in its postfix instead.
         if kind == "bc_start":
             chunks = int(values.get("chunks", 1))
             self._new_stage(total=chunks, desc="BC", colour="blue")
-            parity = "reverse" if values.get("reverse") else "forward"
+            parity = "rev" if values.get("reverse") else "fwd"
             self._stage.set_postfix_str(
-                f"{parity} trajectories={int(values.get('sequences', 0))}"
+                f"{parity} seq=0/{int(values.get('sequences', 0))}"
             )
             return
 
         if kind == "bc_sequence_start":
-            index = int(values.get("index", 0))
-            total = int(values.get("total", 0))
-            chunks = int(values.get("chunks", 1))
-            self._new_detail(
-                total=chunks,
-                desc=f"seq {index}/{total}",
-                colour="cyan",
-                phase="bc",
-            )
-            self._detail.set_postfix_str(self._short(values.get("source", "")))
+            if self._stage is not None:
+                index = int(values.get("index", 0))
+                total = int(values.get("total", 0))
+                parity = "rev" if values.get("reverse") else "fwd"
+                source = self._short(values.get("source", ""), 28)
+                self._stage.set_postfix_str(
+                    f"{parity} seq={index}/{total} {source}".rstrip()
+                )
             return
 
         if kind == "bc_chunk":
             if self._stage is not None:
                 self._advance_to(self._stage, int(values.get("global_chunk", 0)))
                 parity = "rev" if values.get("reverse") else "fwd"
+                source = self._short(values.get("source", ""), 24)
                 self._stage.set_postfix_str(
-                    f"{parity} seq={int(values.get('sequence', 0))}/{int(values.get('sequence_total', 0))} "
-                    f"loss={float(values.get('loss', 0.0)):.4f}"
+                    f"{parity} seq={int(values.get('sequence', 0))}/"
+                    f"{int(values.get('sequence_total', 0))} "
+                    f"{source} loss={float(values.get('loss', 0.0)):.4f}".strip()
                 )
-            if self._detail is not None and self._detail_phase == "bc":
-                self._advance_to(self._detail, int(values.get("chunk", 0)))
             return
 
         if kind == "bc_sequence_done":
-            self._close_live("_detail")
+            # Deliberately no separate sequence bar to close.
             return
 
         if kind == "bc_done":
