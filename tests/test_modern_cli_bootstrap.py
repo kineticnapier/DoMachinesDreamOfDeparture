@@ -1,18 +1,20 @@
 from __future__ import annotations
 
+import pytest
+
 from dmdod.modern_cli_bootstrap import BootstrapLiveModernTrainerConsole
 from dmdod.training_progress import TrainingProgressEvent
 
 
 class _FakeBar:
     def __init__(self, total: int) -> None:
-        self.total = int(total)
-        self.n = 0
+        self.total = float(total)
+        self.n = 0.0
         self.postfix = ""
         self.closed = False
 
-    def update(self, delta: int) -> None:
-        self.n += int(delta)
+    def update(self, delta: float) -> None:
+        self.n += float(delta)
 
     def refresh(self) -> None:
         pass
@@ -31,7 +33,9 @@ def _console() -> BootstrapLiveModernTrainerConsole:
         bootstrap_epochs=64,
     )
     console.enabled = True
-    console._live_bar = lambda *, total, desc, colour, position: _FakeBar(total)  # type: ignore[method-assign]
+    factory = lambda *, total, desc, colour, position: _FakeBar(total)
+    console._bar = factory  # type: ignore[method-assign]
+    console._live_bar = factory  # type: ignore[method-assign]
     return console
 
 
@@ -106,3 +110,44 @@ def test_bootstrap_eval_suppresses_generic_eval_and_closes_on_done() -> None:
     assert bar.closed
     assert console._stage is None
     assert not console._bootstrap_eval_active
+
+
+def test_bootstrap_eval_fraction_flows_into_outer_bootstrap_bar() -> None:
+    console = _console()
+    console._bootstrap = _FakeBar(64)
+    console._bootstrap.n = 7.0
+    console._fraction_parent_name = "_bootstrap"
+    console._fraction_parent_base = 7.0
+
+    console._on_progress(
+        TrainingProgressEvent(
+            "bootstrap_eval_start",
+            {"total": 100, "waves": 10, "start_micro": 48, "batch_size": 12},
+        )
+    )
+    console._on_progress(
+        TrainingProgressEvent(
+            "bootstrap_eval_step",
+            {
+                "current": 50,
+                "total": 100,
+                "wave": 5,
+                "waves": 10,
+                "phase": "anchors",
+                "evaluated_targets": 500,
+                "total_targets": 1000,
+                "overloaded": False,
+            },
+        )
+    )
+
+    # BC owns 10%; halfway through eval is 10% + 45% = 55% of epoch 8.
+    assert console._bootstrap.n == pytest.approx(7.55)
+
+    console._on_progress(
+        TrainingProgressEvent(
+            "bootstrap_eval_done",
+            {"current": 50, "total": 100, "status": "PRUNE", "reason": "completion"},
+        )
+    )
+    assert console._bootstrap.n == pytest.approx(8.0)
