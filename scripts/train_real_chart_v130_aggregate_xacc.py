@@ -262,7 +262,10 @@ def _aggregate_xacc_line_search(
         validation_aggregate_alive.append(alpha)
     validation_alive = validation_aggregate_alive
 
-    # Stage 3a: Anchor per-segment safety/hit/TooEarly only.
+    # Stage 3a: Anchor per-segment safety/hit/TooEarly only.  Unlike v1.2's
+    # two-anchor compatibility cap, v1.3 may need the entire role to decide the
+    # aggregate XAcc floor, so each wave is allowed to fill all available worker
+    # slots (e.g. one live candidate -> up to 12 anchors per wave).
     anchor_eval_maps = {alpha: {} for alpha in validation_alive}
     anchor_decision_maps = {alpha: {} for alpha in validation_alive}
     alive = list(validation_alive)
@@ -276,7 +279,6 @@ def _aggregate_xacc_line_search(
             len(alive),
             len(anchor_order) - anchor_cursor,
             workers=workers,
-            max_segments=v080_fast.DEFAULT_ANCHOR_BATCH_SIZE,
         )
         batch_indices = anchor_order[anchor_cursor : anchor_cursor + wave_size]
         anchor_cursor += wave_size
