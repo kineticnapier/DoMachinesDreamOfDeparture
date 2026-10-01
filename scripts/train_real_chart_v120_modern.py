@@ -1,0 +1,37 @@
+from __future__ import annotations
+
+"""Modern live frontend for the v1.2 train-preserve trainer."""
+
+import sys
+
+from dmdod.modern_cli_bootstrap import BootstrapLiveModernTrainerConsole
+import train_real_chart_v090_chunk_gru as chunk_gru
+import train_real_chart_v090_progress as progress
+import train_real_chart_v090_round_accel as round_accel
+import train_real_chart_v100_bootstrap_progress as bootstrap_progress
+import train_real_chart_v110_bootstrap_cuda as bootstrap_cuda
+import train_real_chart_v110_nonempty_segments as nonempty_segments
+import train_real_chart_v110_rejection_telemetry as rejection_telemetry
+import train_real_chart_v120_train_preserve as v120
+
+
+def main() -> None:
+    with BootstrapLiveModernTrainerConsole.from_argv(sys.argv[1:]):
+        nonempty_segments.install_nonempty_segment_relocation()
+        round_accel.install_round_acceleration()
+        # Install before rejection telemetry so telemetry observes the new train
+        # guard while still wrapping the final line-search result.
+        v120.install_train_preserve_gate()
+        rejection_telemetry.install_rejection_telemetry()
+        progress.install_progress_instrumentation()
+        chunk_gru.install_chunk_gru_acceleration()
+        bootstrap_cuda.install_bootstrap_cuda_acceleration()
+        bootstrap_progress.install_bootstrap_progress()
+        try:
+            v120.main()
+        finally:
+            rejection_telemetry.print_rejection_telemetry()
+
+
+if __name__ == "__main__":
+    main()
