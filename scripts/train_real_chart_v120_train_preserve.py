@@ -36,6 +36,16 @@ TRAIN_PRESERVE_VERSION = "v120-round-train-preserve-aggregate-v1"
 
 _ORIGINAL_FAST_LINE_SEARCH = None
 _INSTALLED = False
+_AGGREGATE_KEY_FIELDS = (
+    "safety",
+    "start-clean",
+    "start-early",
+    "completion",
+    "XAcc",
+    "PP",
+    "early",
+    "miss",
+)
 
 
 def _train_preservation_guard(best, candidate):
@@ -135,6 +145,51 @@ def _aggregate_key(train_eval, validation_evals, anchor_evals, anchor_segments) 
     )
 
 
+def _aggregate_key_delta(base_key: tuple, candidate_key: tuple) -> dict:
+    """Describe a candidate-vs-base aggregate comparison without new evaluation."""
+
+    if len(base_key) != len(_AGGREGATE_KEY_FIELDS) or len(candidate_key) != len(base_key):
+        raise ValueError("unexpected aggregate key shape")
+
+    first = "tie"
+    relation = "TIE"
+    for index, field in enumerate(_AGGREGATE_KEY_FIELDS):
+        base_value = base_key[index]
+        candidate_value = candidate_key[index]
+        if candidate_value == base_value:
+            continue
+        first = field
+        relation = "WIN" if candidate_value > base_value else "LOSS"
+        break
+
+    # Expose human-direction deltas. start-early/early/miss are stored negated in
+    # the ranking tuple, so positive numbers below mean the candidate has more.
+    return {
+        "first": first,
+        "relation": relation,
+        "safe": int(candidate_key[0]) - int(base_key[0]),
+        "start_clean": int(candidate_key[1]) - int(base_key[1]),
+        "start_early": (-int(candidate_key[2])) - (-int(base_key[2])),
+        "completion_pp": (float(candidate_key[3]) - float(base_key[3])) * 100.0,
+        "xacc_pt": float(candidate_key[4]) - float(base_key[4]),
+        "pp_pt": float(candidate_key[5]) - float(base_key[5]),
+        "early": (-int(candidate_key[6])) - (-int(base_key[6])),
+        "miss": (-int(candidate_key[7])) - (-int(base_key[7])),
+    }
+
+
+def _format_aggregate_delta(alpha: float, base_key: tuple, candidate_key: tuple) -> str:
+    delta = _aggregate_key_delta(base_key, candidate_key)
+    return (
+        f"a={float(alpha):g} first={delta['first']}:{delta['relation']} "
+        f"dSafe={delta['safe']:+d} dStartClean={delta['start_clean']:+d} "
+        f"dStartEarly={delta['start_early']:+d} "
+        f"dCompletion={delta['completion_pp']:+.3f}pp "
+        f"dX={delta['xacc_pt']:+.3f}pt dPP={delta['pp_pt']:+.3f}pt "
+        f"dEarly={delta['early']:+d} dMiss={delta['miss']:+d}"
+    )
+
+
 def _complete_candidates(candidates, validation_count: int, anchor_count: int):
     return [
         candidate
@@ -231,6 +286,7 @@ def _train_preserve_line_search(
     )
 
     improving = []
+    compared = []
     for candidate in complete:
         key = _aggregate_key(
             candidate.train_eval,
@@ -238,8 +294,17 @@ def _train_preserve_line_search(
             candidate.anchor_evals,
             anchor_segments,
         )
+        compared.append((key, candidate))
         if key > base_key:
             improving.append((key, candidate))
+
+    # Diagnostic-only: these lines reuse keys that selection already computed.
+    # They trigger no extra gameplay evaluation and make a rollback explainable.
+    for key, candidate in compared:
+        print(
+            f"{label}: aggregate-delta "
+            + _format_aggregate_delta(candidate.alpha, base_key, key)
+        )
 
     if not improving:
         model.load_state_dict(base_state)
