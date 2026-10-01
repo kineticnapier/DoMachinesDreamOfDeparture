@@ -12,6 +12,7 @@ import train_real_chart_v100_bootstrap_progress as bootstrap_progress
 import train_real_chart_v110_bootstrap_cuda as bootstrap_cuda
 import train_real_chart_v110_nonempty_segments as nonempty_segments
 import train_real_chart_v110_rejection_telemetry as rejection_telemetry
+import train_real_chart_v120_guard_wave_accel as guard_wave_accel
 import train_real_chart_v120_train_preserve as v120
 
 
@@ -19,6 +20,7 @@ def main() -> None:
     with BootstrapLiveModernTrainerConsole.from_argv(sys.argv[1:]):
         nonempty_segments.install_nonempty_segment_relocation()
         round_accel.install_round_acceleration()
+        guard_wave_accel.install_adaptive_guard_waves()
         # Install before rejection telemetry so telemetry observes the new train
         # guard while still wrapping the final line-search result.
         v120.install_train_preserve_gate()
