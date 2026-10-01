@@ -1,0 +1,110 @@
+from __future__ import annotations
+
+import sys
+from pathlib import Path
+from types import SimpleNamespace
+
+
+SCRIPTS = Path(__file__).resolve().parents[1] / "scripts"
+if str(SCRIPTS) not in sys.path:
+    sys.path.insert(0, str(SCRIPTS))
+
+import train_real_chart_v120_train_preserve as v120
+
+
+def _eval(
+    *,
+    hits: int = 100,
+    targets: int = 100,
+    x: float = 95.0,
+    pp: float = 90.0,
+    early: int = 0,
+    misses: int | None = None,
+    overloaded: bool = False,
+):
+    if misses is None:
+        misses = max(0, targets - hits)
+    return SimpleNamespace(
+        stats=SimpleNamespace(
+            hits=hits,
+            targets=targets,
+            x_accuracy_percent=x,
+            perfect_rate=pp,
+            too_early_presses=early,
+            misses=misses,
+            overloaded=overloaded,
+        )
+    )
+
+
+def test_train_preservation_accepts_identical_policy() -> None:
+    base = _eval()
+    candidate = _eval()
+    decision = v120._train_preservation_guard(base, candidate)
+    assert decision.accepted
+    assert decision.reason == "train preserved"
+
+
+def test_train_preservation_rejects_real_regressions() -> None:
+    base = _eval(hits=100, targets=100, x=95.0, early=1)
+
+    assert not v120._train_preservation_guard(
+        base, _eval(hits=100, targets=100, x=95.0, early=1, overloaded=True)
+    ).accepted
+    assert not v120._train_preservation_guard(
+        base, _eval(hits=96, targets=100, x=95.0, early=1)
+    ).accepted
+    assert not v120._train_preservation_guard(
+        base, _eval(hits=100, targets=100, x=92.9, early=1)
+    ).accepted
+    assert not v120._train_preservation_guard(
+        base, _eval(hits=100, targets=100, x=95.0, early=6)
+    ).accepted
+
+
+def test_train_preservation_allows_overloaded_policy_to_escape() -> None:
+    base = _eval(hits=20, targets=100, x=50.0, overloaded=True)
+    candidate = _eval(hits=10, targets=100, x=40.0, overloaded=False)
+    decision = v120._train_preservation_guard(base, candidate)
+    assert decision.accepted
+    assert decision.reason == "train escaped overload"
+
+
+def test_aggregate_key_keeps_start_clean_ahead_of_completion() -> None:
+    normal = SimpleNamespace(role="anchor-1")
+    start = SimpleNamespace(role="start-micro-4")
+
+    clean_key = v120._aggregate_key(
+        _eval(hits=90),
+        (_eval(hits=90),),
+        (_eval(hits=90), _eval(hits=4, targets=4, early=0)),
+        (normal, start),
+    )
+    dirty_but_more_complete_key = v120._aggregate_key(
+        _eval(hits=100),
+        (_eval(hits=100),),
+        (_eval(hits=100), _eval(hits=4, targets=4, early=1)),
+        (normal, start),
+    )
+
+    assert clean_key > dirty_but_more_complete_key
+
+
+def test_aggregate_key_prefers_completion_when_start_gate_ties() -> None:
+    normal = SimpleNamespace(role="anchor-1")
+    start = SimpleNamespace(role="start-micro-4")
+
+    lower = v120._aggregate_key(
+        _eval(hits=90),
+        (_eval(hits=90),),
+        (_eval(hits=90), _eval(hits=4, targets=4)),
+        (normal, start),
+    )
+    higher = v120._aggregate_key(
+        _eval(hits=91),
+        (_eval(hits=90),),
+        (_eval(hits=90), _eval(hits=4, targets=4)),
+        (normal, start),
+    )
+
+    assert higher > lower
