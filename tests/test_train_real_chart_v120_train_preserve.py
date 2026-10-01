@@ -108,3 +108,33 @@ def test_aggregate_key_prefers_completion_when_start_gate_ties() -> None:
     )
 
     assert higher > lower
+
+
+def test_aggregate_delta_reports_first_lexicographic_loss() -> None:
+    base = (1, 0, -2, 0.9500, 93.0, 80.0, -10, -20)
+    candidate = (1, 0, -2, 0.9490, 94.0, 82.0, -8, -19)
+
+    delta = v120._aggregate_key_delta(base, candidate)
+
+    assert delta["first"] == "completion"
+    assert delta["relation"] == "LOSS"
+    assert abs(delta["completion_pp"] + 0.1) < 1e-9
+    assert delta["xacc_pt"] == 1.0
+    assert delta["pp_pt"] == 2.0
+    assert delta["early"] == -2
+    assert delta["miss"] == -1
+
+
+def test_aggregate_delta_uses_human_direction_for_start_early() -> None:
+    base = (1, 0, -2, 0.95, 93.0, 80.0, -10, -20)
+    candidate = (1, 0, -3, 0.96, 94.0, 82.0, -10, -20)
+
+    delta = v120._aggregate_key_delta(base, candidate)
+
+    assert delta["first"] == "start-early"
+    assert delta["relation"] == "LOSS"
+    assert delta["start_early"] == 1
+    text = v120._format_aggregate_delta(0.125, base, candidate)
+    assert "a=0.125" in text
+    assert "first=start-early:LOSS" in text
+    assert "dStartEarly=+1" in text
