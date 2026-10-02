@@ -39,6 +39,25 @@ def _segment():
     return build_playable_segment(compiled, start_s=0.0, end_s=compiled.duration_s)
 
 
+def _dense_segment():
+    chart = parse_adofai_text(
+        """
+        {
+          "angleData": [0, 90, 180, 270, 0, 90, 180, 270, 0],
+          "settings": {
+            "bpm": 1200,
+            "pitch": 100,
+            "countdownTicks": 0,
+            "separateCountdownTime": false
+          },
+          "actions": []
+        }
+        """
+    )
+    compiled = compile_adofai(chart)
+    return build_playable_segment(compiled, start_s=0.0, end_s=compiled.duration_s)
+
+
 def test_center_first_teacher_latches_key_until_physical_press() -> None:
     teacher = CenterFirstFourKeyTeacher()
     observation = _idle_motor()
@@ -139,6 +158,65 @@ def test_new_target_releases_latch_and_advances_center_alternation() -> None:
     assert second.right_inner == 1.0
 
 
+def test_pipelined_teacher_launches_second_inner_before_first_keydown() -> None:
+    teacher = CenterFirstFourKeyTeacher()
+    observation = _idle_motor()
+
+    action = teacher.pipeline_action(
+        observation,
+        now_s=0.0,
+        targets=((1, 0.04), (2, 0.05)),
+        lead_s=0.05,
+    )
+
+    assert action.left_inner == 1.0
+    assert action.right_inner == 1.0
+    assert action.left_outer == 0.0
+    assert action.right_outer == 0.0
+
+
+def test_pipelined_teacher_unlocks_outer_after_both_inners_are_reserved() -> None:
+    teacher = CenterFirstFourKeyTeacher()
+    observation = _idle_motor()
+
+    action = teacher.pipeline_action(
+        observation,
+        now_s=0.0,
+        targets=((1, 0.03), (2, 0.04), (3, 0.05)),
+        lead_s=0.05,
+    )
+
+    assert action.left_inner == 1.0
+    assert action.right_inner == 1.0
+    assert action.left_outer == 1.0
+    assert action.right_outer == 0.0
+
+
+def test_pipelined_teacher_keeps_inflight_target_reserved_until_it_resolves() -> None:
+    teacher = CenterFirstFourKeyTeacher()
+    idle = _idle_motor()
+    targets = ((1, 0.04), (2, 0.05))
+
+    teacher.pipeline_action(
+        idle,
+        now_s=0.0,
+        targets=targets,
+        lead_s=0.05,
+    )
+    first_pressed = replace(idle, left_inner_pressed=True)
+    action = teacher.pipeline_action(
+        first_pressed,
+        now_s=0.04,
+        targets=targets,
+        lead_s=0.05,
+    )
+
+    assert action.left_inner == -1.0
+    assert action.right_inner == 1.0
+    assert action.left_outer == 0.0
+    assert action.right_outer == 0.0
+
+
 def test_four_key_actuation_loss_accepts_only_four_output_batches() -> None:
     target = torch.tensor(
         [
@@ -192,3 +270,15 @@ def test_four_key_expert_collection_produces_251d_4d_training_sequence() -> None
     assert rollout.sequence.teacher_actions.shape == (rollout.sequence.frames, 4)
     assert rollout.teacher_fraction == 1.0
     assert rollout.physical_keydowns >= 0
+
+
+def test_four_key_expert_collection_pipelines_dense_future_targets() -> None:
+    rollout = collect_four_key_expert_sequence(
+        _dense_segment(),
+        lead_s=0.05,
+        control_dt_s=0.010,
+        device=torch.device("cpu"),
+    )
+
+    positive_per_frame = (rollout.sequence.teacher_actions > 0.25).sum(dim=1)
+    assert int(positive_per_frame.max().item()) >= 2
