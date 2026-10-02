@@ -1,9 +1,18 @@
 from __future__ import annotations
 
+from pathlib import Path
+import sys
 from types import SimpleNamespace
 
 import pytest
 import torch
+
+# Trainer entry points live under scripts/ and are normally executed directly.
+# Pytest adds the repository root/src package path, not scripts/, so make the
+# script module importable explicitly for these unit tests.
+SCRIPTS_DIR = Path(__file__).resolve().parents[1] / "scripts"
+if str(SCRIPTS_DIR) not in sys.path:
+    sys.path.insert(0, str(SCRIPTS_DIR))
 
 import train_real_chart_v150_four_key_bootstrap as trainer
 from dmdod.four_key_policy import FourKeyRecurrentActorCritic
