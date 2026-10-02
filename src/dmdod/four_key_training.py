@@ -73,16 +73,19 @@ class FourKeyRollout:
 
 
 class CenterFirstFourKeyTeacher:
-    """Privileged timing teacher with a latched center-first finger choice.
+    """Privileged center-first teacher with an in-flight target pipeline.
 
-    The inner pair is always the first tier.  Outer keys are considered only
-    while both inner keys are physically held.  Once a key is chosen for a
-    target, the choice is latched until that key actually presses or the target
-    changes; otherwise a 100 Hz teacher would alternate free inner keys on every
-    control frame while waiting for the physical switch to actuate.
+    A dense chart can expose the next launch point before the key for the
+    previous target has physically actuated.  The teacher therefore reserves
+    different fingers for multiple future targets at once instead of waiting
+    for ``privileged_next_target()`` to advance after every KeyDown.
 
-    During DAgger, a student's positive command may choose among currently
-    eligible keys, but it cannot skip the center-first tier.
+    Reservations are center-first: the two inner keys are occupied first and
+    the outer tier is unlocked only while both inner keys are physically held
+    or already reserved for earlier targets.  A reservation stays latched until
+    its target resolves, preventing 100 Hz routing from swapping fingers while
+    the switch is still travelling.  During DAgger, student preference may pick
+    a key only inside the currently eligible tier.
     """
 
     def __init__(self, *, preference_threshold: float = 0.15) -> None:
@@ -92,8 +95,7 @@ class CenterFirstFourKeyTeacher:
     def reset(self) -> None:
         self._last_center = "right_inner"
         self._last_outer = "right_outer"
-        self._pending_key: str | None = None
-        self._target_token: object | None = None
+        self._reservations: dict[str, tuple[object, float]] = {}
 
     @staticmethod
     def _ordered_pair(pair: tuple[str, str], last: str) -> tuple[str, str]:
@@ -105,15 +107,27 @@ class CenterFirstFourKeyTeacher:
             return float("-inf")
         return float(getattr(action, key))
 
+    @staticmethod
+    def _contains_token(
+        targets: tuple[tuple[object, float], ...],
+        token: object,
+    ) -> bool:
+        return any(candidate == token for candidate, _ in targets)
+
     def _choose_from_tier(
         self,
         observation: FourKeyObservation,
         pair: tuple[str, str],
         *,
         last: str,
+        occupied: set[str],
         preferred_action: FourKeyAction | None,
     ) -> str | None:
-        available = [key for key in pair if not observation.pressed(key)]
+        available = [
+            key
+            for key in pair
+            if key not in occupied and not observation.pressed(key)
+        ]
         if not available:
             return None
 
@@ -133,12 +147,15 @@ class CenterFirstFourKeyTeacher:
     def _choose_key(
         self,
         observation: FourKeyObservation,
+        *,
+        occupied: set[str],
         preferred_action: FourKeyAction | None,
     ) -> str | None:
         center = self._choose_from_tier(
             observation,
             CENTER_KEY_NAMES,
             last=self._last_center,
+            occupied=occupied,
             preferred_action=preferred_action,
         )
         if center is not None:
@@ -149,11 +166,81 @@ class CenterFirstFourKeyTeacher:
             observation,
             OUTER_KEY_NAMES,
             last=self._last_outer,
+            occupied=occupied,
             preferred_action=preferred_action,
         )
         if outer is not None:
             self._last_outer = outer
         return outer
+
+    def pipeline_action(
+        self,
+        observation: FourKeyObservation,
+        *,
+        now_s: float,
+        targets: tuple[tuple[object, float], ...],
+        lead_s: float,
+        preferred_action: FourKeyAction | None = None,
+    ) -> FourKeyAction:
+        """Launch every due target that can be assigned to a free finger.
+
+        ``targets`` must be the still-unresolved target tail in chronological
+        order, represented as ``(stable_token, episode_time_s)`` pairs.  Exact
+        target times are privileged teacher-only information and are never
+        emitted in the 251D policy observation.
+        """
+
+        now_s = float(now_s)
+        lead_s = float(lead_s)
+
+        # Once a target disappears from the unresolved tail, its reservation is
+        # complete (hit or miss) and the finger may be allocated again after it
+        # physically resets.
+        for key, (token, _) in tuple(self._reservations.items()):
+            if not self._contains_token(targets, token):
+                del self._reservations[key]
+
+        commands = {
+            key: (-1.0 if observation.pressed(key) else 0.0)
+            for key in FOUR_KEY_NAMES
+        }
+
+        # Keep every in-flight reservation latched.  If an early press failed to
+        # consume its target, the same reservation naturally retries once that
+        # key has physically reset instead of immediately spraying another key.
+        for key, (_, target_time_s) in self._reservations.items():
+            if (
+                not observation.pressed(key)
+                and now_s + lead_s >= float(target_time_s)
+            ):
+                commands[key] = 1.0
+
+        occupied = {
+            key for key in FOUR_KEY_NAMES if observation.pressed(key)
+        } | set(self._reservations)
+        reserved_tokens = [token for token, _ in self._reservations.values()]
+
+        for token, target_time_s in targets:
+            target_time_s = float(target_time_s)
+            if now_s + lead_s < target_time_s:
+                break
+            if any(token == reserved for reserved in reserved_tokens):
+                continue
+
+            key = self._choose_key(
+                observation,
+                occupied=occupied,
+                preferred_action=preferred_action,
+            )
+            if key is None:
+                break
+
+            self._reservations[key] = (token, target_time_s)
+            reserved_tokens.append(token)
+            occupied.add(key)
+            commands[key] = 1.0
+
+        return FourKeyAction(*(commands[key] for key in FOUR_KEY_NAMES))
 
     def action(
         self,
@@ -165,28 +252,20 @@ class CenterFirstFourKeyTeacher:
         target_token: object | None,
         preferred_action: FourKeyAction | None = None,
     ) -> FourKeyAction:
-        if target_token != self._target_token:
-            self._target_token = target_token
-            self._pending_key = None
+        """Single-target compatibility wrapper around the pipelined scheduler."""
 
-        commands = {
-            key: (-1.0 if observation.pressed(key) else 0.0)
-            for key in FOUR_KEY_NAMES
-        }
-
-        if target_token is None or float(now_s) + float(lead_s) < float(target_time_s):
-            self._pending_key = None
-            return FourKeyAction(*(commands[key] for key in FOUR_KEY_NAMES))
-
-        if self._pending_key is not None and observation.pressed(self._pending_key):
-            self._pending_key = None
-
-        if self._pending_key is None:
-            self._pending_key = self._choose_key(observation, preferred_action)
-
-        if self._pending_key is not None:
-            commands[self._pending_key] = 1.0
-        return FourKeyAction(*(commands[key] for key in FOUR_KEY_NAMES))
+        targets = (
+            ()
+            if target_token is None
+            else ((target_token, float(target_time_s)),)
+        )
+        return self.pipeline_action(
+            observation,
+            now_s=now_s,
+            targets=targets,
+            lead_s=lead_s,
+            preferred_action=preferred_action,
+        )
 
 
 def four_key_actuation_loss(predicted: torch.Tensor, target: torch.Tensor) -> torch.Tensor:
@@ -228,20 +307,24 @@ def _teacher_action(
 ) -> FourKeyAction:
     target = env.privileged_next_target()
     if target is None:
-        return teacher.action(
-            observation.motor,
-            now_s=env.privileged_episode_time_s(),
-            target_time_s=float("inf"),
-            lead_s=lead_s,
-            target_token=None,
-            preferred_action=preferred_action,
+        targets: tuple[tuple[object, float], ...] = ()
+    else:
+        # ``ordinal`` is the target's index in segment.targets.  Feed the whole
+        # unresolved tail to the privileged teacher so targets closer than one
+        # physical press latency can already occupy different fingers.
+        targets = tuple(
+            (
+                (future.ordinal, future.floor_index, future.episode_time_s),
+                float(future.episode_time_s),
+            )
+            for future in env.segment.targets[int(target.ordinal) :]
         )
-    return teacher.action(
+
+    return teacher.pipeline_action(
         observation.motor,
         now_s=env.privileged_episode_time_s(),
-        target_time_s=target.episode_time_s,
+        targets=targets,
         lead_s=lead_s,
-        target_token=(target.floor_index, target.episode_time_s),
         preferred_action=preferred_action,
     )
 
