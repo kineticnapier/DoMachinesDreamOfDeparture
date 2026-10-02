@@ -2,7 +2,10 @@ from __future__ import annotations
 
 import pytest
 
-from dmdod.modern_cli_bootstrap import BootstrapLiveModernTrainerConsole
+from dmdod.modern_cli_bootstrap import (
+    BootstrapLiveModernTrainerConsole,
+    _stable_parent_rate,
+)
 from dmdod.training_progress import TrainingProgressEvent
 
 
@@ -12,6 +15,7 @@ class _FakeBar:
         self.n = 0.0
         self.postfix = ""
         self.closed = False
+        self.eta_resets = 0
 
     def update(self, delta: float) -> None:
         self.n += float(delta)
@@ -24,6 +28,9 @@ class _FakeBar:
 
     def set_postfix_str(self, text: str) -> None:
         self.postfix = str(text)
+
+    def reset_eta_origin(self) -> None:
+        self.eta_resets += 1
 
 
 def _console() -> BootstrapLiveModernTrainerConsole:
@@ -151,3 +158,27 @@ def test_bootstrap_eval_fraction_flows_into_outer_bootstrap_bar() -> None:
         )
     )
     assert console._bootstrap.n == pytest.approx(8.0)
+
+
+def test_parent_eta_waits_for_one_logical_unit() -> None:
+    assert _stable_parent_rate(0.0, 10.0) is None
+    assert _stable_parent_rate(0.999, 100.0) is None
+    assert _stable_parent_rate(1.0, 100.0) == pytest.approx(0.01)
+
+
+def test_parent_eta_uses_cumulative_fractional_rate_not_last_update() -> None:
+    # 2.5 logical epochs over 250 seconds is 0.01 epoch/s regardless of how
+    # tiny or bursty the individual child-bar updates were.
+    assert _stable_parent_rate(2.5, 250.0) == pytest.approx(0.01)
+    assert _stable_parent_rate(2.5, 0.0) is None
+
+
+def test_parent_eta_origin_can_be_reset_after_resume() -> None:
+    console = _console()
+    bar = _FakeBar(48)
+    bar.n = 17.0
+    console._round = bar
+
+    console._reset_parent_eta("_round")
+
+    assert bar.eta_resets == 1
