@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from dataclasses import dataclass
 from pathlib import Path
 import sys
 from types import SimpleNamespace
@@ -12,9 +13,22 @@ if str(SCRIPTS_DIR) not in sys.path:
     sys.path.insert(0, str(SCRIPTS_DIR))
 
 import train_real_chart_v160_n_key_bootstrap as trainer
-from dmdod.n_key_policy import NKeyRecurrentActorCritic
+from dmdod.n_key_policy import (
+    N_KEY_POLICY_BACKEND_GRU,
+    N_KEY_POLICY_BACKEND_SPARSE_RESERVOIR,
+    NKeyRecurrentActorCritic,
+)
 from dmdod.n_key_real_chart import n_key_hud_real_chart_input_dim
 from dmdod.n_key_training import NKeyBCSequence
+
+
+def _training_sequence(input_dim: int) -> NKeyBCSequence:
+    observations = torch.zeros((12, input_dim), dtype=torch.float32)
+    observations[:, 0] = torch.linspace(0.0, 1.0, 12)
+    actions = torch.zeros((12, 8), dtype=torch.float32)
+    actions[2:6, 3] = 1.0
+    actions[6:9, 3] = -1.0
+    return NKeyBCSequence(observations, actions, 8, "unit")
 
 
 def test_n_key_bootstrap_epoch_trains_263d_to_8d_policy() -> None:
@@ -25,12 +39,7 @@ def test_n_key_bootstrap_epoch_trains_263d_to_8d_policy() -> None:
         key_count=8,
         hidden_dim=16,
     )
-    observations = torch.zeros((12, input_dim), dtype=torch.float32)
-    observations[:, 0] = torch.linspace(0.0, 1.0, 12)
-    actions = torch.zeros((12, 8), dtype=torch.float32)
-    actions[2:6, 3] = 1.0
-    actions[6:9, 3] = -1.0
-    sequence = NKeyBCSequence(observations, actions, 8, "unit")
+    sequence = _training_sequence(input_dim)
 
     before = model.actor_mean.weight.detach().clone()
     optimizer = torch.optim.Adam(model.parameters(), lr=1e-3)
@@ -44,6 +53,39 @@ def test_n_key_bootstrap_epoch_trains_263d_to_8d_policy() -> None:
     assert loss >= 0.0
     assert torch.isfinite(torch.tensor(loss))
     assert not torch.equal(before, model.actor_mean.weight.detach())
+
+
+def test_sparse_reservoir_bootstrap_uses_same_training_path_and_keeps_core_fixed() -> None:
+    torch.manual_seed(11)
+    input_dim = n_key_hud_real_chart_input_dim(8)
+    model = trainer._build_bootstrap_policy(
+        backend=N_KEY_POLICY_BACKEND_SPARSE_RESERVOIR,
+        input_dim=input_dim,
+        key_count=8,
+        hidden_dim=16,
+        reservoir_density=0.25,
+        reservoir_gain=0.8,
+        reservoir_seed=11,
+        device=torch.device("cpu"),
+    )
+    sequence = _training_sequence(input_dim)
+
+    recurrent_before = model.reservoir.weight_hh_l0.detach().clone()
+    readout_before = model.actor_mean.weight.detach().clone()
+    optimizer = torch.optim.Adam(
+        (parameter for parameter in model.parameters() if parameter.requires_grad),
+        lr=1e-3,
+    )
+    loss = trainer._train_bc_epoch(
+        model,
+        [sequence],
+        optimizer=optimizer,
+        chunk_steps=5,
+    )
+
+    assert loss >= 0.0
+    assert torch.equal(recurrent_before, model.reservoir.weight_hh_l0.detach())
+    assert not torch.equal(readout_before, model.actor_mean.weight.detach())
 
 
 def test_n_key_bootstrap_rejects_sequence_for_different_body() -> None:
@@ -65,9 +107,73 @@ def test_n_key_bootstrap_rejects_sequence_for_different_body() -> None:
 
 
 def test_n_key_bootstrap_identity_and_8k_dimensions() -> None:
-    assert trainer.TRAINER_VERSION == "1.6.0-n-key-bootstrap"
-    assert trainer.CHECKPOINT_FORMAT_VERSION == 17
+    assert trainer.TRAINER_VERSION == "1.6.5-n-key-backend-bootstrap"
+    assert trainer.CHECKPOINT_FORMAT_VERSION == 23
     assert n_key_hud_real_chart_input_dim(8) == 263
+
+
+@dataclass(frozen=True)
+class _Calibration:
+    lead_s: float
+
+
+def test_sparse_bootstrap_checkpoint_records_backend_and_reservoir_metadata() -> None:
+    model = trainer._build_bootstrap_policy(
+        backend=N_KEY_POLICY_BACKEND_SPARSE_RESERVOIR,
+        input_dim=263,
+        key_count=8,
+        hidden_dim=16,
+        reservoir_density=0.25,
+        reservoir_gain=0.8,
+        reservoir_seed=99,
+        device=torch.device("cpu"),
+    )
+    args = SimpleNamespace(
+        bootstrap_epochs=2,
+        train_window=30.0,
+        validation_window=30.0,
+        anchors_per_chart=2,
+        anchor_limit=4,
+        validation_limit=2,
+        control_dt=0.010,
+        physics_dt=0.001,
+        chunk_steps=192,
+        seed=7,
+    )
+    dataset = SimpleNamespace(root="dataset", signature=lambda: "sig")
+
+    payload = trainer._checkpoint_payload(
+        model=model,
+        args=args,
+        dataset=dataset,
+        calibration=_Calibration(lead_s=0.044),
+        epoch=2,
+        losses=[1.0, 0.8],
+    )
+
+    assert payload["n_key_policy_backend"] == N_KEY_POLICY_BACKEND_SPARSE_RESERVOIR
+    assert payload["n_key_policy_version"] == "n-key-fixed-sparse-reservoir-v1"
+    assert payload["reservoir_density"] == pytest.approx(0.25)
+    assert payload["reservoir_gain"] == pytest.approx(0.8)
+    assert payload["reservoir_seed"] == 99
+    assert payload["format_version"] == 23
+    assert payload["trainer_version"] == "1.6.5-n-key-backend-bootstrap"
+
+
+def test_gru_bootstrap_factory_remains_available() -> None:
+    model = trainer._build_bootstrap_policy(
+        backend=N_KEY_POLICY_BACKEND_GRU,
+        input_dim=263,
+        key_count=8,
+        hidden_dim=16,
+        reservoir_density=0.1,
+        reservoir_gain=0.9,
+        reservoir_seed=1,
+        device=torch.device("cpu"),
+    )
+
+    assert isinstance(model, NKeyRecurrentActorCritic)
+    assert model.backend_name == "gru"
 
 
 def test_post_bootstrap_role_evaluation_reports_train_anchor_aggregate(
