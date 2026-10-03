@@ -12,10 +12,82 @@ from .n_key_motor import NKeyAction, n_key_names
 
 
 N_KEY_POLICY_VERSION = "n-key-gru-v1"
+N_KEY_POLICY_BACKEND_GRU = "gru"
+N_KEY_POLICY_BACKENDS = (N_KEY_POLICY_BACKEND_GRU,)
 
 
-class NKeyRecurrentActorCritic(nn.Module):
+class NKeyPolicyBase(nn.Module):
+    """Backend-neutral contract used by N-key training and evaluation code.
+
+    Future recurrent cores (for example a fixed sparse reservoir or a
+    connectome-derived front end) should implement the same state/forward
+    contract instead of making the training loop depend on one concrete GRU.
+    """
+
+    backend_name = "base"
+    policy_version = "n-key-policy-base-v1"
+
+    def __init__(
+        self,
+        *,
+        input_dim: int,
+        key_count: int,
+        hidden_dim: int,
+    ) -> None:
+        super().__init__()
+        self.input_dim = int(input_dim)
+        self.key_count = int(key_count)
+        self.key_names = n_key_names(self.key_count)
+        self.hidden_dim = int(hidden_dim)
+        self.action_dim = self.key_count
+
+    def prepare_recurrent_runtime(self) -> None:
+        """Allow a backend to prepare optimized recurrent runtime state."""
+
+    def initial_state(self, device: torch.device) -> torch.Tensor:
+        raise NotImplementedError
+
+    def forward_step(
+        self,
+        x: torch.Tensor,
+        state: torch.Tensor,
+    ) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]:
+        raise NotImplementedError
+
+    def forward_sequence(
+        self,
+        observations: torch.Tensor,
+        initial_state: torch.Tensor,
+    ) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
+        raise NotImplementedError
+
+    @torch.no_grad()
+    def deterministic_action(
+        self,
+        x: torch.Tensor,
+        state: torch.Tensor,
+    ) -> tuple[NKeyAction, torch.Tensor]:
+        mean, _, _, next_state = self.forward_step(x, state)
+        squashed = torch.tanh(mean)
+        return NKeyAction(tuple(float(value.item()) for value in squashed)), next_state
+
+    def checkpoint_metadata(self) -> dict[str, int | str | tuple[str, ...]]:
+        return {
+            "n_key_policy_backend": self.backend_name,
+            "n_key_policy_version": self.policy_version,
+            "input_dim": self.input_dim,
+            "hidden_dim": self.hidden_dim,
+            "action_dim": self.action_dim,
+            "key_count": self.key_count,
+            "key_names": self.key_names,
+        }
+
+
+class NKeyRecurrentActorCritic(NKeyPolicyBase):
     """Configurable-output GRU policy for 2K/4K/6K/8K Level A bodies."""
+
+    backend_name = N_KEY_POLICY_BACKEND_GRU
+    policy_version = N_KEY_POLICY_VERSION
 
     def __init__(
         self,
@@ -25,12 +97,11 @@ class NKeyRecurrentActorCritic(nn.Module):
         hidden_dim: int = 128,
         initial_log_std: float = -1.20,
     ) -> None:
-        super().__init__()
-        self.input_dim = int(input_dim)
-        self.key_count = int(key_count)
-        self.key_names = n_key_names(self.key_count)
-        self.hidden_dim = int(hidden_dim)
-        self.action_dim = self.key_count
+        super().__init__(
+            input_dim=input_dim,
+            key_count=key_count,
+            hidden_dim=hidden_dim,
+        )
 
         self.input_layer = nn.Linear(self.input_dim, self.hidden_dim)
         # Use a real nn.GRU module so CUDA can maintain its packed contiguous
@@ -43,6 +114,9 @@ class NKeyRecurrentActorCritic(nn.Module):
         self.log_std = nn.Parameter(
             torch.full((self.action_dim,), float(initial_log_std))
         )
+
+    def prepare_recurrent_runtime(self) -> None:
+        self.gru.flatten_parameters()
 
     def initial_state(self, device: torch.device) -> torch.Tensor:
         return torch.zeros(self.hidden_dim, dtype=torch.float32, device=device)
@@ -101,22 +175,37 @@ class NKeyRecurrentActorCritic(nn.Module):
         values = self.critic(features).squeeze(-1)
         return means, values, final_state.reshape(self.hidden_dim)
 
-    @torch.no_grad()
-    def deterministic_action(
-        self,
-        x: torch.Tensor,
-        state: torch.Tensor,
-    ) -> tuple[NKeyAction, torch.Tensor]:
-        mean, _, _, next_state = self.forward_step(x, state)
-        squashed = torch.tanh(mean)
-        return NKeyAction(tuple(float(value.item()) for value in squashed)), next_state
 
-    def checkpoint_metadata(self) -> dict[str, int | str | tuple[str, ...]]:
-        return {
-            "n_key_policy_version": N_KEY_POLICY_VERSION,
-            "input_dim": self.input_dim,
-            "hidden_dim": self.hidden_dim,
-            "action_dim": self.action_dim,
-            "key_count": self.key_count,
-            "key_names": self.key_names,
-        }
+def build_n_key_policy(
+    *,
+    backend: str,
+    input_dim: int,
+    key_count: int,
+    hidden_dim: int = 128,
+    initial_log_std: float = -1.20,
+) -> NKeyPolicyBase:
+    """Construct one registered N-key policy backend."""
+
+    backend = str(backend)
+    if backend == N_KEY_POLICY_BACKEND_GRU:
+        return NKeyRecurrentActorCritic(
+            input_dim=input_dim,
+            key_count=key_count,
+            hidden_dim=hidden_dim,
+            initial_log_std=initial_log_std,
+        )
+    choices = ", ".join(N_KEY_POLICY_BACKENDS)
+    raise ValueError(f"unknown N-key policy backend {backend!r}; expected one of: {choices}")
+
+
+def n_key_policy_backend_from_checkpoint(checkpoint: dict) -> str:
+    """Read backend metadata while keeping legacy GRU checkpoints loadable."""
+
+    backend = str(checkpoint.get("n_key_policy_backend", N_KEY_POLICY_BACKEND_GRU))
+    if backend not in N_KEY_POLICY_BACKENDS:
+        choices = ", ".join(N_KEY_POLICY_BACKENDS)
+        raise ValueError(
+            f"checkpoint uses unsupported N-key policy backend {backend!r}; "
+            f"expected one of: {choices}"
+        )
+    return backend
