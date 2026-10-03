@@ -107,6 +107,45 @@ def test_restore_optimizer_state_rolls_back_rejected_proposal_momentum() -> None
     assert optimizer.state == {}
 
 
+def test_collect_student_state_sequences_uses_current_policy_and_generation(monkeypatch) -> None:
+    model = object()
+    anchors = [
+        SimpleNamespace(segment="segment-a", chart_name="Chart A"),
+        SimpleNamespace(segment="segment-b", chart_name="Chart B"),
+    ]
+    calls = []
+
+    def fake_collect(current_model, segment, **kwargs):
+        calls.append((current_model, segment, kwargs))
+        sequence = SimpleNamespace(frames=3, source=kwargs["source"])
+        return SimpleNamespace(
+            sequence=sequence,
+            stats=_stats(hits=2, targets=3, xacc=40.0),
+            physical_keydowns=2,
+        )
+
+    monkeypatch.setattr(trainer, "collect_n_key_dagger_sequence", fake_collect)
+
+    sequences, frames = trainer._collect_student_state_sequences(
+        model,
+        anchors,
+        round_index=2,
+        collection_index=3,
+        lead_s=0.044,
+        control_dt_s=0.010,
+        physics_dt_s=0.001,
+        device=torch.device("cpu"),
+    )
+
+    assert frames == 6
+    assert len(sequences) == 2
+    assert all(call[0] is model for call in calls)
+    assert [call[1] for call in calls] == ["segment-a", "segment-b"]
+    assert all(call[2]["action_mode"] == "continuous" for call in calls)
+    assert "student-r3-1-Chart A" in calls[0][2]["source"]
+    assert "student-r3-2-Chart B" in calls[1][2]["source"]
+
+
 def test_select_improving_candidate_ignores_unsafe_and_nonimproving() -> None:
     reference = [(_stats(hits=100, xacc=30.0), 100)]
     candidates = [
@@ -132,7 +171,7 @@ def test_select_improving_candidate_can_keep_current_state() -> None:
     assert trainer._select_improving_candidate(reference, candidates) is None
 
 
-def test_v163_checkpoint_records_trust_region_optimizer_selection() -> None:
+def test_v164_checkpoint_records_refresh_and_optimizer_selection() -> None:
     state = {"weight": torch.tensor([1.0])}
     optimizer_state = {
         "state": {0: {"step": torch.tensor(1.0)}},
@@ -167,20 +206,24 @@ def test_v163_checkpoint_records_trust_region_optimizer_selection() -> None:
         selected_alpha=0.125,
         lr=3e-4,
         expert_frames=100,
-        dagger_frames=90,
+        dagger_frames=95,
+        student_frame_history=[90, 95],
         losses=[1.0, 0.8, 0.7, 0.6],
         trust_alphas=(1.0, 0.5, 0.25, 0.125),
         trust_history=history,
     )
 
-    assert trainer.TRAINER_VERSION == "1.6.3-n-key-continuous-trust-dagger-opt-rollback"
-    assert trainer.CHECKPOINT_FORMAT_VERSION == 21
+    assert trainer.TRAINER_VERSION == "1.6.4-n-key-continuous-trust-dagger-refresh"
+    assert trainer.CHECKPOINT_FORMAT_VERSION == 22
     assert payload["dagger_round"] == 2
     assert payload["dagger_action_mode"] == "continuous"
     assert payload["dagger_selected_epoch"] == 3
     assert payload["dagger_selected_alpha"] == pytest.approx(0.125)
     assert payload["dagger_trust_continuation"] == "accepted-model+optimizer-state"
     assert payload["dagger_trust_optimizer_continuation"] == "accepted-proposal-or-rollback"
+    assert payload["dagger_student_state_frames"] == 95
+    assert payload["dagger_student_state_frame_history"] == [90, 95]
+    assert payload["dagger_student_state_refresh"] == "after-accepted-trust-step"
     assert payload["dagger_optimizer_state"] == optimizer_state
     assert payload["dagger_trust_history"] == history
     assert payload["dagger_selection_uses_validation"] is False
