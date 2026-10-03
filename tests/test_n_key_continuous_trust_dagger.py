@@ -66,6 +66,35 @@ def test_interpolate_state_rejects_changed_nonfloating_buffer() -> None:
         trainer._interpolate_state(base, proposal, 0.5)
 
 
+def test_clone_optimizer_state_isolated_from_later_proposal_updates() -> None:
+    parameter = torch.nn.Parameter(torch.tensor([1.0]))
+    optimizer = torch.optim.Adam([parameter], lr=0.1)
+    parameter.grad = torch.tensor([2.0])
+    optimizer.step()
+
+    accepted = trainer._clone_optimizer_state(optimizer)
+    live_state = optimizer.state_dict()
+    live_exp_avg = next(iter(live_state["state"].values()))["exp_avg"]
+    live_exp_avg.add_(10.0)
+
+    accepted_exp_avg = next(iter(accepted["state"].values()))["exp_avg"]
+    assert not torch.equal(live_exp_avg, accepted_exp_avg)
+
+
+def test_restore_optimizer_state_rolls_back_rejected_proposal_momentum() -> None:
+    parameter = torch.nn.Parameter(torch.tensor([1.0]))
+    optimizer = torch.optim.Adam([parameter], lr=0.1)
+    accepted = trainer._clone_optimizer_state(optimizer)
+
+    parameter.grad = torch.tensor([2.0])
+    optimizer.step()
+    assert optimizer.state
+
+    trainer._restore_optimizer_state(optimizer, accepted)
+
+    assert optimizer.state == {}
+
+
 def test_select_improving_candidate_ignores_unsafe_and_nonimproving() -> None:
     reference = [(_stats(hits=100, xacc=30.0), 100)]
     candidates = [
@@ -91,8 +120,12 @@ def test_select_improving_candidate_can_keep_current_state() -> None:
     assert trainer._select_improving_candidate(reference, candidates) is None
 
 
-def test_v163_checkpoint_records_trust_region_selection() -> None:
+def test_v163_checkpoint_records_trust_region_optimizer_selection() -> None:
     state = {"weight": torch.tensor([1.0])}
+    optimizer_state = {
+        "state": {0: {"step": torch.tensor(1.0)}},
+        "param_groups": [{"params": [0], "lr": 3e-4}],
+    }
     parent = {
         "format_version": 18,
         "trainer_version": "1.6.1-n-key-dagger",
@@ -112,6 +145,7 @@ def test_v163_checkpoint_records_trust_region_selection() -> None:
     payload = trainer._checkpoint_payload(
         parent,
         model_state=state,
+        optimizer_state=optimizer_state,
         source_checkpoint=Path("dagger1.pt"),
         output_checkpoint=Path("dagger2-trust.pt"),
         round_index=2,
@@ -127,13 +161,15 @@ def test_v163_checkpoint_records_trust_region_selection() -> None:
         trust_history=history,
     )
 
-    assert trainer.TRAINER_VERSION == "1.6.3-n-key-continuous-trust-dagger"
-    assert trainer.CHECKPOINT_FORMAT_VERSION == 20
+    assert trainer.TRAINER_VERSION == "1.6.3-n-key-continuous-trust-dagger-opt-rollback"
+    assert trainer.CHECKPOINT_FORMAT_VERSION == 21
     assert payload["dagger_round"] == 2
     assert payload["dagger_action_mode"] == "continuous"
     assert payload["dagger_selected_epoch"] == 3
     assert payload["dagger_selected_alpha"] == pytest.approx(0.125)
-    assert payload["dagger_trust_continuation"] == "accepted-state"
+    assert payload["dagger_trust_continuation"] == "accepted-model+optimizer-state"
+    assert payload["dagger_trust_optimizer_continuation"] == "accepted-proposal-or-rollback"
+    assert payload["dagger_optimizer_state"] == optimizer_state
     assert payload["dagger_trust_history"] == history
     assert payload["dagger_selection_uses_validation"] is False
     assert payload["final_used_for_selection"] is False
