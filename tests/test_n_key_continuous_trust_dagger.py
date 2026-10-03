@@ -107,6 +107,33 @@ def test_restore_optimizer_state_rolls_back_rejected_proposal_momentum() -> None
     assert optimizer.state == {}
 
 
+def test_build_policy_from_legacy_checkpoint_uses_gru_backend() -> None:
+    reference = trainer.build_n_key_policy(
+        backend="gru",
+        input_dim=17,
+        key_count=4,
+        hidden_dim=8,
+    )
+    checkpoint = {
+        "input_dim": 17,
+        "key_count": 4,
+        "hidden_dim": 8,
+        "model_state": reference.state_dict(),
+    }
+
+    loaded = trainer._build_policy_from_checkpoint(
+        checkpoint,
+        device=torch.device("cpu"),
+    )
+
+    assert loaded.backend_name == "gru"
+    assert loaded.input_dim == 17
+    assert loaded.key_count == 4
+    assert loaded.hidden_dim == 8
+    for name, expected in reference.state_dict().items():
+        assert torch.equal(loaded.state_dict()[name], expected)
+
+
 def test_collect_student_state_sequences_uses_current_policy_and_generation(monkeypatch) -> None:
     model = object()
     anchors = [
@@ -171,7 +198,7 @@ def test_select_improving_candidate_can_keep_current_state() -> None:
     assert trainer._select_improving_candidate(reference, candidates) is None
 
 
-def test_v164_checkpoint_records_refresh_and_optimizer_selection() -> None:
+def test_v164_checkpoint_records_refresh_optimizer_and_policy_backend() -> None:
     state = {"weight": torch.tensor([1.0])}
     optimizer_state = {
         "state": {0: {"step": torch.tensor(1.0)}},
@@ -192,6 +219,24 @@ def test_v164_checkpoint_records_refresh_and_optimizer_selection() -> None:
             "accepted_for_continuation": True,
         }
     ]
+    policy_metadata = {
+        "n_key_policy_backend": "gru",
+        "n_key_policy_version": "n-key-gru-v1",
+        "input_dim": 263,
+        "hidden_dim": 128,
+        "action_dim": 8,
+        "key_count": 8,
+        "key_names": (
+            "left_4",
+            "left_3",
+            "left_2",
+            "left_1",
+            "right_1",
+            "right_2",
+            "right_3",
+            "right_4",
+        ),
+    }
 
     payload = trainer._checkpoint_payload(
         parent,
@@ -211,10 +256,13 @@ def test_v164_checkpoint_records_refresh_and_optimizer_selection() -> None:
         losses=[1.0, 0.8, 0.7, 0.6],
         trust_alphas=(1.0, 0.5, 0.25, 0.125),
         trust_history=history,
+        policy_metadata=policy_metadata,
     )
 
     assert trainer.TRAINER_VERSION == "1.6.4-n-key-continuous-trust-dagger-refresh"
     assert trainer.CHECKPOINT_FORMAT_VERSION == 22
+    assert payload["n_key_policy_backend"] == "gru"
+    assert payload["n_key_policy_version"] == "n-key-gru-v1"
     assert payload["dagger_round"] == 2
     assert payload["dagger_action_mode"] == "continuous"
     assert payload["dagger_selected_epoch"] == 3
