@@ -1,19 +1,20 @@
 from __future__ import annotations
 
-"""v1.6.3: trust-region continuous-action DAgger for N-key policies.
+"""v1.6.4: trust-region continuous-action DAgger with trajectory refresh.
 
 A full BC epoch can cross a sharp closed-loop boundary even while the
-teacher-forced loss improves.  Each epoch here therefore produces only a
-proposal direction.  The proposal is line-searched from the current accepted
-Train-safe state.  Only a Train-safe interpolation that improves the Train
-selection key is accepted.
+teacher-forced loss improves. Each epoch therefore produces only a proposal
+direction. The proposal is line-searched from the current accepted Train-safe
+state, and only a Train-safe interpolation that improves the Train selection
+key is accepted.
 
-Model and Adam state are treated as one continuation state.  The optimizer
+Model and Adam state are treated as one continuation state. The optimizer
 state produced by a proposal epoch is committed only when one of that epoch's
-line-search candidates is accepted.  If every candidate is rejected, both the
-model and optimizer are rolled back to the previous accepted pair before the
-next proposal.  Validation is evaluated once after Train-only selection; Final
-is never touched.
+line-search candidates is accepted. After an accepted step, the student-state
+DAgger trajectories are recollected from the newly accepted policy before the
+next proposal; privileged expert trajectories stay fixed. Rejected proposals
+roll model and optimizer back without changing the current DAgger data.
+Validation is evaluated once after Train-only selection; Final is never touched.
 """
 
 import argparse
@@ -38,8 +39,8 @@ from dmdod.n_key_training import (
 )
 
 
-TRAINER_VERSION = "1.6.3-n-key-continuous-trust-dagger-opt-rollback"
-CHECKPOINT_FORMAT_VERSION = 21
+TRAINER_VERSION = "1.6.4-n-key-continuous-trust-dagger-refresh"
+CHECKPOINT_FORMAT_VERSION = 22
 DEFAULT_TRUST_ALPHAS = (1.0, 0.5, 0.25, 0.125, 0.0625, 0.03125)
 
 
@@ -124,6 +125,50 @@ def _select_improving_candidate(
     return max(eligible, key=lambda candidate: v161._selection_key(candidate.results))
 
 
+def _collect_student_state_sequences(
+    model: NKeyRecurrentActorCritic,
+    anchors,
+    *,
+    round_index: int,
+    collection_index: int,
+    lead_s: float,
+    control_dt_s: float,
+    physics_dt_s: float,
+    device: torch.device,
+) -> tuple[list[NKeyBCSequence], int]:
+    """Collect fresh continuous-action DAgger trajectories from one policy."""
+
+    sequences: list[NKeyBCSequence] = []
+    total = len(anchors)
+    label = f"collect-r{collection_index}"
+    for index, named in enumerate(anchors, 1):
+        rollout = collect_n_key_dagger_sequence(
+            model,
+            named.segment,
+            lead_s=lead_s,
+            press_threshold=0.25,
+            release_threshold=-0.45,
+            control_dt_s=control_dt_s,
+            physics_dt_s=physics_dt_s,
+            device=device,
+            source=(
+                f"dagger{round_index}-trust-student-r{collection_index}-"
+                f"{index}-{named.chart_name}"
+            ),
+            action_mode="continuous",
+        )
+        sequences.append(rollout.sequence)
+        print(
+            f"{label} {index:02d}/{total} {named.chart_name}: "
+            f"frames={rollout.sequence.frames} H={rollout.stats.hits}/{rollout.stats.targets} "
+            f"X={rollout.stats.x_accuracy_percent:.2f}% early={rollout.stats.too_early_presses} "
+            f"over={rollout.stats.overloaded} keydowns={rollout.physical_keydowns}"
+        )
+    frames = sum(sequence.frames for sequence in sequences)
+    print(f"{label} aggregate: student-state={frames} frames")
+    return sequences, frames
+
+
 def _trust_record(
     *,
     epoch: int,
@@ -164,6 +209,7 @@ def _checkpoint_payload(
     lr: float,
     expert_frames: int,
     dagger_frames: int,
+    student_frame_history: list[int],
     losses: list[float],
     trust_alphas: tuple[float, ...],
     trust_history: list[dict],
@@ -186,6 +232,10 @@ def _checkpoint_payload(
             "dagger_lr": float(lr),
             "dagger_expert_frames": int(expert_frames),
             "dagger_student_state_frames": int(dagger_frames),
+            "dagger_student_state_frame_history": [
+                int(frames) for frames in student_frame_history
+            ],
+            "dagger_student_state_refresh": "after-accepted-trust-step",
             "dagger_loss_history": list(losses),
             "dagger_trust_alphas": tuple(float(alpha) for alpha in trust_alphas),
             "dagger_trust_history": list(trust_history),
@@ -205,7 +255,8 @@ def main() -> None:
     parser = argparse.ArgumentParser(
         description=(
             "Run continuous-action N-key DAgger with Train-only trust-region "
-            "line search and accepted model+optimizer continuation."
+            "line search, accepted model+optimizer continuation, and fresh "
+            "student-state trajectories after accepted steps."
         )
     )
     parser.add_argument("dataset")
@@ -300,7 +351,7 @@ def main() -> None:
         args.output or v161._default_output_path(source_checkpoint, round_index)
     )
 
-    print("=== DMDOD v1.6.3 N-Key Continuous Trust DAgger ===")
+    print("=== DMDOD v1.6.4 N-Key Continuous Trust DAgger Refresh ===")
     print(
         f"source={source_checkpoint} output={output_checkpoint} round={round_index} "
         f"keys={key_count} input={input_dim}D device={device}"
@@ -313,7 +364,8 @@ def main() -> None:
     print("trust-alphas=" + ",".join(f"{alpha:g}" for alpha in trust_alphas))
     print(
         "Each epoch proposes from the current accepted model+optimizer state; "
-        "rejected proposals roll back both. Validation is not used for selection."
+        "accepted steps refresh student-state trajectories before the next proposal. "
+        "Validation is not used for selection."
     )
 
     print("=== pre-DAgger continuous Train / accepted state 0 ===")
@@ -330,7 +382,6 @@ def main() -> None:
     accepted_alpha = 0.0
 
     expert_sequences: list[NKeyBCSequence] = []
-    dagger_sequences: list[NKeyBCSequence] = []
     for index, named in enumerate(anchors, 1):
         expert = collect_n_key_expert_sequence(
             named.segment,
@@ -342,32 +393,22 @@ def main() -> None:
             source=f"dagger{round_index}-trust-expert-{index}-{named.chart_name}",
         )
         expert_sequences.append(expert.sequence)
-
-        rollout = collect_n_key_dagger_sequence(
-            model,
-            named.segment,
-            lead_s=lead_s,
-            press_threshold=0.25,
-            release_threshold=-0.45,
-            control_dt_s=control_dt_s,
-            physics_dt_s=physics_dt_s,
-            device=device,
-            source=f"dagger{round_index}-trust-student-{index}-{named.chart_name}",
-            action_mode="continuous",
-        )
-        dagger_sequences.append(rollout.sequence)
-        print(
-            f"collect {index:02d}/{len(anchors)} {named.chart_name}: "
-            f"frames={rollout.sequence.frames} H={rollout.stats.hits}/{rollout.stats.targets} "
-            f"X={rollout.stats.x_accuracy_percent:.2f}% early={rollout.stats.too_early_presses} "
-            f"over={rollout.stats.overloaded} keydowns={rollout.physical_keydowns}"
-        )
-
-    training_sequences = [*expert_sequences, *dagger_sequences]
     expert_frames = sum(sequence.frames for sequence in expert_sequences)
-    dagger_frames = sum(sequence.frames for sequence in dagger_sequences)
+
+    dagger_sequences, dagger_frames = _collect_student_state_sequences(
+        model,
+        anchors,
+        round_index=round_index,
+        collection_index=0,
+        lead_s=lead_s,
+        control_dt_s=control_dt_s,
+        physics_dt_s=physics_dt_s,
+        device=device,
+    )
+    student_frame_history = [dagger_frames]
+    training_sequences = [*expert_sequences, *dagger_sequences]
     print(
-        f"aggregate-data expert={expert_frames} student-state={dagger_frames} "
+        f"aggregate-data generation=0 expert={expert_frames} student-state={dagger_frames} "
         f"total={expert_frames + dagger_frames} frames"
     )
 
@@ -464,6 +505,25 @@ def main() -> None:
                 + v161._aggregate(accepted_results)
             )
 
+            if epoch < args.dagger_epochs:
+                dagger_sequences, dagger_frames = _collect_student_state_sequences(
+                    model,
+                    anchors,
+                    round_index=round_index,
+                    collection_index=epoch,
+                    lead_s=lead_s,
+                    control_dt_s=control_dt_s,
+                    physics_dt_s=physics_dt_s,
+                    device=device,
+                )
+                student_frame_history.append(dagger_frames)
+                training_sequences = [*expert_sequences, *dagger_sequences]
+                print(
+                    f"aggregate-data generation={epoch} expert={expert_frames} "
+                    f"student-state={dagger_frames} "
+                    f"total={expert_frames + dagger_frames} frames"
+                )
+
     model.load_state_dict(accepted_state)
     model.gru.flatten_parameters()
     _restore_optimizer_state(optimizer, accepted_optimizer_state)
@@ -489,6 +549,7 @@ def main() -> None:
             lr=args.lr,
             expert_frames=expert_frames,
             dagger_frames=dagger_frames,
+            student_frame_history=student_frame_history,
             losses=losses,
             trust_alphas=trust_alphas,
             trust_history=trust_history,
