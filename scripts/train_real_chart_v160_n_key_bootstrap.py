@@ -112,7 +112,7 @@ def _evaluate(
             if step.done:
                 break
         else:
-            raise RuntimeError("N-key validation episode exceeded step budget")
+            raise RuntimeError("N-key evaluation episode exceeded step budget")
     return env.stats, int(env.physical_keydowns)
 
 
@@ -131,6 +131,39 @@ def _aggregate(results: list[tuple[object, int]]) -> str:
         f"H={hits}/{targets} X={xacc:.2f}% early={early} "
         f"over={overloaded} keydowns={keydowns}"
     )
+
+
+def _evaluate_role(
+    model: NKeyRecurrentActorCritic,
+    named_segments,
+    *,
+    role_label: str,
+    control_dt_s: float,
+    physics_dt_s: float,
+    device: torch.device,
+) -> list[tuple[object, int]]:
+    """Evaluate the deterministic student over one named segment collection."""
+
+    results: list[tuple[object, int]] = []
+    total = len(named_segments)
+    for index, named in enumerate(named_segments, 1):
+        stats, keydowns = _evaluate(
+            model,
+            named,
+            control_dt_s=control_dt_s,
+            physics_dt_s=physics_dt_s,
+            device=device,
+        )
+        results.append((stats, keydowns))
+        print(
+            f"{role_label} {index:02d}/{total} {named.chart_name}: "
+            f"H={stats.hits}/{stats.targets} X={stats.x_accuracy_percent:.2f}% "
+            f"PP={stats.perfect_rate * 100.0:.1f}% "
+            f"MAE={stats.mean_abs_error_ms if stats.mean_abs_error_ms is not None else float('nan'):.2f}ms "
+            f"early={stats.too_early_presses} over={stats.overloaded} keydowns={keydowns}"
+        )
+    print(f"{role_label} aggregate: " + _aggregate(results))
+    return results
 
 
 def _checkpoint_payload(
@@ -190,8 +223,9 @@ def _device_from_arg(value: str) -> torch.device:
 def main() -> None:
     parser = argparse.ArgumentParser(
         description=(
-            "Bootstrap a configurable N-key Level A policy on Train anchors and "
-            "evaluate only Validation. Final is never touched."
+            "Bootstrap a configurable N-key Level A policy on Train anchors, "
+            "measure post-bootstrap Train imitation, and evaluate Validation. "
+            "Final is never touched."
         )
     )
     parser.add_argument("dataset")
@@ -336,25 +370,26 @@ def main() -> None:
             ),
         )
 
-    validation_results: list[tuple[object, int]] = []
-    for index, named in enumerate(validation_segments, 1):
-        stats, keydowns = _evaluate(
-            model,
-            named,
-            control_dt_s=args.control_dt,
-            physics_dt_s=args.physics_dt,
-            device=device,
-        )
-        validation_results.append((stats, keydowns))
-        print(
-            f"validation {index:02d}/{len(validation_segments)} {named.chart_name}: "
-            f"H={stats.hits}/{stats.targets} X={stats.x_accuracy_percent:.2f}% "
-            f"PP={stats.perfect_rate * 100.0:.1f}% "
-            f"MAE={stats.mean_abs_error_ms if stats.mean_abs_error_ms is not None else float('nan'):.2f}ms "
-            f"early={stats.too_early_presses} over={stats.overloaded} keydowns={keydowns}"
-        )
+    print("=== post-bootstrap student train anchors ===")
+    _evaluate_role(
+        model,
+        anchor_segments,
+        role_label="student-train",
+        control_dt_s=args.control_dt,
+        physics_dt_s=args.physics_dt,
+        device=device,
+    )
 
-    print("validation aggregate: " + _aggregate(validation_results))
+    print("=== post-bootstrap validation ===")
+    _evaluate_role(
+        model,
+        validation_segments,
+        role_label="validation",
+        control_dt_s=args.control_dt,
+        physics_dt_s=args.physics_dt,
+        device=device,
+    )
+
     print(f"checkpoint final: {checkpoint}")
 
 
