@@ -58,8 +58,31 @@ class NKeyRollout:
     physical_keydowns: int
 
 
+def _macro_key_masked_mean(values: torch.Tensor, mask: torch.Tensor) -> torch.Tensor:
+    """Average a masked loss per key first, then equally across active keys.
+
+    N-key routing is intentionally center-first, so inner keys appear in many
+    more press/release labels while outer keys spend most frames neutral.  A
+    single global denominator lets those frequency differences hide severe
+    per-key errors.  Macro averaging makes every key that has at least one
+    sample of the requested class in this chunk contribute equally.
+    """
+
+    counts = mask.sum(dim=0)
+    active = counts > 0
+    per_key = (values * mask).sum(dim=0) / counts.clamp_min(1)
+    return (per_key * active).sum() / active.sum().clamp_min(1)
+
+
 def n_key_actuation_loss(predicted: torch.Tensor, target: torch.Tensor) -> torch.Tensor:
-    """Actuation-aware BC loss generalized from the mature 2K/4K objective."""
+    """Actuation-aware BC loss with per-key class balancing.
+
+    Press, release and unsafe-neutral penalties are macro-averaged across keys
+    before the existing coefficients are applied.  This preserves the mature
+    2K/4K margins while preventing an 8K center-first dataset from letting
+    high-frequency inner-key labels or high-volume outer-key neutral labels
+    dominate the objective.
+    """
 
     if predicted.shape != target.shape or predicted.ndim != 2:
         raise ValueError("predicted and target must have matching shape [T, K]")
@@ -73,13 +96,13 @@ def n_key_actuation_loss(predicted: torch.Tensor, target: torch.Tensor) -> torch
     mse = (predicted - target).square().mean()
 
     press_gap = torch.relu(PRESS_MARGIN - predicted).square()
-    press_loss = (press_gap * press).sum() / press.sum().clamp_min(1)
+    press_loss = _macro_key_masked_mean(press_gap, press)
 
     release_gap = torch.relu(predicted - RELEASE_MARGIN).square()
-    release_loss = (release_gap * release).sum() / release.sum().clamp_min(1)
+    release_loss = _macro_key_masked_mean(release_gap, release)
 
     unsafe_neutral_push = torch.relu(predicted - NEUTRAL_PUSH_LIMIT).square()
-    neutral_loss = (unsafe_neutral_push * neutral).sum() / neutral.sum().clamp_min(1)
+    neutral_loss = _macro_key_masked_mean(unsafe_neutral_push, neutral)
 
     return (
         MSE_COEF * mse
