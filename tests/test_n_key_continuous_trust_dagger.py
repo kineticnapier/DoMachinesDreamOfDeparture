@@ -81,6 +81,18 @@ def test_clone_optimizer_state_isolated_from_later_proposal_updates() -> None:
     assert not torch.equal(live_exp_avg, accepted_exp_avg)
 
 
+def test_clone_optimizer_state_accepts_saved_state_dict() -> None:
+    saved = {
+        "state": {0: {"exp_avg": torch.tensor([1.0])}},
+        "param_groups": [{"params": [0], "lr": 0.1}],
+    }
+
+    cloned = trainer._clone_optimizer_state(saved)
+    saved["state"][0]["exp_avg"].add_(5.0)
+
+    assert torch.equal(cloned["state"][0]["exp_avg"], torch.tensor([1.0]))
+
+
 def test_restore_optimizer_state_rolls_back_rejected_proposal_momentum() -> None:
     parameter = torch.nn.Parameter(torch.tensor([1.0]))
     optimizer = torch.optim.Adam([parameter], lr=0.1)
