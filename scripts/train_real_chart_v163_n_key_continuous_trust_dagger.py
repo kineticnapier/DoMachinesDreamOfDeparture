@@ -6,12 +6,18 @@ A full BC epoch can cross a sharp closed-loop boundary even while the
 teacher-forced loss improves.  Each epoch here therefore produces only a
 proposal direction.  The proposal is line-searched from the current accepted
 Train-safe state.  Only a Train-safe interpolation that improves the Train
-selection key is accepted, and the following epoch starts from that accepted
-state rather than from a rejected proposal.  Validation is evaluated once after
-Train-only selection; Final is never touched.
+selection key is accepted.
+
+Model and Adam state are treated as one continuation state.  The optimizer
+state produced by a proposal epoch is committed only when one of that epoch's
+line-search candidates is accepted.  If every candidate is rejected, both the
+model and optimizer are rolled back to the previous accepted pair before the
+next proposal.  Validation is evaluated once after Train-only selection; Final
+is never touched.
 """
 
 import argparse
+from copy import deepcopy
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -32,8 +38,8 @@ from dmdod.n_key_training import (
 )
 
 
-TRAINER_VERSION = "1.6.3-n-key-continuous-trust-dagger"
-CHECKPOINT_FORMAT_VERSION = 20
+TRAINER_VERSION = "1.6.3-n-key-continuous-trust-dagger-opt-rollback"
+CHECKPOINT_FORMAT_VERSION = 21
 DEFAULT_TRUST_ALPHAS = (1.0, 0.5, 0.25, 0.125, 0.0625, 0.03125)
 
 
@@ -83,6 +89,21 @@ def _interpolate_state(
     return blended
 
 
+def _clone_optimizer_state(optimizer: torch.optim.Optimizer) -> dict:
+    """Deep-copy optimizer state so rejected proposals cannot mutate it later."""
+
+    return deepcopy(optimizer.state_dict())
+
+
+def _restore_optimizer_state(
+    optimizer: torch.optim.Optimizer,
+    state: dict,
+) -> None:
+    """Restore a previously accepted optimizer state without aliasing it."""
+
+    optimizer.load_state_dict(deepcopy(state))
+
+
 def _select_improving_candidate(
     reference_results: list[tuple[object, int]],
     candidates: list[TrustCandidate],
@@ -128,6 +149,7 @@ def _checkpoint_payload(
     parent: dict,
     *,
     model_state: dict[str, torch.Tensor],
+    optimizer_state: dict | None,
     source_checkpoint: Path,
     output_checkpoint: Path,
     round_index: int,
@@ -148,6 +170,7 @@ def _checkpoint_payload(
             "format_version": CHECKPOINT_FORMAT_VERSION,
             "trainer_version": TRAINER_VERSION,
             "model_state": model_state,
+            "dagger_optimizer_state": optimizer_state,
             "dagger_round": int(round_index),
             "completed_dagger_epoch": int(completed_epoch),
             "requested_dagger_epochs": int(requested_epochs),
@@ -162,7 +185,8 @@ def _checkpoint_payload(
             "dagger_loss_history": list(losses),
             "dagger_trust_alphas": tuple(float(alpha) for alpha in trust_alphas),
             "dagger_trust_history": list(trust_history),
-            "dagger_trust_continuation": "accepted-state",
+            "dagger_trust_continuation": "accepted-model+optimizer-state",
+            "dagger_trust_optimizer_continuation": "accepted-proposal-or-rollback",
             "dagger_selection_uses_validation": False,
             "dagger_source_checkpoint": str(source_checkpoint),
             "dagger_output_checkpoint": str(output_checkpoint),
@@ -177,7 +201,7 @@ def main() -> None:
     parser = argparse.ArgumentParser(
         description=(
             "Run continuous-action N-key DAgger with Train-only trust-region "
-            "line search and accepted-state continuation."
+            "line search and accepted model+optimizer continuation."
         )
     )
     parser.add_argument("dataset")
@@ -284,8 +308,8 @@ def main() -> None:
     )
     print("trust-alphas=" + ",".join(f"{alpha:g}" for alpha in trust_alphas))
     print(
-        "Each epoch proposes from the current accepted state; line-search candidates "
-        "are guarded against that state. Validation is not used for selection."
+        "Each epoch proposes from the current accepted model+optimizer state; "
+        "rejected proposals roll back both. Validation is not used for selection."
     )
 
     print("=== pre-DAgger continuous Train / accepted state 0 ===")
@@ -344,13 +368,16 @@ def main() -> None:
     )
 
     optimizer = torch.optim.Adam(model.parameters(), lr=args.lr)
+    accepted_optimizer_state = _clone_optimizer_state(optimizer)
     losses: list[float] = []
     trust_history: list[dict] = []
 
     for epoch in range(1, args.dagger_epochs + 1):
         model.load_state_dict(accepted_state)
         model.gru.flatten_parameters()
+        _restore_optimizer_state(optimizer, accepted_optimizer_state)
         base_state = accepted_state
+        base_optimizer_state = _clone_optimizer_state(accepted_optimizer_state)
         base_results = accepted_results
 
         loss = v160._train_bc_epoch(
@@ -361,6 +388,7 @@ def main() -> None:
         )
         losses.append(loss)
         proposal_state = v161._clone_model_state(model)
+        proposal_optimizer_state = _clone_optimizer_state(optimizer)
         print(f"dagger-proposal {epoch:03d}/{args.dagger_epochs} loss={loss:.6f}")
         print(f"=== Train trust line search epoch {epoch}/{args.dagger_epochs} ===")
 
@@ -409,27 +437,32 @@ def main() -> None:
 
         if chosen is None:
             accepted_state = base_state
+            accepted_optimizer_state = base_optimizer_state
             accepted_results = base_results
             model.load_state_dict(accepted_state)
             model.gru.flatten_parameters()
+            _restore_optimizer_state(optimizer, accepted_optimizer_state)
             print(
-                f"epoch-continuation: KEEP previous accepted state epoch={accepted_epoch} "
+                f"epoch-continuation: KEEP previous accepted pair epoch={accepted_epoch} "
                 f"alpha={accepted_alpha:g} {v161._aggregate(accepted_results)}"
             )
         else:
             accepted_state = chosen.state
+            accepted_optimizer_state = proposal_optimizer_state
             accepted_results = chosen.results
             accepted_epoch = epoch
             accepted_alpha = chosen.alpha
             model.load_state_dict(accepted_state)
             model.gru.flatten_parameters()
+            _restore_optimizer_state(optimizer, accepted_optimizer_state)
             print(
-                f"epoch-continuation: ACCEPT epoch={epoch} alpha={chosen.alpha:g} "
+                f"epoch-continuation: ACCEPT pair epoch={epoch} alpha={chosen.alpha:g} "
                 + v161._aggregate(accepted_results)
             )
 
     model.load_state_dict(accepted_state)
     model.gru.flatten_parameters()
+    _restore_optimizer_state(optimizer, accepted_optimizer_state)
     print("=== selected Train-safe trust-region checkpoint ===")
     print(
         f"selected epoch={accepted_epoch}/{args.dagger_epochs} alpha={accepted_alpha:g}: "
@@ -441,6 +474,7 @@ def main() -> None:
         _checkpoint_payload(
             parent,
             model_state=accepted_state,
+            optimizer_state=accepted_optimizer_state,
             source_checkpoint=source_checkpoint,
             output_checkpoint=output_checkpoint,
             round_index=round_index,
