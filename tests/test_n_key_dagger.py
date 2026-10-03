@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from pathlib import Path
 import sys
+from types import SimpleNamespace
 
 import torch
 
@@ -39,6 +40,25 @@ def _segment():
     return build_playable_segment(compiled, start_s=0.0, end_s=compiled.duration_s)
 
 
+def _stats(
+    *,
+    hits: int,
+    targets: int = 100,
+    xacc: float = 50.0,
+    early: int = 0,
+    overloaded: bool = False,
+):
+    return SimpleNamespace(
+        hits=hits,
+        targets=targets,
+        x_accuracy_percent=xacc,
+        x_accuracy_points=xacc * targets / 100.0,
+        x_accuracy_denominator=float(targets),
+        too_early_presses=early,
+        overloaded=overloaded,
+    )
+
+
 def test_discretize_n_key_action_uses_separate_press_release_thresholds() -> None:
     action = discretize_n_key_action(
         (0.24, 0.25, 0.80, -0.44, -0.45, 0.0, -0.90, 0.10),
@@ -73,6 +93,35 @@ def test_n_key_dagger_collects_teacher_labels_on_student_state_trajectory() -> N
     assert rollout.physical_keydowns >= 0
 
 
+def test_train_safety_guard_rejects_safe_to_overload() -> None:
+    references = [(_stats(hits=80, overloaded=False), 80)]
+    candidates = [(_stats(hits=90, overloaded=True), 90)]
+
+    accepted, reasons = dagger_trainer._train_safety_guard(references, candidates)
+
+    assert accepted is False
+    assert any("safe->overload" in reason for reason in reasons)
+
+
+def test_train_safety_guard_rejects_large_anchor_hit_regression() -> None:
+    references = [(_stats(hits=80, targets=100), 80)]
+    candidates = [(_stats(hits=0, targets=100), 0)]
+
+    accepted, reasons = dagger_trainer._train_safety_guard(references, candidates)
+
+    assert accepted is False
+    assert any("hits" in reason for reason in reasons)
+
+
+def test_train_selection_prioritizes_aggregate_hits_before_xacc() -> None:
+    more_hits = [(_stats(hits=91, xacc=10.0), 91)]
+    less_hits_better_xacc = [(_stats(hits=90, xacc=99.0), 90)]
+
+    assert dagger_trainer._selection_key(more_hits) > dagger_trainer._selection_key(
+        less_hits_better_xacc
+    )
+
+
 def test_v161_checkpoint_records_one_dagger_round_without_finalizing() -> None:
     model = NKeyRecurrentActorCritic(input_dim=263, key_count=8, hidden_dim=16)
     parent = {
@@ -91,24 +140,29 @@ def test_v161_checkpoint_records_one_dagger_round_without_finalizing() -> None:
         source_checkpoint=Path("bootstrap.pt"),
         output_checkpoint=Path("dagger1.pt"),
         round_index=1,
-        dagger_epoch=2,
+        dagger_epoch=4,
         dagger_epochs=4,
         press_threshold=0.25,
         release_threshold=-0.45,
         lr=3e-4,
         expert_frames=100,
         dagger_frames=80,
-        losses=[0.8, 0.6],
+        losses=[0.8, 0.6, 0.5, 0.4],
+        selected_epoch=2,
+        selection_history=[{"epoch": 0}, {"epoch": 2}],
     )
 
     assert dagger_trainer.TRAINER_VERSION == "1.6.1-n-key-dagger"
     assert dagger_trainer.CHECKPOINT_FORMAT_VERSION == 18
     assert payload["dagger_round"] == 1
-    assert payload["completed_dagger_epoch"] == 2
+    assert payload["completed_dagger_epoch"] == 4
+    assert payload["dagger_selected_epoch"] == 2
     assert payload["dagger_press_threshold"] == 0.25
     assert payload["dagger_release_threshold"] == -0.45
     assert payload["dagger_expert_frames"] == 100
     assert payload["dagger_student_state_frames"] == 80
+    assert payload["dagger_selection_uses_validation"] is False
+    assert payload["dagger_train_selection_history"] == [{"epoch": 0}, {"epoch": 2}]
     assert payload["final_used_for_selection"] is False
     assert payload["finalized"] is False
     assert "model_state" in payload
