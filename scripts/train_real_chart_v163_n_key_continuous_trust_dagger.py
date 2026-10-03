@@ -89,10 +89,14 @@ def _interpolate_state(
     return blended
 
 
-def _clone_optimizer_state(optimizer: torch.optim.Optimizer) -> dict:
-    """Deep-copy optimizer state so rejected proposals cannot mutate it later."""
+def _clone_optimizer_state(optimizer_or_state: torch.optim.Optimizer | dict) -> dict:
+    """Deep-copy a live optimizer or saved state so proposals cannot alias it."""
 
-    return deepcopy(optimizer.state_dict())
+    if isinstance(optimizer_or_state, torch.optim.Optimizer):
+        state = optimizer_or_state.state_dict()
+    else:
+        state = optimizer_or_state
+    return deepcopy(state)
 
 
 def _restore_optimizer_state(
