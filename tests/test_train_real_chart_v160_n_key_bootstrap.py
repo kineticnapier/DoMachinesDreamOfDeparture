@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from pathlib import Path
 import sys
+from types import SimpleNamespace
 
 import pytest
 import torch
@@ -67,3 +68,64 @@ def test_n_key_bootstrap_identity_and_8k_dimensions() -> None:
     assert trainer.TRAINER_VERSION == "1.6.0-n-key-bootstrap"
     assert trainer.CHECKPOINT_FORMAT_VERSION == 17
     assert n_key_hud_real_chart_input_dim(8) == 263
+
+
+def test_post_bootstrap_role_evaluation_reports_train_anchor_aggregate(
+    monkeypatch,
+    capsys,
+) -> None:
+    named_segments = [
+        SimpleNamespace(chart_name="Train A"),
+        SimpleNamespace(chart_name="Train B"),
+    ]
+    results = iter(
+        [
+            (
+                SimpleNamespace(
+                    hits=8,
+                    targets=10,
+                    x_accuracy_percent=75.0,
+                    perfect_rate=0.5,
+                    mean_abs_error_ms=12.0,
+                    too_early_presses=1,
+                    overloaded=False,
+                    x_accuracy_points=7.5,
+                    x_accuracy_denominator=10.0,
+                ),
+                9,
+            ),
+            (
+                SimpleNamespace(
+                    hits=9,
+                    targets=10,
+                    x_accuracy_percent=85.0,
+                    perfect_rate=0.6,
+                    mean_abs_error_ms=10.0,
+                    too_early_presses=0,
+                    overloaded=False,
+                    x_accuracy_points=8.5,
+                    x_accuracy_denominator=10.0,
+                ),
+                9,
+            ),
+        ]
+    )
+
+    def fake_evaluate(*args, **kwargs):
+        return next(results)
+
+    monkeypatch.setattr(trainer, "_evaluate", fake_evaluate)
+    evaluated = trainer._evaluate_role(
+        object(),
+        named_segments,
+        role_label="student-train",
+        control_dt_s=0.010,
+        physics_dt_s=0.001,
+        device=torch.device("cpu"),
+    )
+
+    assert len(evaluated) == 2
+    output = capsys.readouterr().out
+    assert "student-train 01/2 Train A" in output
+    assert "student-train 02/2 Train B" in output
+    assert "student-train aggregate: H=17/20 X=80.00% early=1 over=False keydowns=18" in output
