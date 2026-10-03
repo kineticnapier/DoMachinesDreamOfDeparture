@@ -30,7 +30,11 @@ import train_real_chart_v161_n_key_dagger as v161
 import train_real_chart_v162_n_key_continuous_dagger as v162
 from dmdod.multichart_dataset import discover_multichart_dataset
 from dmdod.n_key_motor import n_key_names
-from dmdod.n_key_policy import NKeyRecurrentActorCritic
+from dmdod.n_key_policy import (
+    NKeyPolicyBase,
+    build_n_key_policy,
+    n_key_policy_backend_from_checkpoint,
+)
 from dmdod.n_key_real_chart import n_key_hud_real_chart_input_dim
 from dmdod.n_key_training import (
     NKeyBCSequence,
@@ -109,6 +113,29 @@ def _restore_optimizer_state(
     optimizer.load_state_dict(deepcopy(state))
 
 
+def _build_policy_from_checkpoint(
+    checkpoint: dict,
+    *,
+    device: torch.device,
+) -> NKeyPolicyBase:
+    """Construct the checkpoint-selected policy without trainer backend knowledge."""
+
+    try:
+        backend = n_key_policy_backend_from_checkpoint(checkpoint)
+        model = build_n_key_policy(
+            backend=backend,
+            input_dim=int(checkpoint["input_dim"]),
+            key_count=int(checkpoint["key_count"]),
+            hidden_dim=int(checkpoint["hidden_dim"]),
+        ).to(device)
+    except ValueError as exc:
+        raise SystemExit(str(exc)) from exc
+
+    model.load_state_dict(checkpoint["model_state"])
+    model.prepare_recurrent_runtime()
+    return model
+
+
 def _select_improving_candidate(
     reference_results: list[tuple[object, int]],
     candidates: list[TrustCandidate],
@@ -126,7 +153,7 @@ def _select_improving_candidate(
 
 
 def _collect_student_state_sequences(
-    model: NKeyRecurrentActorCritic,
+    model: NKeyPolicyBase,
     anchors,
     *,
     round_index: int,
@@ -213,8 +240,11 @@ def _checkpoint_payload(
     losses: list[float],
     trust_alphas: tuple[float, ...],
     trust_history: list[dict],
+    policy_metadata: dict | None = None,
 ) -> dict:
     payload = dict(parent)
+    if policy_metadata:
+        payload.update(policy_metadata)
     payload.update(
         {
             "format_version": CHECKPOINT_FORMAT_VERSION,
@@ -302,13 +332,7 @@ def main() -> None:
         )
     key_names = n_key_names(key_count)
 
-    model = NKeyRecurrentActorCritic(
-        input_dim=input_dim,
-        key_count=key_count,
-        hidden_dim=int(parent["hidden_dim"]),
-    ).to(device)
-    model.load_state_dict(parent["model_state"])
-    model.gru.flatten_parameters()
+    model = _build_policy_from_checkpoint(parent, device=device)
 
     calibration = parent.get("calibration") or {}
     if "lead_s" not in calibration:
@@ -354,7 +378,7 @@ def main() -> None:
     print("=== DMDOD v1.6.4 N-Key Continuous Trust DAgger Refresh ===")
     print(
         f"source={source_checkpoint} output={output_checkpoint} round={round_index} "
-        f"keys={key_count} input={input_dim}D device={device}"
+        f"backend={model.backend_name} keys={key_count} input={input_dim}D device={device}"
     )
     print("key-order: " + ",".join(key_names))
     print(
@@ -419,7 +443,7 @@ def main() -> None:
 
     for epoch in range(1, args.dagger_epochs + 1):
         model.load_state_dict(accepted_state)
-        model.gru.flatten_parameters()
+        model.prepare_recurrent_runtime()
         _restore_optimizer_state(optimizer, accepted_optimizer_state)
         base_state = accepted_state
         base_optimizer_state = _clone_optimizer_state(accepted_optimizer_state)
@@ -441,7 +465,7 @@ def main() -> None:
         for alpha in trust_alphas:
             candidate_state = _interpolate_state(base_state, proposal_state, alpha)
             model.load_state_dict(candidate_state)
-            model.gru.flatten_parameters()
+            model.prepare_recurrent_runtime()
             candidate_results = v162._evaluate_role_continuous(
                 model,
                 anchors,
@@ -485,7 +509,7 @@ def main() -> None:
             accepted_optimizer_state = base_optimizer_state
             accepted_results = base_results
             model.load_state_dict(accepted_state)
-            model.gru.flatten_parameters()
+            model.prepare_recurrent_runtime()
             _restore_optimizer_state(optimizer, accepted_optimizer_state)
             print(
                 f"epoch-continuation: KEEP previous accepted pair epoch={accepted_epoch} "
@@ -498,7 +522,7 @@ def main() -> None:
             accepted_epoch = epoch
             accepted_alpha = chosen.alpha
             model.load_state_dict(accepted_state)
-            model.gru.flatten_parameters()
+            model.prepare_recurrent_runtime()
             _restore_optimizer_state(optimizer, accepted_optimizer_state)
             print(
                 f"epoch-continuation: ACCEPT pair epoch={epoch} alpha={chosen.alpha:g} "
@@ -525,7 +549,7 @@ def main() -> None:
                 )
 
     model.load_state_dict(accepted_state)
-    model.gru.flatten_parameters()
+    model.prepare_recurrent_runtime()
     _restore_optimizer_state(optimizer, accepted_optimizer_state)
     print("=== selected Train-safe trust-region checkpoint ===")
     print(
@@ -553,6 +577,7 @@ def main() -> None:
             losses=losses,
             trust_alphas=trust_alphas,
             trust_history=trust_history,
+            policy_metadata=model.checkpoint_metadata(),
         ),
     )
 
