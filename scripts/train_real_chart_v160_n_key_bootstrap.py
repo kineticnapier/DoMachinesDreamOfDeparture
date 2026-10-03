@@ -1,10 +1,10 @@
 from __future__ import annotations
 
-"""v1.6 bootstrap trainer for configurable even-N Level A bodies.
+"""Backend-selectable bootstrap trainer for configurable even-N Level A bodies.
 
-This generalizes the proven v1.5 four-key bootstrap path to 4K/6K/8K while
-keeping the same chart geometry and HUD contract.  Final is never evaluated or
-used for selection here.
+This keeps the proven v1.6 N-key bootstrap data/training path while allowing
+policy backends to be compared under the same Train/Validation split and
+training budget. Final is never evaluated or used for selection here.
 """
 
 import argparse
@@ -18,7 +18,14 @@ import train_real_chart_v080 as v080
 from dmdod.multichart_dataset import discover_multichart_dataset
 from dmdod.n_key_capacity import calibrate_n_key_press_lead
 from dmdod.n_key_motor import n_key_names
-from dmdod.n_key_policy import NKeyRecurrentActorCritic
+from dmdod.n_key_policy import (
+    DEFAULT_SPARSE_RESERVOIR_DENSITY,
+    DEFAULT_SPARSE_RESERVOIR_GAIN,
+    N_KEY_POLICY_BACKEND_GRU,
+    N_KEY_POLICY_BACKENDS,
+    NKeyPolicyBase,
+    build_n_key_policy,
+)
 from dmdod.n_key_real_chart import (
     DiagnosticHudNKeyRealChartMotorEnv,
     encode_n_key_hud_real_chart_observation,
@@ -32,12 +39,12 @@ from dmdod.n_key_training import (
 from dmdod.real_chart_features import DEFAULT_REAL_CHART_FEATURE_CONFIG
 
 
-TRAINER_VERSION = "1.6.0-n-key-bootstrap"
-CHECKPOINT_FORMAT_VERSION = 17
+TRAINER_VERSION = "1.6.5-n-key-backend-bootstrap"
+CHECKPOINT_FORMAT_VERSION = 23
 
 
 def _train_bc_epoch(
-    model: NKeyRecurrentActorCritic,
+    model: NKeyPolicyBase,
     sequences: list[NKeyBCSequence],
     *,
     optimizer: torch.optim.Optimizer,
@@ -79,7 +86,7 @@ def _train_bc_epoch(
 
 
 def _evaluate(
-    model: NKeyRecurrentActorCritic,
+    model: NKeyPolicyBase,
     named,
     *,
     control_dt_s: float,
@@ -134,7 +141,7 @@ def _aggregate(results: list[tuple[object, int]]) -> str:
 
 
 def _evaluate_role(
-    model: NKeyRecurrentActorCritic,
+    model: NKeyPolicyBase,
     named_segments,
     *,
     role_label: str,
@@ -166,23 +173,46 @@ def _evaluate_role(
     return results
 
 
+def _build_bootstrap_policy(
+    *,
+    backend: str,
+    input_dim: int,
+    key_count: int,
+    hidden_dim: int,
+    reservoir_density: float,
+    reservoir_gain: float,
+    reservoir_seed: int,
+    device: torch.device,
+) -> NKeyPolicyBase:
+    try:
+        model = build_n_key_policy(
+            backend=backend,
+            input_dim=input_dim,
+            key_count=key_count,
+            hidden_dim=hidden_dim,
+            initial_log_std=-1.20,
+            reservoir_density=reservoir_density,
+            reservoir_gain=reservoir_gain,
+            reservoir_seed=reservoir_seed,
+        ).to(device)
+    except ValueError as exc:
+        raise SystemExit(str(exc)) from exc
+    model.prepare_recurrent_runtime()
+    return model
+
+
 def _checkpoint_payload(
     *,
-    model: NKeyRecurrentActorCritic,
+    model: NKeyPolicyBase,
     args,
     dataset,
     calibration,
     epoch: int,
     losses: list[float],
 ) -> dict:
-    return {
+    payload = {
         "format_version": CHECKPOINT_FORMAT_VERSION,
         "trainer_version": TRAINER_VERSION,
-        "input_dim": int(model.input_dim),
-        "action_dim": int(model.action_dim),
-        "key_count": int(model.key_count),
-        "key_names": tuple(model.key_names),
-        "hidden_dim": int(model.hidden_dim),
         "model_state": model.state_dict(),
         "dataset_root": dataset.root,
         "dataset_signature": dataset.signature(),
@@ -202,6 +232,8 @@ def _checkpoint_payload(
         "final_used_for_selection": False,
         "finalized": False,
     }
+    payload.update(model.checkpoint_metadata())
+    return payload
 
 
 def _save_checkpoint(path: Path, payload: dict) -> None:
@@ -223,13 +255,14 @@ def _device_from_arg(value: str) -> torch.device:
 def main() -> None:
     parser = argparse.ArgumentParser(
         description=(
-            "Bootstrap a configurable N-key Level A policy on Train anchors, "
+            "Bootstrap a configurable N-key Level A policy backend on Train anchors, "
             "measure post-bootstrap Train imitation, and evaluate Validation. "
             "Final is never touched."
         )
     )
     parser.add_argument("dataset")
     parser.add_argument("--keys", type=int, default=8)
+    parser.add_argument("--backend", choices=N_KEY_POLICY_BACKENDS, default=N_KEY_POLICY_BACKEND_GRU)
     parser.add_argument("--train-window", type=float, default=v080.DEFAULT_TRAIN_WINDOW_S)
     parser.add_argument("--validation-window", type=float, default=v080.DEFAULT_VALIDATION_WINDOW_S)
     parser.add_argument("--anchors-per-chart", type=int, default=v080.DEFAULT_ANCHORS_PER_CHART)
@@ -240,6 +273,9 @@ def main() -> None:
     parser.add_argument("--control-dt", type=float, default=0.010)
     parser.add_argument("--physics-dt", type=float, default=0.001)
     parser.add_argument("--seed", type=int, default=1)
+    parser.add_argument("--reservoir-density", type=float, default=DEFAULT_SPARSE_RESERVOIR_DENSITY)
+    parser.add_argument("--reservoir-gain", type=float, default=DEFAULT_SPARSE_RESERVOIR_GAIN)
+    parser.add_argument("--reservoir-seed", type=int, default=None)
     parser.add_argument("--device", default="auto")
     parser.add_argument("--anchor-limit", type=int, default=None)
     parser.add_argument("--validation-limit", type=int, default=None)
@@ -258,6 +294,10 @@ def main() -> None:
         raise SystemExit("hidden/chunk-steps must be positive")
     if args.control_dt <= 0.0 or args.physics_dt <= 0.0:
         raise SystemExit("control-dt/physics-dt must be positive")
+    if not (0.0 < args.reservoir_density <= 1.0):
+        raise SystemExit("--reservoir-density must be in (0, 1]")
+    if args.reservoir_gain <= 0.0:
+        raise SystemExit("--reservoir-gain must be positive")
     if args.anchor_limit is not None and args.anchor_limit <= 0:
         raise SystemExit("--anchor-limit must be positive")
     if args.validation_limit is not None and args.validation_limit <= 0:
@@ -266,6 +306,7 @@ def main() -> None:
     torch.manual_seed(args.seed)
     random.seed(args.seed)
     device = _device_from_arg(args.device)
+    reservoir_seed = args.seed if args.reservoir_seed is None else args.reservoir_seed
 
     try:
         dataset = discover_multichart_dataset(args.dataset)
@@ -296,15 +337,24 @@ def main() -> None:
     input_dim = n_key_hud_real_chart_input_dim(args.keys)
     checkpoint = Path(
         args.checkpoint
-        or f"checkpoints/real_chart_v160_{args.keys}k_bootstrap.pt"
+        or (
+            f"checkpoints/real_chart_v165_{args.keys}k_{args.backend}_bootstrap.pt"
+            if args.backend != N_KEY_POLICY_BACKEND_GRU
+            else f"checkpoints/real_chart_v160_{args.keys}k_bootstrap.pt"
+        )
     )
 
-    print("=== DMDOD v1.6.0 N-Key Bootstrap ===")
+    print("=== DMDOD v1.6.5 N-Key Backend Bootstrap ===")
     print(
-        f"keys={args.keys} input={input_dim}D action={args.keys} hidden={args.hidden} "
-        f"device={device} lead={calibration.lead_s * 1000.0:.1f}ms "
+        f"backend={args.backend} keys={args.keys} input={input_dim}D action={args.keys} "
+        f"hidden={args.hidden} device={device} lead={calibration.lead_s * 1000.0:.1f}ms "
         f"control={args.control_dt * 1000.0:.1f}ms physics={args.physics_dt * 1000.0:.1f}ms"
     )
+    if args.backend != N_KEY_POLICY_BACKEND_GRU:
+        print(
+            f"reservoir density={args.reservoir_density:g} gain={args.reservoir_gain:g} "
+            f"seed={reservoir_seed}"
+        )
     print("key-order: " + ",".join(key_names))
     print(
         f"anchors={len(anchor_segments)} validation={len(validation_segments)} "
@@ -338,15 +388,31 @@ def main() -> None:
             f"over={rollout.stats.overloaded} keydowns={rollout.physical_keydowns}"
         )
 
-    model = NKeyRecurrentActorCritic(
+    model = _build_bootstrap_policy(
+        backend=args.backend,
         input_dim=input_dim,
         key_count=args.keys,
         hidden_dim=args.hidden,
-        initial_log_std=-1.20,
-    ).to(device)
-    # Keep cuDNN's recurrent weights packed after moving the model to CUDA.
-    model.gru.flatten_parameters()
-    optimizer = torch.optim.Adam(model.parameters(), lr=args.lr)
+        reservoir_density=args.reservoir_density,
+        reservoir_gain=args.reservoir_gain,
+        reservoir_seed=reservoir_seed,
+        device=device,
+    )
+    trainable_parameters = sum(
+        parameter.numel() for parameter in model.parameters() if parameter.requires_grad
+    )
+    fixed_parameters = sum(
+        parameter.numel() for parameter in model.parameters() if not parameter.requires_grad
+    )
+    print(
+        f"parameters trainable={trainable_parameters} fixed={fixed_parameters} "
+        f"total={trainable_parameters + fixed_parameters}"
+    )
+
+    optimizer = torch.optim.Adam(
+        (parameter for parameter in model.parameters() if parameter.requires_grad),
+        lr=args.lr,
+    )
     losses: list[float] = []
 
     for epoch in range(1, args.bootstrap_epochs + 1):
