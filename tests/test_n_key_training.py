@@ -106,6 +106,41 @@ def test_n_key_actuation_loss_supports_eight_outputs() -> None:
     assert n_key_actuation_loss(good, target) < n_key_actuation_loss(bad, target)
 
 
+def test_n_key_actuation_loss_macro_balances_rare_key_press() -> None:
+    # key 0 has one press while key 1 presses on every frame.  Missing the rare
+    # key must remain a first-class error rather than being diluted by the 100
+    # common-key press labels.
+    target = torch.zeros((100, 2), dtype=torch.float32)
+    target[0, 0] = 1.0
+    target[:, 1] = 1.0
+    predicted = target.clone()
+    predicted[0, 0] = 0.0
+
+    loss = n_key_actuation_loss(predicted, target)
+
+    # press margin miss on key 0 is 0.7^2.  Per-key macro averaging contributes
+    # half of that before PRESS_MARGIN_COEF=6, i.e. about 1.47 by itself.
+    assert loss > 1.4
+
+
+def test_n_key_actuation_loss_macro_balances_neutral_keys() -> None:
+    # Inner-like key 0 has only two neutral frames, outer-like key 1 is neutral
+    # almost everywhere.  Unsafe pushes on key 0 should not disappear in the
+    # large global neutral denominator.
+    target = torch.ones((100, 2), dtype=torch.float32)
+    target[:2, 0] = 0.0
+    target[:, 1] = 0.0
+    predicted = target.clone()
+    predicted[:2, 0] = 0.30
+
+    loss = n_key_actuation_loss(predicted, target)
+
+    # neutral violation on key 0 is (0.30 - 0.05)^2 = 0.0625; macro averaging
+    # across two neutral-bearing keys then NEUTRAL_PUSH_COEF=12 gives 0.375,
+    # plus the small MSE term.
+    assert loss > 0.37
+
+
 def test_n_key_policy_maps_263d_to_eight_actions_without_vf_gru_path() -> None:
     model = NKeyRecurrentActorCritic(input_dim=263, key_count=8, hidden_dim=16)
     state = model.initial_state(torch.device("cpu"))
