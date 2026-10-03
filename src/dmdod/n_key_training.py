@@ -58,51 +58,76 @@ class NKeyRollout:
     physical_keydowns: int
 
 
-def _macro_key_masked_mean(values: torch.Tensor, mask: torch.Tensor) -> torch.Tensor:
-    """Average a masked loss per key first, then equally across active keys.
-
-    N-key routing is intentionally center-first, so inner keys appear in many
-    more press/release labels while outer keys spend most frames neutral.  A
-    single global denominator lets those frequency differences hide severe
-    per-key errors.  Macro averaging makes every key that has at least one
-    sample of the requested class in this chunk contribute equally.
-    """
-
-    counts = mask.sum(dim=0)
-    active = counts > 0
-    per_key = (values * mask).sum(dim=0) / counts.clamp_min(1)
-    return (per_key * active).sum() / active.sum().clamp_min(1)
+def _masked_mean(values: torch.Tensor, mask: torch.Tensor) -> torch.Tensor:
+    count = mask.sum()
+    return (values * mask).sum() / count.clamp_min(1)
 
 
 def n_key_actuation_loss(predicted: torch.Tensor, target: torch.Tensor) -> torch.Tensor:
-    """Actuation-aware BC loss with per-key class balancing.
+    """Permutation-invariant actuation loss for interchangeable free fingers.
 
-    Press, release and unsafe-neutral penalties are macro-averaged across keys
-    before the existing coefficients are applied.  This preserves the mature
-    2K/4K margins while preventing an 8K center-first dataset from letting
-    high-frequency inner-key labels or high-volume outer-key neutral labels
-    dominate the objective.
+    ADOFAI scoring does not care which physical key claims a target.  The
+    center-first privileged teacher still needs a concrete routing choice to
+    drive the body, but that key identity is not a unique BC label.  Treating
+    it as exact creates contradictory supervision in larger bodies: a valid
+    press on another free finger is simultaneously scored as a missed teacher
+    press and an unsafe neutral push.
+
+    For each frame this objective therefore keeps only the action semantics:
+
+    * keys the teacher is releasing stay identity-specific, because they are
+      the keys physically held in the teacher state;
+    * the *number* of requested presses is preserved, but those presses may be
+      assigned to any currently non-held output;
+    * every remaining non-held output is neutral and is penalized for an extra
+      positive push.
+
+    Sorting the non-held outputs implements the minimum-cost assignment without
+    enumerating key permutations: the strongest ``press_count`` outputs are the
+    candidate presses, and the rest are candidate neutrals.
     """
 
     if predicted.shape != target.shape or predicted.ndim != 2:
         raise ValueError("predicted and target must have matching shape [T, K]")
-    if predicted.shape[1] < 2 or predicted.shape[1] % 2 != 0:
+    key_count = int(predicted.shape[1])
+    if key_count < 2 or key_count % 2 != 0:
         raise ValueError("N-key action width must be an even integer >= 2")
 
     press = target > TEACHER_ACTIVE_THRESHOLD
     release = target < -TEACHER_ACTIVE_THRESHOLD
-    neutral = ~(press | release)
+    available = ~release
 
-    mse = (predicted - target).square().mean()
+    press_count = press.sum(dim=1, keepdim=True)
+    available_count = available.sum(dim=1, keepdim=True)
+    if bool((press_count > available_count).any()):
+        raise ValueError("teacher requests more presses than non-held keys")
 
-    press_gap = torch.relu(PRESS_MARGIN - predicted).square()
-    press_loss = _macro_key_masked_mean(press_gap, press)
+    # tanh policy outputs are in [-1, 1], so -2 safely moves held/release keys
+    # behind every available key before sorting.  Release outputs are trained
+    # separately against their physical identity below.
+    ranked, _ = torch.sort(
+        predicted.masked_fill(release, -2.0),
+        dim=1,
+        descending=True,
+    )
+    ranks = torch.arange(key_count, device=predicted.device).reshape(1, key_count)
+    ranked_press = ranks < press_count
+    ranked_available = ranks < available_count
+    ranked_neutral = ranked_available & ~ranked_press
+
+    desired_ranked = ranked_press.to(dtype=predicted.dtype)
+    available_mse = ((ranked - desired_ranked).square() * ranked_available).sum()
+    release_mse = ((predicted + 1.0).square() * release).sum()
+    mse = (available_mse + release_mse) / max(1, predicted.numel())
+
+    press_gap = torch.relu(PRESS_MARGIN - ranked).square()
+    press_loss = _masked_mean(press_gap, ranked_press)
 
     release_gap = torch.relu(predicted - RELEASE_MARGIN).square()
-    release_loss = _macro_key_masked_mean(release_gap, release)
+    release_loss = _masked_mean(release_gap, release)
 
-    unsafe_neutral_push = torch.relu(predicted - NEUTRAL_PUSH_LIMIT).square()
-    neutral_loss = _macro_key_masked_mean(unsafe_neutral_push, neutral)
+    unsafe_neutral_push = torch.relu(ranked - NEUTRAL_PUSH_LIMIT).square()
+    neutral_loss = _masked_mean(unsafe_neutral_push, ranked_neutral)
 
     return (
         MSE_COEF * mse
