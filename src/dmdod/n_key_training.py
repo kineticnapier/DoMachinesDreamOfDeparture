@@ -274,16 +274,25 @@ def collect_n_key_dagger_sequence(
     physics_dt_s: float,
     device: torch.device,
     source: str = "n-key-student-state-dagger",
+    action_mode: str = "hard",
 ) -> NKeyRollout:
-    """Collect privileged set-valued labels on a hard-action student trajectory.
+    """Collect privileged set-valued labels on a student-state trajectory.
 
     The student alone drives the physical body.  At every visited observation,
     the privileged center-first teacher is queried only for a supervision label.
+    ``action_mode='hard'`` discretizes the policy with the supplied thresholds;
+    ``action_mode='continuous'`` applies the tanh policy output directly.  The
+    latter is useful once DAgger has taught the policy amplitudes well enough for
+    the physical body to respond reliably without thresholding.
+
     Because ``n_key_actuation_loss`` treats free-finger press identity as a set,
     the teacher's concrete routing choice is not imposed as the unique answer.
     Release identity remains tied to the actually held keys visible in the
     student-state observation.
     """
+
+    if action_mode not in {"hard", "continuous"}:
+        raise ValueError("action_mode must be 'hard' or 'continuous'")
 
     key_count = int(model.key_count)
     env = _make_env(
@@ -306,11 +315,14 @@ def collect_n_key_dagger_sequence(
             x = torch.tensor(encoded, dtype=torch.float32, device=device)
             mean, _, _, state = model.forward_step(x, state)
             soft_values = tuple(float(value.item()) for value in torch.tanh(mean))
-            student_action = discretize_n_key_action(
-                soft_values,
-                press_threshold=press_threshold,
-                release_threshold=release_threshold,
-            )
+            if action_mode == "continuous":
+                student_action = NKeyAction(soft_values)
+            else:
+                student_action = discretize_n_key_action(
+                    soft_values,
+                    press_threshold=press_threshold,
+                    release_threshold=release_threshold,
+                )
             teacher_action = _teacher_action(
                 env,
                 teacher,
