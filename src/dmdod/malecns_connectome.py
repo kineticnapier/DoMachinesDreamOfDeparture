@@ -99,6 +99,7 @@ def build_malecns_weighted_core(
         internal_weights,
         (selected_count, selected_count),
         dtype=torch.float32,
+        check_invariants=True,
     ).coalesce()
     edge_index = sparse.indices().cpu()
     edge_weight = sparse.values().cpu()
