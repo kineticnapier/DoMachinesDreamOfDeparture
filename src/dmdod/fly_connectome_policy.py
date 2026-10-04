@@ -22,13 +22,13 @@ class NKeyFlyConnectomeActorCritic(NKeyPolicyBase):
 
     The policy keeps one recurrent state value per selected MaleCNS neuron.
     Trainable observations first enter a small sensory bottleneck; a fixed,
-    seeded projection fans that bottleneck into the connectome.  Recurrent
+    seeded projection fans that bottleneck into the connectome. Recurrent
     weights preserve the artifact topology and relative raw synapse strengths,
     but are row-normalized and globally scaled for stable tanh dynamics.
 
     This first backend is intentionally topology-only: the current MaleCNS
     artifact is unsigned, so neurotransmitter-derived excitation/inhibition is
-    not modeled yet.  The connectome and input projection are fixed; only the
+    not modeled yet. The connectome and input projection are fixed; only the
     sensory bottleneck, actor/critic readouts, and log standard deviation learn.
     """
 
@@ -103,10 +103,21 @@ class NKeyFlyConnectomeActorCritic(NKeyPolicyBase):
             check_invariants=True,
         ).coalesce()
         self.register_buffer("recurrent_weight", recurrent)
+        # CSR is a runtime-only acceleration structure. Keep the canonical COO
+        # tensor persistent so existing checkpoints remain byte/schema compatible.
+        self.register_buffer(
+            "_recurrent_weight_runtime",
+            recurrent.to_sparse_csr(),
+            persistent=False,
+        )
         self.register_buffer(
             "body_ids",
             torch.as_tensor(artifact["body_ids"], dtype=torch.int64, device="cpu"),
         )
+
+    def _refresh_recurrent_runtime_weight(self) -> None:
+        """Rebuild the runtime CSR view after replacing the canonical COO graph."""
+        self._recurrent_weight_runtime = self.recurrent_weight.to_sparse_csr()
 
     def initial_state(self, device: torch.device) -> torch.Tensor:
         return torch.zeros(self.hidden_dim, dtype=torch.float32, device=device)
@@ -123,7 +134,7 @@ class NKeyFlyConnectomeActorCritic(NKeyPolicyBase):
         state: torch.Tensor,
     ) -> torch.Tensor:
         recurrent = torch.sparse.mm(
-            self.recurrent_weight,
+            self._recurrent_weight_runtime,
             state.reshape(self.hidden_dim, 1),
         ).reshape(self.hidden_dim)
         return torch.tanh(injected + recurrent)
