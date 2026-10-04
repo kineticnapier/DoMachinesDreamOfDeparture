@@ -74,6 +74,7 @@ class BootstrapLiveModernTrainerConsole(LiveModernTrainerConsole):
         super().__init__(**kwargs)
         self._bootstrap_eval_active = False
         self._n_key_role: str | None = None
+        self._n_key_bootstrap_total: int | None = None
 
     def _bar(self, *, total: int, desc: str, colour: str, position: int):
         """Use cumulative-rate ETA for persistent parent bars only."""
@@ -110,10 +111,23 @@ class BootstrapLiveModernTrainerConsole(LiveModernTrainerConsole):
         """Translate the v1.6.x N-key bootstrap's existing logs into tqdm bars.
 
         That trainer predates the fine-grained progress event bus and emits
-        ``001/20`` style progress lines instead.  Keep the trainer output as the
+        ``001/20`` style progress lines instead. Keep the trainer output as the
         source of truth while making the shared modern frontend useful for the
         v1.6.8/v1.7.0 wrappers as well.
+
+        The bootstrap bar is created from the pre-training ``parameters`` line,
+        not from the first completed epoch. This makes tqdm's elapsed/rate cover
+        epoch 1 as well, so a one-epoch run reports real wall time instead of an
+        effectively instantaneous post-hoc 0 -> 1 update.
         """
+
+        config = re.match(
+            r"anchors=\d+\s+validation=\d+\s+epochs=(\d+)\s+\|",
+            text,
+        )
+        if config:
+            self._n_key_bootstrap_total = int(config.group(1))
+            return False
 
         teacher = re.match(r"teacher\s+(\d+)/(\d+)\s+(.+?)\s+H=", text)
         if teacher:
@@ -127,6 +141,14 @@ class BootstrapLiveModernTrainerConsole(LiveModernTrainerConsole):
             if current >= total:
                 self._close_bar("_teacher")
             return True
+
+        if text.startswith("parameters trainable="):
+            total = self._n_key_bootstrap_total
+            if total is not None and total > 0 and self._bootstrap is None:
+                self._bootstrap = self._bar(
+                    total=total, desc="Bootstrap", colour="blue", position=0
+                )
+            return False
 
         bootstrap = re.match(
             r"bootstrap\s+(\d+)/(\d+)\s+loss=([0-9.eE+-]+)", text
@@ -249,7 +271,7 @@ def _pop_ui_option(argv: list[str]) -> str:
     for index, token in enumerate(list(argv)):
         if token == "--ui":
             if index + 1 >= len(argv):
-                raise SystemExit("--ui requires one of: auto, modern, plain")
+                raise SystemExit(f"--ui requires one of: auto, modern, plain")
             mode = argv[index + 1]
             del argv[index : index + 2]
             break
