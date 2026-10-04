@@ -117,13 +117,20 @@ class NKeyFlyConnectomeActorCritic(NKeyPolicyBase):
                 f"state must have shape [{self.hidden_dim}], got {tuple(state.shape)}"
             )
 
-    def _advance(self, encoded: torch.Tensor, state: torch.Tensor) -> torch.Tensor:
-        injected = torch.mv(self.input_projection, encoded)
+    def _advance_injected(
+        self,
+        injected: torch.Tensor,
+        state: torch.Tensor,
+    ) -> torch.Tensor:
         recurrent = torch.sparse.mm(
             self.recurrent_weight,
             state.reshape(self.hidden_dim, 1),
         ).reshape(self.hidden_dim)
         return torch.tanh(injected + recurrent)
+
+    def _advance(self, encoded: torch.Tensor, state: torch.Tensor) -> torch.Tensor:
+        injected = torch.mv(self.input_projection, encoded)
+        return self._advance_injected(injected, state)
 
     def forward_step(
         self,
@@ -161,10 +168,11 @@ class NKeyFlyConnectomeActorCritic(NKeyPolicyBase):
             )
 
         encoded = torch.tanh(self.sensory(observations))
+        injected_sequence = torch.matmul(encoded, self.input_projection.transpose(0, 1))
         state = initial_state
         states: list[torch.Tensor] = []
-        for frame in encoded:
-            state = self._advance(frame, state)
+        for injected in injected_sequence:
+            state = self._advance_injected(injected, state)
             states.append(state)
         recurrent = torch.stack(states)
         means = self.actor_mean(recurrent)
