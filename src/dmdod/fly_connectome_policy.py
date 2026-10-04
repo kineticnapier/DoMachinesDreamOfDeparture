@@ -133,10 +133,10 @@ class NKeyFlyConnectomeActorCritic(NKeyPolicyBase):
         injected: torch.Tensor,
         state: torch.Tensor,
     ) -> torch.Tensor:
-        recurrent = torch.sparse.mm(
-            self._recurrent_weight_runtime,
-            state.reshape(self.hidden_dim, 1),
-        ).reshape(self.hidden_dim)
+        # Keep the recurrent state as a vector. torch.mv supports CSR @ dense
+        # vector directly, avoiding the per-step [H] -> [H, 1] -> [H] views
+        # required by torch.sparse.mm while preserving the same matvec semantics.
+        recurrent = torch.mv(self._recurrent_weight_runtime, state)
         return torch.tanh(injected + recurrent)
 
     def _advance(self, encoded: torch.Tensor, state: torch.Tensor) -> torch.Tensor:
