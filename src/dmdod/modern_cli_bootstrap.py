@@ -2,6 +2,7 @@ from __future__ import annotations
 
 """Bootstrap-aware live terminal dashboard for the v1.0 trainer."""
 
+import re
 import sys
 from collections.abc import Callable
 from typing import Any, TypeVar
@@ -40,16 +41,12 @@ if _IntegerCountTqdm is not None:
         """Persistent tqdm whose ETA is stable under fractional child updates."""
 
         def __init__(self, *args, **kwargs) -> None:
-            # tqdm may render during its own constructor, so make the override
-            # safe before delegating to it.
             self._eta_origin_n: float | None = None
             self._eta_origin_elapsed = 0.0
             super().__init__(*args, **kwargs)
             self.reset_eta_origin()
 
         def reset_eta_origin(self) -> None:
-            """Start a new ETA sample window from the bar's current position."""
-
             values = super().format_dict
             self._eta_origin_n = float(self.n)
             self._eta_origin_elapsed = float(values.get("elapsed", 0.0) or 0.0)
@@ -71,11 +68,12 @@ else:  # pragma: no cover - modern TTY mode is disabled without tqdm
 
 
 class BootstrapLiveModernTrainerConsole(LiveModernTrainerConsole):
-    """Show turbo bootstrap candidate evaluation on the live dashboard."""
+    """Show bootstrap and evaluation progress on the live dashboard."""
 
     def __init__(self, **kwargs: Any) -> None:
         super().__init__(**kwargs)
         self._bootstrap_eval_active = False
+        self._n_key_role: str | None = None
 
     def _bar(self, *, total: int, desc: str, colour: str, position: int):
         """Use cumulative-rate ETA for persistent parent bars only."""
@@ -104,12 +102,90 @@ class BootstrapLiveModernTrainerConsole(LiveModernTrainerConsole):
 
     def _handle(self, event, raw: str) -> bool:
         handled = super()._handle(event, raw)
-        # A resumed Rounds bar is first advanced to historical progress. That
-        # history happened before this process started, so do not divide it by
-        # the current process's tiny elapsed time when estimating ETA.
         if event.kind == "resume":
             self._reset_parent_eta("_round")
         return handled
+
+    def _handle_n_key_bootstrap_line(self, text: str) -> bool:
+        """Translate the v1.6.x N-key bootstrap's existing logs into tqdm bars.
+
+        That trainer predates the fine-grained progress event bus and emits
+        ``001/20`` style progress lines instead.  Keep the trainer output as the
+        source of truth while making the shared modern frontend useful for the
+        v1.6.8/v1.7.0 wrappers as well.
+        """
+
+        teacher = re.match(r"teacher\s+(\d+)/(\d+)\s+(.+?)\s+H=", text)
+        if teacher:
+            current, total = int(teacher.group(1)), int(teacher.group(2))
+            if self._teacher is None:
+                self._teacher = self._bar(
+                    total=total, desc="Teacher", colour="cyan", position=0
+                )
+            self._advance_to(self._teacher, current)
+            self._teacher.set_postfix_str(teacher.group(3)[-36:])
+            if current >= total:
+                self._close_bar("_teacher")
+            return True
+
+        bootstrap = re.match(
+            r"bootstrap\s+(\d+)/(\d+)\s+loss=([0-9.eE+-]+)", text
+        )
+        if bootstrap:
+            current = int(bootstrap.group(1))
+            total = int(bootstrap.group(2))
+            loss = float(bootstrap.group(3))
+            if self._bootstrap is None:
+                self._bootstrap = self._bar(
+                    total=total, desc="Bootstrap", colour="blue", position=0
+                )
+            self._advance_to(self._bootstrap, current)
+            self._bootstrap.set_postfix_str(f"loss={loss:.6f}")
+            if current >= total:
+                self._close_bar("_bootstrap")
+            return True
+
+        role = re.match(
+            r"(student-train|validation)\s+(\d+)/(\d+)\s+(.+?):\s+H=", text
+        )
+        if role:
+            name = role.group(1)
+            current, total = int(role.group(2)), int(role.group(3))
+            if self._stage is None or self._n_key_role != name:
+                self._close_live("_stage")
+                self._n_key_role = name
+                desc = "Train eval" if name == "student-train" else "Validation"
+                colour = "yellow" if name == "student-train" else "cyan"
+                self._new_stage(total=total, desc=desc, colour=colour)
+            self._advance_to(self._stage, current)
+            self._stage.set_postfix_str(role.group(4)[-34:])
+            if current >= total:
+                self._close_live("_stage")
+                self._n_key_role = None
+            return True
+
+        aggregate = re.match(r"(student-train|validation) aggregate:", text)
+        if aggregate:
+            self._close_live("_stage")
+            self._n_key_role = None
+            self._write(text)
+            return True
+
+        return False
+
+    def _modern_print(self, *args, **kwargs) -> None:
+        file = kwargs.get("file", self.stream)
+        sep = kwargs.get("sep", " ")
+        end = kwargs.get("end", "\n")
+        if (
+            self.enabled
+            and file in (None, self.stream, sys.stdout)
+            and end == "\n"
+        ):
+            text = sep.join(str(item) for item in args)
+            if self._handle_n_key_bootstrap_line(text):
+                return
+        super()._modern_print(*args, **kwargs)
 
     def _on_progress(self, event) -> None:
         if not self.enabled:
@@ -160,9 +236,6 @@ class BootstrapLiveModernTrainerConsole(LiveModernTrainerConsole):
             self._bootstrap_eval_active = False
             return
 
-        # The wrapped evaluator may itself emit generic eval events for each
-        # worker-sized wave. Hide those while the bootstrap-specific bar owns
-        # the display, otherwise the bar would reset on every wave.
         if self._bootstrap_eval_active and kind in {"eval_start", "eval_step", "eval_done"}:
             return
 
@@ -190,13 +263,7 @@ def _pop_ui_option(argv: list[str]) -> str:
 
 
 def run_with_modern_console(main: Callable[[], _T]) -> _T:
-    """Run any compatible trainer through the shared modern/plain UI switch.
-
-    ``--ui auto`` (default) enables the modern console only on a supported TTY.
-    ``--ui modern`` requests the same frontend explicitly, while ``--ui plain``
-    bypasses it. The option is removed from ``sys.argv`` before trainer-specific
-    argument parsing, so thin wrapper trainers do not need their own UI parser.
-    """
+    """Run any compatible trainer through the shared modern/plain UI switch."""
 
     argv = list(sys.argv)
     mode = _pop_ui_option(argv)
