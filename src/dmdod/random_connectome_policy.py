@@ -23,7 +23,7 @@ class NKeyRandomConnectomeActorCritic(NKeyFlyConnectomeActorCritic):
 
     Everything outside the recurrent graph matches NKeyFlyConnectomeActorCritic:
     trainable sensory bottleneck, fixed seeded sensory projection, tanh state,
-    and trainable actor/critic heads.  The null model preserves each target
+    and trainable actor/critic heads. The null model preserves each target
     neuron's incoming edge count and incoming raw-weight multiset from the
     reference MaleCNS artifact, but replaces the presynaptic neuron identities
     with deterministic random unique sources (excluding self edges).
@@ -100,6 +100,7 @@ class NKeyRandomConnectomeActorCritic(NKeyFlyConnectomeActorCritic):
                 f"expected {raw_weight.numel()}, got {randomized._nnz()}"
             )
         self.recurrent_weight = randomized
+        self._refresh_recurrent_runtime_weight()
 
     def checkpoint_metadata(self) -> dict[str, object]:
         metadata = super().checkpoint_metadata()
