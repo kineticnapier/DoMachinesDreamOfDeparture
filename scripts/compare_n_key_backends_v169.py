@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-"""v1.6.9: compare GRU, sparse reservoir, and MaleCNS on one Validation set."""
+"""v1.6.9: compare N-key recurrent backends on one Validation set."""
 
 import argparse
 from dataclasses import dataclass
@@ -9,11 +9,7 @@ import sys
 
 import torch
 
-# Historical training scripts import their siblings as top-level modules
-# (for example train_real_chart_v080 -> train_real_chart_v054).  When this
-# module is imported as scripts.compare_n_key_backends_v169 under pytest,
-# scripts/ is not automatically on sys.path, so add it explicitly before
-# loading the legacy trainer modules.
+# Historical training scripts import their siblings as top-level modules.
 _SCRIPTS_DIR = Path(__file__).resolve().parent
 if str(_SCRIPTS_DIR) not in sys.path:
     sys.path.insert(0, str(_SCRIPTS_DIR))
@@ -28,12 +24,15 @@ from dmdod.fly_connectome_policy import (
 from dmdod.multichart_dataset import discover_multichart_dataset
 from dmdod.n_key_policy import (
     N_KEY_POLICY_BACKEND_GRU,
-    N_KEY_POLICY_BACKEND_SPARSE_RESERVOIR,
     NKeyPolicyBase,
     build_n_key_policy,
     n_key_policy_backend_from_checkpoint,
 )
 from dmdod.n_key_real_chart import n_key_hud_real_chart_input_dim
+from dmdod.random_connectome_policy import (
+    N_KEY_POLICY_BACKEND_RANDOM_CONNECTOME,
+    NKeyRandomConnectomeActorCritic,
+)
 
 
 @dataclass(frozen=True, slots=True)
@@ -71,7 +70,10 @@ def _device_from_arg(value: str) -> torch.device:
 
 def _checkpoint_backend(checkpoint: dict) -> str:
     backend = str(checkpoint.get("n_key_policy_backend", N_KEY_POLICY_BACKEND_GRU))
-    if backend == N_KEY_POLICY_BACKEND_FLY_CONNECTOME:
+    if backend in (
+        N_KEY_POLICY_BACKEND_FLY_CONNECTOME,
+        N_KEY_POLICY_BACKEND_RANDOM_CONNECTOME,
+    ):
         return backend
     return n_key_policy_backend_from_checkpoint(checkpoint)
 
@@ -101,6 +103,22 @@ def _load_policy(path: Path, device: torch.device) -> tuple[NKeyPolicyBase, dict
             sensory_dim=int(checkpoint.get("fly_connectome_sensory_dim", 128)),
             recurrent_gain=float(checkpoint.get("fly_connectome_recurrent_gain", 0.9)),
             projection_seed=int(checkpoint.get("fly_connectome_projection_seed", 1701)),
+            initial_log_std=-1.20,
+        )
+    elif backend == N_KEY_POLICY_BACKEND_RANDOM_CONNECTOME:
+        core_path = checkpoint.get("random_connectome_reference_core_path") or checkpoint.get(
+            "fly_connectome_core_path"
+        )
+        if not core_path:
+            raise SystemExit(f"{path}: random-connectome checkpoint is missing reference core path")
+        model = NKeyRandomConnectomeActorCritic(
+            input_dim=input_dim,
+            key_count=key_count,
+            core_path=core_path,
+            sensory_dim=int(checkpoint.get("fly_connectome_sensory_dim", 128)),
+            recurrent_gain=float(checkpoint.get("fly_connectome_recurrent_gain", 0.9)),
+            projection_seed=int(checkpoint.get("fly_connectome_projection_seed", 1701)),
+            topology_seed=int(checkpoint.get("random_connectome_topology_seed", 2718)),
             initial_log_std=-1.20,
         )
     else:
