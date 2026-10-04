@@ -39,13 +39,16 @@ class _FixedSparseMv(torch.autograd.Function):
         weight_transpose: torch.Tensor,
         vector: torch.Tensor,
     ) -> torch.Tensor:
-        ctx.save_for_backward(weight_transpose)
+        # The transpose is a fixed, non-trainable runtime buffer. Keeping it as
+        # a plain context reference avoids SavedVariable bookkeeping/version
+        # checks at every recurrent step while preserving the exact backward
+        # operation and tensor identity.
+        ctx.weight_transpose = weight_transpose
         return torch.mv(weight, vector)
 
     @staticmethod
     def backward(ctx, grad_output: torch.Tensor):
-        (weight_transpose,) = ctx.saved_tensors
-        grad_vector = torch.mv(weight_transpose, grad_output)
+        grad_vector = torch.mv(ctx.weight_transpose, grad_output)
         return None, None, grad_vector
 
 
