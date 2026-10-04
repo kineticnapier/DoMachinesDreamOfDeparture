@@ -2,7 +2,9 @@ from __future__ import annotations
 
 """Bootstrap-aware live terminal dashboard for the v1.0 trainer."""
 
-from typing import Any
+import sys
+from collections.abc import Callable
+from typing import Any, TypeVar
 
 from .modern_cli_live import (
     LiveModernTrainerConsole,
@@ -12,6 +14,7 @@ from .modern_cli_live import (
 
 
 PARENT_ETA_VERSION = "cumulative-fractional-v1"
+_T = TypeVar("_T")
 
 
 def _stable_parent_rate(progress: float, elapsed_s: float) -> float | None:
@@ -101,7 +104,7 @@ class BootstrapLiveModernTrainerConsole(LiveModernTrainerConsole):
 
     def _handle(self, event, raw: str) -> bool:
         handled = super()._handle(event, raw)
-        # A resumed Rounds bar is first advanced to historical progress.  That
+        # A resumed Rounds bar is first advanced to historical progress. That
         # history happened before this process started, so do not divide it by
         # the current process's tiny elapsed time when estimating ETA.
         if event.kind == "resume":
@@ -164,3 +167,41 @@ class BootstrapLiveModernTrainerConsole(LiveModernTrainerConsole):
             return
 
         super()._on_progress(event)
+
+
+def _pop_ui_option(argv: list[str]) -> str:
+    """Consume the common --ui option before trainer-specific argparse sees it."""
+
+    mode = "auto"
+    for index, token in enumerate(list(argv)):
+        if token == "--ui":
+            if index + 1 >= len(argv):
+                raise SystemExit("--ui requires one of: auto, modern, plain")
+            mode = argv[index + 1]
+            del argv[index : index + 2]
+            break
+        if token.startswith("--ui="):
+            mode = token.split("=", 1)[1]
+            del argv[index]
+            break
+    if mode not in {"auto", "modern", "plain"}:
+        raise SystemExit("--ui must be one of: auto, modern, plain")
+    return mode
+
+
+def run_with_modern_console(main: Callable[[], _T]) -> _T:
+    """Run any compatible trainer through the shared modern/plain UI switch.
+
+    ``--ui auto`` (default) enables the modern console only on a supported TTY.
+    ``--ui modern`` requests the same frontend explicitly, while ``--ui plain``
+    bypasses it. The option is removed from ``sys.argv`` before trainer-specific
+    argument parsing, so thin wrapper trainers do not need their own UI parser.
+    """
+
+    argv = list(sys.argv)
+    mode = _pop_ui_option(argv)
+    sys.argv = argv
+    if mode == "plain":
+        return main()
+    with BootstrapLiveModernTrainerConsole.from_argv(argv[1:]):
+        return main()
