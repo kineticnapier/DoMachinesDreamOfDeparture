@@ -82,6 +82,40 @@ def test_fly_connectome_core_and_projection_are_fixed(tmp_path) -> None:
     assert model.actor_mean.weight.grad is not None
 
 
+def test_fixed_sparse_recurrent_backward_matches_dense_reference(tmp_path) -> None:
+    path, _ = _core(tmp_path)
+    torch.manual_seed(17)
+    model = NKeyFlyConnectomeActorCritic(
+        input_dim=6,
+        key_count=4,
+        core_path=path,
+        sensory_dim=3,
+        recurrent_gain=0.8,
+        projection_seed=11,
+    )
+
+    injected = torch.randn(model.hidden_dim, requires_grad=True)
+    state = torch.randn(model.hidden_dim, requires_grad=True)
+    probe = torch.randn(model.hidden_dim)
+    actual = model._advance_injected(injected, state)
+    (actual * probe).sum().backward()
+    actual_injected_grad = injected.grad.detach().clone()
+    actual_state_grad = state.grad.detach().clone()
+
+    injected_ref = injected.detach().clone().requires_grad_(True)
+    state_ref = state.detach().clone().requires_grad_(True)
+    dense_weight = model.recurrent_weight.to_dense()
+    expected = torch.tanh(injected_ref + torch.mv(dense_weight, state_ref))
+    (expected * probe).sum().backward()
+
+    assert torch.allclose(actual, expected, atol=1e-7, rtol=1e-6)
+    assert torch.allclose(actual_injected_grad, injected_ref.grad, atol=1e-7, rtol=1e-6)
+    assert torch.allclose(actual_state_grad, state_ref.grad, atol=1e-7, rtol=1e-6)
+    state_dict = model.state_dict()
+    assert "_recurrent_weight_runtime" not in state_dict
+    assert "_recurrent_weight_transpose_runtime" not in state_dict
+
+
 def test_fly_connectome_step_and_sequence_are_consistent(tmp_path) -> None:
     path, _ = _core(tmp_path)
     torch.manual_seed(5)
