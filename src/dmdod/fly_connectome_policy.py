@@ -181,11 +181,10 @@ class NKeyFlyConnectomeActorCritic(NKeyPolicyBase):
         encoded = torch.tanh(self.sensory(observations))
         injected_sequence = torch.matmul(encoded, self.input_projection.transpose(0, 1))
         state = initial_state
-        states: list[torch.Tensor] = []
-        for injected in injected_sequence:
+        recurrent = observations.new_empty((observations.shape[0], self.hidden_dim))
+        for index, injected in enumerate(injected_sequence):
             state = self._advance_injected(injected, state)
-            states.append(state)
-        recurrent = torch.stack(states)
+            recurrent[index] = state
         means = self.actor_mean(recurrent)
         values = self.critic(recurrent).squeeze(-1)
         return means, values, state
