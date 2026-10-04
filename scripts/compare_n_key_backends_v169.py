@@ -8,9 +8,17 @@ from pathlib import Path
 
 import torch
 
-import train_real_chart_v080 as v080
-import train_real_chart_v160_n_key_bootstrap as v160
-from dmdod.fly_connectome_policy import NKeyFlyConnectomeActorCritic
+try:
+    import train_real_chart_v080 as v080
+    import train_real_chart_v160_n_key_bootstrap as v160
+except ModuleNotFoundError:
+    from scripts import train_real_chart_v080 as v080
+    from scripts import train_real_chart_v160_n_key_bootstrap as v160
+
+from dmdod.fly_connectome_policy import (
+    N_KEY_POLICY_BACKEND_FLY_CONNECTOME,
+    NKeyFlyConnectomeActorCritic,
+)
 from dmdod.multichart_dataset import discover_multichart_dataset
 from dmdod.n_key_policy import (
     N_KEY_POLICY_BACKEND_GRU,
@@ -55,12 +63,19 @@ def _device_from_arg(value: str) -> torch.device:
     return device
 
 
+def _checkpoint_backend(checkpoint: dict) -> str:
+    backend = str(checkpoint.get("n_key_policy_backend", N_KEY_POLICY_BACKEND_GRU))
+    if backend == N_KEY_POLICY_BACKEND_FLY_CONNECTOME:
+        return backend
+    return n_key_policy_backend_from_checkpoint(checkpoint)
+
+
 def _load_policy(path: Path, device: torch.device) -> tuple[NKeyPolicyBase, dict]:
     checkpoint = torch.load(path, map_location="cpu", weights_only=False)
     if not isinstance(checkpoint, dict):
         raise SystemExit(f"{path}: checkpoint must be a dict")
 
-    backend = n_key_policy_backend_from_checkpoint(checkpoint)
+    backend = _checkpoint_backend(checkpoint)
     input_dim = int(checkpoint["input_dim"])
     key_count = int(checkpoint["key_count"])
     expected_input = n_key_hud_real_chart_input_dim(key_count)
@@ -69,7 +84,7 @@ def _load_policy(path: Path, device: torch.device) -> tuple[NKeyPolicyBase, dict
             f"{path}: input_dim={input_dim} does not match {key_count}K expected {expected_input}"
         )
 
-    if backend == "fly_connectome":
+    if backend == N_KEY_POLICY_BACKEND_FLY_CONNECTOME:
         core_path = checkpoint.get("fly_connectome_core_path")
         if not core_path:
             raise SystemExit(f"{path}: fly checkpoint is missing fly_connectome_core_path")
@@ -186,7 +201,7 @@ def main() -> None:
 
     summaries: list[Summary] = []
     for path, model, checkpoint in loaded:
-        backend = n_key_policy_backend_from_checkpoint(checkpoint)
+        backend = _checkpoint_backend(checkpoint)
         print(f"\n=== {backend} | {path} ===")
         results = v160._evaluate_role(
             model,
