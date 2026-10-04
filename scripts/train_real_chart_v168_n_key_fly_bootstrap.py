@@ -19,6 +19,7 @@ from dmdod.fly_connectome_policy import (
     NKeyFlyConnectomeActorCritic,
 )
 from dmdod.malecns_connectome import load_malecns_core
+from dmdod.modern_cli_bootstrap import run_with_modern_console
 
 
 TRAINER_VERSION = "1.6.8-n-key-fly-connectome-bootstrap"
@@ -135,4 +136,4 @@ def main() -> None:
 
 
 if __name__ == "__main__":
-    main()
+    run_with_modern_console(main)
