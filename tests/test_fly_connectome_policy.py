@@ -116,6 +116,28 @@ def test_fixed_sparse_recurrent_backward_matches_dense_reference(tmp_path) -> No
     assert "_recurrent_weight_transpose_runtime" not in state_dict
 
 
+def test_fly_connectome_deterministic_action_matches_forward_step(tmp_path) -> None:
+    path, _ = _core(tmp_path)
+    torch.manual_seed(23)
+    model = NKeyFlyConnectomeActorCritic(
+        input_dim=6,
+        key_count=4,
+        core_path=path,
+        sensory_dim=3,
+        projection_seed=11,
+    )
+    observation = torch.randn(6)
+    state = torch.randn(model.hidden_dim)
+
+    with torch.no_grad():
+        mean, _, _, expected_state = model.forward_step(observation, state)
+        expected_action = tuple(float(value) for value in torch.tanh(mean).cpu().tolist())
+    actual_action, actual_state = model.deterministic_action(observation, state)
+
+    assert actual_action.as_tuple() == expected_action
+    assert torch.equal(actual_state, expected_state)
+
+
 def test_fly_connectome_step_and_sequence_are_consistent(tmp_path) -> None:
     path, _ = _core(tmp_path)
     torch.manual_seed(5)
