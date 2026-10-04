@@ -20,6 +20,14 @@ def _core(tmp_path):
     return path, artifact
 
 
+def _assert_sparse_equal(first: torch.Tensor, second: torch.Tensor) -> None:
+    first = first.coalesce()
+    second = second.coalesce()
+    assert first.shape == second.shape
+    assert torch.equal(first.indices(), second.indices())
+    assert torch.equal(first.values(), second.values())
+
+
 def test_fly_connectome_policy_matches_backend_contract(tmp_path) -> None:
     path, _ = _core(tmp_path)
     model = NKeyFlyConnectomeActorCritic(
@@ -68,7 +76,7 @@ def test_fly_connectome_core_and_projection_are_fixed(tmp_path) -> None:
     loss.backward()
     optimizer.step()
 
-    assert torch.equal(model.recurrent_weight, recurrent_before)
+    _assert_sparse_equal(model.recurrent_weight, recurrent_before)
     assert torch.equal(model.input_projection, projection_before)
     assert model.sensory.weight.grad is not None
     assert model.actor_mean.weight.grad is not None
@@ -141,4 +149,4 @@ def test_fly_connectome_projection_seed_is_reproducible(tmp_path) -> None:
 
     assert torch.equal(first.input_projection, second.input_projection)
     assert not torch.equal(first.input_projection, third.input_projection)
-    assert torch.equal(first.recurrent_weight, second.recurrent_weight)
+    _assert_sparse_equal(first.recurrent_weight, second.recurrent_weight)
