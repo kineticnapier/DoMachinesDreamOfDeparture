@@ -5,15 +5,21 @@ from __future__ import annotations
 import argparse
 from dataclasses import dataclass
 from pathlib import Path
+import sys
 
 import torch
 
-try:
-    import train_real_chart_v080 as v080
-    import train_real_chart_v160_n_key_bootstrap as v160
-except ModuleNotFoundError:
-    from scripts import train_real_chart_v080 as v080
-    from scripts import train_real_chart_v160_n_key_bootstrap as v160
+# Historical training scripts import their siblings as top-level modules
+# (for example train_real_chart_v080 -> train_real_chart_v054).  When this
+# module is imported as scripts.compare_n_key_backends_v169 under pytest,
+# scripts/ is not automatically on sys.path, so add it explicitly before
+# loading the legacy trainer modules.
+_SCRIPTS_DIR = Path(__file__).resolve().parent
+if str(_SCRIPTS_DIR) not in sys.path:
+    sys.path.insert(0, str(_SCRIPTS_DIR))
+
+import train_real_chart_v080 as v080
+import train_real_chart_v160_n_key_bootstrap as v160
 
 from dmdod.fly_connectome_policy import (
     N_KEY_POLICY_BACKEND_FLY_CONNECTOME,
