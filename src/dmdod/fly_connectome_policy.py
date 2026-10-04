@@ -228,7 +228,11 @@ class NKeyFlyConnectomeActorCritic(NKeyPolicyBase):
         next_state = self._advance(encoded, state)
         mean = self.actor_mean(next_state)
         squashed = torch.tanh(mean)
-        return NKeyAction(tuple(float(value.item()) for value in squashed)), next_state
+        # Move the tiny action vector to the host once. Calling ``item()`` for
+        # every key separately forces one CUDA synchronization per key during
+        # closed-loop evaluation; ``tolist()`` performs a single device transfer.
+        values = squashed.cpu().tolist()
+        return NKeyAction(tuple(float(value) for value in values)), next_state
 
     def forward_sequence(
         self,
