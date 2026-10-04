@@ -68,9 +68,25 @@ class NKeyRandomConnectomeActorCritic(NKeyFlyConnectomeActorCritic):
         generator.manual_seed(self.topology_seed)
         random_source = torch.empty_like(edge_index[1])
 
+        # MaleCNS core artifacts are emitted in target-major order.  Exploit that
+        # layout to avoid rescanning every edge once per target neuron.  Keep the
+        # old lookup as a compatibility fallback for externally produced cores.
+        target_is_sorted = bool(target.numel() < 2 or torch.all(target[1:] >= target[:-1]).item())
+        if target_is_sorted:
+            fan_in = torch.bincount(target, minlength=self.hidden_dim)
+            target_offsets = torch.empty(self.hidden_dim + 1, dtype=torch.int64)
+            target_offsets[0] = 0
+            torch.cumsum(fan_in, dim=0, out=target_offsets[1:])
+
         for post in range(self.hidden_dim):
-            positions = torch.nonzero(target == post, as_tuple=False).flatten()
-            count = int(positions.numel())
+            if target_is_sorted:
+                start = int(target_offsets[post].item())
+                end = int(target_offsets[post + 1].item())
+                count = end - start
+                positions = slice(start, end)
+            else:
+                positions = torch.nonzero(target == post, as_tuple=False).flatten()
+                count = int(positions.numel())
             if count == 0:
                 continue
             if count > self.hidden_dim - 1:
