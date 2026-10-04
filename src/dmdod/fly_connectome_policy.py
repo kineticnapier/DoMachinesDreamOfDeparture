@@ -7,6 +7,7 @@ import torch
 from torch import nn
 
 from .malecns_connectome import MALECNS_DATASET, load_malecns_core
+from .n_key_motor import NKeyAction
 from .n_key_policy import NKeyPolicyBase
 
 
@@ -210,6 +211,24 @@ class NKeyFlyConnectomeActorCritic(NKeyPolicyBase):
         value = self.critic(next_state).squeeze(-1)
         std = self.log_std.exp().clamp(0.08, 1.5)
         return mean, std, value, next_state
+
+    @torch.no_grad()
+    def deterministic_action(
+        self,
+        x: torch.Tensor,
+        state: torch.Tensor,
+    ) -> tuple[NKeyAction, torch.Tensor]:
+        """Evaluate the deterministic actor without unused critic/std heads."""
+        if x.ndim != 1 or x.shape[0] != self.input_dim:
+            raise ValueError(
+                f"observation must have shape [{self.input_dim}], got {tuple(x.shape)}"
+            )
+        self._validate_state(state)
+        encoded = torch.tanh(self.sensory(x))
+        next_state = self._advance(encoded, state)
+        mean = self.actor_mean(next_state)
+        squashed = torch.tanh(mean)
+        return NKeyAction(tuple(float(value.item()) for value in squashed)), next_state
 
     def forward_sequence(
         self,
