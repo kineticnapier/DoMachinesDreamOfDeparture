@@ -17,6 +17,37 @@ DEFAULT_FLY_CONNECTOME_SENSORY_DIM = 128
 DEFAULT_FLY_CONNECTOME_PROJECTION_SEED = 1701
 
 
+class _FixedSparseMv(torch.autograd.Function):
+    """Sparse matvec with a fixed weight and an explicit fixed transpose backward.
+
+    PyTorch's generic CSR ``mv`` backward computes gradients for a sparse matrix
+    input even when that matrix is a non-trainable buffer. On CUDA that path can
+    repeatedly convert CSR/COO layouts and sort indices. The MaleCNS recurrent
+    graph is fixed, so only the dense state gradient is required:
+
+        y = W @ x        =>        dL/dx = W^T @ dL/dy
+
+    Both CSR matrices are prepared once by the policy and are intentionally
+    excluded from checkpoint state.
+    """
+
+    @staticmethod
+    def forward(
+        ctx,
+        weight: torch.Tensor,
+        weight_transpose: torch.Tensor,
+        vector: torch.Tensor,
+    ) -> torch.Tensor:
+        ctx.save_for_backward(weight_transpose)
+        return torch.mv(weight, vector)
+
+    @staticmethod
+    def backward(ctx, grad_output: torch.Tensor):
+        (weight_transpose,) = ctx.saved_tensors
+        grad_vector = torch.mv(weight_transpose, grad_output)
+        return None, None, grad_vector
+
+
 class NKeyFlyConnectomeActorCritic(NKeyPolicyBase):
     """N-key actor-critic around a fixed MaleCNS recurrent topology.
 
@@ -103,11 +134,16 @@ class NKeyFlyConnectomeActorCritic(NKeyPolicyBase):
             check_invariants=True,
         ).coalesce()
         self.register_buffer("recurrent_weight", recurrent)
-        # CSR is a runtime-only acceleration structure. Keep the canonical COO
-        # tensor persistent so existing checkpoints remain byte/schema compatible.
+        # Runtime-only CSR acceleration structures. Keep only canonical COO in
+        # checkpoints so the existing checkpoint schema remains unchanged.
         self.register_buffer(
             "_recurrent_weight_runtime",
             recurrent.to_sparse_csr(),
+            persistent=False,
+        )
+        self.register_buffer(
+            "_recurrent_weight_transpose_runtime",
+            recurrent.transpose(0, 1).coalesce().to_sparse_csr(),
             persistent=False,
         )
         self.register_buffer(
@@ -116,8 +152,16 @@ class NKeyFlyConnectomeActorCritic(NKeyPolicyBase):
         )
 
     def _refresh_recurrent_runtime_weight(self) -> None:
-        """Rebuild the runtime CSR view after replacing the canonical COO graph."""
+        """Rebuild fixed CSR forward/backward views from the canonical COO graph."""
         self._recurrent_weight_runtime = self.recurrent_weight.to_sparse_csr()
+        self._recurrent_weight_transpose_runtime = (
+            self.recurrent_weight.transpose(0, 1).coalesce().to_sparse_csr()
+        )
+
+    def prepare_recurrent_runtime(self) -> None:
+        # Rebuild after ``to(device)`` / checkpoint loading so both runtime
+        # matrices exactly match the canonical recurrent graph on that device.
+        self._refresh_recurrent_runtime_weight()
 
     def initial_state(self, device: torch.device) -> torch.Tensor:
         return torch.zeros(self.hidden_dim, dtype=torch.float32, device=device)
@@ -133,10 +177,17 @@ class NKeyFlyConnectomeActorCritic(NKeyPolicyBase):
         injected: torch.Tensor,
         state: torch.Tensor,
     ) -> torch.Tensor:
-        # Keep the recurrent state as a vector. torch.mv supports CSR @ dense
-        # vector directly, avoiding the per-step [H] -> [H, 1] -> [H] views
-        # required by torch.sparse.mm while preserving the same matvec semantics.
-        recurrent = torch.mv(self._recurrent_weight_runtime, state)
+        # Evaluation does not need a backward graph, so keep the direct CSR mv
+        # fast path. During training, use the fixed-weight custom backward to
+        # avoid PyTorch's generic sparse-weight gradient machinery.
+        if torch.is_grad_enabled():
+            recurrent = _FixedSparseMv.apply(
+                self._recurrent_weight_runtime,
+                self._recurrent_weight_transpose_runtime,
+                state,
+            )
+        else:
+            recurrent = torch.mv(self._recurrent_weight_runtime, state)
         return torch.tanh(injected + recurrent)
 
     def _advance(self, encoded: torch.Tensor, state: torch.Tensor) -> torch.Tensor:
