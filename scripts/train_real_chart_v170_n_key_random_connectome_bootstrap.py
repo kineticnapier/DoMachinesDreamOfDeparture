@@ -12,6 +12,7 @@ from dmdod.fly_connectome_policy import (
     DEFAULT_FLY_CONNECTOME_SENSORY_DIM,
 )
 from dmdod.malecns_connectome import load_malecns_core
+from dmdod.modern_cli_bootstrap import run_with_modern_console
 from dmdod.random_connectome_policy import (
     DEFAULT_RANDOM_CONNECTOME_TOPOLOGY_SEED,
     N_KEY_POLICY_BACKEND_RANDOM_CONNECTOME,
@@ -138,4 +139,4 @@ def main() -> None:
 
 
 if __name__ == "__main__":
-    main()
+    run_with_modern_console(main)
