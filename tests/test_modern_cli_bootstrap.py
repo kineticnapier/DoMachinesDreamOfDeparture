@@ -160,6 +160,29 @@ def test_bootstrap_eval_fraction_flows_into_outer_bootstrap_bar() -> None:
     assert console._bootstrap.n == pytest.approx(8.0)
 
 
+def test_n_key_bootstrap_bar_starts_before_first_epoch() -> None:
+    console = _console()
+
+    assert not console._handle_n_key_bootstrap_line(
+        "anchors=20 validation=1 epochs=1 | FINAL untouched"
+    )
+    assert console._n_key_bootstrap_total == 1
+    assert console._bootstrap is None
+
+    assert not console._handle_n_key_bootstrap_line(
+        "parameters trainable=70673 fixed=0 total=70673"
+    )
+    bar = console._bootstrap
+    assert bar is not None
+    assert bar.total == 1
+    assert bar.n == 0
+
+    assert console._handle_n_key_bootstrap_line("bootstrap 001/1 loss=0.712229")
+    assert bar.n == 1
+    assert bar.closed
+    assert console._bootstrap is None
+
+
 def test_parent_eta_waits_for_one_logical_unit() -> None:
     assert _stable_parent_rate(0.0, 10.0) is None
     assert _stable_parent_rate(0.999, 100.0) is None
