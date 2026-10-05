@@ -313,10 +313,13 @@ def collect_n_key_dagger_sequence(
         for _ in range(max_steps):
             encoded = encode_n_key_hud_real_chart_observation(observation)
             x = torch.tensor(encoded, dtype=torch.float32, device=device)
-            mean, _, _, state = model.forward_step(x, state)
-            soft_values = tuple(float(value.item()) for value in torch.tanh(mean))
+            # Use the policy's deterministic inference path instead of the
+            # training forward. Connectome policies can omit critic/std work
+            # here and transfer all action values to CPU in one synchronization.
+            deterministic, state = model.deterministic_action(x, state)
+            soft_values = deterministic.as_tuple()
             if action_mode == "continuous":
-                student_action = NKeyAction(soft_values)
+                student_action = deterministic
             else:
                 student_action = discretize_n_key_action(
                     soft_values,
