@@ -263,7 +263,9 @@ class DaggerLiveModernTrainerConsole(BootstrapLiveModernTrainerConsole):
             return False
 
         micro_step = re.match(
-            r"microstep\s+(\d+)/(\d+):\s+loss=([0-9.eE+-]+)\s+grad-norm=([0-9.eE+-]+)",
+            r"microstep\s+(\d+)/(\d+):\s+loss=([0-9.eE+-]+)\s+"
+            r"grad-norm=([0-9.eE+-]+)"
+            r"(?:\s+update-norm=([0-9.eE+-]+)\s+grad-scale=([0-9.eE+-]+))?",
             text,
         )
         if micro_step:
@@ -273,9 +275,20 @@ class DaggerLiveModernTrainerConsole(BootstrapLiveModernTrainerConsole):
                 self._dagger_epochs_total = int(micro_step.group(2))
             self._ensure_dagger_epoch_bar()
             if self._dagger_epoch_bar is not None:
-                self._dagger_epoch_bar.set_postfix_str(
-                    f"step={self._dagger_current_epoch} loss={float(micro_step.group(3)):.6f}"
+                postfix = (
+                    f"step={self._dagger_current_epoch} "
+                    f"loss={float(micro_step.group(3)):.6f}"
                 )
+                if micro_step.group(5) is not None:
+                    postfix += (
+                        f" d={float(micro_step.group(5)):.2e} "
+                        f"scale={float(micro_step.group(6)):.3g}"
+                    )
+                self._dagger_epoch_bar.set_postfix_str(postfix)
+            if micro_step.group(5) is not None:
+                # v1.8.1 update-bound telemetry is important after the live bar
+                # is overwritten by ACCEPT/REJECT status, so preserve the line.
+                self._write(text)
             return True
 
         micro_eval = re.match(
