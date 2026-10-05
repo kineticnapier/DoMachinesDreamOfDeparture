@@ -654,8 +654,8 @@ def main() -> None:
             model.load_state_dict(continuation_state)
             model.prepare_recurrent_runtime()
             print(
-                f"microstep-loop: STOP at action-trust no-op step={step}; "
-                "no actor update fit inside the action RMS bound"
+                f"microstep-loop: STOP at rejected step={step}; "
+                "action-trust no-op: no actor update fit inside the action RMS bound"
             )
             break
 
