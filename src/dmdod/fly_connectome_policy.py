@@ -135,8 +135,8 @@ class NKeyFlyConnectomeActorCritic(NKeyPolicyBase):
         encoded.tanh_()
         next_state = self._advance(encoded, state)
         mean = self.actor_mean(next_state)
-        squashed = torch.tanh(mean)
-        values = squashed.cpu().tolist()
+        mean.tanh_()
+        values = mean.cpu().tolist()
         return NKeyAction(tuple(float(value) for value in values)), next_state
 
     def forward_sequence(self, observations: torch.Tensor, initial_state: torch.Tensor):
