@@ -25,6 +25,7 @@ TRAINER_VERSION = "1.7.1-n-key-connectome-failure-continuation-dagger"
 CHECKPOINT_FORMAT_VERSION = 27
 
 _ORIGINAL_BUILD_POLICY_FROM_CHECKPOINT = v166.base._build_policy_from_checkpoint
+_ORIGINAL_TRAIN_BC_EPOCH = v166.base.v160._train_bc_epoch
 
 
 def _required(checkpoint: dict, name: str):
@@ -67,10 +68,35 @@ def _build_policy_from_checkpoint(
     return model
 
 
+def _train_bc_epoch_without_unused_connectome_critic(model, sequences, **kwargs):
+    """Run the unchanged BC objective without evaluating its discarded critic head.
+
+    v1.6 bootstrap/DAgger training consumes only ``means`` and recurrent state from
+    ``forward_sequence``.  Connectome ``forward_sequence`` nevertheless evaluates
+    the 4096->1 critic for every frame.  Replace only that unused head call with a
+    zero-cost view for the duration of the epoch; optimizer membership, parameters,
+    actor/recurrent computation, loss, and random-number consumption are unchanged.
+    """
+
+    if not isinstance(
+        model,
+        (NKeyFlyConnectomeActorCritic, NKeyRandomConnectomeActorCritic),
+    ):
+        return _ORIGINAL_TRAIN_BC_EPOCH(model, sequences, **kwargs)
+
+    original_forward = model.critic.forward
+    model.critic.forward = lambda features: features[:, :1]
+    try:
+        return _ORIGINAL_TRAIN_BC_EPOCH(model, sequences, **kwargs)
+    finally:
+        model.critic.forward = original_forward
+
+
 def main() -> None:
     v166.TRAINER_VERSION = TRAINER_VERSION
     v166.CHECKPOINT_FORMAT_VERSION = CHECKPOINT_FORMAT_VERSION
     v166.base._build_policy_from_checkpoint = _build_policy_from_checkpoint
+    v166.base.v160._train_bc_epoch = _train_bc_epoch_without_unused_connectome_critic
     print("=== DMDOD v1.7.1 N-Key Connectome Failure-Continuation Trust DAgger ===")
     print(
         "FlyConnectome/RandomConnectome checkpoints are reconstructed from checkpoint "
