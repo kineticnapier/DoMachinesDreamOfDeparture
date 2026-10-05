@@ -133,3 +133,53 @@ def test_dagger_validation_uses_live_stage() -> None:
     assert stage.closed
     assert console._stage is None
     assert writes[-1].startswith("validation aggregate:")
+
+
+def test_microstep_dagger_progress_and_reject_stop() -> None:
+    console, writes = _console()
+
+    assert not console._handle_n_key_dagger_line(
+        "anchors=20 validation=20 micro-steps=4 action=continuous lr=3e-06 chunk=192 | FINAL untouched"
+    )
+    assert console._dagger_mode == "microstep"
+
+    assert not console._handle_n_key_dagger_line(
+        "aggregate-data generation=0 expert=58956 student-state=60235 total=119191 frames"
+    )
+    parent = console._dagger_epoch_bar
+    assert parent is not None
+    assert parent.total == 4
+    assert parent.desc == "Microstep"
+
+    assert console._handle_n_key_dagger_line(
+        "microstep 001/4: loss=0.608031 grad-norm=1.234500"
+    )
+    assert "step=1" in parent.postfix
+    assert "loss=0.608031" in parent.postfix
+
+    assert console._handle_n_key_dagger_line(
+        "microstep-001 05/20 01645 - First town: H=10/100 X=50.00%"
+    )
+    guard = console._stage
+    assert guard is not None
+    assert guard.desc == "Guard m1"
+    assert guard.n == 5
+
+    assert console._handle_n_key_dagger_line(
+        "microstep guard=SAFE+BEST: H=1700/5845 X=49.50% early=240 over=True keydowns=1940"
+    )
+    assert guard.closed
+    assert writes[-1].startswith("microstep guard=SAFE+BEST")
+
+    assert console._handle_n_key_dagger_line(
+        "microstep-continuation: ACCEPT step=1 H=1700/5845 X=49.50%"
+    )
+    assert parent.n == 1
+    assert parent.postfix == "ACCEPT step=1"
+
+    assert console._handle_n_key_dagger_line(
+        "microstep-loop: STOP at rejected step=2; rolled back to last safe state"
+    )
+    assert parent.closed
+    assert console._dagger_epoch_bar is None
+    assert writes[-1].startswith("microstep-loop: STOP")
