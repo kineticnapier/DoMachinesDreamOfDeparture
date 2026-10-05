@@ -27,6 +27,7 @@ import train_real_chart_v190_n_key_connectome_actor_action_trust_dagger as v190
 from dmdod.fly_connectome_policy import (
     N_KEY_POLICY_BACKEND_FLY_CONNECTOME,
 )
+from dmdod.multichart_dataset import discover_multichart_dataset
 from dmdod.n_key_motor import n_key_names
 from dmdod.n_key_real_chart import n_key_hud_real_chart_input_dim
 from dmdod.n_key_training import NKeyBCSequence, collect_n_key_expert_sequence
@@ -270,10 +271,7 @@ def main() -> None:
     physics_dt_s = float(parent.get("physics_dt", 0.001))
     chunk_steps = int(args.chunk_steps or parent.get("chunk_steps", 192))
 
-    dataset = v080.discover_multichart_dataset(args.dataset) if hasattr(v080, "discover_multichart_dataset") else None
-    if dataset is None:
-        from dmdod.multichart_dataset import discover_multichart_dataset
-        dataset = discover_multichart_dataset(args.dataset)
+    dataset = discover_multichart_dataset(args.dataset)
 
     train_charts = v080._compile_role(dataset.train)
     validation_charts = v080._compile_role(dataset.validation)
