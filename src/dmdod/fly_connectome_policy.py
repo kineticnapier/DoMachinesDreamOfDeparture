@@ -76,17 +76,54 @@ class NKeyFlyConnectomeActorCritic(NKeyPolicyBase):
         self.register_buffer("recurrent_weight", recurrent)
         self.register_buffer("_recurrent_weight_runtime", recurrent.to_sparse_csr(), persistent=False)
         self.register_buffer("_recurrent_weight_transpose_runtime", recurrent.transpose(0, 1).coalesce().to_sparse_csr(), persistent=False)
+        # CUDA sparse CSR mv is nondeterministic for this closed-loop evaluator.
+        # Keep an optional dense CUDA runtime only for no-grad execution; CPU
+        # no-grad and all grad-enabled training continue to use the sparse path.
+        self.register_buffer("_recurrent_no_grad_cuda_runtime", torch.empty(0, dtype=torch.float32), persistent=False)
         self.register_buffer("_projection_no_grad_buffer", torch.empty(self.hidden_dim, dtype=torch.float32), persistent=False)
         self.register_buffer("_recurrent_no_grad_buffer", torch.empty(self.hidden_dim, dtype=torch.float32), persistent=False)
         self.register_buffer("body_ids", torch.as_tensor(artifact["body_ids"], dtype=torch.int64, device="cpu"))
 
+    def _refresh_no_grad_cuda_runtime_weight(self) -> None:
+        if self.recurrent_weight.device.type != "cuda":
+            self._recurrent_no_grad_cuda_runtime = torch.empty(
+                0,
+                dtype=self.recurrent_weight.dtype,
+                device=self.recurrent_weight.device,
+            )
+            return
+
+        # Densify on CPU deliberately.  The diagnostic that isolated the issue
+        # showed repeated CUDA sparse CSR mv is nondeterministic, while this
+        # CPU-densify -> CUDA-dense path is stable across repeated evaluations.
+        dense_cpu = self.recurrent_weight.detach().cpu().to_dense()
+        self._recurrent_no_grad_cuda_runtime = dense_cpu.to(
+            device=self.recurrent_weight.device,
+            dtype=self.recurrent_weight.dtype,
+        )
+
     def _refresh_recurrent_runtime_weight(self) -> None:
         self._recurrent_weight_runtime = self.recurrent_weight.to_sparse_csr()
         self._recurrent_weight_transpose_runtime = self.recurrent_weight.transpose(0, 1).coalesce().to_sparse_csr()
+        self._refresh_no_grad_cuda_runtime_weight()
 
     def prepare_recurrent_runtime(self) -> None:
         self._refresh_recurrent_runtime_weight()
         self._input_projection_transpose_runtime = self.input_projection.transpose(0, 1)
+
+    def _no_grad_recurrent_weight(self, state: torch.Tensor) -> torch.Tensor:
+        if state.device.type != "cuda":
+            return self._recurrent_weight_runtime
+
+        expected_shape = (self.hidden_dim, self.hidden_dim)
+        dense = self._recurrent_no_grad_cuda_runtime
+        if dense.device != state.device or tuple(dense.shape) != expected_shape:
+            # Support direct model.to("cuda") callers that do not explicitly
+            # call prepare_recurrent_runtime() after moving the model.
+            dense_cpu = self.recurrent_weight.detach().cpu().to_dense()
+            dense = dense_cpu.to(device=state.device, dtype=self.recurrent_weight.dtype)
+            self._recurrent_no_grad_cuda_runtime = dense
+        return dense
 
     def initial_state(self, device: torch.device) -> torch.Tensor:
         return torch.zeros(self.hidden_dim, dtype=torch.float32, device=device)
@@ -100,7 +137,8 @@ class NKeyFlyConnectomeActorCritic(NKeyPolicyBase):
             recurrent = _FixedSparseMv.apply(self._recurrent_weight_runtime, self._recurrent_weight_transpose_runtime, state)
             recurrent.add_(injected)
             return recurrent.tanh_()
-        torch.mv(self._recurrent_weight_runtime, state, out=self._recurrent_no_grad_buffer)
+        recurrent_weight = self._no_grad_recurrent_weight(state)
+        torch.mv(recurrent_weight, state, out=self._recurrent_no_grad_buffer)
         # `injected` is a private projection result (or a one-shot row of the
         # precomputed sequence) in every no-grad caller. Reuse that storage to
         # avoid hidden_dim-sized allocations for both the recurrent result and
