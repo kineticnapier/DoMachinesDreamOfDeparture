@@ -205,3 +205,22 @@ def test_sgd_microstep_update_telemetry_is_preserved() -> None:
     assert writes[-1] == line
     assert "d=1.00e-05" in parent.postfix
     assert "scale=0.000741" in parent.postfix
+
+
+def test_action_trust_selected_checkpoint_closes_microstep_parent() -> None:
+    console, _ = _console()
+    console._handle_n_key_dagger_line(
+        "anchors=20 validation=20 micro-steps=2 actor-steps=8 lr=0.0003 "
+        "stay=20 max-action-rms=0.01 chunk=192 | FINAL untouched"
+    )
+    console._handle_n_key_dagger_line(
+        "aggregate-data generation=0 expert=58956 student-state=60235 total=119191 frames"
+    )
+    parent = console._dagger_epoch_bar
+    assert parent is not None
+
+    assert not console._handle_n_key_dagger_line(
+        "=== selected Train-safe action-trust checkpoint ==="
+    )
+    assert parent.closed
+    assert console._dagger_epoch_bar is None
