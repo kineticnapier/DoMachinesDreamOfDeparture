@@ -137,7 +137,7 @@ class NKeyFlyConnectomeActorCritic(NKeyPolicyBase):
         mean = self.actor_mean(next_state)
         mean.tanh_()
         values = mean.cpu().tolist()
-        return NKeyAction(tuple(float(value) for value in values)), next_state
+        return NKeyAction(tuple(values)), next_state
 
     def forward_sequence(self, observations: torch.Tensor, initial_state: torch.Tensor):
         if observations.ndim != 2 or observations.shape[1] != self.input_dim:
