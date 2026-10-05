@@ -95,6 +95,12 @@ def test_feature_extractor_is_deterministic_and_actor_independent() -> None:
     assert first.shape == (11, model.hidden_dim)
     assert torch.equal(first, second)
 
+    v190._freeze_actor_only(model)
+    model.actor_mean.zero_grad(set_to_none=True)
+    torch.tanh(model.actor_mean(first)).sum().backward()
+    assert model.actor_mean.weight.grad is not None
+    assert model.actor_mean.bias.grad is not None
+
 
 def test_action_trust_backoff_keeps_rms_inside_bound() -> None:
     torch.manual_seed(11)
