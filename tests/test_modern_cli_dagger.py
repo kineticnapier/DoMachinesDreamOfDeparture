@@ -183,3 +183,25 @@ def test_microstep_dagger_progress_and_reject_stop() -> None:
     assert parent.closed
     assert console._dagger_epoch_bar is None
     assert writes[-1].startswith("microstep-loop: STOP")
+
+
+def test_sgd_microstep_update_telemetry_is_preserved() -> None:
+    console, writes = _console()
+    console._handle_n_key_dagger_line(
+        "anchors=20 validation=20 micro-steps=2 action=continuous lr=3e-06 "
+        "max-update-norm=1e-05 chunk=192 | FINAL untouched"
+    )
+    console._handle_n_key_dagger_line(
+        "aggregate-data generation=0 expert=58956 student-state=60235 total=119191 frames"
+    )
+    parent = console._dagger_epoch_bar
+    assert parent is not None
+
+    line = (
+        "microstep 001/2: loss=0.612345 grad-norm=4.5 "
+        "update-norm=1e-05 grad-scale=0.000740741"
+    )
+    assert console._handle_n_key_dagger_line(line)
+    assert writes[-1] == line
+    assert "d=1.00e-05" in parent.postfix
+    assert "scale=0.000741" in parent.postfix
