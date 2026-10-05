@@ -121,7 +121,7 @@ class NKeyFlyConnectomeActorCritic(NKeyPolicyBase):
         std = self.log_std.exp().clamp(0.08, 1.5)
         return mean, std, value, next_state
 
-    @torch.no_grad()
+    @torch.inference_mode()
     def deterministic_action(self, x: torch.Tensor, state: torch.Tensor) -> tuple[NKeyAction, torch.Tensor]:
         if x.ndim != 1 or x.shape[0] != self.input_dim:
             raise ValueError(f"observation must have shape [{self.input_dim}], got {tuple(x.shape)}")
