@@ -48,20 +48,27 @@ def _format_signature(signature: tuple) -> str:
 
 
 def _configure_recurrent_backend(model, *, backend: str, device: torch.device) -> None:
-    if backend == "sparse":
+    if backend == "production":
         return
+
     recurrent_weight = getattr(model, "recurrent_weight", None)
     runtime_weight = getattr(model, "_recurrent_weight_runtime", None)
     if recurrent_weight is None or runtime_weight is None:
-        raise SystemExit("--recurrent-backend dense requires a connectome model with recurrent_weight")
+        raise SystemExit(
+            "--recurrent-backend sparse/dense requires a connectome model with recurrent_weight"
+        )
+
+    if backend == "sparse":
+        # Force the pre-fix no-grad path so the old CUDA sparse CSR behavior can
+        # still be reproduced after production switched CUDA evaluation to dense.
+        model._no_grad_recurrent_weight = lambda state: model._recurrent_weight_runtime
+        return
 
     # Deliberately densify on CPU so the diagnostic removes CUDA sparse kernels
-    # from both the conversion and recurrent matvec paths. The resulting dense
-    # tensor is then copied to the requested evaluation device.
+    # from both conversion and recurrent matvec. Keep the production grad path
+    # untouched; only no-grad evaluation is overridden here.
     dense = recurrent_weight.detach().cpu().to_dense().to(device=device)
-    model._recurrent_weight_runtime = dense
-    if hasattr(model, "_recurrent_weight_transpose_runtime"):
-        model._recurrent_weight_transpose_runtime = dense.transpose(0, 1).contiguous()
+    model._no_grad_recurrent_weight = lambda state, dense=dense: dense
 
 
 def _build_model(
@@ -98,11 +105,11 @@ def main() -> None:
     )
     parser.add_argument(
         "--recurrent-backend",
-        choices=("sparse", "dense"),
-        default="sparse",
+        choices=("production", "sparse", "dense"),
+        default="production",
         help=(
-            "sparse uses the normal connectome runtime; dense replaces only the recurrent "
-            "runtime matrix after model construction to isolate CUDA sparse matvec"
+            "production uses the current model runtime; sparse forces the legacy sparse "
+            "no-grad recurrent path; dense forces the deterministic dense no-grad path"
         ),
     )
     parser.add_argument(
