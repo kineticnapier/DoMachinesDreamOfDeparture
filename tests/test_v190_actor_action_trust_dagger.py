@@ -75,7 +75,7 @@ def test_freeze_actor_only_selects_exact_readout_parameters() -> None:
         name for name, parameter in model.named_parameters() if parameter.requires_grad
     )
     assert trainable_names == ("actor_mean.weight", "actor_mean.bias")
-    assert selected == tuple(model.actor_mean.parameters())
+    assert len(selected) == 2\n    assert all(a is b for a, b in zip(selected, model.actor_mean.parameters()))
     assert not model.sensory.weight.requires_grad
     assert not model.critic.weight.requires_grad
     assert not model.log_std.requires_grad
