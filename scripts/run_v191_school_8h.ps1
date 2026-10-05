@@ -21,8 +21,8 @@ public static class DmdodPowerState
 "@
 }
 
-$ES_CONTINUOUS = [uint32]0x80000000
-$ES_SYSTEM_REQUIRED = [uint32]0x00000001
+$ES_CONTINUOUS = [uint32]2147483648
+$ES_SYSTEM_REQUIRED = [uint32]1
 
 $logDir = Join-Path $RepoRoot "logs"
 New-Item -ItemType Directory -Force -Path $logDir | Out-Null
