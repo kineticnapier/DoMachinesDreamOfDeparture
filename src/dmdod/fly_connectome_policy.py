@@ -76,6 +76,7 @@ class NKeyFlyConnectomeActorCritic(NKeyPolicyBase):
         self.register_buffer("recurrent_weight", recurrent)
         self.register_buffer("_recurrent_weight_runtime", recurrent.to_sparse_csr(), persistent=False)
         self.register_buffer("_recurrent_weight_transpose_runtime", recurrent.transpose(0, 1).coalesce().to_sparse_csr(), persistent=False)
+        self.register_buffer("_recurrent_no_grad_buffer", torch.empty(self.hidden_dim, dtype=torch.float32), persistent=False)
         self.register_buffer("body_ids", torch.as_tensor(artifact["body_ids"], dtype=torch.int64, device="cpu"))
 
     def _refresh_recurrent_runtime_weight(self) -> None:
@@ -97,11 +98,12 @@ class NKeyFlyConnectomeActorCritic(NKeyPolicyBase):
         if torch.is_grad_enabled():
             recurrent = _FixedSparseMv.apply(self._recurrent_weight_runtime, self._recurrent_weight_transpose_runtime, state)
             return torch.tanh(injected + recurrent)
-        recurrent = torch.mv(self._recurrent_weight_runtime, state)
+        torch.mv(self._recurrent_weight_runtime, state, out=self._recurrent_no_grad_buffer)
         # `injected` is a private projection result (or a one-shot row of the
         # precomputed sequence) in every no-grad caller. Reuse that storage to
-        # avoid two hidden_dim-sized allocations per evaluation step.
-        injected.add_(recurrent)
+        # avoid hidden_dim-sized allocations for both the recurrent result and
+        # the add/tanh result on every evaluation step.
+        injected.add_(self._recurrent_no_grad_buffer)
         return injected.tanh_()
 
     def _advance(self, encoded: torch.Tensor, state: torch.Tensor) -> torch.Tensor:
