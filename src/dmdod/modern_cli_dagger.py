@@ -340,7 +340,9 @@ class DaggerLiveModernTrainerConsole(BootstrapLiveModernTrainerConsole):
             self._close_dagger_epoch_bar()
             return True
 
-        if text.startswith("=== selected Train-safe micro-step checkpoint ==="):
+        if text.startswith("=== selected Train-safe micro-step checkpoint ===") or text.startswith(
+            "=== selected Train-safe action-trust checkpoint ==="
+        ):
             self._close_dagger_stage()
             self._close_dagger_epoch_bar()
             return False
