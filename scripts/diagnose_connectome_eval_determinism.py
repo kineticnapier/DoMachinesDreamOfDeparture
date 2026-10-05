@@ -3,7 +3,7 @@ from __future__ import annotations
 """Diagnose closed-loop evaluation determinism for N-key connectome checkpoints.
 
 This intentionally performs evaluation only: no expert/student collection, BC,
-optimizer construction, trust interpolation, or checkpoint writes.  Repeated
+optimizer construction, trust interpolation, or checkpoint writes. Repeated
 runs are compared anchor-by-anchor using the exact metrics that can influence
 trust-region selection or its diagnostics.
 """
@@ -47,8 +47,32 @@ def _format_signature(signature: tuple) -> str:
     )
 
 
-def _build_model(checkpoint: dict, *, device: torch.device):
-    return v171._build_policy_from_checkpoint(checkpoint, device=device)
+def _configure_recurrent_backend(model, *, backend: str, device: torch.device) -> None:
+    if backend == "sparse":
+        return
+    recurrent_weight = getattr(model, "recurrent_weight", None)
+    runtime_weight = getattr(model, "_recurrent_weight_runtime", None)
+    if recurrent_weight is None or runtime_weight is None:
+        raise SystemExit("--recurrent-backend dense requires a connectome model with recurrent_weight")
+
+    # Deliberately densify on CPU so the diagnostic removes CUDA sparse kernels
+    # from both the conversion and recurrent matvec paths. The resulting dense
+    # tensor is then copied to the requested evaluation device.
+    dense = recurrent_weight.detach().cpu().to_dense().to(device=device)
+    model._recurrent_weight_runtime = dense
+    if hasattr(model, "_recurrent_weight_transpose_runtime"):
+        model._recurrent_weight_transpose_runtime = dense.transpose(0, 1).contiguous()
+
+
+def _build_model(
+    checkpoint: dict,
+    *,
+    device: torch.device,
+    recurrent_backend: str,
+):
+    model = v171._build_policy_from_checkpoint(checkpoint, device=device)
+    _configure_recurrent_backend(model, backend=recurrent_backend, device=device)
+    return model
 
 
 def main() -> None:
@@ -70,6 +94,15 @@ def main() -> None:
         help=(
             "rebuild reconstructs/reloads the model before every run and best matches "
             "separate trainer invocations; reuse isolates repeated evaluation on one model"
+        ),
+    )
+    parser.add_argument(
+        "--recurrent-backend",
+        choices=("sparse", "dense"),
+        default="sparse",
+        help=(
+            "sparse uses the normal connectome runtime; dense replaces only the recurrent "
+            "runtime matrix after model construction to isolate CUDA sparse matvec"
         ),
     )
     parser.add_argument(
@@ -108,13 +141,18 @@ def main() -> None:
     print(
         f"checkpoint={checkpoint_path} backend={checkpoint.get('n_key_policy_backend', 'unknown')} "
         f"device={device} anchors={len(anchors)} runs={args.runs} "
-        f"model-lifecycle={args.model_lifecycle} deterministic={args.deterministic}"
+        f"model-lifecycle={args.model_lifecycle} recurrent-backend={args.recurrent_backend} "
+        f"deterministic={args.deterministic}"
     )
     print("No training, collection, optimizer step, trust interpolation, or checkpoint write is performed.")
 
     model = None
     if args.model_lifecycle == "reuse":
-        model = _build_model(checkpoint, device=device)
+        model = _build_model(
+            checkpoint,
+            device=device,
+            recurrent_backend=args.recurrent_backend,
+        )
 
     baseline: list[tuple] | None = None
     baseline_fingerprint: str | None = None
@@ -123,7 +161,11 @@ def main() -> None:
 
     for run_index in range(1, args.runs + 1):
         if args.model_lifecycle == "rebuild":
-            model = _build_model(checkpoint, device=device)
+            model = _build_model(
+                checkpoint,
+                device=device,
+                recurrent_backend=args.recurrent_backend,
+            )
         assert model is not None
 
         results = []
