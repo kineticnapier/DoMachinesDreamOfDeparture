@@ -145,7 +145,8 @@ class NKeyFlyConnectomeActorCritic(NKeyPolicyBase):
         self._validate_state(initial_state)
         if observations.shape[0] == 0:
             return observations.new_empty((0, self.action_dim)), observations.new_empty((0,)), initial_state
-        encoded = torch.tanh(self.sensory(observations))
+        encoded = self.sensory(observations)
+        encoded.tanh_()
         injected_sequence = torch.matmul(encoded, self._input_projection_transpose_runtime)
         state = initial_state
         states: list[torch.Tensor] = []
