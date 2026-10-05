@@ -76,6 +76,7 @@ class NKeyFlyConnectomeActorCritic(NKeyPolicyBase):
         self.register_buffer("recurrent_weight", recurrent)
         self.register_buffer("_recurrent_weight_runtime", recurrent.to_sparse_csr(), persistent=False)
         self.register_buffer("_recurrent_weight_transpose_runtime", recurrent.transpose(0, 1).coalesce().to_sparse_csr(), persistent=False)
+        self.register_buffer("_projection_no_grad_buffer", torch.empty(self.hidden_dim, dtype=torch.float32), persistent=False)
         self.register_buffer("_recurrent_no_grad_buffer", torch.empty(self.hidden_dim, dtype=torch.float32), persistent=False)
         self.register_buffer("body_ids", torch.as_tensor(artifact["body_ids"], dtype=torch.int64, device="cpu"))
 
@@ -107,7 +108,11 @@ class NKeyFlyConnectomeActorCritic(NKeyPolicyBase):
         return injected.tanh_()
 
     def _advance(self, encoded: torch.Tensor, state: torch.Tensor) -> torch.Tensor:
-        injected = torch.mv(self.input_projection, encoded)
+        if torch.is_grad_enabled():
+            injected = torch.mv(self.input_projection, encoded)
+        else:
+            torch.mv(self.input_projection, encoded, out=self._projection_no_grad_buffer)
+            injected = self._projection_no_grad_buffer
         return self._advance_injected(injected, state)
 
     def forward_step(self, x: torch.Tensor, state: torch.Tensor):
