@@ -98,7 +98,8 @@ class NKeyFlyConnectomeActorCritic(NKeyPolicyBase):
     def _advance_injected(self, injected: torch.Tensor, state: torch.Tensor) -> torch.Tensor:
         if torch.is_grad_enabled():
             recurrent = _FixedSparseMv.apply(self._recurrent_weight_runtime, self._recurrent_weight_transpose_runtime, state)
-            return torch.tanh(injected + recurrent)
+            recurrent.add_(injected)
+            return recurrent.tanh_()
         torch.mv(self._recurrent_weight_runtime, state, out=self._recurrent_no_grad_buffer)
         # `injected` is a private projection result (or a one-shot row of the
         # precomputed sequence) in every no-grad caller. Reuse that storage to
