@@ -117,7 +117,7 @@ def _freeze_actor_only(model) -> tuple[torch.nn.Parameter, ...]:
     return tuple(selected)
 
 
-@torch.inference_mode()
+@torch.no_grad()
 def _extract_connectome_features(
     model: NKeyFlyConnectomeActorCritic,
     observations: torch.Tensor,
@@ -151,7 +151,7 @@ def _extract_connectome_features(
     return features
 
 
-@torch.inference_mode()
+@torch.no_grad()
 def _build_action_trust_sequences(
     model: NKeyFlyConnectomeActorCritic,
     sequences: list[NKeyBCSequence],
@@ -171,7 +171,7 @@ def _build_action_trust_sequences(
     return cached
 
 
-@torch.inference_mode()
+@torch.no_grad()
 def _action_drift(
     model,
     sequences: list[ActorTrustSequence],
