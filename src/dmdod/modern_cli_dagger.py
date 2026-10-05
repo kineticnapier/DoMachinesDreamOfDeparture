@@ -1,11 +1,12 @@
 from __future__ import annotations
 
-"""tqdm frontend for the v1.6+ N-key trust-DAgger text logs.
+"""tqdm frontend for the v1.6+ N-key DAgger text logs.
 
-The trust-DAgger trainers intentionally keep plain ``print`` logs as their
-source of truth.  This module only translates those existing lines into the
-shared modern tqdm dashboard, so training/evaluation semantics and checkpoint
-contents remain untouched.
+The trainers intentionally keep plain ``print`` logs as their source of truth.
+This module only translates those existing lines into the shared modern tqdm
+dashboard, so training/evaluation semantics and checkpoint contents remain
+untouched.  It supports both the v1.6/v1.7 trust-line-search flow and the v1.8
+direct micro-step flow.
 """
 
 import re
@@ -20,7 +21,7 @@ _T = TypeVar("_T")
 
 
 class DaggerLiveModernTrainerConsole(BootstrapLiveModernTrainerConsole):
-    """Render v1.6+ trust-DAgger progress with stage and epoch ETAs."""
+    """Render v1.6+ DAgger progress with stage and update ETAs."""
 
     def __init__(self, **kwargs: Any) -> None:
         super().__init__(**kwargs)
@@ -30,6 +31,7 @@ class DaggerLiveModernTrainerConsole(BootstrapLiveModernTrainerConsole):
         self._dagger_epoch_bar = None
         self._dagger_stage_key: str | None = None
         self._dagger_current_epoch = 0
+        self._dagger_mode = "trust"
 
     def _close_dagger_stage(self) -> None:
         self._close_live("_stage")
@@ -48,7 +50,7 @@ class DaggerLiveModernTrainerConsole(BootstrapLiveModernTrainerConsole):
             return
         self._dagger_epoch_bar = self._bar(
             total=total,
-            desc="DAgger",
+            desc="Microstep" if self._dagger_mode == "microstep" else "DAgger",
             colour="blue",
             position=0,
         )
@@ -95,8 +97,19 @@ class DaggerLiveModernTrainerConsole(BootstrapLiveModernTrainerConsole):
             text,
         )
         if config:
+            self._dagger_mode = "trust"
             self._dagger_anchor_total = int(config.group(1))
             self._dagger_epochs_total = int(config.group(3))
+            return False
+
+        micro_config = re.match(
+            r"anchors=(\d+)\s+validation=(\d+)\s+micro-steps=(\d+)\s+",
+            text,
+        )
+        if micro_config:
+            self._dagger_mode = "microstep"
+            self._dagger_anchor_total = int(micro_config.group(1))
+            self._dagger_epochs_total = int(micro_config.group(3))
             return False
 
         alpha_config = re.match(r"trust-alphas=(.+)", text)
@@ -109,7 +122,9 @@ class DaggerLiveModernTrainerConsole(BootstrapLiveModernTrainerConsole):
                 self._dagger_alphas = []
             return False
 
-        if text.startswith("=== pre-DAgger continuous Train"):
+        if text.startswith("=== pre-DAgger continuous Train") or text.startswith(
+            "=== pre-microstep continuous Train"
+        ):
             total = self._dagger_anchor_total
             if total is not None:
                 self._ensure_stage(
@@ -138,24 +153,26 @@ class DaggerLiveModernTrainerConsole(BootstrapLiveModernTrainerConsole):
             return True
 
         collect = re.match(
-            r"collect-r(\d+)\s+(\d+)/(\d+)\s+(.+?):\s+frames=", text
+            r"collect-([rm])(\d+)\s+(\d+)/(\d+)\s+(.+?):\s+frames=", text
         )
         if collect:
-            round_index = int(collect.group(1))
-            current, total = int(collect.group(2)), int(collect.group(3))
+            kind = collect.group(1)
+            collection_index = int(collect.group(2))
+            current, total = int(collect.group(3)), int(collect.group(4))
+            prefix = "m" if kind == "m" else "r"
             self._ensure_stage(
-                key=f"collect:{round_index}",
+                key=f"collect:{prefix}:{collection_index}",
                 total=total,
-                desc=f"Collect r{round_index}",
+                desc=f"Collect {prefix}{collection_index}",
                 colour="magenta",
             )
             self._advance_to(self._stage, current)
-            self._stage.set_postfix_str(collect.group(4)[-34:])
+            self._stage.set_postfix_str(collect.group(5)[-34:])
             if current >= total:
                 self._close_dagger_stage()
             return True
 
-        if re.match(r"(pre-train|collect-r\d+) aggregate:", text):
+        if re.match(r"(pre-train|collect-[rm]\d+) aggregate:", text):
             self._close_dagger_stage()
             self._write(text)
             return True
@@ -245,6 +262,76 @@ class DaggerLiveModernTrainerConsole(BootstrapLiveModernTrainerConsole):
             self._close_dagger_epoch_bar()
             return False
 
+        micro_step = re.match(
+            r"microstep\s+(\d+)/(\d+):\s+loss=([0-9.eE+-]+)\s+grad-norm=([0-9.eE+-]+)",
+            text,
+        )
+        if micro_step:
+            self._dagger_mode = "microstep"
+            self._dagger_current_epoch = int(micro_step.group(1))
+            if self._dagger_epochs_total is None:
+                self._dagger_epochs_total = int(micro_step.group(2))
+            self._ensure_dagger_epoch_bar()
+            if self._dagger_epoch_bar is not None:
+                self._dagger_epoch_bar.set_postfix_str(
+                    f"step={self._dagger_current_epoch} loss={float(micro_step.group(3)):.6f}"
+                )
+            return True
+
+        micro_eval = re.match(
+            r"microstep-(\d+)\s+(\d+)/(\d+)\s+(.+?):\s+H=", text
+        )
+        if micro_eval:
+            step = int(micro_eval.group(1))
+            current, total = int(micro_eval.group(2)), int(micro_eval.group(3))
+            self._dagger_current_epoch = step
+            self._ensure_stage(
+                key=f"microstep-guard:{step}",
+                total=total,
+                desc=f"Guard m{step}",
+                colour="yellow",
+            )
+            self._advance_to(self._stage, current)
+            self._stage.set_postfix_str(micro_eval.group(4)[-34:])
+            return True
+
+        if text.startswith("microstep guard="):
+            self._close_dagger_stage()
+            self._write(text)
+            return True
+
+        micro_continuation = re.match(
+            r"microstep-continuation:\s+ACCEPT\s+step=(\d+)\s+(.+)", text
+        )
+        if micro_continuation:
+            step = int(micro_continuation.group(1))
+            self._dagger_current_epoch = step
+            self._close_dagger_stage()
+            self._ensure_dagger_epoch_bar()
+            if self._dagger_epoch_bar is not None:
+                self._advance_to(self._dagger_epoch_bar, step)
+                self._dagger_epoch_bar.set_postfix_str(f"ACCEPT step={step}")
+            self._write(text)
+            return True
+
+        micro_stop = re.match(
+            r"microstep-loop:\s+STOP at rejected step=(\d+);\s+(.+)", text
+        )
+        if micro_stop:
+            step = int(micro_stop.group(1))
+            self._dagger_current_epoch = step
+            self._close_dagger_stage()
+            if self._dagger_epoch_bar is not None:
+                self._dagger_epoch_bar.set_postfix_str(f"REJECT step={step}")
+            self._write(text)
+            self._close_dagger_epoch_bar()
+            return True
+
+        if text.startswith("=== selected Train-safe micro-step checkpoint ==="):
+            self._close_dagger_stage()
+            self._close_dagger_epoch_bar()
+            return False
+
         validation = re.match(
             r"validation\s+(\d+)/(\d+)\s+(.+?):\s+H=", text
         )
@@ -290,7 +377,7 @@ class DaggerLiveModernTrainerConsole(BootstrapLiveModernTrainerConsole):
 
 
 def run_with_dagger_modern_console(main: Callable[[], _T]) -> _T:
-    """Run a trust-DAgger trainer with ``--ui auto|modern|plain`` support."""
+    """Run a DAgger trainer with ``--ui auto|modern|plain`` support."""
 
     argv = list(sys.argv)
     mode = _pop_ui_option(argv)
