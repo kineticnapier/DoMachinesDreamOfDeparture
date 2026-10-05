@@ -62,6 +62,9 @@ class NKeyFlyConnectomeActorCritic(NKeyPolicyBase):
         generator.manual_seed(self.projection_seed)
         projection = torch.randn(self.hidden_dim, self.sensory_dim, generator=generator, dtype=torch.float32) / math.sqrt(float(self.sensory_dim))
         self.register_buffer("input_projection", projection)
+        # This is a metadata-only transpose view, not a second projection copy.
+        # It is deliberately non-persistent and refreshed after device moves.
+        self._input_projection_transpose_runtime = self.input_projection.transpose(0, 1)
         edge_index = torch.as_tensor(artifact["edge_index"], dtype=torch.int64, device="cpu")
         raw_weight = torch.as_tensor(artifact["edge_weight"], dtype=torch.float32, device="cpu")
         target = edge_index[0]
@@ -81,6 +84,7 @@ class NKeyFlyConnectomeActorCritic(NKeyPolicyBase):
 
     def prepare_recurrent_runtime(self) -> None:
         self._refresh_recurrent_runtime_weight()
+        self._input_projection_transpose_runtime = self.input_projection.transpose(0, 1)
 
     def initial_state(self, device: torch.device) -> torch.Tensor:
         return torch.zeros(self.hidden_dim, dtype=torch.float32, device=device)
@@ -134,7 +138,7 @@ class NKeyFlyConnectomeActorCritic(NKeyPolicyBase):
         if observations.shape[0] == 0:
             return observations.new_empty((0, self.action_dim)), observations.new_empty((0,)), initial_state
         encoded = torch.tanh(self.sensory(observations))
-        injected_sequence = torch.matmul(encoded, self.input_projection.transpose(0, 1))
+        injected_sequence = torch.matmul(encoded, self._input_projection_transpose_runtime)
         state = initial_state
         states: list[torch.Tensor] = []
         for injected in injected_sequence:
