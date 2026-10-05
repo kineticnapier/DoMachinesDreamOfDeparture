@@ -120,7 +120,8 @@ class NKeyFlyConnectomeActorCritic(NKeyPolicyBase):
         if x.ndim != 1 or x.shape[0] != self.input_dim:
             raise ValueError(f"observation must have shape [{self.input_dim}], got {tuple(x.shape)}")
         self._validate_state(state)
-        encoded = torch.tanh(self.sensory(x))
+        encoded = self.sensory(x)
+        encoded.tanh_()
         next_state = self._advance(encoded, state)
         mean = self.actor_mean(next_state)
         value = self.critic(next_state).squeeze(-1)
