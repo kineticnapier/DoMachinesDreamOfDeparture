@@ -6,14 +6,14 @@ from pathlib import Path
 import sys
 
 import train_real_chart_v160_n_key_bootstrap as v160
-from dmdod.fly_connectome_policy import (
+from dmdod.connectome.fly_policy import (
     DEFAULT_FLY_CONNECTOME_GAIN,
     DEFAULT_FLY_CONNECTOME_PROJECTION_SEED,
     DEFAULT_FLY_CONNECTOME_SENSORY_DIM,
 )
-from dmdod.malecns_connectome import load_malecns_core
-from dmdod.modern_cli_bootstrap import run_with_modern_console
-from dmdod.random_connectome_policy import (
+from dmdod.connectome.malecns import load_malecns_core
+from dmdod.cli.bootstrap import run_with_modern_console
+from dmdod.connectome.random_policy import (
     DEFAULT_RANDOM_CONNECTOME_TOPOLOGY_SEED,
     N_KEY_POLICY_BACKEND_RANDOM_CONNECTOME,
     NKeyRandomConnectomeActorCritic,
