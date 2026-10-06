@@ -89,10 +89,20 @@ class NKeyDiagnostics:
 
 
 @dataclass(frozen=True, slots=True)
+class NKeyPhysicsSample:
+    """Optional evaluator-side 1 kHz motor trace for diagnostics only."""
+
+    time_s: float
+    positions_m: tuple[float, ...]
+    events: tuple[tuple[str, KeyEvent], ...]
+
+
+@dataclass(frozen=True, slots=True)
 class NKeyTransition:
     observation: NKeyObservation
     evaluator_events: tuple[TimedKeyEvent, ...]
     diagnostics: NKeyDiagnostics
+    physics_samples: tuple[NKeyPhysicsSample, ...] = ()
 
 
 class NKeyBody:
@@ -383,6 +393,7 @@ class NKeyMotorEnv:
         self.physics_dt_s = float(physics_dt_s)
         self.physics_substeps = int(substeps)
         self.time_s = 0.0
+        self.capture_physics_trace = False
 
     def reset(self) -> NKeyObservation:
         self.body.reset()
@@ -416,9 +427,24 @@ class NKeyMotorEnv:
             raise ValueError(f"expected {self.key_count} action values, got {len(values)}")
         clamped = NKeyAction(tuple(max(-1.0, min(1.0, value)) for value in values))
         events: list[TimedKeyEvent] = []
+        physics_samples: list[NKeyPhysicsSample] = []
         for _ in range(self.physics_substeps):
             states = self.body.step(clamped, self.physics_dt_s)
             self.time_s += self.physics_dt_s
-            raw = self.keyboard.step(tuple(state.position_m for state in states))
+            positions = tuple(state.position_m for state in states)
+            raw = self.keyboard.step(positions)
             events.extend(TimedKeyEvent(self.time_s, key, event) for key, event in raw)
-        return NKeyTransition(self.observe(), tuple(events), self.diagnostics())
+            if self.capture_physics_trace:
+                physics_samples.append(
+                    NKeyPhysicsSample(
+                        time_s=float(self.time_s),
+                        positions_m=positions,
+                        events=tuple(raw),
+                    )
+                )
+        return NKeyTransition(
+            self.observe(),
+            tuple(events),
+            self.diagnostics(),
+            tuple(physics_samples),
+        )
