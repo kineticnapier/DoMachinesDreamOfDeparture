@@ -1,19 +1,19 @@
 """Do Machines Dream of Departure? simulator package."""
 
-from .adofai_chart import (
+from .adofai.chart import (
     AdoFaiAction,
     AdoFaiChart,
     load_adofai,
     parse_adofai_bytes,
     parse_adofai_text,
 )
-from .adofai_geometry import AdoFaiFloorGeometry, build_floor_geometry
-from .adofai_playable import (
+from .adofai.geometry import AdoFaiFloorGeometry, build_floor_geometry
+from .adofai.playable import (
     PlayableChartSegment,
     PlayableChartTarget,
     build_playable_segment,
 )
-from .adofai_rules import (
+from .adofai.rules import (
     ABSOLUTE_MIN_S,
     COUNTED_BASE_DEG,
     EARLY_LATE_PERFECT_BASE_DEG,
@@ -48,7 +48,7 @@ from .adofai_rules import (
     x_accuracy_percent,
     x_accuracy_weight,
 )
-from .adofai_timing import (
+from .adofai.timing import (
     AdoFaiFloorTiming,
     CompiledAdoFaiChart,
     CompiledChartFloor,
@@ -228,3 +228,35 @@ __all__ = [
     "SimulationConfig",
     "StepResult",
 ]
+
+
+# Temporary import compatibility while the flat package layout is retired.
+# Internal code should import the structured package paths directly. Keeping
+# these aliases here lets historical scripts/tests continue importing old
+# submodule names without leaving duplicate files in src/dmdod/.
+import importlib as _importlib
+import sys as _sys
+
+_COMPAT_SUBMODULES = {
+    "adofai_chart": ".adofai.chart",
+    "adofai_geometry": ".adofai.geometry",
+    "adofai_playable": ".adofai.playable",
+    "adofai_rules": ".adofai.rules",
+    "adofai_timing": ".adofai.timing",
+    "fly_connectome_policy": ".connectome.fly_policy",
+    "random_connectome_policy": ".connectome.random_policy",
+    "malecns_connectome": ".connectome.malecns",
+    "modern_cli": ".cli.modern",
+    "modern_cli_bootstrap": ".cli.bootstrap",
+    "modern_cli_dagger": ".cli.dagger",
+    "modern_cli_live": ".cli.live",
+    "extremeeditor_ipc": ".integrations.extremeeditor",
+}
+
+for _legacy_name, _target_name in _COMPAT_SUBMODULES.items():
+    _sys.modules.setdefault(
+        f"{__name__}.{_legacy_name}",
+        _importlib.import_module(_target_name, __name__),
+    )
+
+del _legacy_name, _target_name, _importlib, _sys
