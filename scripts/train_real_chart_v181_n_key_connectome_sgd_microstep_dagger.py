@@ -29,7 +29,7 @@ import train_real_chart_v080 as v080
 import train_real_chart_v161_n_key_dagger as v161
 import train_real_chart_v162_n_key_continuous_dagger as v162
 import train_real_chart_v171_n_key_connectome_failure_continuation_dagger as v171
-from dmdod.fly_connectome_policy import (
+from dmdod.connectome.fly_policy import (
     N_KEY_POLICY_BACKEND_FLY_CONNECTOME,
     NKeyFlyConnectomeActorCritic,
 )
@@ -44,7 +44,7 @@ from dmdod.n_key_training import (
     collect_n_key_expert_sequence,
     n_key_actuation_loss,
 )
-from dmdod.random_connectome_policy import (
+from dmdod.connectome.random_policy import (
     N_KEY_POLICY_BACKEND_RANDOM_CONNECTOME,
     NKeyRandomConnectomeActorCritic,
 )
