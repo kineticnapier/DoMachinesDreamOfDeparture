@@ -5,7 +5,7 @@ from dataclasses import asdict, dataclass
 import torch
 import torch.nn.functional as F
 
-from dmdod.fly_connectome_policy import NKeyFlyConnectomeActorCritic
+from dmdod.connectome.fly_policy import NKeyFlyConnectomeActorCritic
 from dmdod.n_key_training import NKeyBCSequence, n_key_actuation_loss
 
 
