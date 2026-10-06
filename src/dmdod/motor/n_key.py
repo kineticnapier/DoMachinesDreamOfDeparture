@@ -394,11 +394,13 @@ class NKeyMotorEnv:
         self.physics_substeps = int(substeps)
         self.time_s = 0.0
         self.capture_physics_trace = False
+        self.last_transition: NKeyTransition | None = None
 
     def reset(self) -> NKeyObservation:
         self.body.reset()
         self.keyboard.reset()
         self.time_s = 0.0
+        self.last_transition = None
         return self.observe()
 
     def observe(self) -> NKeyObservation:
@@ -442,9 +444,11 @@ class NKeyMotorEnv:
                         events=tuple(raw),
                     )
                 )
-        return NKeyTransition(
+        transition = NKeyTransition(
             self.observe(),
             tuple(events),
             self.diagnostics(),
             tuple(physics_samples),
         )
+        self.last_transition = transition
+        return transition
