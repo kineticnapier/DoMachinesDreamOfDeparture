@@ -7,7 +7,7 @@ import sys
 from collections.abc import Callable
 from typing import Any, TypeVar
 
-from .modern_cli_live import (
+from .live import (
     LiveModernTrainerConsole,
     _INTEGER_COUNT_BAR_FORMAT,
     _IntegerCountTqdm,
