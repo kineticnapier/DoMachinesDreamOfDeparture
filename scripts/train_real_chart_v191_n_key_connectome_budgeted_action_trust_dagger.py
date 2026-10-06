@@ -384,8 +384,9 @@ def main() -> None:
                 stopped_reason = "time-budget"
                 break
             if current_action_rms < args.min_action_rms:
-                stopped_reason = "action-rms-floor"
-                break
+                # Defensive clamp for old/externally resumed state. Normal
+                # shrink paths clamp before returning to the top of the loop.
+                current_action_rms = float(args.min_action_rms)
 
             if cached is None:
                 model.load_state_dict(continuation_state)
@@ -434,7 +435,17 @@ def main() -> None:
                         "guard_reasons": ("action-trust-no-op",),
                     }
                 )
-                current_action_rms *= float(args.reject_shrink)
+                if current_action_rms <= args.min_action_rms:
+                    stopped_reason = "action-rms-floor"
+                    print(
+                        f"budget stop: action-trust no-op at radius floor "
+                        f"{args.min_action_rms:.6g}"
+                    )
+                    break
+                current_action_rms = max(
+                    float(args.min_action_rms),
+                    current_action_rms * float(args.reject_shrink),
+                )
                 print(
                     f"budget retry: action-trust no-op; radius -> {current_action_rms:.6g}"
                 )
@@ -485,7 +496,17 @@ def main() -> None:
             if not safe:
                 model.load_state_dict(continuation_state)
                 model.prepare_recurrent_runtime()
-                current_action_rms *= float(args.reject_shrink)
+                if current_action_rms <= args.min_action_rms:
+                    stopped_reason = "action-rms-floor"
+                    print(
+                        f"budget stop: rejected at radius floor "
+                        f"{args.min_action_rms:.6g}"
+                    )
+                    break
+                current_action_rms = max(
+                    float(args.min_action_rms),
+                    current_action_rms * float(args.reject_shrink),
+                )
                 print(
                     f"budget retry: rollback accepted={accepted_steps}; "
                     f"radius -> {current_action_rms:.6g}"
