@@ -41,12 +41,18 @@ class BudgetConfig:
 
 
 @dataclass(frozen=True, slots=True)
+class TrajectoryProbeConfig:
+    candidate_action_rms: float = 2.5e-5
+
+
+@dataclass(frozen=True, slots=True)
 class TrainingConfig:
     mode: str
     run: RunConfig
     data: DataConfig
     action_trust: ActionTrustConfig
     budget: BudgetConfig
+    trajectory_probe: TrajectoryProbeConfig
 
     def as_dict(self) -> dict:
         return asdict(self)
@@ -124,17 +130,29 @@ def load_training_config(path: str | Path) -> TrainingConfig:
         safe_grow=float(budget_raw.get("safe_grow", 1.25)),
     )
 
-    _validate(action_trust, budget)
+    probe_raw = _section(raw, "trajectory_probe")
+    trajectory_probe = TrajectoryProbeConfig(
+        candidate_action_rms=float(
+            probe_raw.get("candidate_action_rms", 2.5e-5)
+        ),
+    )
+
+    _validate(action_trust, budget, trajectory_probe)
     return TrainingConfig(
         mode=mode,
         run=run,
         data=data,
         action_trust=action_trust,
         budget=budget,
+        trajectory_probe=trajectory_probe,
     )
 
 
-def _validate(action: ActionTrustConfig, budget: BudgetConfig) -> None:
+def _validate(
+    action: ActionTrustConfig,
+    budget: BudgetConfig,
+    trajectory_probe: TrajectoryProbeConfig,
+) -> None:
     if action.actor_steps <= 0:
         raise ValueError("action_trust.actor_steps must be positive")
     if action.lr <= 0.0 or action.min_lr <= 0.0:
@@ -162,3 +180,5 @@ def _validate(action: ActionTrustConfig, budget: BudgetConfig) -> None:
         raise ValueError("budget.reject_shrink must be in (0, 1)")
     if budget.safe_grow < 1.0:
         raise ValueError("budget.safe_grow must be >= 1")
+    if trajectory_probe.candidate_action_rms <= 0.0:
+        raise ValueError("trajectory_probe.candidate_action_rms must be positive")
