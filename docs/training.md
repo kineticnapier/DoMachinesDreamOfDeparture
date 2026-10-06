@@ -36,7 +36,12 @@ must not import them. This is enforced by
 - `budget.py`: adaptive trust-radius controller.
 - `runner.py`: configured orchestration and checkpoint metadata.
 
-The current stable mode is `budget_action_trust`.
+The current stable modes are:
+
+- `budget_action_trust` — actor-only DAgger with adaptive action-space trust.
+- `trajectory_probe` — generate one bounded actor candidate and compare it
+  against the source policy in paired closed-loop rollouts, reporting the first
+  physical/score/overload divergence per Train anchor.
 
 ## Running
 
@@ -50,6 +55,12 @@ Generic form:
 
 ```powershell
 .\scripts\run_training.ps1 -Config configs\training\school_8h.toml
+```
+
+Trajectory divergence probe:
+
+```powershell
+.\scripts\run_training.ps1 -Config configs\training\trajectory_probe.toml
 ```
 
 Direct Python form:
