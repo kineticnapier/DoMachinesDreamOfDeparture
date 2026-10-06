@@ -7,7 +7,7 @@ import torch
 
 from dmdod.adofai_playable import build_playable_segment
 from dmdod.adofai_timing import load_compiled_adofai
-from dmdod.fly_connectome_policy import (
+from dmdod.connectome.fly_policy import (
     N_KEY_POLICY_BACKEND_FLY_CONNECTOME,
     NKeyFlyConnectomeActorCritic,
 )
@@ -20,7 +20,7 @@ from dmdod.n_key_real_chart import (
     encode_n_key_hud_real_chart_observation,
 )
 from dmdod.n_key_training import NKeyBCSequence
-from dmdod.random_connectome_policy import (
+from dmdod.connectome.random_policy import (
     N_KEY_POLICY_BACKEND_RANDOM_CONNECTOME,
     NKeyRandomConnectomeActorCritic,
 )
