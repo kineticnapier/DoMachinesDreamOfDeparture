@@ -1,5 +1,10 @@
 """Do Machines Dream of Departure? simulator package."""
 
+from .legacy.import_aliases import install_legacy_import_aliases
+
+install_legacy_import_aliases()
+del install_legacy_import_aliases
+
 from .adofai.chart import (
     AdoFaiAction,
     AdoFaiChart,
@@ -229,94 +234,3 @@ __all__ = [
     "StepResult",
 ]
 
-
-# Temporary import compatibility while the flat package layout is retired.
-# Internal code should import the structured package paths directly. Keeping
-# these aliases here lets historical scripts/tests continue importing old
-# submodule names without leaving duplicate files in src/dmdod/.
-import importlib as _importlib
-import sys as _sys
-
-_COMPAT_SUBMODULES = {
-    # Core package split
-    "adofai_chart": ".adofai.chart",
-    "adofai_geometry": ".adofai.geometry",
-    "adofai_playable": ".adofai.playable",
-    "adofai_rules": ".adofai.rules",
-    "adofai_timing": ".adofai.timing",
-
-    "body": ".motor.body",
-    "fast_motor": ".motor.fast",
-    "keyboard": ".motor.keyboard",
-    "motor_env": ".motor.env",
-    "n_key_capacity": ".motor.capacity",
-    "n_key_motor": ".motor.n_key",
-
-    "recurrent_policy": ".policies.recurrent",
-    "predictive_recurrent_policy": ".policies.predictive_recurrent",
-    "toy_policy": ".policies.toy",
-    "visual_policy": ".policies.visual",
-    "n_key_policy": ".policies.n_key",
-
-    "finger_agnostic_teacher": ".teachers.finger_agnostic",
-    "privileged_teacher": ".teachers.privileged",
-
-    "multichart_dataset": ".data.multichart",
-    "tuf_dataset": ".data.tuf",
-    "tuf_balanced_dataset": ".data.tuf_balanced",
-    "tuf_dataset_parallel": ".data.tuf_parallel",
-    "tuf_dataset_preflight": ".data.preflight",
-
-    "evaluator": ".evaluation.evaluator",
-    "flat_hud_eval": ".evaluation.flat_hud",
-    "parallel_hud_eval": ".evaluation.parallel_hud",
-    "parallel_rollout": ".evaluation.rollout",
-    "benchmark": ".evaluation.benchmark",
-
-    "perception": ".features.perception",
-    "planet_perception": ".features.planet",
-    "real_chart_features": ".features.real_chart",
-    "real_chart_hud": ".features.hud",
-    "real_chart_hud_features": ".features.hud_features",
-    "visual_observation": ".features.visual",
-    "pattern_memory": ".features.pattern_memory",
-
-    "rhythm_env": ".envs.rhythm",
-    "geometry_rhythm_env": ".envs.geometry_rhythm",
-    "motion_geometry_env": ".envs.motion_geometry",
-    "pattern_geometry_env": ".envs.pattern_geometry",
-    "real_chart_env": ".envs.real_chart",
-    "n_key_real_chart": ".envs.n_key",
-    "simulator": ".envs.simulator",
-
-    "n_key_training": ".training.n_key",
-    "n_key_dagger_continuation": ".training.dagger_continuation",
-    "training_progress": ".training.progress",
-    "curriculum": ".training.curriculum",
-    "ablation": ".training.ablation",
-    "fitting": ".training.fitting",
-
-    "four_key_calibration": ".legacy.four_key.calibration",
-    "four_key_motor": ".legacy.four_key.motor",
-    "four_key_policy": ".legacy.four_key.policy",
-    "four_key_real_chart": ".legacy.four_key.real_chart",
-    "four_key_training": ".legacy.four_key.training",
-
-    # Already-migrated packages
-    "fly_connectome_policy": ".connectome.fly_policy",
-    "random_connectome_policy": ".connectome.random_policy",
-    "malecns_connectome": ".connectome.malecns",
-    "modern_cli": ".cli.modern",
-    "modern_cli_bootstrap": ".cli.bootstrap",
-    "modern_cli_dagger": ".cli.dagger",
-    "modern_cli_live": ".cli.live",
-    "extremeeditor_ipc": ".integrations.extremeeditor",
-}
-
-for _legacy_name, _target_name in _COMPAT_SUBMODULES.items():
-    _sys.modules.setdefault(
-        f"{__name__}.{_legacy_name}",
-        _importlib.import_module(_target_name, __name__),
-    )
-
-del _legacy_name, _target_name, _importlib, _sys
