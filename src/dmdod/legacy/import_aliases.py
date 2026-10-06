@@ -6,7 +6,6 @@ from importlib import import_module
 from importlib.abc import Loader, MetaPathFinder
 from importlib.util import spec_from_loader
 import sys
-from types import ModuleType
 
 
 LEGACY_SUBMODULE_ALIASES: dict[str, str] = {
@@ -85,26 +84,26 @@ LEGACY_SUBMODULE_ALIASES: dict[str, str] = {
 
 
 class _LegacyAliasLoader(Loader):
+    """Bind a retired flat import path to the exact structured module object.
+
+    Returning the target module itself is important. Test suites and historical
+    callers monkeypatch module globals such as _request_json; a copied proxy
+    module would leave function.__globals__ pointing at the structured target
+    and make those patches ineffective.
+    """
+
     def __init__(self, target_name: str) -> None:
         self.target_name = target_name
 
     def create_module(self, spec):
-        return None
-
-    def exec_module(self, module: ModuleType) -> None:
         target = import_module(self.target_name)
-        preserved = {
-            "__name__": module.__name__,
-            "__package__": module.__package__,
-            "__loader__": module.__loader__,
-            "__spec__": module.__spec__,
-        }
-        for name, value in target.__dict__.items():
-            if name in preserved:
-                continue
-            module.__dict__[name] = value
-        module.__dict__.update(preserved)
-        module.__dict__["__legacy_target__"] = self.target_name
+        target.__dict__["__legacy_target__"] = self.target_name
+        return target
+
+    def exec_module(self, module) -> None:
+        # create_module already returned the fully initialized target module.
+        # There is intentionally nothing to copy or execute here.
+        return None
 
 
 class _LegacyAliasFinder(MetaPathFinder):
