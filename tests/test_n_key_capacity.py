@@ -117,6 +117,42 @@ def test_center_first_n_key_teacher_reserves_from_inner_pair_outward() -> None:
     assert commands["right_4"] == 0.0
 
 
+def test_n_key_motor_physics_trace_is_opt_in_and_records_boundary_events() -> None:
+    env = NKeyMotorEnv(4, control_dt_s=0.010, physics_dt_s=0.001)
+    env.reset()
+
+    plain = env.step(NKeyAction((0.0, 1.0, 0.0, 0.0)))
+    assert plain.physics_samples == ()
+    assert env.last_transition is plain
+
+    env.reset()
+    env.capture_physics_trace = True
+    action = NKeyAction((0.0, 1.0, 0.0, 0.0))
+    transition = None
+    for _ in range(10):
+        transition = env.step(action)
+        if transition.evaluator_events:
+            break
+
+    assert transition is not None
+    assert transition.physics_samples
+    assert len(transition.physics_samples) == env.physics_substeps
+    assert env.last_transition is transition
+
+    traced_events = [
+        (sample.time_s, key, event, sample.positions_m)
+        for sample in transition.physics_samples
+        for key, event in sample.events
+    ]
+    assert traced_events
+    event_time, key, event, positions = traced_events[0]
+    assert event_time > 0.0
+    assert key == "left_1"
+    assert event.value == "down"
+    key_index = env.key_names.index(key)
+    assert positions[key_index] >= env.keyboard.config.actuation_m
+
+
 def test_n_key_calibration_matches_existing_4k_single_press_latency() -> None:
     calibration = calibrate_n_key_press_lead(4)
     assert calibration.lead_s == pytest.approx(0.044, abs=1e-12)
