@@ -5,7 +5,7 @@ from __future__ import annotations
 import argparse
 from pathlib import Path
 
-from dmdod.malecns_connectome import (
+from dmdod.connectome.malecns import (
     DEFAULT_MALECNS_CORE_NODES,
     DEFAULT_MALECNS_MIN_WEIGHT,
     MALECNS_DATASET,
