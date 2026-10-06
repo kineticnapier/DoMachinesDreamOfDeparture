@@ -6,7 +6,7 @@ from pathlib import Path
 
 import torch
 
-from dmdod.fly_connectome_policy import NKeyFlyConnectomeActorCritic
+from dmdod.connectome.fly_policy import NKeyFlyConnectomeActorCritic
 from dmdod.n_key_motor import NKeyAction
 
 
