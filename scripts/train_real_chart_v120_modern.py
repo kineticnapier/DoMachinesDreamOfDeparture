@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import sys
 
-from dmdod.modern_cli_bootstrap import BootstrapLiveModernTrainerConsole
+from dmdod.cli.bootstrap import BootstrapLiveModernTrainerConsole
 import train_real_chart_v090_chunk_gru as chunk_gru
 import train_real_chart_v090_progress as progress
 import train_real_chart_v090_round_accel as round_accel
