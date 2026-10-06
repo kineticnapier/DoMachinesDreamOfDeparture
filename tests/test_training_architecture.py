@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import ast
 from pathlib import Path
 
 
@@ -8,9 +9,18 @@ def test_stable_training_package_does_not_depend_on_versioned_scripts() -> None:
     offenders: list[str] = []
 
     for path in sorted(root.glob("*.py")):
-        source = path.read_text(encoding="utf-8")
-        if "train_real_chart_v" in source:
-            offenders.append(path.name)
+        tree = ast.parse(path.read_text(encoding="utf-8"), filename=str(path))
+        for node in ast.walk(tree):
+            imported: list[str] = []
+            if isinstance(node, ast.Import):
+                imported.extend(alias.name for alias in node.names)
+            elif isinstance(node, ast.ImportFrom):
+                if node.module:
+                    imported.append(node.module)
+                imported.extend(alias.name for alias in node.names)
+            if any("train_real_chart_v" in name for name in imported):
+                offenders.append(path.name)
+                break
 
     assert offenders == [], (
         "stable training modules must not import historical versioned scripts: "
@@ -48,15 +58,12 @@ def test_legacy_flat_module_imports_alias_structured_modules() -> None:
     from dmdod.motor import body
     from dmdod.training import n_key
 
+    assert legacy_chart is chart
+    assert legacy_body is body
+    assert legacy_connectome is fly_policy
+    assert legacy_training is n_key
+
     assert legacy_chart.__legacy_target__ == "dmdod.adofai.chart"
     assert legacy_body.__legacy_target__ == "dmdod.motor.body"
     assert legacy_connectome.__legacy_target__ == "dmdod.connectome.fly_policy"
     assert legacy_training.__legacy_target__ == "dmdod.training.n_key"
-
-    assert legacy_chart.AdoFaiChart is chart.AdoFaiChart
-    assert legacy_body.TwoFingerBody is body.TwoFingerBody
-    assert (
-        legacy_connectome.NKeyFlyConnectomeActorCritic
-        is fly_policy.NKeyFlyConnectomeActorCritic
-    )
-    assert legacy_training.n_key_actuation_loss is n_key.n_key_actuation_loss
