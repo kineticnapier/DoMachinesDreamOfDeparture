@@ -1,5 +1,6 @@
 param(
-    [double]$Hours = 8.0
+    [double]$Hours = 8.0,
+    [double]$MinActionRms = 0.000001
 )
 
 $ErrorActionPreference = "Stop"
@@ -32,6 +33,7 @@ $logPath = Join-Path $logDir ("v191-school-" + $stamp + ".log")
 Write-Host "=== DMDOD school run preflight ==="
 Write-Host "repo: $RepoRoot"
 Write-Host "budget: $Hours h"
+Write-Host "min action RMS: $MinActionRms"
 Write-Host "log: $logPath"
 
 try {
@@ -68,7 +70,7 @@ try {
         "--lr", "0.0003",
         "--stay-coef", "20",
         "--initial-action-rms", "0.01",
-        "--min-action-rms", "0.00001",
+        "--min-action-rms", ([string]$MinActionRms),
         "--reject-shrink", "0.5",
         "--safe-grow", "1.25",
         "--chunk-steps", "192",
