@@ -15,7 +15,7 @@ from pathlib import Path
 import torch
 from torch.profiler import ProfilerActivity, profile, record_function
 
-from dmdod.fly_connectome_policy import NKeyFlyConnectomeActorCritic
+from dmdod.connectome.fly_policy import NKeyFlyConnectomeActorCritic
 from dmdod.n_key_training import n_key_actuation_loss
 
 
