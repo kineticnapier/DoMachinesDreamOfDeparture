@@ -289,6 +289,19 @@ _COMPAT_SUBMODULES = {
     "n_key_real_chart": ".envs.n_key",
     "simulator": ".envs.simulator",
 
+    "n_key_training": ".training.n_key",
+    "n_key_dagger_continuation": ".training.dagger_continuation",
+    "training_progress": ".training.progress",
+    "curriculum": ".training.curriculum",
+    "ablation": ".training.ablation",
+    "fitting": ".training.fitting",
+
+    "four_key_calibration": ".legacy.four_key.calibration",
+    "four_key_motor": ".legacy.four_key.motor",
+    "four_key_policy": ".legacy.four_key.policy",
+    "four_key_real_chart": ".legacy.four_key.real_chart",
+    "four_key_training": ".legacy.four_key.training",
+
     # Already-migrated packages
     "fly_connectome_policy": ".connectome.fly_policy",
     "random_connectome_policy": ".connectome.random_policy",
