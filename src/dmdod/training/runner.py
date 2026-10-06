@@ -34,6 +34,13 @@ from .real_chart import (
     summarize,
     train_safety_guard,
 )
+from .trajectory_trust import (
+    build_probe_candidate,
+    collect_probe_training_sequences,
+    format_probe_result,
+    probe_anchor_pair,
+    save_probe_report,
+)
 
 
 TRAINER_VERSION = "2.0.0-configured-action-trust"
@@ -603,8 +610,91 @@ def run_budget_action_trust(config: TrainingConfig) -> None:
     )
 
 
+
+def run_trajectory_probe(config: TrainingConfig) -> None:
+    prepared = _prepare(config)
+    baseline_model = prepared.model
+    trust = config.action_trust
+    probe = config.trajectory_probe
+
+    print("=== DMDOD closed-loop trajectory divergence probe ===")
+    print(
+        f"source={prepared.source_checkpoint} output={prepared.output_checkpoint} "
+        f"anchors={len(prepared.anchors)} candidate-action-rms="
+        f"{probe.candidate_action_rms:g} device={prepared.device}"
+    )
+
+    training_sequences, expert_frames, student_frames = (
+        collect_probe_training_sequences(
+            baseline_model,
+            prepared.anchors,
+            round_index=prepared.round_index,
+            lead_s=prepared.lead_s,
+            control_dt_s=prepared.control_dt_s,
+            physics_dt_s=prepared.physics_dt_s,
+            device=prepared.device,
+        )
+    )
+    print(
+        f"probe-data expert={expert_frames} student-state={student_frames} "
+        f"total={expert_frames + student_frames} frames"
+    )
+
+    candidate_model, candidate_metrics = build_probe_candidate(
+        prepared.parent,
+        baseline_model,
+        training_sequences,
+        action_rms=probe.candidate_action_rms,
+        actor_steps=trust.actor_steps,
+        lr=trust.lr,
+        stay_coef=trust.stay_coef,
+        lr_backoffs=trust.lr_backoffs,
+        min_lr=trust.min_lr,
+        chunk_steps=prepared.chunk_steps,
+        device=prepared.device,
+    )
+    del training_sequences
+
+    print(
+        "candidate: "
+        f"inner={candidate_metrics.accepted_inner_steps}/{trust.actor_steps} "
+        f"open-loop-action-rms={candidate_metrics.action_rms:.6g} "
+        f"action-max={candidate_metrics.action_max:.6g} "
+        f"lr={candidate_metrics.final_lr:.3g}"
+    )
+    if candidate_metrics.accepted_inner_steps == 0:
+        raise SystemExit(
+            "trajectory probe candidate could not fit inside the configured "
+            "action RMS bound"
+        )
+
+    results = []
+    for index, named in enumerate(prepared.anchors, 1):
+        result = probe_anchor_pair(
+            baseline_model,
+            candidate_model,
+            named,
+            anchor_index=index,
+            control_dt_s=prepared.control_dt_s,
+            physics_dt_s=prepared.physics_dt_s,
+            device=prepared.device,
+        )
+        results.append(result)
+        print(format_probe_result(result))
+
+    save_probe_report(
+        prepared.output_checkpoint,
+        candidate_metrics=candidate_metrics,
+        results=results,
+        source_checkpoint=str(prepared.source_checkpoint),
+        configured_action_rms=probe.candidate_action_rms,
+    )
+    print(f"trajectory probe report: {prepared.output_checkpoint}")
+
+
 _RUNNERS = {
     "budget_action_trust": run_budget_action_trust,
+    "trajectory_probe": run_trajectory_probe,
 }
 
 
