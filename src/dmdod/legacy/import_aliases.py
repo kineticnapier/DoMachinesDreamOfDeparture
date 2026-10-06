@@ -94,16 +94,31 @@ class _LegacyAliasLoader(Loader):
 
     def __init__(self, target_name: str) -> None:
         self.target_name = target_name
+        self._target_metadata = None
 
     def create_module(self, spec):
         target = import_module(self.target_name)
+        # module_from_spec temporarily applies the alias spec to the object
+        # returned here. Save the canonical metadata so exec_module can restore
+        # it after the alias import has been installed in sys.modules.
+        self._target_metadata = (
+            target.__name__,
+            target.__package__,
+            target.__loader__,
+            target.__spec__,
+        )
         target.__dict__["__legacy_target__"] = self.target_name
         return target
 
     def exec_module(self, module) -> None:
-        # create_module already returned the fully initialized target module.
-        # There is intentionally nothing to copy or execute here.
-        return None
+        if self._target_metadata is None:
+            raise RuntimeError("legacy alias loader metadata was not initialized")
+        (
+            module.__name__,
+            module.__package__,
+            module.__loader__,
+            module.__spec__,
+        ) = self._target_metadata
 
 
 class _LegacyAliasFinder(MetaPathFinder):
