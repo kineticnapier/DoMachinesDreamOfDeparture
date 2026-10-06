@@ -57,7 +57,7 @@ from .adofai.timing import (
     compile_adofai,
     load_compiled_adofai,
 )
-from .body import (
+from .motor.body import (
     BilateralConfig,
     BilateralState,
     BodyConfig,
@@ -68,9 +68,9 @@ from .body import (
     TwoFingerBody,
 )
 from .calibration import INITIAL_RATE_TARGETS, RateTarget
-from .evaluator import EvaluationSummary, Judgement, TargetHit, TimingEvaluator
-from .keyboard import KeyConfig, KeyEvent, KeyState, TwoKeyKeyboard
-from .motor_env import (
+from .evaluation.evaluator import EvaluationSummary, Judgement, TargetHit, TimingEvaluator
+from .motor.keyboard import KeyConfig, KeyEvent, KeyState, TwoKeyKeyboard
+from .motor.env import (
     LeftThresholdReflexPolicy,
     MotorAction,
     MotorDiagnostics,
@@ -80,26 +80,26 @@ from .motor_env import (
     MotorTransition,
     TimedKeyEvent,
 )
-from .pattern_geometry_env import (
+from .envs.pattern_geometry import (
     PatternGeometryObservation,
     PatternGeometryStep,
     PatternMemoryGeometryEnv,
 )
-from .pattern_memory import PatternMemory, PatternMemoryEntry, PatternMemoryFeatures
-from .perception import VisualCueConfig, VisualCueEncoder, VisualCueObservation
-from .planet_perception import (
+from .features.pattern_memory import PatternMemory, PatternMemoryEntry, PatternMemoryFeatures
+from .features.perception import VisualCueConfig, VisualCueEncoder, VisualCueObservation
+from .features.planet import (
     PlanetGeometryObservation,
     PlanetVisionConfig,
     StraightPlanetGeometryEncoder,
 )
 from .profiles import PERSONAL_BLUE_SWITCH_V0_1_NAME, personal_blue_switch_v0_1
-from .real_chart_env import (
+from .envs.real_chart import (
     RealChartMotorEnv,
     RealChartObservation,
     RealChartStep,
     RelativeVisibleFloor,
 )
-from .real_chart_features import (
+from .features.real_chart import (
     DEFAULT_REAL_CHART_FEATURE_CONFIG,
     REAL_CHART_EVENT_MARKERS,
     REAL_CHART_FLOOR_FEATURE_DIM,
@@ -107,7 +107,7 @@ from .real_chart_features import (
     RealChartFeatureConfig,
     encode_real_chart_observation,
 )
-from .rhythm_env import (
+from .envs.rhythm import (
     EpisodeStats,
     RewardConfig,
     RhythmMotorEnv,
@@ -115,7 +115,7 @@ from .rhythm_env import (
     RhythmStep,
     make_regular_targets,
 )
-from .simulator import Simulation, SimulationConfig, StepResult
+from .envs.simulator import Simulation, SimulationConfig, StepResult
 
 __all__ = [
     "AdoFaiAction",
@@ -238,11 +238,58 @@ import importlib as _importlib
 import sys as _sys
 
 _COMPAT_SUBMODULES = {
+    # Core package split
     "adofai_chart": ".adofai.chart",
     "adofai_geometry": ".adofai.geometry",
     "adofai_playable": ".adofai.playable",
     "adofai_rules": ".adofai.rules",
     "adofai_timing": ".adofai.timing",
+
+    "body": ".motor.body",
+    "fast_motor": ".motor.fast",
+    "keyboard": ".motor.keyboard",
+    "motor_env": ".motor.env",
+    "n_key_capacity": ".motor.capacity",
+    "n_key_motor": ".motor.n_key",
+
+    "recurrent_policy": ".policies.recurrent",
+    "predictive_recurrent_policy": ".policies.predictive_recurrent",
+    "toy_policy": ".policies.toy",
+    "visual_policy": ".policies.visual",
+    "n_key_policy": ".policies.n_key",
+
+    "finger_agnostic_teacher": ".teachers.finger_agnostic",
+    "privileged_teacher": ".teachers.privileged",
+
+    "multichart_dataset": ".data.multichart",
+    "tuf_dataset": ".data.tuf",
+    "tuf_balanced_dataset": ".data.tuf_balanced",
+    "tuf_dataset_parallel": ".data.tuf_parallel",
+    "tuf_dataset_preflight": ".data.preflight",
+
+    "evaluator": ".evaluation.evaluator",
+    "flat_hud_eval": ".evaluation.flat_hud",
+    "parallel_hud_eval": ".evaluation.parallel_hud",
+    "parallel_rollout": ".evaluation.rollout",
+    "benchmark": ".evaluation.benchmark",
+
+    "perception": ".features.perception",
+    "planet_perception": ".features.planet",
+    "real_chart_features": ".features.real_chart",
+    "real_chart_hud": ".features.hud",
+    "real_chart_hud_features": ".features.hud_features",
+    "visual_observation": ".features.visual",
+    "pattern_memory": ".features.pattern_memory",
+
+    "rhythm_env": ".envs.rhythm",
+    "geometry_rhythm_env": ".envs.geometry_rhythm",
+    "motion_geometry_env": ".envs.motion_geometry",
+    "pattern_geometry_env": ".envs.pattern_geometry",
+    "real_chart_env": ".envs.real_chart",
+    "n_key_real_chart": ".envs.n_key",
+    "simulator": ".envs.simulator",
+
+    # Already-migrated packages
     "fly_connectome_policy": ".connectome.fly_policy",
     "random_connectome_policy": ".connectome.random_policy",
     "malecns_connectome": ".connectome.malecns",
@@ -251,7 +298,6 @@ _COMPAT_SUBMODULES = {
     "modern_cli_dagger": ".cli.dagger",
     "modern_cli_live": ".cli.live",
     "extremeeditor_ipc": ".integrations.extremeeditor",
-}
 
 for _legacy_name, _target_name in _COMPAT_SUBMODULES.items():
     _sys.modules.setdefault(
