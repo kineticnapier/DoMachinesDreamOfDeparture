@@ -48,7 +48,15 @@ def test_legacy_flat_module_imports_alias_structured_modules() -> None:
     from dmdod.motor import body
     from dmdod.training import n_key
 
-    assert legacy_chart is chart
-    assert legacy_body is body
-    assert legacy_connectome is fly_policy
-    assert legacy_training is n_key
+    assert legacy_chart.__legacy_target__ == "dmdod.adofai.chart"
+    assert legacy_body.__legacy_target__ == "dmdod.motor.body"
+    assert legacy_connectome.__legacy_target__ == "dmdod.connectome.fly_policy"
+    assert legacy_training.__legacy_target__ == "dmdod.training.n_key"
+
+    assert legacy_chart.AdoFaiChart is chart.AdoFaiChart
+    assert legacy_body.TwoFingerBody is body.TwoFingerBody
+    assert (
+        legacy_connectome.NKeyFlyConnectomeActorCritic
+        is fly_policy.NKeyFlyConnectomeActorCritic
+    )
+    assert legacy_training.n_key_actuation_loss is n_key.n_key_actuation_loss
