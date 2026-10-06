@@ -75,7 +75,15 @@ try {
         "--device", "cuda"
     )
 
-    & uv @trainArgs 2>&1 | Tee-Object -FilePath $logPath
+    # Windows PowerShell turns native stderr records into NativeCommandError
+    # objects when stderr is merged in the PowerShell pipeline. PyTorch writes
+    # harmless warnings to stderr, so merge stderr inside cmd.exe before
+    # PowerShell sees the stream.
+    $quotedArgs = $trainArgs | ForEach-Object {
+        '"' + ([string]$_).Replace('"', '""') + '"'
+    }
+    $cmdLine = 'uv ' + ($quotedArgs -join ' ') + ' 2>&1'
+    & cmd.exe /d /s /c $cmdLine | Tee-Object -FilePath $logPath
     $trainExit = $LASTEXITCODE
     if ($trainExit -ne 0) {
         throw "training failed with exit code $trainExit; see $logPath"
