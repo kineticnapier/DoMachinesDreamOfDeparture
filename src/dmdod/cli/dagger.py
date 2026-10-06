@@ -14,7 +14,7 @@ import sys
 from collections.abc import Callable
 from typing import Any, TypeVar
 
-from .modern_cli_bootstrap import BootstrapLiveModernTrainerConsole, _pop_ui_option
+from .bootstrap import BootstrapLiveModernTrainerConsole, _pop_ui_option
 
 
 _T = TypeVar("_T")
