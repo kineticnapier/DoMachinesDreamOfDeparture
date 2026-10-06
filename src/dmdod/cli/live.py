@@ -4,9 +4,9 @@ from __future__ import annotations
 
 from typing import Any
 
-from . import modern_cli as base
+from . import modern as base
 from .modern import ModernTrainerConsole
-from .training_progress import TrainingProgressEvent, subscribe, unsubscribe
+from ..training.progress import TrainingProgressEvent, subscribe, unsubscribe
 
 
 # BC is normally much shorter than guard/evaluation.  This share is only a UI
