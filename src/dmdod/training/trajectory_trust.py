@@ -14,6 +14,7 @@ from dmdod.envs.n_key import (
     encode_n_key_hud_real_chart_observation,
 )
 from dmdod.features.real_chart import DEFAULT_REAL_CHART_FEATURE_CONFIG
+from dmdod.motor.keyboard import KeyEvent
 from dmdod.training.action_trust import (
     build_action_trust_sequences,
     freeze_actor_only,
@@ -36,6 +37,25 @@ class DivergencePoint:
     target_ordinal: int | None
     baseline: object
     candidate: object
+
+
+@dataclass(frozen=True, slots=True)
+class BoundaryDivergence:
+    step: int
+    time_s: float
+    target_ordinal: int | None
+    key: str
+    event: str
+    threshold_m: float
+    baseline_event: bool
+    candidate_event: bool
+    baseline_position_m: float
+    candidate_position_m: float
+    position_delta_m: float
+    baseline_margin_m: float
+    candidate_margin_m: float
+    baseline_action: float
+    candidate_action: float
 
 
 @dataclass(frozen=True, slots=True)
@@ -68,6 +88,7 @@ class TrajectoryProbeResult:
     baseline_keydowns: int
     candidate_keydowns: int
     stopped_side: str
+    first_boundary_divergence: BoundaryDivergence | None = None
 
     def as_dict(self) -> dict:
         return asdict(self)
@@ -142,7 +163,7 @@ def _score_tuple(stats) -> tuple[int, int, int]:
 
 
 def _make_env(segment, *, key_count: int, control_dt_s: float, physics_dt_s: float):
-    return DiagnosticHudNKeyRealChartMotorEnv(
+    env = DiagnosticHudNKeyRealChartMotorEnv(
         segment,
         key_count=key_count,
         control_dt_s=control_dt_s,
@@ -150,6 +171,69 @@ def _make_env(segment, *, key_count: int, control_dt_s: float, physics_dt_s: flo
         behind_floors=DEFAULT_REAL_CHART_FEATURE_CONFIG.behind_floors,
         ahead_floors=DEFAULT_REAL_CHART_FEATURE_CONFIG.ahead_floors,
     )
+    env.motor.capture_physics_trace = True
+    return env
+
+
+def _first_boundary_divergence(
+    *,
+    step: int,
+    env_a,
+    env_b,
+    action_a: tuple[float, ...],
+    action_b: tuple[float, ...],
+) -> BoundaryDivergence | None:
+    transition_a = env_a.motor.last_transition
+    transition_b = env_b.motor.last_transition
+    if transition_a is None or transition_b is None:
+        return None
+
+    samples_a = transition_a.physics_samples
+    samples_b = transition_b.physics_samples
+    if len(samples_a) != len(samples_b):
+        raise RuntimeError("paired motor traces have different physics sample counts")
+
+    key_names = env_a.motor.key_names
+    config = env_a.motor.keyboard.config
+    key_order = {name: index for index, name in enumerate(key_names)}
+
+    for sample_a, sample_b in zip(samples_a, samples_b):
+        events_a = set(sample_a.events)
+        events_b = set(sample_b.events)
+        if events_a == events_b:
+            continue
+
+        differing = events_a.symmetric_difference(events_b)
+        key, event = min(
+            differing,
+            key=lambda item: (key_order[item[0]], item[1].value),
+        )
+        index = key_order[key]
+        threshold = (
+            float(config.actuation_m)
+            if event is KeyEvent.DOWN
+            else float(config.reset_m)
+        )
+        position_a = float(sample_a.positions_m[index])
+        position_b = float(sample_b.positions_m[index])
+        return BoundaryDivergence(
+            step=int(step),
+            time_s=max(float(sample_a.time_s), float(sample_b.time_s)),
+            target_ordinal=_next_target_ordinal(env_a),
+            key=str(key),
+            event=str(event.value),
+            threshold_m=threshold,
+            baseline_event=(key, event) in events_a,
+            candidate_event=(key, event) in events_b,
+            baseline_position_m=position_a,
+            candidate_position_m=position_b,
+            position_delta_m=position_b - position_a,
+            baseline_margin_m=position_a - threshold,
+            candidate_margin_m=position_b - threshold,
+            baseline_action=float(action_a[index]),
+            candidate_action=float(action_b[index]),
+        )
+    return None
 
 
 @torch.no_grad()
@@ -193,6 +277,7 @@ def probe_anchor_pair(
     coordination_acc = _SquaredAccumulator()
 
     pressed_mismatch_frames = 0
+    first_boundary = None
     first_pressed = None
     first_keydown = None
     first_score = None
@@ -223,6 +308,15 @@ def probe_anchor_pair(
         observation_a = transition_a.observation
         observation_b = transition_b.observation
         steps = step_index
+
+        if first_boundary is None:
+            first_boundary = _first_boundary_divergence(
+                step=step_index,
+                env_a=env_a,
+                env_b=env_b,
+                action_a=values_a,
+                action_b=values_b,
+            )
 
         motor_a = observation_a.motor
         motor_b = observation_b.motor
@@ -335,6 +429,7 @@ def probe_anchor_pair(
         baseline_keydowns=int(env_a.physical_keydowns),
         candidate_keydowns=int(env_b.physical_keydowns),
         stopped_side=stopped_side,
+        first_boundary_divergence=first_boundary,
     )
 
 
@@ -444,11 +539,28 @@ def format_probe_result(result: TrajectoryProbeResult) -> str:
         target = "?" if value.target_ordinal is None else str(value.target_ordinal)
         return f"{value.time_s:.3f}s/t{target}"
 
+    boundary = result.first_boundary_divergence
+    boundary_text = "-"
+    if boundary is not None:
+        boundary_text = (
+            f"{boundary.time_s:.3f}s {boundary.key} {boundary.event.upper()} "
+            f"thr={boundary.threshold_m * 1000.0:.6f}mm "
+            f"pos={boundary.baseline_position_m * 1000.0:.6f}/"
+            f"{boundary.candidate_position_m * 1000.0:.6f}mm "
+            f"d={boundary.position_delta_m * 1e6:+.3f}um "
+            f"margin={boundary.baseline_margin_m * 1e6:+.3f}/"
+            f"{boundary.candidate_margin_m * 1e6:+.3f}um "
+            f"event={int(boundary.baseline_event)}/{int(boundary.candidate_event)} "
+            f"action={boundary.baseline_action:.6f}/"
+            f"{boundary.candidate_action:.6f}"
+        )
+
     return (
         f"anchor {result.anchor_index:02d}: "
         f"actionRMS={result.action_rms:.3g} max={result.action_max:.3g} "
         f"posRMS={result.position_rms_m:.3g}m "
         f"actRMS={result.activation_rms:.3g} fatigueRMS={result.fatigue_rms:.3g} "
+        f"boundary=[{boundary_text}] "
         f"press-div={point(result.first_pressed_divergence)} "
         f"key-div={point(result.first_keydown_divergence)} "
         f"score-div={point(result.first_score_divergence)} "
