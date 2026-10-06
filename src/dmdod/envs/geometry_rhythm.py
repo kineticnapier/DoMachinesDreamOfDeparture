@@ -1,0 +1,128 @@
+from __future__ import annotations
+
+from dataclasses import dataclass
+
+from dmdod.adofai_rules import TimingDifficulty
+from dmdod.evaluation.evaluator import TargetHit
+from dmdod.motor.env import MotorAction, MotorObservation
+from dmdod.features.planet import (
+    PlanetGeometryObservation,
+    PlanetVisionConfig,
+    StraightPlanetGeometryEncoder,
+)
+from dmdod.envs.rhythm import EpisodeStats, RewardConfig, RhythmMotorEnv
+
+
+@dataclass(frozen=True)
+class GeometryRhythmObservation:
+    """Policy input: body state plus visible planet/tile geometry."""
+
+    motor: MotorObservation
+    geometry: PlanetGeometryObservation
+
+
+@dataclass(frozen=True)
+class GeometryRhythmStep:
+    observation: GeometryRhythmObservation
+    reward: float
+    done: bool
+
+
+class GeometryRhythmEnv:
+    """Geometry-observation wrapper around the established rhythm evaluator.
+
+    A private ``RhythmMotorEnv`` owns the DLL-derived timing/OVERLOAD/reward
+    mechanics. Its Gaussian cue is discarded. The policy instead sees visible
+    straight-tile planet geometry derived from the active target and current
+    simulation time.
+    """
+
+    def __init__(
+        self,
+        targets: list[TargetHit] | tuple[TargetHit, ...],
+        *,
+        bpm: float,
+        same_hand: bool = True,
+        control_dt_s: float = 0.010,
+        vision_config: PlanetVisionConfig | None = None,
+        perception_seed: int | None = None,
+        clockwise: bool = False,
+        reward_config: RewardConfig | None = None,
+        difficulty: TimingDifficulty | str = TimingDifficulty.NORMAL,
+        timing_scale: float = 1.0,
+        controller_speed: float = 1.0,
+        pitch: float = 1.0,
+        speed_trial: float = 1.0,
+        mobile: bool = False,
+    ) -> None:
+        if not targets:
+            raise ValueError("at least one target is required")
+        self._targets = tuple(sorted(targets, key=lambda target: target.time_s))
+        self._perception_seed = perception_seed
+        self._base = RhythmMotorEnv(
+            self._targets,
+            bpm=bpm,
+            same_hand=same_hand,
+            control_dt_s=control_dt_s,
+            reward_config=reward_config,
+            difficulty=difficulty,
+            timing_scale=timing_scale,
+            controller_speed=controller_speed,
+            pitch=pitch,
+            speed_trial=speed_trial,
+            mobile=mobile,
+        )
+        self._geometry_encoder = StraightPlanetGeometryEncoder(
+            self._targets,
+            bpm=bpm,
+            config=vision_config,
+            seed=perception_seed,
+            clockwise=clockwise,
+        )
+
+    def _active_target_index(self) -> int | None:
+        resolved = self._base.stats.hits + self._base.stats.misses
+        return resolved if resolved < len(self._targets) else None
+
+    def _observation(self) -> GeometryRhythmObservation:
+        now = self._base.motor.diagnostics().time_s
+        return GeometryRhythmObservation(
+            self._base.motor.observe(),
+            self._geometry_encoder.observe(
+                now,
+                active_target_index=self._active_target_index(),
+            ),
+        )
+
+    def reset(self) -> GeometryRhythmObservation:
+        self._base.reset()
+        self._geometry_encoder.reset(seed=self._perception_seed)
+        return self._observation()
+
+    def step(self, action: MotorAction) -> GeometryRhythmStep:
+        transition = self._base.step(action)
+        return GeometryRhythmStep(
+            observation=self._observation(),
+            reward=transition.reward,
+            done=transition.done,
+        )
+
+    @property
+    def stats(self) -> EpisodeStats:
+        return self._base.stats
+
+    @property
+    def timing_errors_ms(self) -> tuple[float, ...]:
+        return self._base.timing_errors_ms
+
+    @property
+    def timing_windows(self):
+        return self._base.timing_windows
+
+    @property
+    def motor(self):
+        return self._base.motor
+
+    @property
+    def bpm(self) -> float:
+        return self._base.bpm
