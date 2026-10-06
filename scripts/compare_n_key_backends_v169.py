@@ -17,7 +17,7 @@ if str(_SCRIPTS_DIR) not in sys.path:
 import train_real_chart_v080 as v080
 import train_real_chart_v160_n_key_bootstrap as v160
 
-from dmdod.fly_connectome_policy import (
+from dmdod.connectome.fly_policy import (
     N_KEY_POLICY_BACKEND_FLY_CONNECTOME,
     NKeyFlyConnectomeActorCritic,
 )
@@ -29,7 +29,7 @@ from dmdod.n_key_policy import (
     n_key_policy_backend_from_checkpoint,
 )
 from dmdod.n_key_real_chart import n_key_hud_real_chart_input_dim
-from dmdod.random_connectome_policy import (
+from dmdod.connectome.random_policy import (
     N_KEY_POLICY_BACKEND_RANDOM_CONNECTOME,
     NKeyRandomConnectomeActorCritic,
 )
