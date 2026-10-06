@@ -11,11 +11,11 @@ and RandomConnectome policies from checkpoint metadata.
 import torch
 
 import train_real_chart_v166_n_key_failure_continuation_dagger as v166
-from dmdod.fly_connectome_policy import (
+from dmdod.connectome.fly_policy import (
     N_KEY_POLICY_BACKEND_FLY_CONNECTOME,
     NKeyFlyConnectomeActorCritic,
 )
-from dmdod.random_connectome_policy import (
+from dmdod.connectome.random_policy import (
     N_KEY_POLICY_BACKEND_RANDOM_CONNECTOME,
     NKeyRandomConnectomeActorCritic,
 )
