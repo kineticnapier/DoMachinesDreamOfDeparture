@@ -60,6 +60,7 @@ try {
             "tests/test_training_action_trust.py",
             "tests/test_training_real_chart.py",
             "tests/test_training_trajectory_trust.py",
+            "tests/test_n_key_capacity.py",
             "tests/test_training_architecture.py",
             "tests/test_fly_connectome_policy.py",
             "tests/test_fly_connectome_cuda_no_grad_runtime.py",
