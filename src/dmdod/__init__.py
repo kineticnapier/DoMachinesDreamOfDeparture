@@ -298,6 +298,7 @@ _COMPAT_SUBMODULES = {
     "modern_cli_dagger": ".cli.dagger",
     "modern_cli_live": ".cli.live",
     "extremeeditor_ipc": ".integrations.extremeeditor",
+}
 
 for _legacy_name, _target_name in _COMPAT_SUBMODULES.items():
     _sys.modules.setdefault(
