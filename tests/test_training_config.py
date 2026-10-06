@@ -33,6 +33,9 @@ reserve_minutes = 5
 max_trials = 99
 reject_shrink = 0.5
 safe_grow = 1.25
+
+[trajectory_probe]
+candidate_action_rms = 0.000025
 """,
         encoding="utf-8",
     )
@@ -47,6 +50,7 @@ safe_grow = 1.25
     assert config.action_trust.min_action_rms == 1e-6
     assert config.budget.hours == 2.0
     assert config.budget.max_trials == 99
+    assert config.trajectory_probe.candidate_action_rms == 2.5e-5
 
 
 def test_invalid_radius_order_is_rejected(tmp_path) -> None:
