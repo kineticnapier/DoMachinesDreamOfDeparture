@@ -48,6 +48,7 @@ class TrajectoryProbeConfig:
 @dataclass(frozen=True, slots=True)
 class BoundaryTrustConfig:
     preserve_safe_only: bool = True
+    mismatch_grace_s: float = 0.030
 
 
 @dataclass(frozen=True, slots=True)
@@ -146,9 +147,10 @@ def load_training_config(path: str | Path) -> TrainingConfig:
     boundary_raw = _section(raw, "boundary_trust")
     boundary_trust = BoundaryTrustConfig(
         preserve_safe_only=bool(boundary_raw.get("preserve_safe_only", True)),
+        mismatch_grace_s=float(boundary_raw.get("mismatch_grace_s", 0.030)),
     )
 
-    _validate(action_trust, budget, trajectory_probe)
+    _validate(action_trust, budget, trajectory_probe, boundary_trust)
     return TrainingConfig(
         mode=mode,
         run=run,
@@ -164,6 +166,7 @@ def _validate(
     action: ActionTrustConfig,
     budget: BudgetConfig,
     trajectory_probe: TrajectoryProbeConfig,
+    boundary_trust: BoundaryTrustConfig,
 ) -> None:
     if action.actor_steps <= 0:
         raise ValueError("action_trust.actor_steps must be positive")
@@ -194,3 +197,5 @@ def _validate(
         raise ValueError("budget.safe_grow must be >= 1")
     if trajectory_probe.candidate_action_rms <= 0.0:
         raise ValueError("trajectory_probe.candidate_action_rms must be positive")
+    if boundary_trust.mismatch_grace_s < 0.0:
+        raise ValueError("boundary_trust.mismatch_grace_s must be non-negative")
