@@ -505,7 +505,7 @@ def boundary_event_guard_reason(
     boundary = result.first_boundary_divergence
     if boundary is not None:
         detail = (
-            f" boundary={boundary.key}:{boundary.event}@{boundary.time_s:.3f}s "
+            f" first-boundary={boundary.key}:{boundary.event}@{boundary.time_s:.3f}s "
             f"dpos={boundary.position_delta_m * 1e6:+.3f}um"
         )
     duration = (
