@@ -46,6 +46,11 @@ class TrajectoryProbeConfig:
 
 
 @dataclass(frozen=True, slots=True)
+class BoundaryTrustConfig:
+    preserve_safe_only: bool = True
+
+
+@dataclass(frozen=True, slots=True)
 class TrainingConfig:
     mode: str
     run: RunConfig
@@ -53,6 +58,7 @@ class TrainingConfig:
     action_trust: ActionTrustConfig
     budget: BudgetConfig
     trajectory_probe: TrajectoryProbeConfig
+    boundary_trust: BoundaryTrustConfig
 
     def as_dict(self) -> dict:
         return asdict(self)
@@ -137,6 +143,11 @@ def load_training_config(path: str | Path) -> TrainingConfig:
         ),
     )
 
+    boundary_raw = _section(raw, "boundary_trust")
+    boundary_trust = BoundaryTrustConfig(
+        preserve_safe_only=bool(boundary_raw.get("preserve_safe_only", True)),
+    )
+
     _validate(action_trust, budget, trajectory_probe)
     return TrainingConfig(
         mode=mode,
@@ -145,6 +156,7 @@ def load_training_config(path: str | Path) -> TrainingConfig:
         action_trust=action_trust,
         budget=budget,
         trajectory_probe=trajectory_probe,
+        boundary_trust=boundary_trust,
     )
 
 
