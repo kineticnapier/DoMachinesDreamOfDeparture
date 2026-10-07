@@ -7,6 +7,7 @@ from dmdod.training.action_trust import ActionTrustMetrics
 from dmdod.training.trajectory_trust import (
     BoundaryDivergence,
     DivergencePoint,
+    EventGuardViolation,
     TrajectoryProbeResult,
     _SquaredAccumulator,
     boundary_event_guard_reason,
@@ -177,6 +178,7 @@ def _guard_result(
     pressed: DivergencePoint | None = None,
     keydown: DivergencePoint | None = None,
     score: DivergencePoint | None = None,
+    violation: EventGuardViolation | None = None,
 ) -> TrajectoryProbeResult:
     return TrajectoryProbeResult(
         anchor_index=2,
@@ -206,22 +208,39 @@ def _guard_result(
         candidate_overloaded=False,
         baseline_keydowns=10,
         candidate_keydowns=10,
-        stopped_side="event-divergence" if any(
-            value is not None for value in (pressed, keydown, score)
-        ) else "both",
+        stopped_side="event-divergence" if violation is not None else "both",
+        event_guard_violation=violation,
     )
 
 
-def test_boundary_guard_preserves_event_topology_on_safe_anchor() -> None:
+def test_boundary_guard_rejects_sustained_keydown_mismatch() -> None:
     point = DivergencePoint(12, 0.12, 7, 10, 11)
+    violation = EventGuardViolation(
+        kind="keydown-count",
+        time_s=0.15,
+        target_ordinal=7,
+        duration_s=0.03,
+    )
     reason = boundary_event_guard_reason(
         anchor_index=2,
         reference_stats=SimpleNamespace(overloaded=False),
-        result=_guard_result(keydown=point),
+        result=_guard_result(keydown=point, violation=violation),
     )
 
     assert reason is not None
     assert "anchor 2 keydown-count divergence" in reason
+    assert "duration=30.0ms" in reason
+
+
+def test_boundary_guard_allows_transient_pressed_history_after_resync() -> None:
+    point = DivergencePoint(12, 0.12, 7, (False,), (True,))
+    reason = boundary_event_guard_reason(
+        anchor_index=2,
+        reference_stats=SimpleNamespace(overloaded=False),
+        result=_guard_result(pressed=point),
+    )
+
+    assert reason is None
 
 
 def test_boundary_guard_allows_x_only_change() -> None:
@@ -236,10 +255,16 @@ def test_boundary_guard_allows_x_only_change() -> None:
 
 def test_boundary_guard_allows_failed_anchor_to_change() -> None:
     point = DivergencePoint(12, 0.12, 7, 10, 11)
+    violation = EventGuardViolation(
+        kind="pressed-state",
+        time_s=0.15,
+        target_ordinal=7,
+        duration_s=0.03,
+    )
     reason = boundary_event_guard_reason(
         anchor_index=2,
         reference_stats=SimpleNamespace(overloaded=True),
-        result=_guard_result(pressed=point),
+        result=_guard_result(pressed=point, violation=violation),
         preserve_safe_only=True,
     )
 
