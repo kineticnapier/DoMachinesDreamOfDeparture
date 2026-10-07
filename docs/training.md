@@ -33,12 +33,17 @@ must not import them. This is enforced by
 - `real_chart.py`: dataset windows, model reconstruction, evaluation,
   Train-safety guard, checkpoint primitives, DAgger collection.
 - `action_trust.py`: actor-only action-space trust optimization.
+- `trajectory_trust.py`: paired closed-loop trajectory, key-boundary, and
+  event-topology diagnostics/guards.
 - `budget.py`: adaptive trust-radius controller.
 - `runner.py`: configured orchestration and checkpoint metadata.
 
 The current stable modes are:
 
 - `budget_action_trust` — actor-only DAgger with adaptive action-space trust.
+- `budget_boundary_trust` — use action RMS only to generate bounded candidates,
+  then preserve pressed/key-count/hit-miss-TooEarly topology on the current
+  policy's SAFE Train anchors before the ordinary Train safety guard.
 - `trajectory_probe` — generate one bounded actor candidate and compare it
   against the source policy in paired closed-loop rollouts, reporting the first
   physical/score/overload divergence per Train anchor.
@@ -49,6 +54,12 @@ Short form:
 
 ```powershell
 .\scripts\run_school.ps1
+```
+
+Boundary/event-trust school run:
+
+```powershell
+.\scripts\run_school_boundary.ps1
 ```
 
 Generic form:
