@@ -40,6 +40,14 @@ class DivergencePoint:
 
 
 @dataclass(frozen=True, slots=True)
+class EventGuardViolation:
+    kind: str
+    time_s: float
+    target_ordinal: int | None
+    duration_s: float
+
+
+@dataclass(frozen=True, slots=True)
 class BoundaryDivergence:
     step: int
     time_s: float
@@ -89,6 +97,7 @@ class TrajectoryProbeResult:
     candidate_keydowns: int
     stopped_side: str
     first_boundary_divergence: BoundaryDivergence | None = None
+    event_guard_violation: EventGuardViolation | None = None
 
     def as_dict(self) -> dict:
         return asdict(self)
@@ -247,6 +256,7 @@ def probe_anchor_pair(
     physics_dt_s: float,
     device: torch.device,
     stop_on_event_divergence: bool = False,
+    mismatch_grace_s: float = 0.0,
 ) -> TrajectoryProbeResult:
     """Run two policies synchronously on independent copies of one anchor."""
 
@@ -283,6 +293,9 @@ def probe_anchor_pair(
     first_keydown = None
     first_score = None
     first_overload = None
+    event_guard_violation = None
+    pressed_mismatch_run = 0
+    keydown_mismatch_run = 0
     steps = 0
     stopped_side = "budget"
 
@@ -337,8 +350,10 @@ def probe_anchor_pair(
             _coordination_tuple(diagnostics_b),
         )
 
-        if motor_a.pressed_flags != motor_b.pressed_flags:
+        pressed_mismatch = motor_a.pressed_flags != motor_b.pressed_flags
+        if pressed_mismatch:
             pressed_mismatch_frames += 1
+            pressed_mismatch_run += 1
             if first_pressed is None:
                 first_pressed = _point(
                     step=step_index,
@@ -347,18 +362,24 @@ def probe_anchor_pair(
                     baseline=tuple(bool(v) for v in motor_a.pressed_flags),
                     candidate=tuple(bool(v) for v in motor_b.pressed_flags),
                 )
+        else:
+            pressed_mismatch_run = 0
 
-        if (
-            first_keydown is None
-            and int(env_a.physical_keydowns) != int(env_b.physical_keydowns)
-        ):
-            first_keydown = _point(
-                step=step_index,
-                env_a=env_a,
-                env_b=env_b,
-                baseline=int(env_a.physical_keydowns),
-                candidate=int(env_b.physical_keydowns),
-            )
+        keydown_mismatch = (
+            int(env_a.physical_keydowns) != int(env_b.physical_keydowns)
+        )
+        if keydown_mismatch:
+            keydown_mismatch_run += 1
+            if first_keydown is None:
+                first_keydown = _point(
+                    step=step_index,
+                    env_a=env_a,
+                    env_b=env_b,
+                    baseline=int(env_a.physical_keydowns),
+                    candidate=int(env_b.physical_keydowns),
+                )
+        else:
+            keydown_mismatch_run = 0
 
         stats_a = env_a.stats
         stats_b = env_b.stats
@@ -388,13 +409,34 @@ def probe_anchor_pair(
                 ),
             )
 
-        if stop_on_event_divergence and (
-            first_pressed is not None
-            or first_keydown is not None
-            or first_score is not None
-        ):
-            stopped_side = "event-divergence"
-            break
+        if stop_on_event_divergence:
+            if first_score is not None:
+                event_guard_violation = EventGuardViolation(
+                    kind="score-topology",
+                    time_s=float(env_a.privileged_episode_time_s()),
+                    target_ordinal=_next_target_ordinal(env_a),
+                    duration_s=0.0,
+                )
+            else:
+                pressed_duration = pressed_mismatch_run * control_dt_s
+                keydown_duration = keydown_mismatch_run * control_dt_s
+                if pressed_mismatch and pressed_duration + 1e-12 >= mismatch_grace_s:
+                    event_guard_violation = EventGuardViolation(
+                        kind="pressed-state",
+                        time_s=float(env_a.privileged_episode_time_s()),
+                        target_ordinal=_next_target_ordinal(env_a),
+                        duration_s=float(pressed_duration),
+                    )
+                elif keydown_mismatch and keydown_duration + 1e-12 >= mismatch_grace_s:
+                    event_guard_violation = EventGuardViolation(
+                        kind="keydown-count",
+                        time_s=float(env_a.privileged_episode_time_s()),
+                        target_ordinal=_next_target_ordinal(env_a),
+                        duration_s=float(keydown_duration),
+                    )
+            if event_guard_violation is not None:
+                stopped_side = "event-divergence"
+                break
 
         if transition_a.done or transition_b.done:
             if transition_a.done and transition_b.done:
@@ -439,6 +481,7 @@ def probe_anchor_pair(
         candidate_keydowns=int(env_b.physical_keydowns),
         stopped_side=stopped_side,
         first_boundary_divergence=first_boundary,
+        event_guard_violation=event_guard_violation,
     )
 
 
@@ -449,32 +492,15 @@ def boundary_event_guard_reason(
     result: TrajectoryProbeResult,
     preserve_safe_only: bool = True,
 ) -> str | None:
-    """Reject topology changes on an accepted policy's currently safe anchors.
-
-    X-Accuracy judgement changes are intentionally not part of this guard.
-    The protected topology is only pressed-state, physical keydown count, and
-    cumulative hit/miss/TooEarly state. Already-overloaded anchors remain free
-    to change so training can improve them.
-    """
+    """Reject meaningful event-topology changes on currently safe anchors."""
 
     if preserve_safe_only and bool(reference_stats.overloaded):
         return None
 
-    divergence = (
-        result.first_pressed_divergence
-        or result.first_keydown_divergence
-        or result.first_score_divergence
-    )
-    if divergence is None:
+    violation = result.event_guard_violation
+    if violation is None:
         return None
 
-    kind = (
-        "pressed-state"
-        if result.first_pressed_divergence is not None
-        else "keydown-count"
-        if result.first_keydown_divergence is not None
-        else "score-topology"
-    )
     detail = ""
     boundary = result.first_boundary_divergence
     if boundary is not None:
@@ -482,10 +508,15 @@ def boundary_event_guard_reason(
             f" boundary={boundary.key}:{boundary.event}@{boundary.time_s:.3f}s "
             f"dpos={boundary.position_delta_m * 1e6:+.3f}um"
         )
+    duration = (
+        ""
+        if violation.duration_s <= 0.0
+        else f" duration={violation.duration_s * 1000.0:.1f}ms"
+    )
     return (
-        f"anchor {anchor_index} {kind} divergence at "
-        f"{divergence.time_s:.3f}s target={divergence.target_ordinal}"
-        f"{detail}"
+        f"anchor {anchor_index} {violation.kind} divergence at "
+        f"{violation.time_s:.3f}s target={violation.target_ordinal}"
+        f"{duration}{detail}"
     )
 
 
@@ -500,6 +531,7 @@ def evaluate_boundary_event_guard(
     physics_dt_s: float,
     device: torch.device,
     preserve_safe_only: bool = True,
+    mismatch_grace_s: float = 0.030,
 ) -> tuple[bool, tuple[str, ...], list[TrajectoryProbeResult]]:
     if len(anchors) != len(reference_results):
         raise ValueError("boundary trust reference/anchor count mismatch")
@@ -523,6 +555,7 @@ def evaluate_boundary_event_guard(
             physics_dt_s=physics_dt_s,
             device=device,
             stop_on_event_divergence=True,
+            mismatch_grace_s=mismatch_grace_s,
         )
         probes.append(result)
         reason = boundary_event_guard_reason(
