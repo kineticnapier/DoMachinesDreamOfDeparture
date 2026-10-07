@@ -36,6 +36,9 @@ safe_grow = 1.25
 
 [trajectory_probe]
 candidate_action_rms = 0.000025
+
+[boundary_trust]
+preserve_safe_only = true
 """,
         encoding="utf-8",
     )
@@ -51,6 +54,7 @@ candidate_action_rms = 0.000025
     assert config.budget.hours == 2.0
     assert config.budget.max_trials == 99
     assert config.trajectory_probe.candidate_action_rms == 2.5e-5
+    assert config.boundary_trust.preserve_safe_only is True
 
 
 def test_invalid_radius_order_is_rejected(tmp_path) -> None:
