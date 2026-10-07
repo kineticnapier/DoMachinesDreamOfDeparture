@@ -36,6 +36,7 @@ from .real_chart import (
 )
 from .trajectory_trust import (
     build_probe_candidate,
+    evaluate_boundary_event_guard,
     collect_probe_training_sequences,
     format_probe_result,
     probe_anchor_pair,
@@ -43,7 +44,7 @@ from .trajectory_trust import (
 )
 
 
-TRAINER_VERSION = "2.0.0-configured-action-trust"
+TRAINER_VERSION = "2.1.0-configured-trust"
 CHECKPOINT_FORMAT_VERSION = 33
 
 
@@ -209,6 +210,12 @@ def _checkpoint_payload(
             "action_trust_selected_step": int(selected_step),
             "action_trust_current_rms": float(current_action_rms),
             "action_trust_history": list(history),
+            "boundary_trust_enabled": config.mode == "budget_boundary_trust",
+            "boundary_trust_semantics": (
+                "preserve-current-safe-anchor-event-topology-v1"
+                if config.mode == "budget_boundary_trust"
+                else None
+            ),
             "budget_requested_hours": float(config.budget.hours),
             "budget_elapsed_seconds": float(time.monotonic() - start_time),
             "budget_stopped_reason": str(stopped_reason),
@@ -276,7 +283,11 @@ def _collect_expert_sequences(
     return sequences, sum(sequence.frames for sequence in sequences)
 
 
-def run_budget_action_trust(config: TrainingConfig) -> None:
+def run_budget_action_trust(
+    config: TrainingConfig,
+    *,
+    use_boundary_trust: bool = False,
+) -> None:
     prepared = _prepare(config)
     model = prepared.model
     trust = config.action_trust
@@ -287,7 +298,11 @@ def run_budget_action_trust(config: TrainingConfig) -> None:
     train_budget_s = total_budget_s - reserve_s
     start_time = time.monotonic()
 
-    print("=== DMDOD configured budgeted actor action-trust DAgger ===")
+    print(
+        "=== DMDOD configured budgeted actor "
+        + ("boundary/event trust" if use_boundary_trust else "action-trust")
+        + " DAgger ==="
+    )
     print(
         f"source={prepared.source_checkpoint} "
         f"output={prepared.output_checkpoint} "
@@ -310,6 +325,12 @@ def run_budget_action_trust(config: TrainingConfig) -> None:
         "Trainable: actor_mean only. Selection is Train-only; "
         "Validation runs after selection and Final is untouched."
     )
+    if use_boundary_trust:
+        print(
+            "Boundary trust: preserve pressed/key-count/hit-miss-TooEarly "
+            "topology on the current policy's SAFE anchors; already-overloaded "
+            "anchors remain free to change."
+        )
 
     print("=== pre-budget continuous Train / fixed safety baseline ===")
     initial_results = evaluate_role_continuous(
@@ -321,7 +342,16 @@ def run_budget_action_trust(config: TrainingConfig) -> None:
         device=prepared.device,
     )
     safety_reference_results = initial_results
+    continuation_results = initial_results
     continuation_state = clone_model_state(model)
+    boundary_reference_model = (
+        build_connectome_policy_from_checkpoint(
+            prepared.parent,
+            device=prepared.device,
+        )
+        if use_boundary_trust
+        else None
+    )
     best_state = continuation_state
     best_results = initial_results
     best_step = 0
@@ -434,6 +464,66 @@ def run_budget_action_trust(config: TrainingConfig) -> None:
                 continue
 
             candidate_state = clone_model_state(model)
+
+            boundary_passed = True
+            boundary_reasons: tuple[str, ...] = ()
+            boundary_checked = 0
+            if use_boundary_trust:
+                assert boundary_reference_model is not None
+                boundary_reference_model.load_state_dict(continuation_state)
+                boundary_reference_model.prepare_recurrent_runtime()
+                (
+                    boundary_passed,
+                    boundary_reasons,
+                    boundary_probes,
+                ) = evaluate_boundary_event_guard(
+                    boundary_reference_model,
+                    model,
+                    prepared.anchors,
+                    continuation_results,
+                    control_dt_s=prepared.control_dt_s,
+                    physics_dt_s=prepared.physics_dt_s,
+                    device=prepared.device,
+                    preserve_safe_only=config.boundary_trust.preserve_safe_only,
+                )
+                boundary_checked = len(boundary_probes)
+                if not boundary_passed:
+                    history.append(
+                        {
+                            "trial": int(trial_count),
+                            "accepted_step": int(accepted_steps),
+                            "radius": float(radius.current),
+                            **metrics_dict,
+                            "boundary_trust_accepted": False,
+                            "boundary_trust_checked_anchors": int(boundary_checked),
+                            "boundary_trust_reasons": tuple(boundary_reasons),
+                            "guard_accepted": False,
+                            "guard_reasons": tuple(boundary_reasons),
+                        }
+                    )
+                    print(
+                        "boundary guard=REJECT: "
+                        + "; ".join(boundary_reasons)
+                    )
+                    model.load_state_dict(continuation_state)
+                    model.prepare_recurrent_runtime()
+                    if not radius.reject():
+                        stopped_reason = "boundary-trust-floor"
+                        print(
+                            f"budget stop: boundary reject at radius floor "
+                            f"{radius.minimum:.6g}"
+                        )
+                        break
+                    print(
+                        f"budget retry: boundary rollback accepted="
+                        f"{accepted_steps}; radius -> {radius.current:.6g}"
+                    )
+                    continue
+                print(
+                    f"boundary guard=PASS: checked={boundary_checked} "
+                    f"safe anchors"
+                )
+
             candidate_results = evaluate_role_continuous(
                 model,
                 prepared.anchors,
@@ -457,6 +547,9 @@ def run_budget_action_trust(config: TrainingConfig) -> None:
                     "accepted_step": int(accepted_steps),
                     "radius": float(radius.current),
                     **metrics_dict,
+                    "boundary_trust_accepted": bool(boundary_passed),
+                    "boundary_trust_checked_anchors": int(boundary_checked),
+                    "boundary_trust_reasons": tuple(boundary_reasons),
                     "guard_accepted": bool(safe),
                     "guard_reasons": tuple(reasons),
                     "selected_best_when_evaluated": bool(selected_best),
@@ -501,6 +594,7 @@ def run_budget_action_trust(config: TrainingConfig) -> None:
                 continue
 
             continuation_state = candidate_state
+            continuation_results = candidate_results
             accepted_steps += 1
 
             if selected_best:
@@ -692,8 +786,13 @@ def run_trajectory_probe(config: TrainingConfig) -> None:
     print(f"trajectory probe report: {prepared.output_checkpoint}")
 
 
+def run_budget_boundary_trust(config: TrainingConfig) -> None:
+    run_budget_action_trust(config, use_boundary_trust=True)
+
+
 _RUNNERS = {
     "budget_action_trust": run_budget_action_trust,
+    "budget_boundary_trust": run_budget_boundary_trust,
     "trajectory_probe": run_trajectory_probe,
 }
 
