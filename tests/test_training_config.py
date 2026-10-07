@@ -39,6 +39,7 @@ candidate_action_rms = 0.000025
 
 [boundary_trust]
 preserve_safe_only = true
+mismatch_grace_s = 0.030
 """,
         encoding="utf-8",
     )
@@ -55,6 +56,7 @@ preserve_safe_only = true
     assert config.budget.max_trials == 99
     assert config.trajectory_probe.candidate_action_rms == 2.5e-5
     assert config.boundary_trust.preserve_safe_only is True
+    assert config.boundary_trust.mismatch_grace_s == 0.03
 
 
 def test_invalid_radius_order_is_rejected(tmp_path) -> None:
