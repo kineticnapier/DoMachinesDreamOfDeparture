@@ -246,6 +246,7 @@ def probe_anchor_pair(
     control_dt_s: float,
     physics_dt_s: float,
     device: torch.device,
+    stop_on_event_divergence: bool = False,
 ) -> TrajectoryProbeResult:
     """Run two policies synchronously on independent copies of one anchor."""
 
@@ -387,6 +388,14 @@ def probe_anchor_pair(
                 ),
             )
 
+        if stop_on_event_divergence and (
+            first_pressed is not None
+            or first_keydown is not None
+            or first_score is not None
+        ):
+            stopped_side = "event-divergence"
+            break
+
         if transition_a.done or transition_b.done:
             if transition_a.done and transition_b.done:
                 stopped_side = "both"
@@ -431,6 +440,102 @@ def probe_anchor_pair(
         stopped_side=stopped_side,
         first_boundary_divergence=first_boundary,
     )
+
+
+def boundary_event_guard_reason(
+    *,
+    anchor_index: int,
+    reference_stats,
+    result: TrajectoryProbeResult,
+    preserve_safe_only: bool = True,
+) -> str | None:
+    """Reject topology changes on an accepted policy's currently safe anchors.
+
+    X-Accuracy judgement changes are intentionally not part of this guard.
+    The protected topology is only pressed-state, physical keydown count, and
+    cumulative hit/miss/TooEarly state. Already-overloaded anchors remain free
+    to change so training can improve them.
+    """
+
+    if preserve_safe_only and bool(reference_stats.overloaded):
+        return None
+
+    divergence = (
+        result.first_pressed_divergence
+        or result.first_keydown_divergence
+        or result.first_score_divergence
+    )
+    if divergence is None:
+        return None
+
+    kind = (
+        "pressed-state"
+        if result.first_pressed_divergence is not None
+        else "keydown-count"
+        if result.first_keydown_divergence is not None
+        else "score-topology"
+    )
+    detail = ""
+    boundary = result.first_boundary_divergence
+    if boundary is not None:
+        detail = (
+            f" boundary={boundary.key}:{boundary.event}@{boundary.time_s:.3f}s "
+            f"dpos={boundary.position_delta_m * 1e6:+.3f}um"
+        )
+    return (
+        f"anchor {anchor_index} {kind} divergence at "
+        f"{divergence.time_s:.3f}s target={divergence.target_ordinal}"
+        f"{detail}"
+    )
+
+
+@torch.no_grad()
+def evaluate_boundary_event_guard(
+    baseline_model,
+    candidate_model,
+    anchors,
+    reference_results,
+    *,
+    control_dt_s: float,
+    physics_dt_s: float,
+    device: torch.device,
+    preserve_safe_only: bool = True,
+) -> tuple[bool, tuple[str, ...], list[TrajectoryProbeResult]]:
+    if len(anchors) != len(reference_results):
+        raise ValueError("boundary trust reference/anchor count mismatch")
+
+    reasons: list[str] = []
+    probes: list[TrajectoryProbeResult] = []
+    for index, (named, reference) in enumerate(
+        zip(anchors, reference_results),
+        1,
+    ):
+        reference_stats, _ = reference
+        if preserve_safe_only and bool(reference_stats.overloaded):
+            continue
+
+        result = probe_anchor_pair(
+            baseline_model,
+            candidate_model,
+            named,
+            anchor_index=index,
+            control_dt_s=control_dt_s,
+            physics_dt_s=physics_dt_s,
+            device=device,
+            stop_on_event_divergence=True,
+        )
+        probes.append(result)
+        reason = boundary_event_guard_reason(
+            anchor_index=index,
+            reference_stats=reference_stats,
+            result=result,
+            preserve_safe_only=preserve_safe_only,
+        )
+        if reason is not None:
+            reasons.append(reason)
+            break
+
+    return not reasons, tuple(reasons), probes
 
 
 def collect_probe_training_sequences(
