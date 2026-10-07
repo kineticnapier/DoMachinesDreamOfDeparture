@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+from types import SimpleNamespace
 
 from dmdod.training.action_trust import ActionTrustMetrics
 from dmdod.training.trajectory_trust import (
@@ -8,6 +9,7 @@ from dmdod.training.trajectory_trust import (
     DivergencePoint,
     TrajectoryProbeResult,
     _SquaredAccumulator,
+    boundary_event_guard_reason,
     format_probe_result,
     save_probe_report,
 )
@@ -168,3 +170,77 @@ def test_probe_summary_contains_physical_divergence() -> None:
     assert "key-div=0.120s/t7" in text
     assert "H=10->9" in text
     assert "over=False->True" in text
+
+
+def _guard_result(
+    *,
+    pressed: DivergencePoint | None = None,
+    keydown: DivergencePoint | None = None,
+    score: DivergencePoint | None = None,
+) -> TrajectoryProbeResult:
+    return TrajectoryProbeResult(
+        anchor_index=2,
+        chart_name="guard",
+        steps=20,
+        action_rms=1e-6,
+        action_max=1e-5,
+        position_rms_m=1e-8,
+        position_max_m=2e-8,
+        velocity_rms_m_s=1e-6,
+        activation_rms=1e-6,
+        fatigue_rms=0.0,
+        hand_fatigue_rms=0.0,
+        coordination_rms=0.0,
+        pressed_mismatch_frames=1 if pressed is not None else 0,
+        first_pressed_divergence=pressed,
+        first_keydown_divergence=keydown,
+        first_score_divergence=score,
+        first_overload_divergence=None,
+        baseline_hits=10,
+        candidate_hits=10,
+        baseline_misses=0,
+        candidate_misses=0,
+        baseline_too_early=0,
+        candidate_too_early=0,
+        baseline_overloaded=False,
+        candidate_overloaded=False,
+        baseline_keydowns=10,
+        candidate_keydowns=10,
+        stopped_side="event-divergence" if any(
+            value is not None for value in (pressed, keydown, score)
+        ) else "both",
+    )
+
+
+def test_boundary_guard_preserves_event_topology_on_safe_anchor() -> None:
+    point = DivergencePoint(12, 0.12, 7, 10, 11)
+    reason = boundary_event_guard_reason(
+        anchor_index=2,
+        reference_stats=SimpleNamespace(overloaded=False),
+        result=_guard_result(keydown=point),
+    )
+
+    assert reason is not None
+    assert "anchor 2 keydown-count divergence" in reason
+
+
+def test_boundary_guard_allows_x_only_change() -> None:
+    reason = boundary_event_guard_reason(
+        anchor_index=2,
+        reference_stats=SimpleNamespace(overloaded=False),
+        result=_guard_result(),
+    )
+
+    assert reason is None
+
+
+def test_boundary_guard_allows_failed_anchor_to_change() -> None:
+    point = DivergencePoint(12, 0.12, 7, 10, 11)
+    reason = boundary_event_guard_reason(
+        anchor_index=2,
+        reference_stats=SimpleNamespace(overloaded=True),
+        result=_guard_result(pressed=point),
+        preserve_safe_only=True,
+    )
+
+    assert reason is None
