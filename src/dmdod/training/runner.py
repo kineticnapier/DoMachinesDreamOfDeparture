@@ -327,9 +327,11 @@ def run_budget_action_trust(
     )
     if use_boundary_trust:
         print(
-            "Boundary trust: preserve pressed/key-count/hit-miss-TooEarly "
-            "topology on the current policy's SAFE anchors; already-overloaded "
-            "anchors remain free to change."
+            "Boundary trust: preserve hit/miss/TooEarly immediately; "
+            f"pressed/key-count mismatches get "
+            f"{config.boundary_trust.mismatch_grace_s * 1000.0:g}ms grace "
+            "on the current policy's SAFE anchors. Already-overloaded anchors "
+            "remain free to change."
         )
 
     print("=== pre-budget continuous Train / fixed safety baseline ===")
@@ -485,6 +487,7 @@ def run_budget_action_trust(
                     physics_dt_s=prepared.physics_dt_s,
                     device=prepared.device,
                     preserve_safe_only=config.boundary_trust.preserve_safe_only,
+                    mismatch_grace_s=config.boundary_trust.mismatch_grace_s,
                 )
                 boundary_checked = len(boundary_probes)
                 if not boundary_passed:
