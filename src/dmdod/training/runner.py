@@ -33,6 +33,7 @@ from .real_chart import (
     selection_key,
     summarize,
     train_safety_guard,
+    train_survival_guard,
 )
 from .trajectory_trust import (
     build_probe_candidate,
@@ -327,11 +328,8 @@ def run_budget_action_trust(
     )
     if use_boundary_trust:
         print(
-            "Boundary trust: preserve hit/miss/TooEarly immediately; "
-            f"pressed/key-count mismatches get "
-            f"{config.boundary_trust.mismatch_grace_s * 1000.0:g}ms grace "
-            "on the current policy's SAFE anchors. Already-overloaded anchors "
-            "remain free to change."
+            "Survival guard: reject only SAFE->overload on Train anchors. "
+            "Hit/X/early/keydown changes are allowed and ranked separately."
         )
 
     print("=== pre-budget continuous Train / fixed safety baseline ===")
@@ -470,62 +468,6 @@ def run_budget_action_trust(
             boundary_passed = True
             boundary_reasons: tuple[str, ...] = ()
             boundary_checked = 0
-            if use_boundary_trust:
-                assert boundary_reference_model is not None
-                boundary_reference_model.load_state_dict(continuation_state)
-                boundary_reference_model.prepare_recurrent_runtime()
-                (
-                    boundary_passed,
-                    boundary_reasons,
-                    boundary_probes,
-                ) = evaluate_boundary_event_guard(
-                    boundary_reference_model,
-                    model,
-                    prepared.anchors,
-                    continuation_results,
-                    control_dt_s=prepared.control_dt_s,
-                    physics_dt_s=prepared.physics_dt_s,
-                    device=prepared.device,
-                    preserve_safe_only=config.boundary_trust.preserve_safe_only,
-                    mismatch_grace_s=config.boundary_trust.mismatch_grace_s,
-                )
-                boundary_checked = len(boundary_probes)
-                if not boundary_passed:
-                    history.append(
-                        {
-                            "trial": int(trial_count),
-                            "accepted_step": int(accepted_steps),
-                            "radius": float(radius.current),
-                            **metrics_dict,
-                            "boundary_trust_accepted": False,
-                            "boundary_trust_checked_anchors": int(boundary_checked),
-                            "boundary_trust_reasons": tuple(boundary_reasons),
-                            "guard_accepted": False,
-                            "guard_reasons": tuple(boundary_reasons),
-                        }
-                    )
-                    print(
-                        "boundary guard=REJECT: "
-                        + "; ".join(boundary_reasons)
-                    )
-                    model.load_state_dict(continuation_state)
-                    model.prepare_recurrent_runtime()
-                    if not radius.reject():
-                        stopped_reason = "boundary-trust-floor"
-                        print(
-                            f"budget stop: boundary reject at radius floor "
-                            f"{radius.minimum:.6g}"
-                        )
-                        break
-                    print(
-                        f"budget retry: boundary rollback accepted="
-                        f"{accepted_steps}; radius -> {radius.current:.6g}"
-                    )
-                    continue
-                print(
-                    f"boundary guard=PASS: checked={boundary_checked} "
-                    f"safe anchors"
-                )
 
             candidate_results = evaluate_role_continuous(
                 model,
@@ -535,7 +477,8 @@ def run_budget_action_trust(
                 physics_dt_s=prepared.physics_dt_s,
                 device=prepared.device,
             )
-            safe, reasons = train_safety_guard(
+            guard = train_survival_guard if use_boundary_trust else train_safety_guard
+            safe, reasons = guard(
                 safety_reference_results,
                 candidate_results,
             )
