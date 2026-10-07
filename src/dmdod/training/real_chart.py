@@ -225,6 +225,25 @@ def train_safety_guard(
     return not reasons, tuple(reasons)
 
 
+def train_survival_guard(
+    references: list[tuple[object, int]],
+    candidates: list[tuple[object, int]],
+) -> tuple[bool, tuple[str, ...]]:
+    """Reject only when a previously SAFE Train anchor becomes overloaded."""
+
+    if len(references) != len(candidates):
+        raise ValueError("Train guard reference/candidate count mismatch")
+
+    reasons: list[str] = []
+    for index, ((reference, _), (candidate, _)) in enumerate(
+        zip(references, candidates),
+        1,
+    ):
+        if not bool(reference.overloaded) and bool(candidate.overloaded):
+            reasons.append(f"anchor {index} safe->overload")
+    return not reasons, tuple(reasons)
+
+
 def selection_key(results: list[tuple[object, int]]) -> tuple[float, ...]:
     summary = summarize(results)
     return (
