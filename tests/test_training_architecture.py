@@ -67,3 +67,11 @@ def test_legacy_flat_module_imports_alias_structured_modules() -> None:
     assert legacy_body.__legacy_target__ == "dmdod.motor.body"
     assert legacy_connectome.__legacy_target__ == "dmdod.connectome.fly_policy"
     assert legacy_training.__legacy_target__ == "dmdod.training.n_key"
+
+
+def test_stable_runner_registers_boundary_trust_mode() -> None:
+    from dmdod.training.runner import _RUNNERS
+
+    assert "budget_action_trust" in _RUNNERS
+    assert "budget_boundary_trust" in _RUNNERS
+    assert "trajectory_probe" in _RUNNERS
