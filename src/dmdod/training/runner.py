@@ -37,7 +37,6 @@ from .real_chart import (
 )
 from .trajectory_trust import (
     build_probe_candidate,
-    evaluate_boundary_event_guard,
     collect_probe_training_sequences,
     format_probe_result,
     probe_anchor_pair,
@@ -344,14 +343,6 @@ def run_budget_action_trust(
     safety_reference_results = initial_results
     continuation_results = initial_results
     continuation_state = clone_model_state(model)
-    boundary_reference_model = (
-        build_connectome_policy_from_checkpoint(
-            prepared.parent,
-            device=prepared.device,
-        )
-        if use_boundary_trust
-        else None
-    )
     best_state = continuation_state
     best_results = initial_results
     best_step = 0
