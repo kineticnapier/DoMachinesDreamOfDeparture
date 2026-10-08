@@ -47,7 +47,7 @@ from .trajectory_trust import (
 )
 
 
-TRAINER_VERSION = "2.4.0-survival-search"
+TRAINER_VERSION = "2.5.0-survival-search"
 CHECKPOINT_FORMAT_VERSION = 33
 
 
@@ -577,18 +577,22 @@ def run_budget_action_trust(
             survival_detail = ""
             if use_survival_guard:
                 parent_safe = safe_anchor_count(guard_reference)
-                candidate_safe = (
-                    safe_anchor_count(candidate_results)
-                    if safe
-                    else parent_safe
-                )
-                recovered = max(0, candidate_safe - parent_safe)
-                survival_detail = (
-                    f" safe-anchors={candidate_safe}/{len(candidate_results)}"
-                    f" recovered={recovered}"
-                )
-                history[-1]["safe_anchor_count"] = int(candidate_safe)
-                history[-1]["recovered_safe_anchors"] = int(recovered)
+                if safe:
+                    candidate_safe = safe_anchor_count(candidate_results)
+                    recovered = max(0, candidate_safe - parent_safe)
+                    survival_detail = (
+                        f" safe-anchors={candidate_safe}/{len(prepared.anchors)}"
+                        f" recovered={recovered}"
+                    )
+                    history[-1]["safe_anchor_count"] = int(candidate_safe)
+                    history[-1]["recovered_safe_anchors"] = int(recovered)
+                else:
+                    survival_detail = (
+                        f" protected-death=1 "
+                        f"parent-safe={parent_safe}/{len(prepared.anchors)}"
+                    )
+                    history[-1]["safe_anchor_count"] = None
+                    history[-1]["recovered_safe_anchors"] = 0
             print(
                 f"budget guard={status}:{survival_detail} "
                 f"{aggregate(candidate_results)}{detail}"
