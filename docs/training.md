@@ -74,10 +74,17 @@ Survival-trust school run:
 .\scripts\run_school_survival.ps1
 ```
 
-Five-trial smoke run:
+Quick survival smoke run:
 
 ```powershell
 .\scripts\run_survival_smoke.ps1
+```
+
+This uses 6 Train anchors, 1 Validation anchor, and at most 2 trials. The older
+20-anchor / 5-trial profile is retained as:
+
+```powershell
+.\scripts\run_survival_smoke_full.ps1
 ```
 
 While a survival run is active, the current continuation is also written to
