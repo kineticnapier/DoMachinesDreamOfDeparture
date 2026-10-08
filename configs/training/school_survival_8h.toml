@@ -26,3 +26,4 @@ reserve_minutes = 8.0
 max_trials = 10000
 reject_shrink = 0.5
 safe_grow = 1.25
+max_nonbest_accepts = 3
