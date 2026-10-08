@@ -36,7 +36,6 @@ from .real_chart import (
     summarize,
     survival_selection_key,
     train_safety_guard,
-    train_survival_guard,
 )
 from .trajectory_trust import (
     build_probe_candidate,
