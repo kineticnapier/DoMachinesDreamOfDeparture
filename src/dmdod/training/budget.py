@@ -61,3 +61,31 @@ class TrustRadiusController:
             self.current * self.safe_grow,
         )
         return self.current
+
+
+@dataclass(slots=True)
+class NonBestRestartController:
+    limit: int
+    streak: int = 0
+    restarts: int = 0
+
+    @classmethod
+    def create(cls, *, limit: int) -> "NonBestRestartController":
+        if limit <= 0:
+            raise ValueError("non-best restart limit must be positive")
+        return cls(limit=int(limit))
+
+    def observe(self, *, selected_best: bool) -> bool:
+        """Return True when exploration should restart from the selected best."""
+
+        if selected_best:
+            self.streak = 0
+            return False
+
+        self.streak += 1
+        if self.streak < self.limit:
+            return False
+
+        self.streak = 0
+        self.restarts += 1
+        return True
