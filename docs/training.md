@@ -41,9 +41,11 @@ must not import them. This is enforced by
 The current stable modes are:
 
 - `budget_action_trust` — actor-only DAgger with adaptive action-space trust.
-- `budget_boundary_trust` — use action RMS only to generate bounded candidates,
-  then preserve pressed/key-count/hit-miss-TooEarly topology on the current
-  policy's SAFE Train anchors before the ordinary Train safety guard.
+- `budget_survival_trust` — actor-only DAgger with bounded action updates;
+  reject only when an anchor that is SAFE in the current accepted policy becomes
+  overloaded. Recovered anchors become protected on later accepted steps.
+- `budget_boundary_trust` — deprecated compatibility alias for
+  `budget_survival_trust`.
 - `trajectory_probe` — generate one bounded actor candidate and compare it
   against the source policy in paired closed-loop rollouts, reporting the first
   physical/score/overload divergence per Train anchor.
@@ -56,11 +58,13 @@ Short form:
 .\scripts\run_school.ps1
 ```
 
-Boundary/event-trust school run:
+Survival-trust school run:
 
 ```powershell
-.\scripts\run_school_boundary.ps1
+.\scripts\run_school_survival.ps1
 ```
+
+The older `run_school_boundary.ps1` remains for compatibility.
 
 Generic form:
 
