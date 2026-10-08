@@ -47,6 +47,10 @@ The current stable modes are:
   Safe non-best continuations may cross short valleys, but after
   `budget.max_nonbest_accepts` consecutive non-best accepts the search restarts
   from the selected best and shrinks the action radius once.
+  Best selection is survival-aware: number of SAFE anchors first, then hits,
+  X-Accuracy, fewer TooEarly presses, and fewer keydowns. Therefore a newly
+  recovered anchor cannot be discarded merely because its first recovery loses
+  some hits elsewhere.
 - `budget_boundary_trust` — deprecated compatibility alias for
   `budget_survival_trust`.
 - `trajectory_probe` — generate one bounded actor candidate and compare it
