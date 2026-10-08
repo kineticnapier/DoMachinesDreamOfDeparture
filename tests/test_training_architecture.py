@@ -32,6 +32,10 @@ def test_stable_entrypoint_name_is_not_versioned() -> None:
     root = Path(__file__).resolve().parents[1]
     assert (root / "scripts" / "train_real_chart.py").is_file()
     assert (root / "scripts" / "run_training.ps1").is_file()
+    assert (root / "scripts" / "run_school_survival.ps1").is_file()
+    assert (root / "scripts" / "run_survival_smoke.ps1").is_file()
+    assert (root / "configs" / "training" / "school_survival_8h.toml").is_file()
+    assert (root / "configs" / "training" / "survival_smoke.toml").is_file()
 
 
 def test_dmdod_package_root_stays_small() -> None:
