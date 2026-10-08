@@ -44,6 +44,9 @@ The current stable modes are:
 - `budget_survival_trust` — actor-only DAgger with bounded action updates;
   reject only when an anchor that is SAFE in the current accepted policy becomes
   overloaded. Recovered anchors become protected on later accepted steps.
+  Safe non-best continuations may cross short valleys, but after
+  `budget.max_nonbest_accepts` consecutive non-best accepts the search restarts
+  from the selected best and shrinks the action radius once.
 - `budget_boundary_trust` — deprecated compatibility alias for
   `budget_survival_trust`.
 - `trajectory_probe` — generate one bounded actor candidate and compare it
@@ -69,6 +72,10 @@ Five-trial smoke run:
 ```powershell
 .\scripts\run_survival_smoke.ps1
 ```
+
+While a survival run is active, the current continuation is also written to
+`<output>.progress.pt`. This is a crash-recovery artifact; successful completion
+removes it. The normal output checkpoint always remains the selected best.
 
 The older `run_school_boundary.ps1` remains for compatibility.
 
