@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from dmdod.training.budget import TrustRadiusController
+from dmdod.training.budget import NonBestRestartController, TrustRadiusController
 
 
 def test_reject_tries_floor_exactly_once() -> None:
@@ -36,3 +36,24 @@ def test_safe_growth_never_exceeds_initial_radius() -> None:
     radius.current = 0.008
     assert radius.accept() == 0.01
     assert radius.accept() == 0.01
+
+
+def test_nonbest_restart_controller_restarts_at_limit() -> None:
+    controller = NonBestRestartController.create(limit=3)
+
+    assert not controller.observe(selected_best=False)
+    assert controller.streak == 1
+    assert not controller.observe(selected_best=False)
+    assert controller.streak == 2
+    assert controller.observe(selected_best=False)
+    assert controller.streak == 0
+    assert controller.restarts == 1
+
+
+def test_nonbest_restart_controller_best_resets_streak() -> None:
+    controller = NonBestRestartController.create(limit=2)
+
+    assert not controller.observe(selected_best=False)
+    assert not controller.observe(selected_best=True)
+    assert controller.streak == 0
+    assert controller.restarts == 0
