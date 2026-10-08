@@ -44,7 +44,7 @@ from .trajectory_trust import (
 )
 
 
-TRAINER_VERSION = "2.1.0-configured-trust"
+TRAINER_VERSION = "2.2.0-survival-trust"
 CHECKPOINT_FORMAT_VERSION = 33
 
 
@@ -210,9 +210,21 @@ def _checkpoint_payload(
             "action_trust_selected_step": int(selected_step),
             "action_trust_current_rms": float(current_action_rms),
             "action_trust_history": list(history),
+            "survival_guard_enabled": config.mode in {
+                "budget_survival_trust",
+                "budget_boundary_trust",
+            },
+            "survival_guard_semantics": (
+                "reject-current-safe-anchor-to-overload-v1"
+                if config.mode in {
+                    "budget_survival_trust",
+                    "budget_boundary_trust",
+                }
+                else None
+            ),
             "boundary_trust_enabled": config.mode == "budget_boundary_trust",
             "boundary_trust_semantics": (
-                "preserve-current-safe-anchor-event-topology-v1"
+                "deprecated-alias-of-survival-guard-v1"
                 if config.mode == "budget_boundary_trust"
                 else None
             ),
@@ -286,7 +298,7 @@ def _collect_expert_sequences(
 def run_budget_action_trust(
     config: TrainingConfig,
     *,
-    use_boundary_trust: bool = False,
+    use_survival_guard: bool = False,
 ) -> None:
     prepared = _prepare(config)
     model = prepared.model
@@ -300,7 +312,7 @@ def run_budget_action_trust(
 
     print(
         "=== DMDOD configured budgeted actor "
-        + ("boundary/event trust" if use_boundary_trust else "action-trust")
+        + ("survival trust" if use_survival_guard else "action-trust")
         + " DAgger ==="
     )
     print(
@@ -325,7 +337,7 @@ def run_budget_action_trust(
         "Trainable: actor_mean only. Selection is Train-only; "
         "Validation runs after selection and Final is untouched."
     )
-    if use_boundary_trust:
+    if use_survival_guard:
         print(
             "Survival guard: reject only SAFE->overload on Train anchors. "
             "Hit/X/early/keydown changes are allowed and ranked separately."
@@ -468,9 +480,14 @@ def run_budget_action_trust(
                 physics_dt_s=prepared.physics_dt_s,
                 device=prepared.device,
             )
-            guard = train_survival_guard if use_boundary_trust else train_safety_guard
+            guard = train_survival_guard if use_survival_guard else train_safety_guard
+            guard_reference = (
+                continuation_results
+                if use_survival_guard
+                else safety_reference_results
+            )
             safe, reasons = guard(
-                safety_reference_results,
+                guard_reference,
                 candidate_results,
             )
             selected_best = safe and (
@@ -723,12 +740,18 @@ def run_trajectory_probe(config: TrainingConfig) -> None:
     print(f"trajectory probe report: {prepared.output_checkpoint}")
 
 
+def run_budget_survival_trust(config: TrainingConfig) -> None:
+    run_budget_action_trust(config, use_survival_guard=True)
+
+
 def run_budget_boundary_trust(config: TrainingConfig) -> None:
-    run_budget_action_trust(config, use_boundary_trust=True)
+    """Backward-compatible alias for the survival-only guard mode."""
+    run_budget_survival_trust(config)
 
 
 _RUNNERS = {
     "budget_action_trust": run_budget_action_trust,
+    "budget_survival_trust": run_budget_survival_trust,
     "budget_boundary_trust": run_budget_boundary_trust,
     "trajectory_probe": run_trajectory_probe,
 }
