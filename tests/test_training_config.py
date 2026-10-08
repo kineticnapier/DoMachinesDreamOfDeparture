@@ -85,3 +85,28 @@ min_action_rms = 0.01
         assert "cannot exceed" in str(exc)
     else:
         raise AssertionError("invalid action trust radius order must fail")
+
+
+def test_invalid_nonbest_restart_limit_is_rejected(tmp_path) -> None:
+    path = tmp_path / "bad-restart.toml"
+    path.write_text(
+        """
+mode = "budget_survival_trust"
+
+[run]
+dataset = "x"
+checkpoint = "in.pt"
+output = "out.pt"
+
+[budget]
+max_nonbest_accepts = 0
+""",
+        encoding="utf-8",
+    )
+
+    try:
+        load_training_config(path)
+    except ValueError as exc:
+        assert "max_nonbest_accepts" in str(exc)
+    else:
+        raise AssertionError("zero non-best restart limit must fail")
