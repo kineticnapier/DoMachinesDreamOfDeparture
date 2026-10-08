@@ -80,3 +80,13 @@ def test_stable_runner_registers_boundary_trust_mode() -> None:
     assert "budget_survival_trust" in _RUNNERS
     assert "budget_boundary_trust" in _RUNNERS
     assert "trajectory_probe" in _RUNNERS
+
+
+def test_survival_progress_checkpoint_name() -> None:
+    from pathlib import Path
+
+    from dmdod.training.runner import _progress_checkpoint_path
+
+    assert _progress_checkpoint_path(Path("checkpoints/run.pt")) == Path(
+        "checkpoints/run.progress.pt"
+    )
