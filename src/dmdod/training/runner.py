@@ -46,7 +46,7 @@ from .trajectory_trust import (
 )
 
 
-TRAINER_VERSION = "2.5.0-survival-search"
+TRAINER_VERSION = "2.6.0-survival-search"
 CHECKPOINT_FORMAT_VERSION = 33
 
 
@@ -498,8 +498,6 @@ def run_budget_action_trust(
                 )
                 continue
 
-            candidate_state = clone_model_state(model)
-
             guard_reference = (
                 continuation_results
                 if use_survival_guard
@@ -613,6 +611,7 @@ def run_budget_action_trust(
                 )
                 continue
 
+            candidate_state = clone_model_state(model)
             continuation_state = candidate_state
             continuation_results = candidate_results
             accepted_steps += 1
