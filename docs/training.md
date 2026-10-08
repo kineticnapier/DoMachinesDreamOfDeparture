@@ -51,6 +51,9 @@ The current stable modes are:
   X-Accuracy, fewer TooEarly presses, and fewer keydowns. Therefore a newly
   recovered anchor cannot be discarded merely because its first recovery loses
   some hits elsewhere.
+  Candidate evaluation also stops immediately when a currently SAFE anchor
+  becomes overloaded, avoiding evaluation of the remaining anchors for a
+  candidate that is already guaranteed to be rejected.
 - `budget_boundary_trust` — deprecated compatibility alias for
   `budget_survival_trust`.
 - `trajectory_probe` — generate one bounded actor candidate and compare it
