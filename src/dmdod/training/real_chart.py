@@ -254,6 +254,23 @@ def selection_key(results: list[tuple[object, int]]) -> tuple[float, ...]:
     )
 
 
+def safe_anchor_count(results: list[tuple[object, int]]) -> int:
+    return sum(
+        1
+        for stats, _ in results
+        if not bool(stats.overloaded)
+    )
+
+
+def survival_selection_key(
+    results: list[tuple[object, int]],
+) -> tuple[float, ...]:
+    return (
+        float(safe_anchor_count(results)),
+        *selection_key(results),
+    )
+
+
 def clone_model_state(model) -> dict[str, torch.Tensor]:
     return {
         name: tensor.detach().cpu().clone()
