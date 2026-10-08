@@ -401,6 +401,57 @@ def evaluate_role_continuous(
     return results
 
 
+def evaluate_role_survival_guarded(
+    model,
+    segments: list[NamedSegment],
+    references: list[tuple[object, int]],
+    *,
+    label: str,
+    control_dt_s: float,
+    physics_dt_s: float,
+    device: torch.device,
+) -> tuple[list[tuple[object, int]], bool, tuple[str, ...]]:
+    """Evaluate until a currently SAFE anchor becomes overloaded."""
+
+    if len(segments) != len(references):
+        raise ValueError("survival evaluation reference/segment count mismatch")
+
+    results: list[tuple[object, int]] = []
+    total = len(segments)
+    for index, (named, (reference, _)) in enumerate(
+        zip(segments, references),
+        1,
+    ):
+        stats, keydowns = _evaluate_continuous(
+            model,
+            named,
+            control_dt_s=control_dt_s,
+            physics_dt_s=physics_dt_s,
+            device=device,
+        )
+        results.append((stats, keydowns))
+        print(
+            f"{label} {index:02d}/{total} {named.chart_name}: "
+            f"H={stats.hits}/{stats.targets} "
+            f"X={stats.x_accuracy_percent:.2f}% "
+            f"PP={stats.perfect_rate * 100.0:.1f}% "
+            f"MAE={stats.mean_abs_error_ms if stats.mean_abs_error_ms is not None else float('nan'):.2f}ms "
+            f"early={stats.too_early_presses} "
+            f"over={stats.overloaded} keydowns={keydowns}"
+        )
+
+        if not bool(reference.overloaded) and bool(stats.overloaded):
+            reason = f"anchor {index} safe->overload"
+            print(
+                f"{label} early-reject after {index:02d}/{total}: "
+                f"{reason}; partial={aggregate(results)}"
+            )
+            return results, False, (reason,)
+
+    print(f"{label} aggregate: {aggregate(results)}")
+    return results, True, ()
+
+
 def collect_student_state_sequences(
     model,
     anchors: list[NamedSegment],
