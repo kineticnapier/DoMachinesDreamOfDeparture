@@ -468,10 +468,6 @@ def run_budget_action_trust(
 
             candidate_state = clone_model_state(model)
 
-            boundary_passed = True
-            boundary_reasons: tuple[str, ...] = ()
-            boundary_checked = 0
-
             candidate_results = evaluate_role_continuous(
                 model,
                 prepared.anchors,
@@ -501,9 +497,8 @@ def run_budget_action_trust(
                     "accepted_step": int(accepted_steps),
                     "radius": float(radius.current),
                     **metrics_dict,
-                    "boundary_trust_accepted": bool(boundary_passed),
-                    "boundary_trust_checked_anchors": int(boundary_checked),
-                    "boundary_trust_reasons": tuple(boundary_reasons),
+                    "survival_guard_enabled": bool(use_survival_guard),
+                    "survival_guard_accepted": bool(safe) if use_survival_guard else None,
                     "guard_accepted": bool(safe),
                     "guard_reasons": tuple(reasons),
                     "selected_best_when_evaluated": bool(selected_best),
