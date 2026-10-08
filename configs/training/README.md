@@ -17,7 +17,8 @@ The current schema uses these tables:
 - `[boundary_trust]`: legacy trajectory-boundary diagnostic settings; not used by
   `budget_survival_trust`.
 - `[trajectory_probe]`: standalone divergence-probe candidate radius.
-- `[budget]`: wall-clock budget and adaptive radius policy.
+- `[budget]`: wall-clock budget, adaptive radius policy, and
+  `max_nonbest_accepts` for survival-search restarts.
 
 All values used by a run are copied into the resulting checkpoint metadata as
 `training_config`.
