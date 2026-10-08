@@ -17,7 +17,7 @@ from .action_trust import (
     freeze_actor_only,
     train_actor_action_trust,
 )
-from .budget import TrustRadiusController
+from .budget import NonBestRestartController, TrustRadiusController
 from .config import TrainingConfig
 from .real_chart import (
     aggregate,
@@ -44,7 +44,7 @@ from .trajectory_trust import (
 )
 
 
-TRAINER_VERSION = "2.2.0-survival-trust"
+TRAINER_VERSION = "2.3.0-survival-restart"
 CHECKPOINT_FORMAT_VERSION = 33
 
 
@@ -394,8 +394,9 @@ def run_budget_action_trust(
     history: list[dict] = []
     trial_count = 0
     accepted_steps = 0
-    nonbest_accept_streak = 0
-    restart_count = 0
+    restart = NonBestRestartController.create(
+        limit=budget.max_nonbest_accepts
+    )
     stopped_reason = "time-budget"
     cached = None
     progress_checkpoint = (
@@ -563,7 +564,6 @@ def run_budget_action_trust(
                 best_state = candidate_state
                 best_results = candidate_results
                 best_step = accepted_steps
-                nonbest_accept_streak = 0
                 _save(
                     prepared,
                     config,
@@ -583,15 +583,11 @@ def run_budget_action_trust(
                     f"autosave best: accepted={accepted_steps} "
                     f"trial={trial_count} {prepared.output_checkpoint}"
                 )
-            elif use_survival_guard:
-                nonbest_accept_streak += 1
-
             radius.accept()
 
             restart_to_best = (
                 use_survival_guard
-                and not selected_best
-                and nonbest_accept_streak >= budget.max_nonbest_accepts
+                and restart.observe(selected_best=selected_best)
             )
             if restart_to_best:
                 continuation_state = {
@@ -599,12 +595,10 @@ def run_budget_action_trust(
                     for name, tensor in best_state.items()
                 }
                 continuation_results = best_results
-                restart_count += 1
-                nonbest_accept_streak = 0
                 if not radius.at_floor:
                     radius.reject()
                 history[-1]["continuation_restart"] = True
-                history[-1]["restart_count"] = int(restart_count)
+                history[-1]["restart_count"] = int(restart.restarts)
                 print(
                     f"budget continuation: RESTART best={best_step} "
                     f"after {budget.max_nonbest_accepts} non-best accepts; "
@@ -612,7 +606,7 @@ def run_budget_action_trust(
                 )
             else:
                 history[-1]["continuation_restart"] = False
-                history[-1]["restart_count"] = int(restart_count)
+                history[-1]["restart_count"] = int(restart.restarts)
                 print(
                     f"budget continuation: ACCEPT step={accepted_steps} "
                     f"{aggregate(candidate_results)} "
@@ -696,7 +690,7 @@ def run_budget_action_trust(
         f"stop={stopped_reason} "
         f"elapsed={_format_duration(time.monotonic() - start_time)} "
         f"trials={trial_count} accepted={accepted_steps} "
-        f"restarts={restart_count} selected={best_step}: "
+        f"restarts={restart.restarts} selected={best_step}: "
         f"{aggregate(best_results)}"
     )
 
