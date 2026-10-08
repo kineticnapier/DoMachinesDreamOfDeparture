@@ -29,9 +29,11 @@ from .real_chart import (
     compile_role,
     device_from_arg,
     evaluate_role_continuous,
+    safe_anchor_count,
     save_checkpoint,
     selection_key,
     summarize,
+    survival_selection_key,
     train_safety_guard,
     train_survival_guard,
 )
@@ -44,7 +46,7 @@ from .trajectory_trust import (
 )
 
 
-TRAINER_VERSION = "2.3.0-survival-restart"
+TRAINER_VERSION = "2.4.0-survival-search"
 CHECKPOINT_FORMAT_VERSION = 33
 
 
@@ -225,6 +227,22 @@ def _checkpoint_payload(
                     "budget_boundary_trust",
                 }
                 else None
+            ),
+            "survival_selection_semantics": (
+                "safe-anchor-count-then-hits-x-early-keydowns-v1"
+                if config.mode in {
+                    "budget_survival_trust",
+                    "budget_boundary_trust",
+                }
+                else None
+            ),
+            "survival_restart_limit": int(
+                config.budget.max_nonbest_accepts
+            ),
+            "survival_restart_count": sum(
+                1
+                for item in history
+                if item.get("continuation_restart")
             ),
             "boundary_trust_enabled": config.mode == "budget_boundary_trust",
             "boundary_trust_semantics": (
@@ -500,9 +518,14 @@ def run_budget_action_trust(
                 guard_reference,
                 candidate_results,
             )
+            rank_key = (
+                survival_selection_key
+                if use_survival_guard
+                else selection_key
+            )
             selected_best = safe and (
-                selection_key(candidate_results)
-                > selection_key(best_results)
+                rank_key(candidate_results)
+                > rank_key(best_results)
             )
             summary = summarize(candidate_results)
             history.append(
@@ -535,8 +558,19 @@ def run_budget_action_trust(
                 else "REJECT"
             )
             detail = "" if safe else " " + "; ".join(reasons)
+            survival_detail = ""
+            if use_survival_guard:
+                parent_safe = safe_anchor_count(guard_reference)
+                candidate_safe = safe_anchor_count(candidate_results)
+                recovered = max(0, candidate_safe - parent_safe)
+                survival_detail = (
+                    f" safe-anchors={candidate_safe}/{len(candidate_results)}"
+                    f" recovered={recovered}"
+                )
+                history[-1]["safe_anchor_count"] = int(candidate_safe)
+                history[-1]["recovered_safe_anchors"] = int(recovered)
             print(
-                f"budget guard={status}: "
+                f"budget guard={status}:{survival_detail} "
                 f"{aggregate(candidate_results)}{detail}"
             )
 
