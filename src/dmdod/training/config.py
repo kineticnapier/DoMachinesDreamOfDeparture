@@ -38,6 +38,7 @@ class BudgetConfig:
     max_trials: int = 10_000
     reject_shrink: float = 0.5
     safe_grow: float = 1.25
+    max_nonbest_accepts: int = 3
 
 
 @dataclass(frozen=True, slots=True)
@@ -135,6 +136,7 @@ def load_training_config(path: str | Path) -> TrainingConfig:
         max_trials=int(budget_raw.get("max_trials", 10_000)),
         reject_shrink=float(budget_raw.get("reject_shrink", 0.5)),
         safe_grow=float(budget_raw.get("safe_grow", 1.25)),
+        max_nonbest_accepts=int(budget_raw.get("max_nonbest_accepts", 3)),
     )
 
     probe_raw = _section(raw, "trajectory_probe")
@@ -195,6 +197,8 @@ def _validate(
         raise ValueError("budget.reject_shrink must be in (0, 1)")
     if budget.safe_grow < 1.0:
         raise ValueError("budget.safe_grow must be >= 1")
+    if budget.max_nonbest_accepts <= 0:
+        raise ValueError("budget.max_nonbest_accepts must be positive")
     if trajectory_probe.candidate_action_rms <= 0.0:
         raise ValueError("trajectory_probe.candidate_action_rms must be positive")
     if boundary_trust.mismatch_grace_s < 0.0:
