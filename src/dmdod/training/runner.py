@@ -331,7 +331,8 @@ def run_budget_action_trust(
         f"stay={trust.stay_coef:g} "
         f"action-rms={trust.initial_action_rms:g}->{trust.min_action_rms:g} "
         f"reject-shrink={budget.reject_shrink:g} "
-        f"safe-grow={budget.safe_grow:g}"
+        f"safe-grow={budget.safe_grow:g} "
+        f"nonbest-restart={budget.max_nonbest_accepts}"
     )
     print(
         "Trainable: actor_mean only. Selection is Train-only; "
@@ -388,6 +389,8 @@ def run_budget_action_trust(
     history: list[dict] = []
     trial_count = 0
     accepted_steps = 0
+    nonbest_accept_streak = 0
+    restart_count = 0
     stopped_reason = "time-budget"
     cached = None
 
@@ -550,6 +553,7 @@ def run_budget_action_trust(
                 best_state = candidate_state
                 best_results = candidate_results
                 best_step = accepted_steps
+                nonbest_accept_streak = 0
                 _save(
                     prepared,
                     config,
@@ -569,13 +573,41 @@ def run_budget_action_trust(
                     f"autosave best: accepted={accepted_steps} "
                     f"trial={trial_count} {prepared.output_checkpoint}"
                 )
+            elif use_survival_guard:
+                nonbest_accept_streak += 1
 
             radius.accept()
-            print(
-                f"budget continuation: ACCEPT step={accepted_steps} "
-                f"{aggregate(candidate_results)} "
-                f"next-radius={radius.current:.6g}"
+
+            restart_to_best = (
+                use_survival_guard
+                and not selected_best
+                and nonbest_accept_streak >= budget.max_nonbest_accepts
             )
+            if restart_to_best:
+                continuation_state = {
+                    name: tensor.clone()
+                    for name, tensor in best_state.items()
+                }
+                continuation_results = best_results
+                restart_count += 1
+                nonbest_accept_streak = 0
+                if not radius.at_floor:
+                    radius.reject()
+                history[-1]["continuation_restart"] = True
+                history[-1]["restart_count"] = int(restart_count)
+                print(
+                    f"budget continuation: RESTART best={best_step} "
+                    f"after {budget.max_nonbest_accepts} non-best accepts; "
+                    f"radius={radius.current:.6g}"
+                )
+            else:
+                history[-1]["continuation_restart"] = False
+                history[-1]["restart_count"] = int(restart_count)
+                print(
+                    f"budget continuation: ACCEPT step={accepted_steps} "
+                    f"{aggregate(candidate_results)} "
+                    f"next-radius={radius.current:.6g}"
+                )
 
             del cached
             cached = None
@@ -634,7 +666,8 @@ def run_budget_action_trust(
         f"stop={stopped_reason} "
         f"elapsed={_format_duration(time.monotonic() - start_time)} "
         f"trials={trial_count} accepted={accepted_steps} "
-        f"selected={best_step}: {aggregate(best_results)}"
+        f"restarts={restart_count} selected={best_step}: "
+        f"{aggregate(best_results)}"
     )
 
     print("=== selected checkpoint continuous Validation ===")
