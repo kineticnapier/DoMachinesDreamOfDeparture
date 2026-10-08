@@ -73,6 +73,10 @@ def _format_duration(seconds: float) -> str:
     return f"{hours:02d}:{minutes:02d}:{seconds:02d}"
 
 
+def _progress_checkpoint_path(output: Path) -> Path:
+    return output.with_name(output.stem + ".progress" + output.suffix)
+
+
 def _prepare(config: TrainingConfig) -> PreparedRun:
     device = device_from_arg(config.run.device)
     source_checkpoint = Path(config.run.checkpoint)
@@ -253,25 +257,26 @@ def _save(
     dagger_frames: int,
     student_frame_history: list[int],
     history: list[dict],
+    path: Path | None = None,
+    checkpoint_role: str = "selected-best",
 ) -> None:
-    save_checkpoint(
-        prepared.output_checkpoint,
-        _checkpoint_payload(
-            prepared,
-            config,
-            model_state=model_state,
-            start_time=start_time,
-            trial_count=trial_count,
-            accepted_steps=accepted_steps,
-            selected_step=selected_step,
-            stopped_reason=stopped_reason,
-            current_action_rms=current_action_rms,
-            expert_frames=expert_frames,
-            dagger_frames=dagger_frames,
-            student_frame_history=student_frame_history,
-            history=history,
-        ),
+    payload = _checkpoint_payload(
+        prepared,
+        config,
+        model_state=model_state,
+        start_time=start_time,
+        trial_count=trial_count,
+        accepted_steps=accepted_steps,
+        selected_step=selected_step,
+        stopped_reason=stopped_reason,
+        current_action_rms=current_action_rms,
+        expert_frames=expert_frames,
+        dagger_frames=dagger_frames,
+        student_frame_history=student_frame_history,
+        history=history,
     )
+    payload["checkpoint_role"] = str(checkpoint_role)
+    save_checkpoint(path or prepared.output_checkpoint, payload)
 
 
 def _collect_expert_sequences(
@@ -393,6 +398,11 @@ def run_budget_action_trust(
     restart_count = 0
     stopped_reason = "time-budget"
     cached = None
+    progress_checkpoint = (
+        _progress_checkpoint_path(prepared.output_checkpoint)
+        if use_survival_guard
+        else None
+    )
 
     try:
         while trial_count < budget.max_trials:
@@ -609,6 +619,26 @@ def run_budget_action_trust(
                     f"next-radius={radius.current:.6g}"
                 )
 
+            if progress_checkpoint is not None:
+                _save(
+                    prepared,
+                    config,
+                    model_state=continuation_state,
+                    start_time=start_time,
+                    trial_count=trial_count,
+                    accepted_steps=accepted_steps,
+                    selected_step=best_step,
+                    stopped_reason="running-progress",
+                    current_action_rms=radius.current,
+                    expert_frames=expert_frames,
+                    dagger_frames=dagger_frames,
+                    student_frame_history=student_frame_history,
+                    history=history,
+                    path=progress_checkpoint,
+                    checkpoint_role="continuation-progress",
+                )
+                print(f"autosave progress: {progress_checkpoint}")
+
             del cached
             cached = None
 
@@ -679,6 +709,10 @@ def run_budget_action_trust(
         physics_dt_s=prepared.physics_dt_s,
         device=prepared.device,
     )
+    if progress_checkpoint is not None and progress_checkpoint.exists():
+        progress_checkpoint.unlink()
+        print(f"removed completed progress checkpoint: {progress_checkpoint}")
+
     print(
         f"budget final "
         f"elapsed={_format_duration(time.monotonic() - start_time)} "
