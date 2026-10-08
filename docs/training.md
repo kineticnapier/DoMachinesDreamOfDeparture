@@ -64,6 +64,12 @@ Survival-trust school run:
 .\scripts\run_school_survival.ps1
 ```
 
+Five-trial smoke run:
+
+```powershell
+.\scripts\run_survival_smoke.ps1
+```
+
 The older `run_school_boundary.ps1` remains for compatibility.
 
 Generic form:
