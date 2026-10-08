@@ -4,7 +4,9 @@ from types import SimpleNamespace
 
 from dmdod.training.real_chart import (
     aggregate,
+    safe_anchor_count,
     selection_key,
+    survival_selection_key,
     train_safety_guard,
     train_survival_guard,
 )
@@ -71,3 +73,21 @@ def test_survival_guard_rejects_only_safe_to_overload() -> None:
 
     assert not safe
     assert reasons == ("anchor 1 safe->overload",)
+
+
+def test_survival_selection_prioritizes_safe_anchor_recovery() -> None:
+    baseline = [
+        (_stats(hits=90, overloaded=False), 100),
+        (_stats(hits=90, overloaded=True), 100),
+    ]
+    recovered_with_fewer_hits = [
+        (_stats(hits=70, overloaded=False), 80),
+        (_stats(hits=1, overloaded=False), 2),
+    ]
+
+    assert safe_anchor_count(baseline) == 1
+    assert safe_anchor_count(recovered_with_fewer_hits) == 2
+    assert (
+        survival_selection_key(recovered_with_fewer_hits)
+        > survival_selection_key(baseline)
+    )
