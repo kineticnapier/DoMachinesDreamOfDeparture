@@ -33,6 +33,7 @@ reserve_minutes = 5
 max_trials = 99
 reject_shrink = 0.5
 safe_grow = 1.25
+max_nonbest_accepts = 4
 
 [trajectory_probe]
 candidate_action_rms = 0.000025
@@ -54,6 +55,7 @@ mismatch_grace_s = 0.030
     assert config.action_trust.min_action_rms == 1e-6
     assert config.budget.hours == 2.0
     assert config.budget.max_trials == 99
+    assert config.budget.max_nonbest_accepts == 4
     assert config.trajectory_probe.candidate_action_rms == 2.5e-5
     assert config.boundary_trust.preserve_safe_only is True
     assert config.boundary_trust.mismatch_grace_s == 0.03
