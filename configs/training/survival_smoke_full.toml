@@ -1,0 +1,29 @@
+mode = "budget_survival_trust"
+
+[run]
+dataset = "data/DMDOD-v140-tuf-p11-p20"
+checkpoint = "checkpoints/real_chart_v191_fly4096_school8h.pt"
+output = "checkpoints/real_chart_survivaltrust_smoke_full.pt"
+device = "cuda"
+
+[data]
+anchor_limit = 20
+validation_limit = 4
+chunk_steps = 192
+
+[action_trust]
+actor_steps = 8
+lr = 0.0003
+stay_coef = 20.0
+initial_action_rms = 0.0001
+min_action_rms = 0.00000001
+lr_backoffs = 18
+min_lr = 0.0000000001
+
+[budget]
+hours = 0.25
+reserve_minutes = 1.0
+max_trials = 5
+reject_shrink = 0.5
+safe_grow = 1.25
+max_nonbest_accepts = 2
