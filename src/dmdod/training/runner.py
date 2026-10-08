@@ -29,6 +29,7 @@ from .real_chart import (
     compile_role,
     device_from_arg,
     evaluate_role_continuous,
+    evaluate_role_survival_guarded,
     safe_anchor_count,
     save_checkpoint,
     selection_key,
@@ -500,24 +501,36 @@ def run_budget_action_trust(
 
             candidate_state = clone_model_state(model)
 
-            candidate_results = evaluate_role_continuous(
-                model,
-                prepared.anchors,
-                label=f"budget-{trial_count:04d}",
-                control_dt_s=prepared.control_dt_s,
-                physics_dt_s=prepared.physics_dt_s,
-                device=prepared.device,
-            )
-            guard = train_survival_guard if use_survival_guard else train_safety_guard
             guard_reference = (
                 continuation_results
                 if use_survival_guard
                 else safety_reference_results
             )
-            safe, reasons = guard(
-                guard_reference,
-                candidate_results,
-            )
+            if use_survival_guard:
+                candidate_results, safe, reasons = (
+                    evaluate_role_survival_guarded(
+                        model,
+                        prepared.anchors,
+                        guard_reference,
+                        label=f"budget-{trial_count:04d}",
+                        control_dt_s=prepared.control_dt_s,
+                        physics_dt_s=prepared.physics_dt_s,
+                        device=prepared.device,
+                    )
+                )
+            else:
+                candidate_results = evaluate_role_continuous(
+                    model,
+                    prepared.anchors,
+                    label=f"budget-{trial_count:04d}",
+                    control_dt_s=prepared.control_dt_s,
+                    physics_dt_s=prepared.physics_dt_s,
+                    device=prepared.device,
+                )
+                safe, reasons = train_safety_guard(
+                    guard_reference,
+                    candidate_results,
+                )
             rank_key = (
                 survival_selection_key
                 if use_survival_guard
@@ -539,6 +552,9 @@ def run_budget_action_trust(
                     "guard_accepted": bool(safe),
                     "guard_reasons": tuple(reasons),
                     "selected_best_when_evaluated": bool(selected_best),
+                    "evaluation_complete": bool(
+                        len(candidate_results) == len(prepared.anchors)
+                    ),
                     "hits": int(summary.hits),
                     "targets": int(summary.targets),
                     "x_accuracy_percent": float(
@@ -561,7 +577,11 @@ def run_budget_action_trust(
             survival_detail = ""
             if use_survival_guard:
                 parent_safe = safe_anchor_count(guard_reference)
-                candidate_safe = safe_anchor_count(candidate_results)
+                candidate_safe = (
+                    safe_anchor_count(candidate_results)
+                    if safe
+                    else parent_safe
+                )
                 recovered = max(0, candidate_safe - parent_safe)
                 survival_detail = (
                     f" safe-anchors={candidate_safe}/{len(candidate_results)}"
