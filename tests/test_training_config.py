@@ -46,6 +46,14 @@ mismatch_grace_s = 0.030
 updates_per_trial = 16
 lr = 0.0002
 min_lr = 0.000002
+controller_lr = 0.00003
+updates_per_epoch = 12
+burn_in_steps = 64
+supervised_steps = 128
+anchors_per_batch = 3
+progression_streak = 2
+catastrophic_patience = 2
+max_epochs = 7
 weight_decay = 0.0001
 grad_clip = 1.5
 seed = 99
@@ -70,6 +78,14 @@ seed = 99
     assert config.human_visible.updates_per_trial == 16
     assert config.human_visible.lr == 2e-4
     assert config.human_visible.min_lr == 2e-6
+    assert config.human_visible.controller_lr == 3e-5
+    assert config.human_visible.updates_per_epoch == 12
+    assert config.human_visible.burn_in_steps == 64
+    assert config.human_visible.supervised_steps == 128
+    assert config.human_visible.anchors_per_batch == 3
+    assert config.human_visible.progression_streak == 2
+    assert config.human_visible.catastrophic_patience == 2
+    assert config.human_visible.max_epochs == 7
     assert config.human_visible.grad_clip == 1.5
     assert config.human_visible.seed == 99
 
