@@ -179,7 +179,14 @@ def decision_context_masks(
     multi_press = press.sum(dim=1) >= 2
 
     high_speed = torch.zeros_like(press_due)
-    event_indices = torch.nonzero(press_due, as_tuple=False).flatten()
+    # A teacher press can persist for several control frames while the motor is
+    # moving. Treat only press onsets as distinct rhythm events, otherwise a
+    # single sustained command would be mislabeled as a high-speed pattern.
+    previous_press = torch.zeros_like(press_due)
+    if press_due.numel() > 1:
+        previous_press[1:] = press_due[:-1]
+    press_onset = press_due & ~previous_press
+    event_indices = torch.nonzero(press_onset, as_tuple=False).flatten()
     max_gap_steps = max(1, int(round(0.100 / float(control_dt_s))))
     if event_indices.numel() >= 2:
         gaps = event_indices[1:] - event_indices[:-1]
@@ -694,6 +701,11 @@ def run_human_visible_curriculum(
     *,
     format_duration,
 ) -> None:
+    if not prepared.validation:
+        raise SystemExit(
+            "human_visible_curriculum_dagger requires at least one Validation segment"
+        )
+
     model = prepared.model
     visible = config.human_visible
     budget = config.budget
