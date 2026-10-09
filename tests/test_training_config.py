@@ -41,6 +41,14 @@ candidate_action_rms = 0.000025
 [boundary_trust]
 preserve_safe_only = true
 mismatch_grace_s = 0.030
+
+[human_visible]
+updates_per_trial = 16
+lr = 0.0002
+min_lr = 0.000002
+weight_decay = 0.0001
+grad_clip = 1.5
+seed = 99
 """,
         encoding="utf-8",
     )
@@ -59,6 +67,11 @@ mismatch_grace_s = 0.030
     assert config.trajectory_probe.candidate_action_rms == 2.5e-5
     assert config.boundary_trust.preserve_safe_only is True
     assert config.boundary_trust.mismatch_grace_s == 0.03
+    assert config.human_visible.updates_per_trial == 16
+    assert config.human_visible.lr == 2e-4
+    assert config.human_visible.min_lr == 2e-6
+    assert config.human_visible.grad_clip == 1.5
+    assert config.human_visible.seed == 99
 
 
 def test_invalid_radius_order_is_rejected(tmp_path) -> None:
@@ -110,3 +123,29 @@ max_nonbest_accepts = 0
         assert "max_nonbest_accepts" in str(exc)
     else:
         raise AssertionError("zero non-best restart limit must fail")
+
+
+def test_invalid_human_visible_lr_order_is_rejected(tmp_path) -> None:
+    path = tmp_path / "bad-visible.toml"
+    path.write_text(
+        """
+mode = "human_visible_dagger"
+
+[run]
+dataset = "x"
+checkpoint = "in.pt"
+output = "out.pt"
+
+[human_visible]
+lr = 0.000001
+min_lr = 0.00001
+""",
+        encoding="utf-8",
+    )
+
+    try:
+        load_training_config(path)
+    except ValueError as exc:
+        assert "human_visible.min_lr" in str(exc)
+    else:
+        raise AssertionError("invalid human-visible learning-rate order must fail")
