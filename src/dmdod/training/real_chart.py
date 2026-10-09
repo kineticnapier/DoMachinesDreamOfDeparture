@@ -336,6 +336,18 @@ def build_connectome_policy_from_checkpoint(
             controller_hidden_dim=int(
                 checkpoint.get("human_visible_controller_hidden_dim", 128)
             ),
+            connectome_context_dim=int(
+                checkpoint.get("human_visible_connectome_context_dim", 64)
+            ),
+            floor_context_dim=int(
+                checkpoint.get("human_visible_floor_context_dim", 64)
+            ),
+            motor_context_dim=int(
+                checkpoint.get("human_visible_motor_context_dim", 48)
+            ),
+            hud_context_dim=int(
+                checkpoint.get("human_visible_hud_context_dim", 24)
+            ),
         )
 
     model = model.to(device)
