@@ -12,17 +12,17 @@ validation_limit = 1
 chunk_steps = 96
 
 [human_visible]
-updates_per_trial = 4
-lr = 0.0001
+updates_per_trial = 2
+lr = 0.00005
 min_lr = 0.000001
 weight_decay = 0.0001
 grad_clip = 1.0
 seed = 2401
 
 [budget]
-hours = 0.10
+hours = 0.15
 reserve_minutes = 0.5
-max_trials = 2
+max_trials = 6
 reject_shrink = 0.5
 safe_grow = 1.25
 max_nonbest_accepts = 2
