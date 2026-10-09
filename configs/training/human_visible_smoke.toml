@@ -1,4 +1,4 @@
-mode = "human_visible_dagger"
+mode = "human_visible_curriculum_dagger"
 
 [run]
 dataset = "data/DMDOD-v140-tuf-p11-p20"
@@ -8,13 +8,21 @@ device = "cuda"
 
 [data]
 anchor_limit = 6
-validation_limit = 1
+validation_limit = 3
 chunk_steps = 96
 
 [human_visible]
 updates_per_trial = 2
 lr = 0.00005
 min_lr = 0.000001
+controller_lr = 0.00003
+updates_per_epoch = 8
+burn_in_steps = 64
+supervised_steps = 96
+anchors_per_batch = 4
+progression_streak = 2
+catastrophic_patience = 2
+max_epochs = 3
 weight_decay = 0.0001
 grad_clip = 1.0
 seed = 2401
