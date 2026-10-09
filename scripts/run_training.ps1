@@ -64,6 +64,7 @@ try {
             "tests/test_training_architecture.py",
             "tests/test_fly_connectome_policy.py",
             "tests/test_human_visible_policy.py",
+            "tests/test_human_visible_curriculum.py",
             "tests/test_fly_connectome_cuda_no_grad_runtime.py",
             "-q"
         )
