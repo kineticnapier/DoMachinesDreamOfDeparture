@@ -860,6 +860,377 @@ def run_budget_action_trust(
 
 
 
+def run_human_visible_dagger(config: TrainingConfig) -> None:
+    """Train the relaxed human-visible residual controller with guarded DAgger."""
+
+    prepared = _prepare(config)
+    model = prepared.model
+    visible = config.human_visible
+    budget = config.budget
+
+    total_budget_s = budget.hours * 3600.0
+    reserve_s = budget.reserve_minutes * 60.0
+    train_budget_s = total_budget_s - reserve_s
+    start_time = time.monotonic()
+
+    print("=== DMDOD human-visible residual controller DAgger ===")
+    print(
+        f"source={prepared.source_checkpoint} "
+        f"output={prepared.output_checkpoint} "
+        f"round={prepared.round_index} backend={model.backend_name} "
+        f"keys={prepared.key_count} input={prepared.input_dim}D "
+        f"device={prepared.device}"
+    )
+    print("key-order: " + ",".join(n_key_names(prepared.key_count)))
+    print(
+        f"budget={budget.hours:g}h reserve={budget.reserve_minutes:g}m "
+        f"anchors={len(prepared.anchors)} validation={len(prepared.validation)} "
+        f"updates/trial={visible.updates_per_trial} "
+        f"lr={visible.lr:g}->{visible.min_lr:g} "
+        f"weight-decay={visible.weight_decay:g} grad-clip={visible.grad_clip:g} "
+        f"nonbest-restart={budget.max_nonbest_accepts}"
+    )
+    print(
+        "Information contract: existing human-visible 263D only; direct floor/motor/HUD "
+        "paths plus controller memory are trainable. Parent sensory/connectome/actor stay fixed."
+    )
+    print(
+        "Safety: reject only current SAFE->overload on Train anchors. "
+        "No action-RMS trust radius."
+    )
+
+    print("=== pre-train continuous Train / exact residual warm start ===")
+    initial_results = evaluate_role_continuous(
+        model,
+        prepared.anchors,
+        label="pre-train",
+        control_dt_s=prepared.control_dt_s,
+        physics_dt_s=prepared.physics_dt_s,
+        device=prepared.device,
+    )
+    continuation_results = initial_results
+    continuation_state = clone_model_state(model)
+    best_results = initial_results
+    best_state = continuation_state
+    best_step = 0
+
+    expert_sequences, expert_frames = _collect_expert_sequences(prepared)
+    dagger_sequences, dagger_frames = collect_student_state_sequences(
+        model,
+        prepared.anchors,
+        round_index=prepared.round_index,
+        collection_index=0,
+        lead_s=prepared.lead_s,
+        control_dt_s=prepared.control_dt_s,
+        physics_dt_s=prepared.physics_dt_s,
+        device=prepared.device,
+    )
+    student_frame_history = [dagger_frames]
+    training_sequences = [*expert_sequences, *dagger_sequences]
+    print(
+        f"aggregate-data generation=0 expert={expert_frames} "
+        f"student-state={dagger_frames} total={expert_frames + dagger_frames} frames"
+    )
+
+    history: list[dict] = []
+    trial_count = 0
+    accepted_steps = 0
+    current_lr = float(visible.lr)
+    restart = NonBestRestartController.create(
+        limit=budget.max_nonbest_accepts
+    )
+    replay_chunks = None
+    stopped_reason = "time-budget"
+    progress_checkpoint = _progress_checkpoint_path(prepared.output_checkpoint)
+
+    try:
+        while trial_count < budget.max_trials:
+            elapsed = time.monotonic() - start_time
+            remaining_train = train_budget_s - elapsed
+            if remaining_train <= 0.0:
+                stopped_reason = "time-budget"
+                break
+
+            model.load_state_dict(continuation_state)
+            model.prepare_recurrent_runtime()
+            freeze_human_visible_controller(model)
+
+            if replay_chunks is None:
+                print(
+                    f"replay-cache: build generation={accepted_steps} "
+                    f"remaining={_format_duration(remaining_train)}"
+                )
+                replay_chunks = build_human_visible_replay_chunks(
+                    model,
+                    training_sequences,
+                    chunk_steps=prepared.chunk_steps,
+                )
+                print(
+                    f"replay-cache: chunks={len(replay_chunks)} "
+                    f"chunk-steps={prepared.chunk_steps}"
+                )
+
+            trial_count += 1
+            model.load_state_dict(continuation_state)
+            model.prepare_recurrent_runtime()
+            trainable = freeze_human_visible_controller(model)
+            optimizer = torch.optim.AdamW(
+                trainable,
+                lr=current_lr,
+                weight_decay=visible.weight_decay,
+            )
+
+            print(
+                f"=== human-visible trial {trial_count} accepted={accepted_steps} "
+                f"lr={current_lr:.6g} "
+                f"elapsed={_format_duration(time.monotonic() - start_time)} "
+                f"remaining={_format_duration(train_budget_s - (time.monotonic() - start_time))} ==="
+            )
+            metrics = train_human_visible_replay(
+                model,
+                replay_chunks,
+                optimizer=optimizer,
+                updates=visible.updates_per_trial,
+                grad_clip=visible.grad_clip,
+                seed=visible.seed + trial_count,
+            )
+            print(
+                f"  train: updates={metrics.updates} "
+                f"loss={metrics.mean_loss:.6f}->{metrics.final_loss:.6f} "
+                f"grad={metrics.mean_grad_norm:.6g} max={metrics.max_grad_norm:.6g}"
+            )
+
+            candidate_results, safe, reasons = evaluate_role_survival_guarded(
+                model,
+                prepared.anchors,
+                continuation_results,
+                label=f"visible-{trial_count:04d}",
+                control_dt_s=prepared.control_dt_s,
+                physics_dt_s=prepared.physics_dt_s,
+                device=prepared.device,
+            )
+            selected_best = safe and (
+                survival_selection_key(candidate_results)
+                > survival_selection_key(best_results)
+            )
+            summary = summarize(candidate_results)
+            parent_safe = safe_anchor_count(continuation_results)
+            candidate_safe = (
+                safe_anchor_count(candidate_results)
+                if safe
+                else None
+            )
+            recovered = (
+                max(0, int(candidate_safe) - parent_safe)
+                if candidate_safe is not None
+                else 0
+            )
+            history.append(
+                {
+                    "trial": int(trial_count),
+                    "accepted_step": int(accepted_steps),
+                    "lr": float(current_lr),
+                    **metrics.as_dict(),
+                    "guard_accepted": bool(safe),
+                    "guard_reasons": tuple(reasons),
+                    "selected_best_when_evaluated": bool(selected_best),
+                    "evaluation_complete": bool(
+                        len(candidate_results) == len(prepared.anchors)
+                    ),
+                    "safe_anchor_count": (
+                        int(candidate_safe)
+                        if candidate_safe is not None
+                        else None
+                    ),
+                    "recovered_safe_anchors": int(recovered),
+                    "hits": int(summary.hits),
+                    "targets": int(summary.targets),
+                    "x_accuracy_percent": float(summary.x_accuracy_percent),
+                    "early": int(summary.early),
+                    "overloaded": bool(summary.overloaded),
+                    "keydowns": int(summary.keydowns),
+                }
+            )
+
+            if not safe:
+                model.load_state_dict(continuation_state)
+                model.prepare_recurrent_runtime()
+                current_lr = max(
+                    float(visible.min_lr),
+                    current_lr * float(budget.reject_shrink),
+                )
+                history[-1]["continuation_restart"] = False
+                history[-1]["restart_count"] = int(restart.restarts)
+                print(
+                    f"human-visible guard=REJECT protected-death=1 "
+                    f"parent-safe={parent_safe}/{len(prepared.anchors)} "
+                    f"{aggregate(candidate_results)} "
+                    + "; ".join(reasons)
+                )
+                print(
+                    f"human-visible retry: rollback accepted={accepted_steps}; "
+                    f"lr -> {current_lr:.6g}"
+                )
+                continue
+
+            print(
+                f"human-visible guard={'SAFE+BEST' if selected_best else 'SAFE'} "
+                f"safe-anchors={candidate_safe}/{len(prepared.anchors)} "
+                f"recovered={recovered} {aggregate(candidate_results)}"
+            )
+            candidate_state = clone_model_state(model)
+            continuation_state = candidate_state
+            continuation_results = candidate_results
+            accepted_steps += 1
+
+            if selected_best:
+                best_state = candidate_state
+                best_results = candidate_results
+                best_step = accepted_steps
+                _save_human_visible(
+                    prepared,
+                    config,
+                    model_state=best_state,
+                    start_time=start_time,
+                    trial_count=trial_count,
+                    accepted_steps=accepted_steps,
+                    selected_step=best_step,
+                    stopped_reason="running",
+                    current_lr=current_lr,
+                    expert_frames=expert_frames,
+                    dagger_frames=dagger_frames,
+                    student_frame_history=student_frame_history,
+                    history=history,
+                )
+                print(
+                    f"autosave best: accepted={accepted_steps} "
+                    f"trial={trial_count} {prepared.output_checkpoint}"
+                )
+
+            current_lr = min(
+                float(visible.lr),
+                current_lr * float(budget.safe_grow),
+            )
+            restart_to_best = restart.observe(selected_best=selected_best)
+            if restart_to_best:
+                continuation_state = {
+                    name: tensor.clone()
+                    for name, tensor in best_state.items()
+                }
+                continuation_results = best_results
+                current_lr = max(
+                    float(visible.min_lr),
+                    current_lr * float(budget.reject_shrink),
+                )
+                history[-1]["continuation_restart"] = True
+                history[-1]["restart_count"] = int(restart.restarts)
+                print(
+                    f"human-visible continuation: RESTART best={best_step} "
+                    f"after {budget.max_nonbest_accepts} non-best accepts; "
+                    f"lr={current_lr:.6g}"
+                )
+            else:
+                history[-1]["continuation_restart"] = False
+                history[-1]["restart_count"] = int(restart.restarts)
+                print(
+                    f"human-visible continuation: ACCEPT step={accepted_steps} "
+                    f"next-lr={current_lr:.6g}"
+                )
+
+            _save_human_visible(
+                prepared,
+                config,
+                model_state=continuation_state,
+                start_time=start_time,
+                trial_count=trial_count,
+                accepted_steps=accepted_steps,
+                selected_step=best_step,
+                stopped_reason="running-progress",
+                current_lr=current_lr,
+                expert_frames=expert_frames,
+                dagger_frames=dagger_frames,
+                student_frame_history=student_frame_history,
+                history=history,
+                path=progress_checkpoint,
+                checkpoint_role="continuation-progress",
+            )
+            print(f"autosave progress: {progress_checkpoint}")
+
+            if time.monotonic() - start_time >= train_budget_s:
+                stopped_reason = "time-budget"
+                break
+
+            model.load_state_dict(continuation_state)
+            model.prepare_recurrent_runtime()
+            dagger_sequences, dagger_frames = collect_student_state_sequences(
+                model,
+                prepared.anchors,
+                round_index=prepared.round_index,
+                collection_index=accepted_steps,
+                lead_s=prepared.lead_s,
+                control_dt_s=prepared.control_dt_s,
+                physics_dt_s=prepared.physics_dt_s,
+                device=prepared.device,
+            )
+            student_frame_history.append(dagger_frames)
+            training_sequences = [*expert_sequences, *dagger_sequences]
+            replay_chunks = None
+            print(
+                f"aggregate-data generation={accepted_steps} "
+                f"expert={expert_frames} student-state={dagger_frames} "
+                f"total={expert_frames + dagger_frames} frames"
+            )
+        else:
+            stopped_reason = "max-trials"
+    finally:
+        replay_chunks = None
+
+    model.load_state_dict(best_state)
+    model.prepare_recurrent_runtime()
+    freeze_human_visible_controller(model)
+    _save_human_visible(
+        prepared,
+        config,
+        model_state=best_state,
+        start_time=start_time,
+        trial_count=trial_count,
+        accepted_steps=accepted_steps,
+        selected_step=best_step,
+        stopped_reason=stopped_reason,
+        current_lr=current_lr,
+        expert_frames=expert_frames,
+        dagger_frames=dagger_frames,
+        student_frame_history=student_frame_history,
+        history=history,
+    )
+
+    print("=== selected human-visible Train-safe checkpoint ===")
+    print(
+        f"stop={stopped_reason} "
+        f"elapsed={_format_duration(time.monotonic() - start_time)} "
+        f"trials={trial_count} accepted={accepted_steps} "
+        f"restarts={restart.restarts} selected={best_step}: "
+        f"{aggregate(best_results)}"
+    )
+    print("=== selected checkpoint continuous Validation ===")
+    evaluate_role_continuous(
+        model,
+        prepared.validation,
+        label="validation",
+        control_dt_s=prepared.control_dt_s,
+        physics_dt_s=prepared.physics_dt_s,
+        device=prepared.device,
+    )
+    if progress_checkpoint.exists():
+        progress_checkpoint.unlink()
+        print(f"removed completed progress checkpoint: {progress_checkpoint}")
+    print(
+        f"human-visible final elapsed="
+        f"{_format_duration(time.monotonic() - start_time)} "
+        f"checkpoint={prepared.output_checkpoint}"
+    )
+
+
 def run_trajectory_probe(config: TrainingConfig) -> None:
     prepared = _prepare(config)
     baseline_model = prepared.model
@@ -951,6 +1322,7 @@ def run_budget_boundary_trust(config: TrainingConfig) -> None:
 
 
 _RUNNERS = {
+    "human_visible_dagger": run_human_visible_dagger,
     "budget_action_trust": run_budget_action_trust,
     "budget_survival_trust": run_budget_survival_trust,
     "budget_boundary_trust": run_budget_boundary_trust,
