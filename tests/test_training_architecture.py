@@ -34,8 +34,12 @@ def test_stable_entrypoint_name_is_not_versioned() -> None:
     assert (root / "scripts" / "run_training.ps1").is_file()
     assert (root / "scripts" / "run_school_survival.ps1").is_file()
     assert (root / "scripts" / "run_survival_smoke.ps1").is_file()
+    assert (root / "scripts" / "run_human_visible_smoke.ps1").is_file()
+    assert (root / "scripts" / "run_school_human_visible.ps1").is_file()
     assert (root / "configs" / "training" / "school_survival_8h.toml").is_file()
     assert (root / "configs" / "training" / "survival_smoke.toml").is_file()
+    assert (root / "configs" / "training" / "human_visible_smoke.toml").is_file()
+    assert (root / "configs" / "training" / "school_human_visible_8h.toml").is_file()
 
 
 def test_dmdod_package_root_stays_small() -> None:
@@ -76,6 +80,7 @@ def test_legacy_flat_module_imports_alias_structured_modules() -> None:
 def test_stable_runner_registers_boundary_trust_mode() -> None:
     from dmdod.training.runner import _RUNNERS
 
+    assert "human_visible_dagger" in _RUNNERS
     assert "budget_action_trust" in _RUNNERS
     assert "budget_survival_trust" in _RUNNERS
     assert "budget_boundary_trust" in _RUNNERS
