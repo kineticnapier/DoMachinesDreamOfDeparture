@@ -19,10 +19,17 @@ from .action_trust import (
 )
 from .budget import NonBestRestartController, TrustRadiusController
 from .config import TrainingConfig
+from .human_visible import (
+    build_human_visible_replay_chunks,
+    freeze_human_visible_controller,
+    human_visible_parameter_names,
+    train_human_visible_replay,
+)
 from .real_chart import (
     aggregate,
     build_anchor_segments,
     build_connectome_policy_from_checkpoint,
+    build_human_visible_policy_from_parent_checkpoint,
     build_validation_segments,
     clone_model_state,
     collect_student_state_sequences,
@@ -98,11 +105,18 @@ def _prepare(config: TrainingConfig) -> PreparedRun:
             f"{key_count}K expected {expected_input}"
         )
 
-    model = build_connectome_policy_from_checkpoint(
-        parent,
-        device=device,
-    )
-    freeze_actor_only(model)
+    if config.mode == "human_visible_dagger":
+        model = build_human_visible_policy_from_parent_checkpoint(
+            parent,
+            device=device,
+        )
+        freeze_human_visible_controller(model)
+    else:
+        model = build_connectome_policy_from_checkpoint(
+            parent,
+            device=device,
+        )
+        freeze_actor_only(model)
 
     calibration = parent.get("calibration") or {}
     if "lead_s" not in calibration:
