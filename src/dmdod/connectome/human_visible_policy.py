@@ -94,6 +94,10 @@ class NKeyHumanVisibleControllerActorCritic(NKeyFlyConnectomeActorCritic):
 
         self.connectome_hidden_dim = int(self.hidden_dim)
         self.controller_hidden_dim = int(controller_hidden_dim)
+        self.connectome_context_dim = int(connectome_context_dim)
+        self.floor_context_dim = int(floor_context_dim)
+        self.motor_context_dim = int(motor_context_dim)
+        self.hud_context_dim = int(hud_context_dim)
         self.policy_state_dim = self.connectome_hidden_dim + self.controller_hidden_dim
 
         self.floor_slots = int(DEFAULT_REAL_CHART_FEATURE_CONFIG.floor_slots)
@@ -115,7 +119,7 @@ class NKeyHumanVisibleControllerActorCritic(NKeyFlyConnectomeActorCritic):
             )
 
         self.connectome_context = nn.Sequential(
-            nn.Linear(self.connectome_hidden_dim, int(connectome_context_dim)),
+            nn.Linear(self.connectome_hidden_dim, self.connectome_context_dim),
             nn.Tanh(),
         )
         self.floor_encoder = nn.Sequential(
@@ -124,26 +128,26 @@ class NKeyHumanVisibleControllerActorCritic(NKeyFlyConnectomeActorCritic):
             nn.Conv1d(32, 32, kernel_size=3, padding=1),
             nn.GELU(),
             nn.Flatten(),
-            nn.Linear(32 * self.floor_slots, int(floor_context_dim)),
+            nn.Linear(32 * self.floor_slots, self.floor_context_dim),
             nn.GELU(),
         )
         self.motor_encoder = nn.Sequential(
             nn.Linear(
                 self.motor_feature_dim + self.orbit_feature_dim,
-                int(motor_context_dim),
+                self.motor_context_dim,
             ),
             nn.GELU(),
         )
         self.hud_encoder = nn.Sequential(
-            nn.Linear(self.hud_feature_dim, int(hud_context_dim)),
+            nn.Linear(self.hud_feature_dim, self.hud_context_dim),
             nn.GELU(),
         )
 
         controller_input_dim = (
-            int(connectome_context_dim)
-            + int(floor_context_dim)
-            + int(motor_context_dim)
-            + int(hud_context_dim)
+            self.connectome_context_dim
+            + self.floor_context_dim
+            + self.motor_context_dim
+            + self.hud_context_dim
         )
         self.controller = nn.GRUCell(controller_input_dim, self.controller_hidden_dim)
         self.controller_post = nn.Sequential(
@@ -362,6 +366,10 @@ class NKeyHumanVisibleControllerActorCritic(NKeyFlyConnectomeActorCritic):
                 "n_key_policy_version": self.policy_version,
                 "human_visible_controller_state_dim": self.policy_state_dim,
                 "human_visible_controller_hidden_dim": self.controller_hidden_dim,
+                "human_visible_connectome_context_dim": self.connectome_context_dim,
+                "human_visible_floor_context_dim": self.floor_context_dim,
+                "human_visible_motor_context_dim": self.motor_context_dim,
+                "human_visible_hud_context_dim": self.hud_context_dim,
                 "human_visible_floor_slots": self.floor_slots,
                 "human_visible_floor_feature_dim": self.floor_feature_dim,
                 "human_visible_motor_feature_dim": self.motor_feature_dim,
