@@ -431,6 +431,7 @@ def evaluate_role_continuous(
     control_dt_s: float,
     physics_dt_s: float,
     device: torch.device,
+    verbose: bool = True,
 ) -> list[tuple[object, int]]:
     results: list[tuple[object, int]] = []
     total = len(segments)
@@ -443,15 +444,16 @@ def evaluate_role_continuous(
             device=device,
         )
         results.append((stats, keydowns))
-        print(
-            f"{label} {index:02d}/{total} {named.chart_name}: "
-            f"H={stats.hits}/{stats.targets} "
-            f"X={stats.x_accuracy_percent:.2f}% "
-            f"PP={stats.perfect_rate * 100.0:.1f}% "
-            f"MAE={stats.mean_abs_error_ms if stats.mean_abs_error_ms is not None else float('nan'):.2f}ms "
-            f"early={stats.too_early_presses} "
-            f"over={stats.overloaded} keydowns={keydowns}"
-        )
+        if verbose:
+            print(
+                f"{label} {index:02d}/{total} {named.chart_name}: "
+                f"H={stats.hits}/{stats.targets} "
+                f"X={stats.x_accuracy_percent:.2f}% "
+                f"PP={stats.perfect_rate * 100.0:.1f}% "
+                f"MAE={stats.mean_abs_error_ms if stats.mean_abs_error_ms is not None else float('nan'):.2f}ms "
+                f"early={stats.too_early_presses} "
+                f"over={stats.overloaded} keydowns={keydowns}"
+            )
     print(f"{label} aggregate: {aggregate(results)}")
     return results
 
@@ -465,6 +467,7 @@ def evaluate_role_survival_guarded(
     control_dt_s: float,
     physics_dt_s: float,
     device: torch.device,
+    verbose: bool = True,
 ) -> tuple[list[tuple[object, int]], bool, tuple[str, ...]]:
     """Evaluate until a currently SAFE anchor becomes overloaded."""
 
@@ -485,15 +488,16 @@ def evaluate_role_survival_guarded(
             device=device,
         )
         results.append((stats, keydowns))
-        print(
-            f"{label} {index:02d}/{total} {named.chart_name}: "
-            f"H={stats.hits}/{stats.targets} "
-            f"X={stats.x_accuracy_percent:.2f}% "
-            f"PP={stats.perfect_rate * 100.0:.1f}% "
-            f"MAE={stats.mean_abs_error_ms if stats.mean_abs_error_ms is not None else float('nan'):.2f}ms "
-            f"early={stats.too_early_presses} "
-            f"over={stats.overloaded} keydowns={keydowns}"
-        )
+        if verbose:
+            print(
+                f"{label} {index:02d}/{total} {named.chart_name}: "
+                f"H={stats.hits}/{stats.targets} "
+                f"X={stats.x_accuracy_percent:.2f}% "
+                f"PP={stats.perfect_rate * 100.0:.1f}% "
+                f"MAE={stats.mean_abs_error_ms if stats.mean_abs_error_ms is not None else float('nan'):.2f}ms "
+                f"early={stats.too_early_presses} "
+                f"over={stats.overloaded} keydowns={keydowns}"
+            )
 
         if not bool(reference.overloaded) and bool(stats.overloaded):
             reason = f"anchor {index} safe->overload"
@@ -517,6 +521,7 @@ def collect_student_state_sequences(
     control_dt_s: float,
     physics_dt_s: float,
     device: torch.device,
+    verbose: bool = True,
 ) -> tuple[list[NKeyBCSequence], int]:
     sequences: list[NKeyBCSequence] = []
     total = len(anchors)
@@ -539,15 +544,16 @@ def collect_student_state_sequences(
             continue_after_failure=True,
         )
         sequences.append(rollout.sequence)
-        print(
-            f"{label} {index:02d}/{total} {named.chart_name}: "
-            f"frames={rollout.sequence.frames} "
-            f"H={rollout.stats.hits}/{rollout.stats.targets} "
-            f"X={rollout.stats.x_accuracy_percent:.2f}% "
-            f"early={rollout.stats.too_early_presses} "
-            f"over={rollout.stats.overloaded} "
-            f"keydowns={rollout.physical_keydowns}"
-        )
+        if verbose:
+            print(
+                f"{label} {index:02d}/{total} {named.chart_name}: "
+                f"frames={rollout.sequence.frames} "
+                f"H={rollout.stats.hits}/{rollout.stats.targets} "
+                f"X={rollout.stats.x_accuracy_percent:.2f}% "
+                f"early={rollout.stats.too_early_presses} "
+                f"over={rollout.stats.overloaded} "
+                f"keydowns={rollout.physical_keydowns}"
+            )
     frames = sum(sequence.frames for sequence in sequences)
     print(f"{label} aggregate: student-state={frames} frames")
     return sequences, frames
