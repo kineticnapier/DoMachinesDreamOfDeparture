@@ -54,9 +54,23 @@ class BoundaryTrustConfig:
 
 @dataclass(frozen=True, slots=True)
 class HumanVisibleConfig:
+    # Legacy trial-based trainer knobs.
     updates_per_trial: int = 32
     lr: float = 1e-4
     min_lr: float = 1e-6
+
+    # Curriculum-DAgger trainer knobs. lr is also the residual-head LR so old
+    # configs remain readable; the recurrent/direct-observation controller uses
+    # the more conservative controller_lr.
+    controller_lr: float = 3e-5
+    updates_per_epoch: int = 32
+    burn_in_steps: int = 96
+    supervised_steps: int = 192
+    anchors_per_batch: int = 4
+    progression_streak: int = 3
+    catastrophic_patience: int = 2
+    max_epochs: int = 10_000
+
     weight_decay: float = 1e-4
     grad_clip: float = 1.0
     seed: int = 2401
@@ -168,6 +182,14 @@ def load_training_config(path: str | Path) -> TrainingConfig:
         updates_per_trial=int(visible_raw.get("updates_per_trial", 32)),
         lr=float(visible_raw.get("lr", 1e-4)),
         min_lr=float(visible_raw.get("min_lr", 1e-6)),
+        controller_lr=float(visible_raw.get("controller_lr", 3e-5)),
+        updates_per_epoch=int(visible_raw.get("updates_per_epoch", 32)),
+        burn_in_steps=int(visible_raw.get("burn_in_steps", 96)),
+        supervised_steps=int(visible_raw.get("supervised_steps", 192)),
+        anchors_per_batch=int(visible_raw.get("anchors_per_batch", 4)),
+        progression_streak=int(visible_raw.get("progression_streak", 3)),
+        catastrophic_patience=int(visible_raw.get("catastrophic_patience", 2)),
+        max_epochs=int(visible_raw.get("max_epochs", 10_000)),
         weight_decay=float(visible_raw.get("weight_decay", 1e-4)),
         grad_clip=float(visible_raw.get("grad_clip", 1.0)),
         seed=int(visible_raw.get("seed", 2401)),
@@ -233,6 +255,22 @@ def _validate(
         raise ValueError("human_visible learning rates must be positive")
     if human_visible.min_lr > human_visible.lr:
         raise ValueError("human_visible.min_lr cannot exceed human_visible.lr")
+    if human_visible.controller_lr <= 0.0:
+        raise ValueError("human_visible.controller_lr must be positive")
+    if human_visible.updates_per_epoch <= 0:
+        raise ValueError("human_visible.updates_per_epoch must be positive")
+    if human_visible.burn_in_steps < 0:
+        raise ValueError("human_visible.burn_in_steps must be non-negative")
+    if human_visible.supervised_steps <= 0:
+        raise ValueError("human_visible.supervised_steps must be positive")
+    if human_visible.anchors_per_batch <= 0:
+        raise ValueError("human_visible.anchors_per_batch must be positive")
+    if human_visible.progression_streak <= 0:
+        raise ValueError("human_visible.progression_streak must be positive")
+    if human_visible.catastrophic_patience <= 0:
+        raise ValueError("human_visible.catastrophic_patience must be positive")
+    if human_visible.max_epochs <= 0:
+        raise ValueError("human_visible.max_epochs must be positive")
     if human_visible.weight_decay < 0.0:
         raise ValueError("human_visible.weight_decay must be non-negative")
     if human_visible.grad_clip <= 0.0:
