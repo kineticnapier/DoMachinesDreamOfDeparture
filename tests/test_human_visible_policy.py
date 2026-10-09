@@ -192,3 +192,75 @@ def test_human_visible_checkpoint_upgrade_and_reload(tmp_path) -> None:
             restored.initial_state(torch.device("cpu")),
         )
     assert torch.allclose(actual, expected, atol=1e-7, rtol=1e-6)
+
+
+def test_human_visible_long_warm_start_preserves_parent_actions(tmp_path) -> None:
+    parent, relaxed = _models(tmp_path)
+    observations = torch.randn(256, parent.input_dim)
+    parent_state = parent.initial_state(torch.device("cpu"))
+    relaxed_state = relaxed.initial_state(torch.device("cpu"))
+
+    with torch.no_grad():
+        for observation in observations:
+            parent_mean, _, parent_value, parent_state = parent.forward_step(
+                observation,
+                parent_state,
+            )
+            relaxed_mean, _, relaxed_value, relaxed_state = relaxed.forward_step(
+                observation,
+                relaxed_state,
+            )
+            assert torch.allclose(relaxed_mean, parent_mean, atol=1e-7, rtol=1e-6)
+            assert torch.allclose(relaxed_value, parent_value, atol=1e-7, rtol=1e-6)
+            assert torch.allclose(
+                relaxed_state[: parent.hidden_dim],
+                parent_state,
+                atol=1e-7,
+                rtol=1e-6,
+            )
+
+
+def test_human_visible_warm_start_matches_after_state_clone(tmp_path) -> None:
+    parent, relaxed = _models(tmp_path)
+    observations = torch.randn(64, parent.input_dim)
+    parent_state = parent.initial_state(torch.device("cpu")).clone()
+    relaxed_state = relaxed.initial_state(torch.device("cpu")).clone()
+
+    with torch.no_grad():
+        for observation in observations:
+            parent_mean, _, _, parent_state = parent.forward_step(
+                observation,
+                parent_state.clone(),
+            )
+            relaxed_mean, _, _, relaxed_state = relaxed.forward_step(
+                observation,
+                relaxed_state.clone(),
+            )
+            assert torch.allclose(relaxed_mean, parent_mean, atol=1e-7, rtol=1e-6)
+
+
+def test_human_visible_burnin_boundary_matches_full_forward(tmp_path) -> None:
+    _, model = _models(tmp_path)
+    observations = torch.randn(48, model.input_dim)
+    initial = model.initial_state(torch.device("cpu"))
+
+    with torch.no_grad():
+        full_means, _, _ = model.forward_sequence(
+            observations,
+            initial.clone(),
+        )
+        _, _, burn_state = model.forward_sequence(
+            observations[:17],
+            initial.clone(),
+        )
+        tail_means, _, _ = model.forward_sequence(
+            observations[17:],
+            burn_state.detach().clone(),
+        )
+
+    assert torch.allclose(
+        tail_means,
+        full_means[17:],
+        atol=1e-6,
+        rtol=1e-5,
+    )
