@@ -53,8 +53,8 @@ from .trajectory_trust import (
 )
 
 
-TRAINER_VERSION = "2.6.0-survival-search"
-CHECKPOINT_FORMAT_VERSION = 33
+TRAINER_VERSION = "3.0.0-human-visible-controller"
+CHECKPOINT_FORMAT_VERSION = 34
 
 
 @dataclass(slots=True)
@@ -308,6 +308,81 @@ def _save(
         history=history,
     )
     payload["checkpoint_role"] = str(checkpoint_role)
+    save_checkpoint(path or prepared.output_checkpoint, payload)
+
+
+def _save_human_visible(
+    prepared: PreparedRun,
+    config: TrainingConfig,
+    *,
+    model_state: dict[str, torch.Tensor],
+    start_time: float,
+    trial_count: int,
+    accepted_steps: int,
+    selected_step: int,
+    stopped_reason: str,
+    current_lr: float,
+    expert_frames: int,
+    dagger_frames: int,
+    student_frame_history: list[int],
+    history: list[dict],
+    path: Path | None = None,
+    checkpoint_role: str = "selected-best",
+) -> None:
+    payload = dict(prepared.parent)
+    payload.update(prepared.model.checkpoint_metadata())
+    payload.update(
+        {
+            "format_version": CHECKPOINT_FORMAT_VERSION,
+            "trainer_version": TRAINER_VERSION,
+            "model_state": model_state,
+            "training_mode": config.mode,
+            "training_config": config.as_dict(),
+            "checkpoint_role": str(checkpoint_role),
+            "dagger_round": int(prepared.round_index),
+            "dagger_action_mode": "continuous",
+            "dagger_source_checkpoint": str(prepared.source_checkpoint),
+            "dagger_output_checkpoint": str(prepared.output_checkpoint),
+            "dagger_expert_frames": int(expert_frames),
+            "dagger_student_state_frames": int(dagger_frames),
+            "dagger_student_state_frame_history": [
+                int(frames) for frames in student_frame_history
+            ],
+            "dagger_student_state_refresh": "after-each-safe-human-visible-step",
+            "dagger_selection_uses_validation": False,
+            "action_trust_optimizer_semantics": None,
+            "action_trust_trainable_parameters": (),
+            "action_trust_frozen_feature_extractor": None,
+            "human_visible_training_semantics": (
+                "fixed-parent-connectome+human-visible-residual-adamw-dagger-v1"
+            ),
+            "human_visible_parent_backend": str(
+                prepared.parent.get("n_key_policy_backend", "unknown")
+            ),
+            "human_visible_trainable_parameters": human_visible_parameter_names(
+                prepared.model
+            ),
+            "human_visible_trial_count": int(trial_count),
+            "human_visible_accepted_steps": int(accepted_steps),
+            "human_visible_selected_step": int(selected_step),
+            "human_visible_current_lr": float(current_lr),
+            "human_visible_history": list(history),
+            "survival_guard_enabled": True,
+            "survival_guard_semantics": "reject-current-safe-anchor-to-overload-v1",
+            "survival_selection_semantics": (
+                "safe-anchor-count-then-hits-x-early-keydowns-v1"
+            ),
+            "survival_restart_limit": int(config.budget.max_nonbest_accepts),
+            "survival_restart_count": sum(
+                1 for item in history if item.get("continuation_restart")
+            ),
+            "budget_requested_hours": float(config.budget.hours),
+            "budget_elapsed_seconds": float(time.monotonic() - start_time),
+            "budget_stopped_reason": str(stopped_reason),
+            "final_used_for_selection": False,
+            "finalized": False,
+        }
+    )
     save_checkpoint(path or prepared.output_checkpoint, payload)
 
 
