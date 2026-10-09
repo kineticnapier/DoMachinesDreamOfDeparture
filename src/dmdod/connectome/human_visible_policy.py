@@ -227,8 +227,12 @@ class NKeyHumanVisibleControllerActorCritic(NKeyFlyConnectomeActorCritic):
                 f"observation must have shape [{self.input_dim}], got {tuple(x.shape)}"
             )
 
-        encoded = torch.tanh(self.sensory(x))
-        next_connectome = self._advance(encoded, connectome_state)
+        # The inherited sensory adapter and MaleCNS path are deliberately
+        # frozen for this backend. Keep their recurrence outside autograd so
+        # controller training does not build a 4096D graph it cannot update.
+        with torch.no_grad():
+            encoded = torch.tanh(self.sensory(x))
+            next_connectome = self._advance(encoded, connectome_state)
 
         context = self._direct_context(x, next_connectome)
         next_controller = self.controller(context, controller_state)
@@ -263,16 +267,17 @@ class NKeyHumanVisibleControllerActorCritic(NKeyFlyConnectomeActorCritic):
 
         # Batch every feed-forward stage. Only the two genuine recurrent paths
         # remain sequential, avoiding one tiny Conv/Linear launch per frame.
-        encoded = torch.tanh(self.sensory(observations))
-        injected_sequence = torch.matmul(
-            encoded,
-            self._input_projection_transpose_runtime,
-        )
-        connectome_states: list[torch.Tensor] = []
-        for injected in injected_sequence:
-            connectome_state = self._advance_injected(injected, connectome_state)
-            connectome_states.append(connectome_state)
-        connectome_stack = torch.stack(connectome_states)
+        with torch.no_grad():
+            encoded = torch.tanh(self.sensory(observations))
+            injected_sequence = torch.matmul(
+                encoded,
+                self._input_projection_transpose_runtime,
+            )
+            connectome_states: list[torch.Tensor] = []
+            for injected in injected_sequence:
+                connectome_state = self._advance_injected(injected, connectome_state)
+                connectome_states.append(connectome_state)
+            connectome_stack = torch.stack(connectome_states)
 
         motor_end = self.motor_feature_dim
         orbit_end = motor_end + self.orbit_feature_dim
