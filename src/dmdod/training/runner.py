@@ -907,6 +907,7 @@ def run_human_visible_dagger(config: TrainingConfig) -> None:
         control_dt_s=prepared.control_dt_s,
         physics_dt_s=prepared.physics_dt_s,
         device=prepared.device,
+        verbose=False,
     )
     continuation_results = initial_results
     continuation_state = clone_model_state(model)
@@ -924,6 +925,7 @@ def run_human_visible_dagger(config: TrainingConfig) -> None:
         control_dt_s=prepared.control_dt_s,
         physics_dt_s=prepared.physics_dt_s,
         device=prepared.device,
+        verbose=False,
     )
     student_frame_history = [dagger_frames]
     training_sequences = [*expert_sequences, *dagger_sequences]
@@ -1008,6 +1010,7 @@ def run_human_visible_dagger(config: TrainingConfig) -> None:
                 control_dt_s=prepared.control_dt_s,
                 physics_dt_s=prepared.physics_dt_s,
                 device=prepared.device,
+                verbose=False,
             )
             selected_best = safe and (
                 survival_selection_key(candidate_results)
@@ -1171,6 +1174,7 @@ def run_human_visible_dagger(config: TrainingConfig) -> None:
                 control_dt_s=prepared.control_dt_s,
                 physics_dt_s=prepared.physics_dt_s,
                 device=prepared.device,
+                verbose=False,
             )
             student_frame_history.append(dagger_frames)
             training_sequences = [*expert_sequences, *dagger_sequences]
@@ -1220,6 +1224,7 @@ def run_human_visible_dagger(config: TrainingConfig) -> None:
         control_dt_s=prepared.control_dt_s,
         physics_dt_s=prepared.physics_dt_s,
         device=prepared.device,
+        verbose=False,
     )
     if progress_checkpoint.exists():
         progress_checkpoint.unlink()
