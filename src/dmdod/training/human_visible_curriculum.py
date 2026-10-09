@@ -973,25 +973,6 @@ def run_human_visible_curriculum(
                 optimizer.state_dict()
             )
             best_summary = dict(current_summary)
-            save_checkpoint(
-                prepared.output_checkpoint,
-                _checkpoint_payload(
-                    prepared,
-                    config,
-                    model,
-                    optimizer,
-                    epoch=epoch,
-                    level=level,
-                    validation_streak=validation_streak,
-                    catastrophic_streak=catastrophic_streak,
-                    baseline_summary=baseline_summary,
-                    current_summary=current_summary,
-                    best_summary=best_summary,
-                    best_checkpoint_path=prepared.output_checkpoint,
-                    history=history,
-                    stopped_reason="running-best",
-                ),
-            )
 
         promoted = False
         if (
@@ -1029,6 +1010,28 @@ def run_human_visible_curriculum(
             }
         )
 
+        if selected_best:
+            save_checkpoint(
+                prepared.output_checkpoint,
+                _checkpoint_payload(
+                    prepared,
+                    config,
+                    model,
+                    optimizer,
+                    epoch=epoch,
+                    level=level,
+                    validation_streak=validation_streak,
+                    catastrophic_streak=catastrophic_streak,
+                    baseline_summary=baseline_summary,
+                    current_summary=current_summary,
+                    best_summary=best_summary,
+                    best_checkpoint_path=prepared.output_checkpoint,
+                    history=history,
+                    stopped_reason="running-best",
+                ),
+            )
+            print(f"autosave best: {prepared.output_checkpoint}")
+
         print(
             f"val: {_format_validation(current_summary)} "
             f"rank={'BEST' if selected_best else 'keep'} "
@@ -1065,26 +1068,6 @@ def run_human_visible_curriculum(
     model.prepare_recurrent_runtime()
     freeze_human_visible_controller(model)
     optimizer.load_state_dict(best_optimizer_state)
-    save_checkpoint(
-        prepared.output_checkpoint,
-        _checkpoint_payload(
-            prepared,
-            config,
-            model,
-            optimizer,
-            epoch=epoch,
-            level=level,
-            validation_streak=validation_streak,
-            catastrophic_streak=catastrophic_streak,
-            baseline_summary=baseline_summary,
-            current_summary=best_summary,
-            best_summary=best_summary,
-            best_checkpoint_path=prepared.output_checkpoint,
-            history=history,
-            stopped_reason=stopped_reason,
-        ),
-    )
-
     if progress_path.exists():
         progress_path.unlink()
         print(f"removed completed progress checkpoint: {progress_path}")
