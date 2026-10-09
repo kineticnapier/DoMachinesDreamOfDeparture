@@ -249,7 +249,7 @@ class NKeyHumanVisibleControllerActorCritic(NKeyFlyConnectomeActorCritic):
                 f"observations must have shape [T, {self.input_dim}], got "
                 f"{tuple(observations.shape)}"
             )
-        self._split_state(initial_state)
+        connectome_state, controller_state = self._split_state(initial_state)
         if observations.shape[0] == 0:
             return (
                 observations.new_empty((0, self.action_dim)),
@@ -257,14 +257,57 @@ class NKeyHumanVisibleControllerActorCritic(NKeyFlyConnectomeActorCritic):
                 initial_state,
             )
 
-        state = initial_state
-        means: list[torch.Tensor] = []
-        values: list[torch.Tensor] = []
-        for observation in observations:
-            mean, _, value, state = self.forward_step(observation, state)
-            means.append(mean)
-            values.append(value)
-        return torch.stack(means), torch.stack(values), state
+        # Batch every feed-forward stage. Only the two genuine recurrent paths
+        # remain sequential, avoiding one tiny Conv/Linear launch per frame.
+        encoded = torch.tanh(self.sensory(observations))
+        injected_sequence = torch.matmul(
+            encoded,
+            self._input_projection_transpose_runtime,
+        )
+        connectome_states: list[torch.Tensor] = []
+        for injected in injected_sequence:
+            connectome_state = self._advance_injected(injected, connectome_state)
+            connectome_states.append(connectome_state)
+        connectome_stack = torch.stack(connectome_states)
+
+        motor_end = self.motor_feature_dim
+        orbit_end = motor_end + self.orbit_feature_dim
+        floors_end = orbit_end + self.floor_slots * self.floor_feature_dim
+        motor_orbit = observations[:, :orbit_end]
+        floors = observations[:, orbit_end:floors_end].reshape(
+            observations.shape[0],
+            self.floor_slots,
+            self.floor_feature_dim,
+        ).transpose(1, 2)
+        hud = observations[:, floors_end:]
+
+        contexts = torch.cat(
+            (
+                self.connectome_context(connectome_stack),
+                self.floor_encoder(floors),
+                self.motor_encoder(motor_orbit),
+                self.hud_encoder(hud),
+            ),
+            dim=1,
+        )
+
+        controller_states: list[torch.Tensor] = []
+        for context in contexts:
+            controller_state = self.controller(context, controller_state)
+            controller_states.append(controller_state)
+        controller_stack = torch.stack(controller_states)
+        controller_features = self.controller_post(controller_stack)
+
+        means = (
+            self.actor_mean(connectome_stack)
+            + self.controller_delta(controller_features)
+        )
+        values = (
+            self.critic(connectome_stack).squeeze(-1)
+            + self.controller_value_delta(controller_features).squeeze(-1)
+        )
+        final_state = torch.cat((connectome_state, controller_state), dim=0)
+        return means, values, final_state
 
     @torch.no_grad()
     def deterministic_action(
