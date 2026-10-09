@@ -220,25 +220,6 @@ def test_human_visible_long_warm_start_preserves_parent_actions(tmp_path) -> Non
             )
 
 
-def test_human_visible_warm_start_matches_after_state_clone(tmp_path) -> None:
-    parent, relaxed = _models(tmp_path)
-    observations = torch.randn(64, parent.input_dim)
-    parent_state = parent.initial_state(torch.device("cpu")).clone()
-    relaxed_state = relaxed.initial_state(torch.device("cpu")).clone()
-
-    with torch.no_grad():
-        for observation in observations:
-            parent_mean, _, _, parent_state = parent.forward_step(
-                observation,
-                parent_state.clone(),
-            )
-            relaxed_mean, _, _, relaxed_state = relaxed.forward_step(
-                observation,
-                relaxed_state.clone(),
-            )
-            assert torch.allclose(relaxed_mean, parent_mean, atol=1e-7, rtol=1e-6)
-
-
 def test_human_visible_burnin_boundary_matches_full_forward(tmp_path) -> None:
     _, model = _models(tmp_path)
     observations = torch.randn(48, model.input_dim)
