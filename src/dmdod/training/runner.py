@@ -25,6 +25,7 @@ from .human_visible import (
     human_visible_parameter_names,
     train_human_visible_replay,
 )
+from .human_visible_curriculum import run_human_visible_curriculum
 from .real_chart import (
     aggregate,
     build_anchor_segments,
@@ -105,7 +106,7 @@ def _prepare(config: TrainingConfig) -> PreparedRun:
             f"{key_count}K expected {expected_input}"
         )
 
-    if config.mode == "human_visible_dagger":
+    if config.mode in {"human_visible_dagger", "human_visible_curriculum_dagger"}:
         model = build_human_visible_policy_from_parent_checkpoint(
             parent,
             device=device,
@@ -1236,6 +1237,15 @@ def run_human_visible_dagger(config: TrainingConfig) -> None:
     )
 
 
+def run_human_visible_curriculum_dagger(config: TrainingConfig) -> None:
+    prepared = _prepare(config)
+    run_human_visible_curriculum(
+        prepared,
+        config,
+        format_duration=_format_duration,
+    )
+
+
 def run_trajectory_probe(config: TrainingConfig) -> None:
     prepared = _prepare(config)
     baseline_model = prepared.model
@@ -1328,6 +1338,7 @@ def run_budget_boundary_trust(config: TrainingConfig) -> None:
 
 _RUNNERS = {
     "human_visible_dagger": run_human_visible_dagger,
+    "human_visible_curriculum_dagger": run_human_visible_curriculum_dagger,
     "budget_action_trust": run_budget_action_trust,
     "budget_survival_trust": run_budget_survival_trust,
     "budget_boundary_trust": run_budget_boundary_trust,
