@@ -13,6 +13,10 @@ from dmdod.training.human_visible import (
     freeze_human_visible_controller,
     train_human_visible_replay,
 )
+from dmdod.training.real_chart import (
+    build_connectome_policy_from_checkpoint,
+    build_human_visible_policy_from_parent_checkpoint,
+)
 
 
 def _core(tmp_path):
@@ -151,3 +155,40 @@ def test_human_visible_metadata_records_information_contract(tmp_path) -> None:
     assert metadata["human_visible_floor_slots"] == 15
     assert metadata["human_visible_hud_feature_dim"] == 12
     assert metadata["human_visible_residual_warm_start"] is True
+
+
+def test_human_visible_checkpoint_upgrade_and_reload(tmp_path) -> None:
+    parent, _ = _models(tmp_path)
+    parent_checkpoint = {
+        **parent.checkpoint_metadata(),
+        "model_state": parent.state_dict(),
+    }
+
+    upgraded = build_human_visible_policy_from_parent_checkpoint(
+        parent_checkpoint,
+        device=torch.device("cpu"),
+    )
+    assert isinstance(upgraded, NKeyHumanVisibleControllerActorCritic)
+
+    checkpoint = {
+        **upgraded.checkpoint_metadata(),
+        "model_state": upgraded.state_dict(),
+    }
+    restored = build_connectome_policy_from_checkpoint(
+        checkpoint,
+        device=torch.device("cpu"),
+    )
+    assert isinstance(restored, NKeyHumanVisibleControllerActorCritic)
+    assert restored.policy_state_dim == upgraded.policy_state_dim
+
+    observation = torch.randn(parent.input_dim)
+    with torch.no_grad():
+        expected, _, _, _ = upgraded.forward_step(
+            observation,
+            upgraded.initial_state(torch.device("cpu")),
+        )
+        actual, _, _, _ = restored.forward_step(
+            observation,
+            restored.initial_state(torch.device("cpu")),
+        )
+    assert torch.allclose(actual, expected, atol=1e-7, rtol=1e-6)
