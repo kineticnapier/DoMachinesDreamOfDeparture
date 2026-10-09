@@ -11,6 +11,10 @@ from dmdod.connectome.fly_policy import (
     N_KEY_POLICY_BACKEND_FLY_CONNECTOME,
     NKeyFlyConnectomeActorCritic,
 )
+from dmdod.connectome.human_visible_policy import (
+    N_KEY_POLICY_BACKEND_HUMAN_VISIBLE_CONTROLLER,
+    NKeyHumanVisibleControllerActorCritic,
+)
 from dmdod.n_key_dagger_continuation import (
     collect_n_key_dagger_sequence_with_continuation,
 )
@@ -291,6 +295,17 @@ def _required(checkpoint: dict, name: str):
     return checkpoint[name]
 
 
+def _connectome_common_from_checkpoint(checkpoint: dict) -> dict:
+    return dict(
+        input_dim=int(checkpoint["input_dim"]),
+        key_count=int(checkpoint["key_count"]),
+        core_path=str(_required(checkpoint, "fly_connectome_core_path")),
+        sensory_dim=int(_required(checkpoint, "fly_connectome_sensory_dim")),
+        recurrent_gain=float(_required(checkpoint, "fly_connectome_recurrent_gain")),
+        projection_seed=int(_required(checkpoint, "fly_connectome_projection_seed")),
+    )
+
+
 def build_connectome_policy_from_checkpoint(
     checkpoint: dict,
     *,
@@ -300,29 +315,57 @@ def build_connectome_policy_from_checkpoint(
     if backend not in {
         N_KEY_POLICY_BACKEND_FLY_CONNECTOME,
         N_KEY_POLICY_BACKEND_RANDOM_CONNECTOME,
+        N_KEY_POLICY_BACKEND_HUMAN_VISIBLE_CONTROLLER,
     }:
         raise SystemExit(
-            "current training pipeline requires fly_connectome or random_connectome"
+            "current training pipeline requires fly_connectome, random_connectome, "
+            "or human_visible_controller"
         )
 
-    common = dict(
-        input_dim=int(checkpoint["input_dim"]),
-        key_count=int(checkpoint["key_count"]),
-        core_path=str(_required(checkpoint, "fly_connectome_core_path")),
-        sensory_dim=int(_required(checkpoint, "fly_connectome_sensory_dim")),
-        recurrent_gain=float(_required(checkpoint, "fly_connectome_recurrent_gain")),
-        projection_seed=int(_required(checkpoint, "fly_connectome_projection_seed")),
-    )
+    common = _connectome_common_from_checkpoint(checkpoint)
     if backend == N_KEY_POLICY_BACKEND_FLY_CONNECTOME:
         model = NKeyFlyConnectomeActorCritic(**common)
-    else:
+    elif backend == N_KEY_POLICY_BACKEND_RANDOM_CONNECTOME:
         model = NKeyRandomConnectomeActorCritic(
             **common,
             topology_seed=int(_required(checkpoint, "random_connectome_topology_seed")),
         )
+    else:
+        model = NKeyHumanVisibleControllerActorCritic(
+            **common,
+            controller_hidden_dim=int(
+                checkpoint.get("human_visible_controller_hidden_dim", 128)
+            ),
+        )
 
     model = model.to(device)
     model.load_state_dict(checkpoint["model_state"])
+    model.prepare_recurrent_runtime()
+    return model
+
+
+def build_human_visible_policy_from_parent_checkpoint(
+    checkpoint: dict,
+    *,
+    device: torch.device,
+) -> NKeyHumanVisibleControllerActorCritic:
+    """Warm-start the relaxed controller without changing visible information."""
+
+    backend = str(checkpoint.get("n_key_policy_backend", "gru"))
+    if backend == N_KEY_POLICY_BACKEND_HUMAN_VISIBLE_CONTROLLER:
+        model = build_connectome_policy_from_checkpoint(checkpoint, device=device)
+        if not isinstance(model, NKeyHumanVisibleControllerActorCritic):
+            raise RuntimeError("human-visible checkpoint produced wrong model type")
+        return model
+    if backend != N_KEY_POLICY_BACKEND_FLY_CONNECTOME:
+        raise SystemExit(
+            "human-visible warm start currently requires a fly_connectome parent"
+        )
+
+    model = NKeyHumanVisibleControllerActorCritic(
+        **_connectome_common_from_checkpoint(checkpoint)
+    ).to(device)
+    model.warm_start_from_fly_checkpoint(checkpoint["model_state"])
     model.prepare_recurrent_runtime()
     return model
 
