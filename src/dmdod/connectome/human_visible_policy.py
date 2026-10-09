@@ -98,7 +98,15 @@ class NKeyHumanVisibleControllerActorCritic(NKeyFlyConnectomeActorCritic):
         self.floor_context_dim = int(floor_context_dim)
         self.motor_context_dim = int(motor_context_dim)
         self.hud_context_dim = int(hud_context_dim)
-        self.policy_state_dim = self.connectome_hidden_dim + self.controller_hidden_dim
+        # One extra bit records whether the legacy fly no-grad state has
+        # advanced at least once. The parent backend reuses its projection
+        # scratch buffer as the returned state, so from the second inference
+        # step onward that state is overwritten by the current projection
+        # before recurrence. Preserve that established rollout behaviour here
+        # without relying on tensor aliasing.
+        self.policy_state_dim = (
+            self.connectome_hidden_dim + self.controller_hidden_dim + 1
+        )
 
         self.floor_slots = int(DEFAULT_REAL_CHART_FEATURE_CONFIG.floor_slots)
         self.floor_feature_dim = int(REAL_CHART_FLOOR_FEATURE_DIM)
@@ -168,15 +176,40 @@ class NKeyHumanVisibleControllerActorCritic(NKeyFlyConnectomeActorCritic):
     def initial_state(self, device: torch.device) -> torch.Tensor:
         return torch.zeros(self.policy_state_dim, dtype=torch.float32, device=device)
 
-    def _split_state(self, state: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor]:
+    def _split_state(
+        self,
+        state: torch.Tensor,
+    ) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
         if state.ndim != 1 or state.shape[0] != self.policy_state_dim:
             raise ValueError(
                 f"state must have shape [{self.policy_state_dim}], got {tuple(state.shape)}"
             )
+        controller_end = self.connectome_hidden_dim + self.controller_hidden_dim
         return (
             state[: self.connectome_hidden_dim],
-            state[self.connectome_hidden_dim :],
+            state[self.connectome_hidden_dim : controller_end],
+            state[controller_end:],
         )
+
+    def _advance_parent_compatible(
+        self,
+        encoded: torch.Tensor,
+        connectome_state: torch.Tensor,
+        started: bool,
+    ) -> torch.Tensor:
+        """Match the established parent no-grad rollout semantics exactly.
+
+        NKeyFlyConnectomeActorCritic returns its reusable projection buffer as
+        the recurrent state during inference. On the next step that same buffer
+        is filled with the new input projection before the recurrent multiply,
+        so after the first step the recurrent input is the *current* projection.
+        The relaxed controller stores state in a concatenated tensor and would
+        otherwise silently change the inherited policy's behaviour.
+        """
+
+        injected = torch.mv(self.input_projection, encoded)
+        recurrent_state = injected if started else connectome_state
+        return self._advance_injected(injected, recurrent_state)
 
     def _split_observation(
         self,
@@ -221,7 +254,7 @@ class NKeyHumanVisibleControllerActorCritic(NKeyFlyConnectomeActorCritic):
         )
 
     def forward_step(self, x: torch.Tensor, state: torch.Tensor):
-        connectome_state, controller_state = self._split_state(state)
+        connectome_state, controller_state, started_flag = self._split_state(state)
         if x.ndim != 1 or x.shape[0] != self.input_dim:
             raise ValueError(
                 f"observation must have shape [{self.input_dim}], got {tuple(x.shape)}"
@@ -232,7 +265,11 @@ class NKeyHumanVisibleControllerActorCritic(NKeyFlyConnectomeActorCritic):
         # controller training does not build a 4096D graph it cannot update.
         with torch.no_grad():
             encoded = torch.tanh(self.sensory(x))
-            next_connectome = self._advance(encoded, connectome_state)
+            next_connectome = self._advance_parent_compatible(
+                encoded,
+                connectome_state,
+                bool(started_flag.item() >= 0.5),
+            )
 
         context = self._direct_context(x, next_connectome)
         next_controller = self.controller(context, controller_state)
@@ -244,7 +281,14 @@ class NKeyHumanVisibleControllerActorCritic(NKeyFlyConnectomeActorCritic):
             + self.controller_value_delta(controller_features).squeeze(-1)
         )
         std = self.log_std.exp().clamp(0.08, 1.5)
-        next_state = torch.cat((next_connectome, next_controller), dim=0)
+        next_state = torch.cat(
+            (
+                next_connectome,
+                next_controller,
+                torch.ones(1, dtype=x.dtype, device=x.device),
+            ),
+            dim=0,
+        )
         return mean, std, value, next_state
 
     def forward_sequence(
@@ -257,7 +301,7 @@ class NKeyHumanVisibleControllerActorCritic(NKeyFlyConnectomeActorCritic):
                 f"observations must have shape [T, {self.input_dim}], got "
                 f"{tuple(observations.shape)}"
             )
-        connectome_state, controller_state = self._split_state(initial_state)
+        connectome_state, controller_state, started_flag = self._split_state(initial_state)
         if observations.shape[0] == 0:
             return (
                 observations.new_empty((0, self.action_dim)),
@@ -265,18 +309,21 @@ class NKeyHumanVisibleControllerActorCritic(NKeyFlyConnectomeActorCritic):
                 initial_state,
             )
 
-        # Batch every feed-forward stage. Only the two genuine recurrent paths
-        # remain sequential, avoiding one tiny Conv/Linear launch per frame.
+        # Batch the sensory transform, then reproduce the parent's established
+        # no-grad rollout semantics explicitly. This keeps exact warm-start
+        # behaviour while avoiding dependence on scratch-buffer aliasing.
         with torch.no_grad():
-            encoded = torch.tanh(self.sensory(observations))
-            injected_sequence = torch.matmul(
-                encoded,
-                self._input_projection_transpose_runtime,
-            )
+            encoded_sequence = torch.tanh(self.sensory(observations))
             connectome_states: list[torch.Tensor] = []
-            for injected in injected_sequence:
-                connectome_state = self._advance_injected(injected, connectome_state)
+            started = bool(started_flag.item() >= 0.5)
+            for encoded in encoded_sequence:
+                connectome_state = self._advance_parent_compatible(
+                    encoded,
+                    connectome_state,
+                    started,
+                )
                 connectome_states.append(connectome_state)
+                started = True
             connectome_stack = torch.stack(connectome_states)
 
         motor_end = self.motor_feature_dim
@@ -315,7 +362,18 @@ class NKeyHumanVisibleControllerActorCritic(NKeyFlyConnectomeActorCritic):
             self.critic(connectome_stack).squeeze(-1)
             + self.controller_value_delta(controller_features).squeeze(-1)
         )
-        final_state = torch.cat((connectome_state, controller_state), dim=0)
+        final_state = torch.cat(
+            (
+                connectome_state,
+                controller_state,
+                torch.ones(
+                    1,
+                    dtype=observations.dtype,
+                    device=observations.device,
+                ),
+            ),
+            dim=0,
+        )
         return means, values, final_state
 
     @torch.no_grad()
