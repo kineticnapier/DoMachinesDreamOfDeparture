@@ -53,6 +53,16 @@ class BoundaryTrustConfig:
 
 
 @dataclass(frozen=True, slots=True)
+class HumanVisibleConfig:
+    updates_per_trial: int = 32
+    lr: float = 1e-4
+    min_lr: float = 1e-6
+    weight_decay: float = 1e-4
+    grad_clip: float = 1.0
+    seed: int = 2401
+
+
+@dataclass(frozen=True, slots=True)
 class TrainingConfig:
     mode: str
     run: RunConfig
@@ -61,6 +71,7 @@ class TrainingConfig:
     budget: BudgetConfig
     trajectory_probe: TrajectoryProbeConfig
     boundary_trust: BoundaryTrustConfig
+    human_visible: HumanVisibleConfig
 
     def as_dict(self) -> dict:
         return asdict(self)
@@ -152,7 +163,17 @@ def load_training_config(path: str | Path) -> TrainingConfig:
         mismatch_grace_s=float(boundary_raw.get("mismatch_grace_s", 0.030)),
     )
 
-    _validate(action_trust, budget, trajectory_probe, boundary_trust)
+    visible_raw = _section(raw, "human_visible")
+    human_visible = HumanVisibleConfig(
+        updates_per_trial=int(visible_raw.get("updates_per_trial", 32)),
+        lr=float(visible_raw.get("lr", 1e-4)),
+        min_lr=float(visible_raw.get("min_lr", 1e-6)),
+        weight_decay=float(visible_raw.get("weight_decay", 1e-4)),
+        grad_clip=float(visible_raw.get("grad_clip", 1.0)),
+        seed=int(visible_raw.get("seed", 2401)),
+    )
+
+    _validate(action_trust, budget, trajectory_probe, boundary_trust, human_visible)
     return TrainingConfig(
         mode=mode,
         run=run,
@@ -161,6 +182,7 @@ def load_training_config(path: str | Path) -> TrainingConfig:
         budget=budget,
         trajectory_probe=trajectory_probe,
         boundary_trust=boundary_trust,
+        human_visible=human_visible,
     )
 
 
@@ -169,6 +191,7 @@ def _validate(
     budget: BudgetConfig,
     trajectory_probe: TrajectoryProbeConfig,
     boundary_trust: BoundaryTrustConfig,
+    human_visible: HumanVisibleConfig,
 ) -> None:
     if action.actor_steps <= 0:
         raise ValueError("action_trust.actor_steps must be positive")
@@ -203,3 +226,14 @@ def _validate(
         raise ValueError("trajectory_probe.candidate_action_rms must be positive")
     if boundary_trust.mismatch_grace_s < 0.0:
         raise ValueError("boundary_trust.mismatch_grace_s must be non-negative")
+
+    if human_visible.updates_per_trial <= 0:
+        raise ValueError("human_visible.updates_per_trial must be positive")
+    if human_visible.lr <= 0.0 or human_visible.min_lr <= 0.0:
+        raise ValueError("human_visible learning rates must be positive")
+    if human_visible.min_lr > human_visible.lr:
+        raise ValueError("human_visible.min_lr cannot exceed human_visible.lr")
+    if human_visible.weight_decay < 0.0:
+        raise ValueError("human_visible.weight_decay must be non-negative")
+    if human_visible.grad_clip <= 0.0:
+        raise ValueError("human_visible.grad_clip must be positive")
