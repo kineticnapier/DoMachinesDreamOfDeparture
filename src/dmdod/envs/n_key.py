@@ -77,6 +77,35 @@ class NKeyHudRealChartObservation:
     last_timing_error_ms: float
 
 
+@dataclass(frozen=True, slots=True)
+class TooEarlyKeyDownTrace:
+    time_s: float
+    key: str
+    target_index: int
+    error_ms: float
+    overload_before: float
+    overload_after: float
+    fail_overload: bool
+
+
+@dataclass(frozen=True, slots=True)
+class EpisodeTerminationTrace:
+    time_s: float
+    reason: str
+    hits: int
+    too_early: int
+    keydowns: int
+    next_target_index: int | None
+    overload_value: float
+
+
+@dataclass(frozen=True, slots=True)
+class NKeyOverloadTrace:
+    termination: EpisodeTerminationTrace
+    keydown_times_s: tuple[float, ...]
+    too_early_events: tuple[TooEarlyKeyDownTrace, ...]
+
+
 class DiagnosticHudNKeyRealChartMotorEnv(NKeyRealChartMotorEnv):
     """N-key real-chart evaluator with the same human-visible HUD slice.
 
@@ -88,17 +117,27 @@ class DiagnosticHudNKeyRealChartMotorEnv(NKeyRealChartMotorEnv):
         self,
         *args,
         feedback_hold_s: float = DEFAULT_FEEDBACK_HOLD_S,
+        capture_overload_trace: bool = False,
         **kwargs,
     ) -> None:
         if feedback_hold_s < 0.0:
             raise ValueError("feedback_hold_s must be non-negative")
         self.feedback_hold_s = float(feedback_hold_s)
+        self.capture_overload_trace = bool(capture_overload_trace)
+        self._trace_keydowns: list[float] = []
+        self._trace_too_early: list[TooEarlyKeyDownTrace] = []
+        self._trace_termination: EpisodeTerminationTrace | None = None
+        self._trace_overload_event_time_s: float | None = None
         self._hud_judgement: TimingJudgement | None = None
         self._hud_error_ms = 0.0
         self._hud_feedback_until_s = -1.0
         super().__init__(*args, **kwargs)
 
     def reset(self) -> NKeyHudRealChartObservation:
+        self._trace_keydowns = []
+        self._trace_too_early = []
+        self._trace_termination = None
+        self._trace_overload_event_time_s = None
         self._hud_judgement = None
         self._hud_error_ms = 0.0
         self._hud_feedback_until_s = -1.0
@@ -108,6 +147,8 @@ class DiagnosticHudNKeyRealChartMotorEnv(NKeyRealChartMotorEnv):
         if event.event is not KeyEvent.DOWN:
             return super()._score_event(event)
 
+        if self.capture_overload_trace:
+            self._trace_keydowns.append(float(event.time_s))
         target_index = self._next_target_index()
         if target_index is None:
             return super()._score_event(event)
@@ -115,12 +156,73 @@ class DiagnosticHudNKeyRealChartMotorEnv(NKeyRealChartMotorEnv):
         target = self.segment.targets[target_index]
         error_s = float(event.time_s) - float(target.episode_time_s)
         margin_count_before = len(self._hit_margins)
+        if self.capture_overload_trace:
+            early_before = self._too_early
+            gauge_before = float(self._overload.value)
+            overloaded_before = bool(self._overload.overloaded)
         reward = super()._score_event(event)
+        if self.capture_overload_trace and self._too_early > early_before:
+            failed = bool(self._overload.overloaded) and not overloaded_before
+            self._trace_too_early.append(
+                TooEarlyKeyDownTrace(
+                    time_s=float(event.time_s),
+                    key=str(event.key),
+                    target_index=target_index,
+                    error_ms=error_s * 1000.0,
+                    overload_before=gauge_before,
+                    overload_after=float(self._overload.value),
+                    fail_overload=failed,
+                )
+            )
+            if failed:
+                self._trace_overload_event_time_s = float(event.time_s)
         if len(self._hit_margins) > margin_count_before:
             self._hud_judgement = self._hit_margins[-1]
             self._hud_error_ms = error_s * 1000.0
             self._hud_feedback_until_s = float(event.time_s) + self.feedback_hold_s
         return reward
+
+    def step(self, action):
+        result = super().step(action)
+        if self.capture_overload_trace and result.done:
+            all_resolved = all(
+                used or missed for used, missed in zip(self._used, self._missed)
+            )
+            if self._overload.overloaded:
+                reason = "Overload"
+            elif self._failed_on_miss:
+                reason = "Miss failure"
+            elif all_resolved:
+                reason = "All targets resolved"
+            else:
+                reason = "Time limit"
+            episode_time_s = (
+                self._trace_overload_event_time_s
+                if reason == "Overload" and self._trace_overload_event_time_s is not None
+                else self.privileged_episode_time_s()
+            )
+            self._trace_termination = EpisodeTerminationTrace(
+                time_s=float(episode_time_s),
+                reason=reason,
+                hits=int(self._hits),
+                too_early=int(self._too_early),
+                keydowns=int(self.physical_keydowns),
+                next_target_index=self._next_target_index(),
+                overload_value=float(self._overload.value),
+            )
+        return result
+
+    @property
+    def overload_trace(self) -> NKeyOverloadTrace | None:
+        if not self.capture_overload_trace:
+            return None
+        if self._trace_termination is None:
+            raise RuntimeError("overload trace requested before episode termination")
+        return NKeyOverloadTrace(
+            termination=self._trace_termination,
+            keydown_times_s=tuple(self._trace_keydowns),
+            too_early_events=tuple(self._trace_too_early),
+        )
 
     def _observation(
         self,

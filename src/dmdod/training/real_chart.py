@@ -21,6 +21,7 @@ from dmdod.n_key_dagger_continuation import (
 from dmdod.n_key_motor import NKeyAction
 from dmdod.n_key_real_chart import (
     DiagnosticHudNKeyRealChartMotorEnv,
+    NKeyOverloadTrace,
     encode_n_key_hud_real_chart_observation,
 )
 from dmdod.n_key_training import NKeyBCSequence
@@ -389,10 +390,12 @@ def _evaluate_continuous(
     control_dt_s: float,
     physics_dt_s: float,
     device: torch.device,
+    trace_collector: list[NKeyOverloadTrace] | None = None,
 ):
     env = DiagnosticHudNKeyRealChartMotorEnv(
         named.segment,
         key_count=model.key_count,
+        capture_overload_trace=trace_collector is not None,
         control_dt_s=control_dt_s,
         physics_dt_s=physics_dt_s,
         behind_floors=DEFAULT_REAL_CHART_FEATURE_CONFIG.behind_floors,
@@ -420,6 +423,11 @@ def _evaluate_continuous(
                 break
         else:
             raise RuntimeError("N-key continuous evaluation exceeded step budget")
+    if trace_collector is not None:
+        trace = env.overload_trace
+        if trace is None:
+            raise RuntimeError("enabled overload trace was not collected")
+        trace_collector.append(trace)
     return env.stats, int(env.physical_keydowns)
 
 
@@ -432,6 +440,7 @@ def evaluate_role_continuous(
     physics_dt_s: float,
     device: torch.device,
     verbose: bool = True,
+    trace_collector: list[NKeyOverloadTrace] | None = None,
 ) -> list[tuple[object, int]]:
     results: list[tuple[object, int]] = []
     total = len(segments)
@@ -442,6 +451,7 @@ def evaluate_role_continuous(
             control_dt_s=control_dt_s,
             physics_dt_s=physics_dt_s,
             device=device,
+            **({"trace_collector": trace_collector} if trace_collector is not None else {}),
         )
         results.append((stats, keydowns))
         if verbose:

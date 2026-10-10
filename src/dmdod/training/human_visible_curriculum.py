@@ -27,6 +27,7 @@ from dmdod.training.n_key import (
     TEACHER_ACTIVE_THRESHOLD,
     collect_n_key_expert_sequence,
 )
+from dmdod.n_key_real_chart import NKeyOverloadTrace
 from dmdod.training.real_chart import (
     aggregate,
     clone_model_state,
@@ -641,6 +642,107 @@ def format_catastrophic_anchor_diagnostics(
     return tuple(lines)
 
 
+
+def first_keydown_count_divergence(
+    best: tuple[float, ...],
+    candidate: tuple[float, ...],
+    *,
+    window_s: float = 0.25,
+    step_s: float = 0.05,
+    min_count_delta: int = 3,
+) -> tuple[float, int, int] | None:
+    """First locally significant press-count difference; physical keys are interchangeable."""
+    if window_s <= 0.0 or step_s <= 0.0 or min_count_delta <= 0:
+        raise ValueError("KeyDown divergence parameters must be positive")
+    if not best and not candidate:
+        return None
+    end = max((*best, *candidate), default=0.0)
+    for step in range(int(math.ceil(end / step_s)) + 1):
+        start = step * step_s
+        a = sum(start <= t < start + window_s for t in best)
+        b = sum(start <= t < start + window_s for t in candidate)
+        if abs(a - b) >= min_count_delta:
+            return start, a, b
+    return None
+
+
+def format_overload_trace_comparison(
+    best: NKeyOverloadTrace,
+    candidate: NKeyOverloadTrace,
+    *,
+    anchor_label: str,
+    max_too_early: int = 10,
+) -> tuple[str, ...]:
+    """Compare termination and physical KeyDown history without another rollout."""
+    if max_too_early < 0:
+        raise ValueError("max_too_early must be non-negative")
+    a, b = best.termination, candidate.termination
+    lines = [
+        f"  overload trace {anchor_label}:",
+        f"    termination: best t={a.time_s:.3f}s {a.reason} -> "
+        f"candidate t={b.time_s:.3f}s {b.reason} "
+        f"(dt={b.time_s - a.time_s:+.3f}s)",
+        f"    best: Hits={a.hits} Early={a.too_early} Keydowns={a.keydowns} "
+        f"next_target={a.next_target_index} gauge={a.overload_value:.3f}",
+        f"    candidate: Hits={b.hits} Early={b.too_early} "
+        f"Keydowns={b.keydowns} next_target={b.next_target_index} "
+        f"gauge={b.overload_value:.3f}",
+    ]
+    divergence = first_keydown_count_divergence(
+        best.keydown_times_s, candidate.keydown_times_s
+    )
+    if divergence is None:
+        lines.append("    key-independent KeyDown divergence: none (250ms window, delta>=3)")
+    else:
+        t, n_best, n_cand = divergence
+        lines.append(
+            f"    first key-independent KeyDown divergence: t={t:.3f}s "
+            f"best={n_best} candidate={n_cand} (250ms window, delta>=3)"
+        )
+    for title, trace in (("best", best), ("candidate", candidate)):
+        events = trace.too_early_events[-max_too_early:] if max_too_early else ()
+        lines.append(
+            f"    {title} TooEarly: total={len(trace.too_early_events)} "
+            f"last={len(events)} times_s="
+            f"[{', '.join(f'{event.time_s:.3f}' for event in events)}]"
+        )
+        for event in events:
+            lines.append(
+                f"      t={event.time_s:.3f}s key={event.key} "
+                f"target_index={event.target_index} error={event.error_ms:+.2f}ms "
+                f"gauge={event.overload_before:.3f}->{event.overload_after:.3f}"
+                f"{' FAIL_OVERLOAD' if event.fail_overload else ''}"
+            )
+    return tuple(lines)
+
+
+def catastrophic_trace_anchor_indices(
+    previous: tuple[ValidationAnchorSnapshot, ...],
+    current: tuple[ValidationAnchorSnapshot, ...],
+) -> tuple[int, ...]:
+    """Detail every SAFE loss and the five largest Hits drops (0-based offsets)."""
+    if len(previous) != len(current):
+        raise ValueError("Validation trace anchor count changed")
+    lost = {
+        i for i, (a, b) in enumerate(zip(previous, current))
+        if a.safe and not b.safe
+    }
+    drops = sorted(
+        (i for i, (a, b) in enumerate(zip(previous, current)) if b.hits < a.hits),
+        key=lambda i: (current[i].hits - previous[i].hits, i),
+    )[:5]
+    return tuple(sorted(lost | set(drops)))
+
+
+def select_best_trace_reference(
+    previous: tuple[NKeyOverloadTrace, ...],
+    candidate: tuple[NKeyOverloadTrace, ...],
+    *,
+    selected_best: bool,
+) -> tuple[NKeyOverloadTrace, ...]:
+    return candidate if selected_best else previous
+
+
 def validation_rank(summary: dict) -> tuple[float, ...]:
     mae = float(summary["mae_ms"])
     if not math.isfinite(mae):
@@ -1225,6 +1327,7 @@ def run_human_visible_curriculum(
     best_beta = start.best_beta
 
     print("=== fixed Validation baseline / best verification ===")
+    best_overload_traces: list[NKeyOverloadTrace] = []
     # A progress model may not be the best model. Evaluate the referenced best
     # separately, then restore the exact continuation model and optimizer.
     if start.role == "continuation-progress":
@@ -1240,6 +1343,7 @@ def run_human_visible_curriculum(
             physics_dt_s=prepared.physics_dt_s,
             device=prepared.device,
             verbose=False,
+            trace_collector=best_overload_traces,
         )
         evaluated_best_summary = validation_summary(baseline_results)
     finally:
@@ -1377,6 +1481,7 @@ def run_human_visible_curriculum(
             f"ctx[{context_text}]"
         )
 
+        candidate_overload_traces: list[NKeyOverloadTrace] = []
         validation_results = evaluate_role_continuous(
             model,
             prepared.validation,
@@ -1385,6 +1490,7 @@ def run_human_visible_curriculum(
             physics_dt_s=prepared.physics_dt_s,
             device=prepared.device,
             verbose=False,
+            trace_collector=candidate_overload_traces,
         )
         current_summary = validation_summary(validation_results)
         current_rank = validation_rank(current_summary)
@@ -1414,8 +1520,28 @@ def run_human_visible_curriculum(
                 best_validation_anchors, current_anchors
             ):
                 print(line)
+            if (
+                len(best_overload_traces) != len(prepared.validation)
+                or len(candidate_overload_traces) != len(prepared.validation)
+            ):
+                raise RuntimeError("Validation trace collection count mismatch")
+            for index in catastrophic_trace_anchor_indices(
+                best_validation_anchors, current_anchors
+            ):
+                label = f"#{index + 1:02d} {prepared.validation[index].chart_name}"
+                for line in format_overload_trace_comparison(
+                    best_overload_traces[index],
+                    candidate_overload_traces[index],
+                    anchor_label=label,
+                ):
+                    print(line)
 
         if selected_best:
+            best_overload_traces = list(select_best_trace_reference(
+                tuple(best_overload_traces),
+                tuple(candidate_overload_traces),
+                selected_best=True,
+            ))
             best_validation_anchors = snapshot_validation_anchors(
                 prepared.validation, validation_results
             )
