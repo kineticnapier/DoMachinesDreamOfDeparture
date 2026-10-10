@@ -48,6 +48,8 @@ lr = 0.0002
 min_lr = 0.000002
 controller_lr = 0.00003
 updates_per_epoch = 12
+transition_updates_per_epoch = 6
+transition_epochs = 4
 burn_in_steps = 64
 supervised_steps = 128
 anchors_per_batch = 3
@@ -80,6 +82,8 @@ seed = 99
     assert config.human_visible.min_lr == 2e-6
     assert config.human_visible.controller_lr == 3e-5
     assert config.human_visible.updates_per_epoch == 12
+    assert config.human_visible.transition_updates_per_epoch == 6
+    assert config.human_visible.transition_epochs == 4
     assert config.human_visible.burn_in_steps == 64
     assert config.human_visible.supervised_steps == 128
     assert config.human_visible.anchors_per_batch == 3
