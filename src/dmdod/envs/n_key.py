@@ -192,6 +192,9 @@ class DiagnosticHudNKeyRealChartMotorEnv(NKeyRealChartMotorEnv):
                 reason = "Overload"
             elif self._failed_on_miss:
                 reason = "Miss failure"
+            elif self.privileged_episode_time_s() >= self._episode_end_s:
+                # The base step may expire the remaining targets on timeout.
+                reason = "Time limit"
             elif all_resolved:
                 reason = "All targets resolved"
             else:
