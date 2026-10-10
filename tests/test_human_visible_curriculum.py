@@ -1,10 +1,16 @@
 from __future__ import annotations
 
+from dataclasses import FrozenInstanceError
+from types import SimpleNamespace
+
 import torch
 
 from dmdod.training.human_visible_curriculum import (
     HumanVisibleReplayWindow,
+    ValidationAnchorSnapshot,
     build_balanced_epoch_plan,
+    format_catastrophic_anchor_diagnostics,
+    snapshot_validation_anchors,
     catastrophic_regression,
     context_balanced_actuation_loss,
     effective_updates_per_epoch,
@@ -419,3 +425,78 @@ def test_progress_rejects_different_saved_best_summary(tmp_path):
     prepared.parent["human_visible_best_checkpoint_path"] = str(prepared.output_checkpoint)
     with pytest.raises(SystemExit, match="rankings disagree"):
         prepare_curriculum_start(prepared, config, model, optim)
+
+
+def _diagnostic_sample(index, *, name=None, safe=True, hits=100, early=1, keydowns=120):
+    return ValidationAnchorSnapshot(
+        index=index,
+        chart_name=name or f"song {index}",
+        chart_sha256=f"sha{index}",
+        start_s=1.0,
+        end_s=12.0,
+        hits=hits,
+        early=early,
+        overloaded=not safe,
+        keydowns=keydowns,
+    )
+
+
+def test_snapshot_uses_existing_results_and_keeps_chart_identity():
+    named = [SimpleNamespace(chart_name="piece", chart_sha256="abcd1234", start_s=2.0, end_s=8.0)]
+    stats = SimpleNamespace(hits=12, too_early_presses=3, overloaded=False)
+    snapshots = snapshot_validation_anchors(named, [(stats, 15)])
+    assert snapshots[0] == ValidationAnchorSnapshot(1, "piece", "abcd1234", 2.0, 8.0, 12, 3, False, 15)
+    stats.hits = 0
+    assert snapshots[0].hits == 12
+    with pytest.raises(FrozenInstanceError):
+        snapshots[0].hits = 7
+
+
+def test_snapshot_rejects_unpaired_validation_entries():
+    with pytest.raises(ValueError, match="length mismatch"):
+        snapshot_validation_anchors([object()], [])
+
+
+def test_catastrophic_report_lists_safe_lost_and_gained_with_full_deltas():
+    prior = (_diagnostic_sample(1, safe=True, hits=90, early=3, keydowns=99), _diagnostic_sample(2, safe=False, hits=30))
+    now = (_diagnostic_sample(1, safe=False, hits=70, early=8, keydowns=112), _diagnostic_sample(2, safe=True, hits=40))
+    text = "\n".join(format_catastrophic_anchor_diagnostics(prior, now))
+    assert "SAFE lost: 1" in text and "SAFE gained: 1" in text
+    assert "#01" in text and "SAFE 1->0" in text and "Hits 90->70 (-20)" in text
+    assert "Early 3->8 (+5)" in text and "Overload 0->1" in text
+    assert "Keydowns 99->112 (+13)" in text
+    assert "#02" in text and "SAFE 0->1" in text
+
+
+def test_hit_decreases_sort_largest_first_and_limit_five_stable_ties():
+    old = tuple(_diagnostic_sample(i, hits=100) for i in range(1, 8))
+    drops = {1: 5, 2: 40, 3: 20, 4: 40, 5: 10, 6: 30, 7: 15}
+    new = tuple(_diagnostic_sample(i, hits=100 - drops[i]) for i in range(1, 8))
+    lines = format_catastrophic_anchor_diagnostics(old, new)
+    header = next(i for i, x in enumerate(lines) if "largest Hits drops" in x)
+    assert "top 5" in lines[header]
+    assert [line.strip().split(" ")[0] for line in lines[header + 1:]] == ["#02", "#04", "#06", "#03", "#07"]
+
+
+def test_no_changes_reports_none_and_best_reference_can_be_replaced():
+    initial = (_diagnostic_sample(1, hits=80),)
+    improved = (_diagnostic_sample(1, hits=90),)
+    old_report = "\n".join(format_catastrophic_anchor_diagnostics(initial, improved))
+    assert "largest Hits drops (top 5): none" in old_report
+    best = improved  # selected_best branch stores the already-computed epoch values
+    worse = (_diagnostic_sample(1, hits=82),)
+    report = "\n".join(format_catastrophic_anchor_diagnostics(best, worse))
+    assert "Hits 90->82 (-8)" in report
+
+
+def test_validation_identity_and_count_must_match():
+    one = (_diagnostic_sample(1),)
+    with pytest.raises(ValueError, match="count"):
+        format_catastrophic_anchor_diagnostics(one, ())
+    with pytest.raises(ValueError, match="identity"):
+        format_catastrophic_anchor_diagnostics(one, (_diagnostic_sample(2),))
+
+
+def test_limit_must_be_nonnegative():
+    with pytest.raises(ValueError, match="non-negative"):
+        format_catastrophic_anchor_diagnostics((), (), max_hit_drops=-1)

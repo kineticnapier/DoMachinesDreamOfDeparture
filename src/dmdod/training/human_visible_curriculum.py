@@ -524,6 +524,123 @@ def validation_summary(results) -> dict[str, float | int | bool]:
     }
 
 
+@dataclass(frozen=True, slots=True)
+class ValidationAnchorSnapshot:
+    """Immutable values from one already-computed fixed-Validation rollout."""
+
+    index: int
+    chart_name: str
+    chart_sha256: str
+    start_s: float
+    end_s: float
+    hits: int
+    early: int
+    overloaded: bool
+    keydowns: int
+
+    @property
+    def safe(self) -> bool:
+        return not self.overloaded
+
+
+def snapshot_validation_anchors(validation, results) -> tuple[ValidationAnchorSnapshot, ...]:
+    """Pair existing Validation results with their ordered chart segments."""
+
+    if len(validation) != len(results):
+        raise ValueError("Validation segments/results length mismatch")
+    return tuple(
+        ValidationAnchorSnapshot(
+            index=index,
+            chart_name=str(named.chart_name),
+            chart_sha256=str(named.chart_sha256),
+            start_s=float(named.start_s),
+            end_s=float(named.end_s),
+            hits=int(stats.hits),
+            early=int(stats.too_early_presses),
+            overloaded=bool(stats.overloaded),
+            keydowns=int(keydowns),
+        )
+        for index, (named, (stats, keydowns)) in enumerate(
+            zip(validation, results), 1
+        )
+    )
+
+
+def _format_anchor_delta(
+    previous: ValidationAnchorSnapshot,
+    current: ValidationAnchorSnapshot,
+) -> str:
+    return (
+        f"#{previous.index:02d} {previous.chart_name!r} "
+        f"[{previous.start_s:.3f}-{previous.end_s:.3f}s "
+        f"sha={previous.chart_sha256[:8]}] "
+        f"SAFE {int(previous.safe)}->{int(current.safe)} "
+        f"Hits {previous.hits}->{current.hits} "
+        f"({current.hits - previous.hits:+d}) "
+        f"Early {previous.early}->{current.early} "
+        f"({current.early - previous.early:+d}) "
+        f"Overload {int(previous.overloaded)}->{int(current.overloaded)} "
+        f"Keydowns {previous.keydowns}->{current.keydowns} "
+        f"({current.keydowns - previous.keydowns:+d})"
+    )
+
+
+def format_catastrophic_anchor_diagnostics(
+    previous_best: tuple[ValidationAnchorSnapshot, ...],
+    current: tuple[ValidationAnchorSnapshot, ...],
+    *,
+    max_hit_drops: int = 5,
+) -> tuple[str, ...]:
+    """Report chart-level deterioration without performing another rollout."""
+
+    if max_hit_drops < 0:
+        raise ValueError("max_hit_drops must be non-negative")
+    if len(previous_best) != len(current):
+        raise ValueError("Validation anchor count changed")
+    for before, after in zip(previous_best, current):
+        if (
+            before.index,
+            before.chart_sha256,
+            before.start_s,
+            before.end_s,
+        ) != (
+            after.index,
+            after.chart_sha256,
+            after.start_s,
+            after.end_s,
+        ):
+            raise ValueError("Validation anchor identity/order changed")
+
+    lost = [
+        (before, after)
+        for before, after in zip(previous_best, current)
+        if before.safe and not after.safe
+    ]
+    gained = [
+        (before, after)
+        for before, after in zip(previous_best, current)
+        if not before.safe and after.safe
+    ]
+    drops = sorted(
+        (
+            (before, after)
+            for before, after in zip(previous_best, current)
+            if after.hits < before.hits
+        ),
+        key=lambda pair: (pair[1].hits - pair[0].hits, pair[0].index),
+    )[:max_hit_drops]
+
+    lines = ["catastrophic Validation anchors (against previous selected best):"]
+    for title, pairs in (
+        ("SAFE lost", lost),
+        ("SAFE gained", gained),
+        (f"largest Hits drops (top {max_hit_drops})", drops),
+    ):
+        lines.append(f"  {title}: {len(pairs)}" if pairs else f"  {title}: none")
+        lines.extend(f"    {_format_anchor_delta(a, b)}" for a, b in pairs)
+    return tuple(lines)
+
+
 def validation_rank(summary: dict) -> tuple[float, ...]:
     mae = float(summary["mae_ms"])
     if not math.isfinite(mae):
@@ -1131,6 +1248,10 @@ def run_human_visible_curriculum(
             model.prepare_recurrent_runtime()
             freeze_human_visible_controller(model)
 
+    best_validation_anchors = snapshot_validation_anchors(
+        prepared.validation, baseline_results
+    )
+
     if start.role:
         _check_validation_summary(evaluated_best_summary, start.best_summary)
         best_summary = dict(start.best_summary)
@@ -1284,7 +1405,20 @@ def run_human_visible_curriculum(
             )
         )
 
+        if catastrophic:
+            current_anchors = snapshot_validation_anchors(
+                prepared.validation, validation_results
+            )
+            print(f"=== val-e{epoch} catastrophic vs best-e{best_epoch} ===")
+            for line in format_catastrophic_anchor_diagnostics(
+                best_validation_anchors, current_anchors
+            ):
+                print(line)
+
         if selected_best:
+            best_validation_anchors = snapshot_validation_anchors(
+                prepared.validation, validation_results
+            )
             best_state = clone_model_state(model)
             best_optimizer_state = copy.deepcopy(
                 optimizer.state_dict()
