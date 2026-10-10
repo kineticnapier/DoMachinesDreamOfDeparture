@@ -7,8 +7,10 @@ from dmdod.training.human_visible_curriculum import (
     build_balanced_epoch_plan,
     catastrophic_regression,
     context_balanced_actuation_loss,
+    effective_updates_per_epoch,
     n_key_actuation_loss_per_frame,
     progression_passes,
+    update_curriculum_state,
 )
 
 
@@ -142,3 +144,75 @@ def test_progression_gate_is_relative_to_fixed_baseline() -> None:
         {"safe": 2, "hits": 110, "x": 60.0},
         baseline,
     )
+
+
+def test_catastrophic_epoch_cannot_advance_progression() -> None:
+    decision = update_curriculum_state(
+        level=1,
+        passed=True,
+        catastrophic=True,
+        validation_streak=1,
+        catastrophic_streak=0,
+        progression_streak=3,
+        catastrophic_patience=2,
+    )
+
+    assert decision.progression_pass is False
+    assert decision.validation_streak == 0
+    assert decision.promoted is False
+    assert decision.rolled_back is False
+
+
+def test_rollback_resets_progression_streak() -> None:
+    decision = update_curriculum_state(
+        level=1,
+        passed=True,
+        catastrophic=True,
+        validation_streak=2,
+        catastrophic_streak=1,
+        progression_streak=3,
+        catastrophic_patience=2,
+    )
+
+    assert decision.rolled_back is True
+    assert decision.validation_streak == 0
+    assert decision.catastrophic_streak == 0
+    assert decision.promoted is False
+
+
+def test_clean_streak_promotes_level() -> None:
+    decision = update_curriculum_state(
+        level=0,
+        passed=True,
+        catastrophic=False,
+        validation_streak=2,
+        catastrophic_streak=0,
+        progression_streak=3,
+        catastrophic_patience=2,
+    )
+
+    assert decision.progression_pass is True
+    assert decision.promoted is True
+    assert decision.level == 1
+    assert decision.validation_streak == 0
+
+
+def test_transition_epochs_use_reduced_update_budget() -> None:
+    assert effective_updates_per_epoch(
+        level=1,
+        transition_epochs_remaining=3,
+        updates_per_epoch=32,
+        transition_updates_per_epoch=16,
+    ) == 16
+    assert effective_updates_per_epoch(
+        level=1,
+        transition_epochs_remaining=0,
+        updates_per_epoch=32,
+        transition_updates_per_epoch=16,
+    ) == 32
+    assert effective_updates_per_epoch(
+        level=0,
+        transition_epochs_remaining=3,
+        updates_per_epoch=32,
+        transition_updates_per_epoch=16,
+    ) == 32
