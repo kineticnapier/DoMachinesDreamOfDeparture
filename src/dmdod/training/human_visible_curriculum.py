@@ -39,8 +39,8 @@ from dmdod.training.real_chart import (
 
 BETA_SCHEDULE = (1.0, 0.75, 0.50, 0.25, 0.10, 0.0)
 TRAINING_MODE = "human_visible_curriculum_dagger"
-TRAINER_VERSION = "3.1.0-human-visible-curriculum-dagger"
-CHECKPOINT_FORMAT_VERSION = 35
+TRAINER_VERSION = "3.2.0-human-visible-curriculum-dagger"
+CHECKPOINT_FORMAT_VERSION = 36
 
 _CONTEXT_WEIGHTS = {
     "press_due": 2.0,
@@ -563,6 +563,82 @@ def catastrophic_regression(
     return False
 
 
+@dataclass(frozen=True, slots=True)
+class CurriculumDecision:
+    level: int
+    validation_streak: int
+    catastrophic_streak: int
+    progression_pass: bool
+    promoted: bool
+    rolled_back: bool
+
+
+def update_curriculum_state(
+    *,
+    level: int,
+    passed: bool,
+    catastrophic: bool,
+    validation_streak: int,
+    catastrophic_streak: int,
+    progression_streak: int,
+    catastrophic_patience: int,
+) -> CurriculumDecision:
+    """Advance curriculum counters without letting failures earn promotion."""
+
+    if progression_streak <= 0:
+        raise ValueError("progression_streak must be positive")
+    if catastrophic_patience <= 0:
+        raise ValueError("catastrophic_patience must be positive")
+
+    progression_pass = bool(passed and not catastrophic)
+    validation_streak = (
+        int(validation_streak) + 1 if progression_pass else 0
+    )
+    catastrophic_streak = (
+        int(catastrophic_streak) + 1 if catastrophic else 0
+    )
+
+    rolled_back = catastrophic_streak >= int(catastrophic_patience)
+    if rolled_back:
+        # A rollback restores a previous policy/optimizer state. Any progression
+        # evidence accumulated by the discarded continuation is invalid too.
+        validation_streak = 0
+        catastrophic_streak = 0
+
+    promoted = False
+    if (
+        not rolled_back
+        and validation_streak >= int(progression_streak)
+        and int(level) < len(BETA_SCHEDULE) - 1
+    ):
+        level = int(level) + 1
+        validation_streak = 0
+        promoted = True
+
+    return CurriculumDecision(
+        level=int(level),
+        validation_streak=int(validation_streak),
+        catastrophic_streak=int(catastrophic_streak),
+        progression_pass=progression_pass,
+        promoted=promoted,
+        rolled_back=rolled_back,
+    )
+
+
+def effective_updates_per_epoch(
+    *,
+    level: int,
+    transition_epochs_remaining: int,
+    updates_per_epoch: int,
+    transition_updates_per_epoch: int,
+) -> int:
+    """Use a smaller optimizer budget immediately after a beta transition."""
+
+    if int(level) > 0 and int(transition_epochs_remaining) > 0:
+        return int(transition_updates_per_epoch)
+    return int(updates_per_epoch)
+
+
 def _format_validation(summary: dict) -> str:
     mae = float(summary["mae_ms"])
     mae_text = "inf" if not math.isfinite(mae) else f"{mae:.2f}ms"
@@ -589,6 +665,9 @@ def _checkpoint_payload(
     current_summary: dict,
     best_summary: dict,
     best_checkpoint_path: Path,
+    best_epoch: int,
+    best_beta: float,
+    transition_epochs_remaining: int,
     history: list[dict],
     stopped_reason: str,
 ) -> dict:
@@ -602,7 +681,7 @@ def _checkpoint_payload(
             "training_mode": TRAINING_MODE,
             "training_config": config.as_dict(),
             "human_visible_training_semantics": (
-                "fixed-parent+curriculum-dagger+balanced-context-v2"
+                "fixed-parent+curriculum-dagger+balanced-context-v3"
             ),
             "human_visible_epoch": int(epoch),
             "human_visible_dagger_level": int(level),
@@ -620,6 +699,11 @@ def _checkpoint_payload(
             ),
             "human_visible_best_validation_summary": dict(best_summary),
             "human_visible_best_checkpoint_path": str(best_checkpoint_path),
+            "human_visible_best_epoch": int(best_epoch),
+            "human_visible_best_beta": float(best_beta),
+            "human_visible_transition_epochs_remaining": int(
+                transition_epochs_remaining
+            ),
             "human_visible_history": list(history),
             "human_visible_stopped_reason": str(stopped_reason),
             "dagger_selection_uses_validation": True,
@@ -733,6 +817,8 @@ def run_human_visible_curriculum(
         f"anchors={len(prepared.anchors)} "
         f"validation={len(prepared.validation)} "
         f"updates/epoch={visible.updates_per_epoch} "
+        f"transition-updates={visible.transition_updates_per_epoch}"
+        f"x{visible.transition_epochs} "
         f"batch={min(visible.anchors_per_batch, len(prepared.anchors))} anchors x 2 sources "
         f"burn-in={visible.burn_in_steps} supervised={visible.supervised_steps}"
     )
@@ -800,10 +886,25 @@ def run_human_visible_curriculum(
         if resuming
         else []
     )
+    transition_epochs_remaining = int(
+        prepared.parent.get("human_visible_transition_epochs_remaining", 0)
+        if resuming
+        else 0
+    )
 
     best_state = clone_model_state(model)
     best_optimizer_state = copy.deepcopy(optimizer.state_dict())
     best_summary = dict(current_summary)
+    best_epoch = int(
+        prepared.parent.get("human_visible_best_epoch", epoch)
+        if resuming
+        else epoch
+    )
+    best_beta = float(
+        prepared.parent.get("human_visible_best_beta", BETA_SCHEDULE[level])
+        if resuming
+        else BETA_SCHEDULE[level]
+    )
 
     best_path_value = prepared.parent.get(
         "human_visible_best_checkpoint_path"
@@ -834,6 +935,12 @@ def run_human_visible_curriculum(
                 )
                 if isinstance(stored_best, dict):
                     best_summary = dict(stored_best)
+                best_epoch = int(
+                    best_checkpoint.get("human_visible_best_epoch", best_epoch)
+                )
+                best_beta = float(
+                    best_checkpoint.get("human_visible_best_beta", best_beta)
+                )
 
     if not resuming:
         save_checkpoint(
@@ -851,6 +958,9 @@ def run_human_visible_curriculum(
                 current_summary=current_summary,
                 best_summary=best_summary,
                 best_checkpoint_path=prepared.output_checkpoint,
+                best_epoch=best_epoch,
+                best_beta=best_beta,
+                transition_epochs_remaining=transition_epochs_remaining,
                 history=history,
                 stopped_reason="baseline-validated",
             ),
@@ -907,10 +1017,16 @@ def run_human_visible_curriculum(
             burn_in_steps=visible.burn_in_steps,
             supervised_steps=visible.supervised_steps,
         )
+        updates_this_epoch = effective_updates_per_epoch(
+            level=level,
+            transition_epochs_remaining=transition_epochs_remaining,
+            updates_per_epoch=visible.updates_per_epoch,
+            transition_updates_per_epoch=visible.transition_updates_per_epoch,
+        )
         plan = build_balanced_epoch_plan(
             windows,
             anchor_ids=list(range(len(prepared.anchors))),
-            updates_per_epoch=visible.updates_per_epoch,
+            updates_per_epoch=updates_this_epoch,
             anchors_per_batch=visible.anchors_per_batch,
             seed=stable_seed(visible.seed, "plan", epoch),
         )
@@ -973,26 +1089,37 @@ def run_human_visible_curriculum(
                 optimizer.state_dict()
             )
             best_summary = dict(current_summary)
+            best_epoch = int(epoch)
+            best_beta = float(beta)
 
-        promoted = False
-        if (
-            validation_streak >= int(visible.progression_streak)
-            and level < len(BETA_SCHEDULE) - 1
-        ):
-            level += 1
-            validation_streak = 0
-            promoted = True
+        decision = update_curriculum_state(
+            level=level,
+            passed=passed,
+            catastrophic=catastrophic,
+            validation_streak=validation_streak,
+            catastrophic_streak=catastrophic_streak,
+            progression_streak=visible.progression_streak,
+            catastrophic_patience=visible.catastrophic_patience,
+        )
+        level = decision.level
+        validation_streak = decision.validation_streak
+        catastrophic_streak = decision.catastrophic_streak
+        passed = decision.progression_pass
+        promoted = decision.promoted
+        rolled_back = decision.rolled_back
 
-        rolled_back = False
-        if catastrophic_streak >= int(
-            visible.catastrophic_patience
-        ):
+        if rolled_back:
             model.load_state_dict(best_state)
             model.prepare_recurrent_runtime()
             freeze_human_visible_controller(model)
             optimizer.load_state_dict(best_optimizer_state)
-            catastrophic_streak = 0
-            rolled_back = True
+
+        if promoted or rolled_back:
+            transition_epochs_remaining = (
+                int(visible.transition_epochs) if level > 0 else 0
+            )
+        elif transition_epochs_remaining > 0:
+            transition_epochs_remaining -= 1
 
         history.append(
             {
@@ -1000,6 +1127,10 @@ def run_human_visible_curriculum(
                 "beta": float(beta),
                 "level": int(level),
                 "intervention_rate": float(intervention_rate),
+                "updates_this_epoch": int(updates_this_epoch),
+                "transition_epochs_remaining": int(
+                    transition_epochs_remaining
+                ),
                 **metrics.as_dict(),
                 "validation": dict(current_summary),
                 "selected_best": bool(selected_best),
@@ -1037,7 +1168,8 @@ def run_human_visible_curriculum(
             f"rank={'BEST' if selected_best else 'keep'} "
             f"pass={validation_streak}/{visible.progression_streak} "
             f"promote={int(promoted)} catastrophic={int(catastrophic)} "
-            f"rollback={int(rolled_back)}"
+            f"rollback={int(rolled_back)} "
+            f"next-updates={effective_updates_per_epoch(level=level, transition_epochs_remaining=transition_epochs_remaining, updates_per_epoch=visible.updates_per_epoch, transition_updates_per_epoch=visible.transition_updates_per_epoch)}"
         )
 
         continuation_summary = (
@@ -1058,6 +1190,9 @@ def run_human_visible_curriculum(
                 current_summary=continuation_summary,
                 best_summary=best_summary,
                 best_checkpoint_path=prepared.output_checkpoint,
+                best_epoch=best_epoch,
+                best_beta=best_beta,
+                transition_epochs_remaining=transition_epochs_remaining,
                 history=history,
                 stopped_reason="running-progress",
             ),
@@ -1074,7 +1209,8 @@ def run_human_visible_curriculum(
 
     print("=== selected fixed-Validation best checkpoint ===")
     print(
-        f"stop={stopped_reason} epoch={epoch} beta={BETA_SCHEDULE[level]:.2f} "
+        f"stop={stopped_reason} final-epoch={epoch} "
+        f"best-epoch={best_epoch} best-beta={best_beta:.2f} "
         f"{_format_validation(best_summary)}"
     )
     print(
