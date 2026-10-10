@@ -1067,9 +1067,6 @@ def run_human_visible_curriculum(
             current_summary,
             baseline_summary,
         )
-        validation_streak = (
-            validation_streak + 1 if passed else 0
-        )
 
         catastrophic = (
             False
@@ -1078,9 +1075,6 @@ def run_human_visible_curriculum(
                 current_summary,
                 best_summary,
             )
-        )
-        catastrophic_streak = (
-            catastrophic_streak + 1 if catastrophic else 0
         )
 
         if selected_best:
@@ -1157,6 +1151,9 @@ def run_human_visible_curriculum(
                     current_summary=current_summary,
                     best_summary=best_summary,
                     best_checkpoint_path=prepared.output_checkpoint,
+                    best_epoch=best_epoch,
+                    best_beta=best_beta,
+                    transition_epochs_remaining=transition_epochs_remaining,
                     history=history,
                     stopped_reason="running-best",
                 ),
