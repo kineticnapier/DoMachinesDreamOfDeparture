@@ -216,3 +216,206 @@ def test_transition_epochs_use_reduced_update_budget() -> None:
         updates_per_epoch=32,
         transition_updates_per_epoch=16,
     ) == 32
+
+
+# Resume-specific CPU checks. No chart dataset or CUDA device is needed.
+from pathlib import Path
+from types import SimpleNamespace
+import copy
+import pytest
+
+from dmdod.training.human_visible_curriculum import (
+    BETA_SCHEDULE,
+    TRAINING_MODE,
+    _check_validation_context,
+    _check_validation_summary,
+    _checkpoint_best_identity,
+    _check_optimizer_state,
+    _load_checked_optimizer,
+    curriculum_checkpoint_role,
+    prepare_curriculum_start,
+)
+
+
+def _small_resume_model_and_optimizer():
+    model = torch.nn.Sequential(torch.nn.Linear(3, 2), torch.nn.Linear(2, 1))
+    optimizer = torch.optim.AdamW(
+        [{"params": list(model[0].parameters()), "lr": 3e-5},
+         {"params": list(model[1].parameters()), "lr": 5e-5}],
+        weight_decay=1e-4,
+    )
+    optimizer.zero_grad()
+    model(torch.ones(2, 3)).square().mean().backward()
+    optimizer.step()
+    return model, optimizer
+
+
+def _tiny_resume_context(tmp_path, model, optimizer, *, role="selected-best"):
+    source = tmp_path / ("source.progress.pt" if role == "continuation-progress" else "source.pt")
+    output = tmp_path / ("source.pt" if role == "continuation-progress" else "copy.pt")
+    summary = {"safe": 1, "anchors": 1, "hits": 2, "targets": 5,
+               "x": 50.0, "pp": 40.0, "mae_ms": 22.0}
+    old = {
+        "training_mode": TRAINING_MODE,
+        "human_visible_stopped_reason": "running-progress" if role == "continuation-progress" else "running-best",
+        "model_state": {k: v.detach().clone() for k, v in model.state_dict().items()},
+        "human_visible_optimizer_state": copy.deepcopy(optimizer.state_dict()),
+        "training_config": {"run": {"dataset": str(tmp_path / "dataset")},
+                            "data": {"anchor_limit": 20, "validation_limit": 20}},
+        "human_visible_epoch": 2,
+        "human_visible_dagger_level": 1,
+        "human_visible_history": [{"epoch": 2, "beta": 1.0, "selected_best": True}],
+        "human_visible_parent_validation_summary": dict(summary),
+        "human_visible_best_validation_summary": dict(summary),
+        "human_visible_current_validation_summary": dict(summary),
+        "human_visible_validation_streak": 1,
+        "human_visible_catastrophic_streak": 1,
+    }
+    data = SimpleNamespace(anchor_limit=20, validation_limit=20)
+    run = SimpleNamespace(dataset=str(tmp_path / "dataset"))
+    config = SimpleNamespace(run=run, data=data, human_visible=SimpleNamespace(transition_epochs=3))
+    prepared = SimpleNamespace(parent=old, source_checkpoint=source, output_checkpoint=output,
+                               validation=[SimpleNamespace(chart_sha256="abc", start_s=0, end_s=10)])
+    return prepared, config, summary
+
+
+def test_old_selected_best_beta_is_read_from_matching_history(tmp_path):
+    model, optim = _small_resume_model_and_optimizer()
+    prepared, config, summary = _tiny_resume_context(tmp_path, model, optim)
+    assert _checkpoint_best_identity(prepared.parent) == (2, 1.0, 0)
+    prepared.parent["human_visible_history"] = []
+    with pytest.raises(SystemExit, match="cannot infer"):
+        _checkpoint_best_identity(prepared.parent)
+
+
+def test_new_best_resume_resets_streak_and_retains_optimizer(tmp_path):
+    model, optim = _small_resume_model_and_optimizer()
+    prepared, config, _ = _tiny_resume_context(tmp_path, model, optim)
+    start = prepare_curriculum_start(prepared, config, model, optim)
+    assert (start.epoch, start.level, start.best_epoch, start.best_beta) == (2, 0, 2, 1.0)
+    assert (start.validation_streak, start.catastrophic_streak) == (0, 0)
+    assert start.seed_output is True
+    assert start.best_optimizer_state["state"]
+
+
+def test_new_best_resume_rejects_existing_output_or_progress(tmp_path):
+    model, optim = _small_resume_model_and_optimizer()
+    prepared, config, _ = _tiny_resume_context(tmp_path, model, optim)
+    prepared.output_checkpoint.touch()
+    with pytest.raises(SystemExit, match="already exists"):
+        prepare_curriculum_start(prepared, config, model, optim)
+    prepared.output_checkpoint.unlink()
+    progress = prepared.output_checkpoint.with_name("copy.progress.pt")
+    progress.touch()
+    with pytest.raises(SystemExit, match="progress exists"):
+        prepare_curriculum_start(prepared, config, model, optim)
+
+
+def test_new_best_resume_rejects_source_equal_output(tmp_path):
+    model, optim = _small_resume_model_and_optimizer()
+    prepared, config, _ = _tiny_resume_context(tmp_path, model, optim)
+    prepared.output_checkpoint = prepared.source_checkpoint
+    with pytest.raises(SystemExit, match="must differ"):
+        prepare_curriculum_start(prepared, config, model, optim)
+
+
+def test_missing_or_wrong_optimizer_state_is_rejected(tmp_path):
+    model, optim = _small_resume_model_and_optimizer()
+    prepared, config, _ = _tiny_resume_context(tmp_path, model, optim)
+    del prepared.parent["human_visible_optimizer_state"]
+    with pytest.raises(SystemExit, match="optimizer state"):
+        prepare_curriculum_start(prepared, config, model, optim)
+    prepared.parent["human_visible_optimizer_state"] = {"state": {}, "param_groups": []}
+    with pytest.raises(SystemExit, match="group count"):
+        prepare_curriculum_start(prepared, config, model, optim)
+
+
+def test_progress_resume_requires_existing_matching_best(tmp_path):
+    model, optim = _small_resume_model_and_optimizer()
+    prepared, config, _ = _tiny_resume_context(tmp_path, model, optim, role="continuation-progress")
+    prepared.parent["human_visible_best_checkpoint_path"] = str(prepared.output_checkpoint)
+    with pytest.raises(SystemExit, match="does not exist"):
+        prepare_curriculum_start(prepared, config, model, optim)
+    torch.save({"training_mode": TRAINING_MODE, "human_visible_stopped_reason": "running-progress"},
+               prepared.output_checkpoint)
+    with pytest.raises(SystemExit, match="not selected-best"):
+        prepare_curriculum_start(prepared, config, model, optim)
+
+
+def test_progress_resume_restores_counters_and_best_reference(tmp_path):
+    model, optim = _small_resume_model_and_optimizer()
+    prepared, config, _ = _tiny_resume_context(tmp_path, model, optim, role="continuation-progress")
+    best = dict(prepared.parent)
+    best["human_visible_stopped_reason"] = "running-best"
+    torch.save(best, prepared.output_checkpoint)
+    prepared.parent["human_visible_best_checkpoint_path"] = str(prepared.output_checkpoint)
+    prepared.parent["human_visible_epoch"] = 8
+    prepared.parent["human_visible_dagger_level"] = 2
+    prepared.parent["human_visible_transition_epochs_remaining"] = 2
+    start = prepare_curriculum_start(prepared, config, model, optim)
+    assert (start.epoch, start.level, start.validation_streak, start.catastrophic_streak) == (8, 2, 1, 1)
+    assert start.transition_epochs_remaining == 2
+    assert start.seed_output is False
+    assert start.best_epoch == 2
+
+
+def test_resume_validation_rejects_modified_limits_or_results(tmp_path):
+    model, optim = _small_resume_model_and_optimizer()
+    prepared, config, summary = _tiny_resume_context(tmp_path, model, optim)
+    config.data.validation_limit = 19
+    with pytest.raises(SystemExit, match="validation_limit"):
+        _check_validation_context(prepared.parent, config, prepared)
+    with pytest.raises(SystemExit, match="fixed Validation mismatch"):
+        _check_validation_summary(dict(summary, hits=3), summary)
+
+
+def test_resume_optimizer_moments_are_loaded_and_can_be_restored(tmp_path):
+    model, optim = _small_resume_model_and_optimizer()
+    prepared, config, _ = _tiny_resume_context(tmp_path, model, optim)
+    original = copy.deepcopy(optim.state_dict())
+    for item in optim.state.values():
+        item["exp_avg"].zero_()
+    _load_checked_optimizer(optim, prepared.parent, model)
+    assert any(torch.count_nonzero(s["exp_avg"]) for s in optim.state.values())
+    assert len(original["state"]) == len(optim.state)
+
+
+def test_resume_checkpoint_roles_fail_closed():
+    assert curriculum_checkpoint_role({"training_mode": TRAINING_MODE,
+        "human_visible_stopped_reason": "running-best"}) == "selected-best"
+    assert curriculum_checkpoint_role({"training_mode": TRAINING_MODE,
+        "human_visible_stopped_reason": "running-progress"}) == "continuation-progress"
+    with pytest.raises(SystemExit, match="cannot be determined"):
+        curriculum_checkpoint_role({"training_mode": TRAINING_MODE})
+
+
+def test_validation_identity_mismatch_is_rejected(tmp_path):
+    model, optim = _small_resume_model_and_optimizer()
+    prepared, config, _ = _tiny_resume_context(tmp_path, model, optim)
+    prepared.parent["human_visible_validation_identity"] = [
+        {"chart_sha256": "different", "start_s": 0, "end_s": 10}
+    ]
+    with pytest.raises(SystemExit, match="SHA changed"):
+        _check_validation_context(prepared.parent, config, prepared)
+
+
+def test_optimizer_shape_mismatch_is_rejected(tmp_path):
+    model, optim = _small_resume_model_and_optimizer()
+    prepared, config, _ = _tiny_resume_context(tmp_path, model, optim)
+    data = prepared.parent["human_visible_optimizer_state"]
+    key = next(iter(data["state"]))
+    data["state"][key]["exp_avg"] = torch.ones(20)
+    with pytest.raises(SystemExit, match="tensor shape mismatch"):
+        _check_optimizer_state(optim, prepared.parent, model)
+
+
+def test_progress_rejects_different_saved_best_summary(tmp_path):
+    model, optim = _small_resume_model_and_optimizer()
+    prepared, config, _ = _tiny_resume_context(tmp_path, model, optim, role="continuation-progress")
+    best = copy.deepcopy(prepared.parent)
+    best["human_visible_stopped_reason"] = "running-best"
+    best["human_visible_best_validation_summary"]["hits"] = 99
+    torch.save(best, prepared.output_checkpoint)
+    prepared.parent["human_visible_best_checkpoint_path"] = str(prepared.output_checkpoint)
+    with pytest.raises(SystemExit, match="rankings disagree"):
+        prepare_curriculum_start(prepared, config, model, optim)

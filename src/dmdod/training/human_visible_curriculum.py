@@ -39,8 +39,8 @@ from dmdod.training.real_chart import (
 
 BETA_SCHEDULE = (1.0, 0.75, 0.50, 0.25, 0.10, 0.0)
 TRAINING_MODE = "human_visible_curriculum_dagger"
-TRAINER_VERSION = "3.2.0-human-visible-curriculum-dagger"
-CHECKPOINT_FORMAT_VERSION = 36
+TRAINER_VERSION = "3.3.0-human-visible-curriculum-resume"
+CHECKPOINT_FORMAT_VERSION = 37
 
 _CONTEXT_WEIGHTS = {
     "press_due": 2.0,
@@ -651,6 +651,261 @@ def _format_validation(summary: dict) -> str:
     )
 
 
+
+# Resume checks are deliberately restricted to this trainer. They do not
+# reinterpret generic/legacy action-trust checkpoint roles.
+def curriculum_checkpoint_role(checkpoint: dict) -> str | None:
+    if str(checkpoint.get("training_mode", "")) != TRAINING_MODE:
+        return None
+    legacy = {
+        "running-best": "selected-best",
+        "baseline-validated": "selected-best",
+        "running-progress": "continuation-progress",
+    }.get(str(checkpoint.get("human_visible_stopped_reason", "")))
+    explicit = checkpoint.get("human_visible_checkpoint_role")
+    if explicit is None:
+        if legacy is None:
+            raise SystemExit("curriculum checkpoint role cannot be determined safely")
+        return legacy
+    if explicit not in {"selected-best", "continuation-progress"}:
+        raise SystemExit(f"unsupported curriculum checkpoint role: {explicit!r}")
+    if legacy is not None and explicit != legacy:
+        raise SystemExit("curriculum checkpoint role conflicts with stopped_reason")
+    return str(explicit)
+
+
+def _checkpoint_best_identity(checkpoint: dict) -> tuple[int, float, int]:
+    if curriculum_checkpoint_role(checkpoint) != "selected-best":
+        raise SystemExit("expected a selected-best curriculum checkpoint")
+    epoch = int(checkpoint.get("human_visible_best_epoch", checkpoint.get("human_visible_epoch", -1)))
+    if epoch < 0:
+        raise SystemExit("selected-best checkpoint has no valid best epoch")
+    beta = checkpoint.get("human_visible_best_beta")
+    if beta is None:
+        matches = [
+            item for item in checkpoint.get("human_visible_history", [])
+            if isinstance(item, dict)
+            and int(item.get("epoch", -1)) == epoch
+            and bool(item.get("selected_best", False))
+            and "beta" in item
+        ]
+        if len(matches) != 1:
+            raise SystemExit("cannot infer old selected-best beta from unique best history entry")
+        beta = matches[0]["beta"]
+    beta = float(beta)
+    indices = [i for i, scheduled in enumerate(BETA_SCHEDULE)
+               if math.isclose(beta, scheduled, rel_tol=0, abs_tol=1e-8)]
+    if len(indices) != 1:
+        raise SystemExit(f"best beta is not in the curriculum schedule: {beta}")
+    if int(checkpoint.get("human_visible_epoch", epoch)) != epoch:
+        raise SystemExit("selected-best checkpoint epoch does not match its best epoch")
+    return epoch, float(BETA_SCHEDULE[indices[0]]), indices[0]
+
+
+def _validation_identity(prepared) -> list[dict]:
+    return [
+        {
+            "chart_sha256": str(item.chart_sha256),
+            "start_s": float(item.start_s),
+            "end_s": float(item.end_s),
+        }
+        for item in prepared.validation
+    ]
+
+
+def _check_validation_context(checkpoint: dict, config, prepared) -> None:
+    previous = checkpoint.get("training_config")
+    if not isinstance(previous, dict):
+        raise SystemExit("resume requires saved training_config")
+    prior_run = previous.get("run", {})
+    prior_data = previous.get("data", {})
+    if not isinstance(prior_run, dict) or not isinstance(prior_data, dict):
+        raise SystemExit("resume training_config has invalid run/data sections")
+    if Path(str(prior_run.get("dataset", ""))).resolve() != Path(config.run.dataset).resolve():
+        raise SystemExit("resume dataset path differs from saved training_config")
+    for name in ("anchor_limit", "validation_limit"):
+        old = prior_data.get(name)
+        new = getattr(config.data, name)
+        if old != new:
+            raise SystemExit(f"resume {name} differs from saved training_config: {old} != {new}")
+    if "human_visible_validation_identity" in checkpoint:
+        previous_items = checkpoint["human_visible_validation_identity"]
+        current_items = _validation_identity(prepared)
+        if len(previous_items) != len(current_items):
+            raise SystemExit("fixed Validation segment count changed")
+        for old, new in zip(previous_items, current_items):
+            if old["chart_sha256"] != new["chart_sha256"]:
+                raise SystemExit("fixed Validation chart SHA changed")
+            for name in ("start_s", "end_s"):
+                if not math.isclose(float(old[name]), new[name], abs_tol=1e-8, rel_tol=0):
+                    raise SystemExit(f"fixed Validation {name} changed")
+
+
+def _check_validation_summary(actual: dict, recorded: dict) -> None:
+    if not isinstance(recorded, dict):
+        raise SystemExit("selected-best checkpoint has no saved Validation summary")
+    for name in ("anchors", "targets", "safe", "hits"):
+        if int(actual[name]) != int(recorded[name]):
+            raise SystemExit(f"fixed Validation mismatch: {name}: {actual[name]} != {recorded[name]}")
+    # Stored checkpoint stats are already rounded by the simulator pipeline.
+    for name, tolerance in (("x", 0.05), ("pp", 0.05), ("mae_ms", 0.25)):
+        a, b = float(actual[name]), float(recorded[name])
+        if not (a == b or math.isclose(a, b, rel_tol=0, abs_tol=tolerance)):
+            raise SystemExit(f"fixed Validation mismatch: {name}: {a} != {b}")
+
+
+def _check_optimizer_state(optimizer: torch.optim.Optimizer, checkpoint: dict, model) -> dict:
+    saved = checkpoint.get("human_visible_optimizer_state")
+    if not isinstance(saved, dict) or not isinstance(saved.get("param_groups"), list):
+        raise SystemExit("resume checkpoint is missing valid AdamW optimizer state")
+    groups = saved["param_groups"]
+    if len(groups) != len(optimizer.param_groups):
+        raise SystemExit("resume AdamW parameter-group count mismatch")
+    parameter_names = {id(value): name for name, value in model.named_parameters()}
+    current_names = [
+        [parameter_names[id(p)] for p in group["params"]]
+        for group in optimizer.param_groups
+    ]
+    previous_names = checkpoint.get("human_visible_optimizer_parameter_names")
+    if previous_names is not None and previous_names != current_names:
+        raise SystemExit("resume AdamW parameter names/order mismatch")
+    saved_state = saved.get("state")
+    if not isinstance(saved_state, dict) or not saved_state:
+        raise SystemExit("resume AdamW has no optimizer moments")
+    expected_ids = {identifier for group in groups for identifier in group.get("params", [])}
+    if not set(saved_state).issubset(expected_ids):
+        raise SystemExit("resume AdamW state refers to an unknown parameter")
+    for i, (old, current) in enumerate(zip(groups, optimizer.param_groups)):
+        old_ids, current_params = old.get("params", []), current["params"]
+        if len(old_ids) != len(current_params) or not old_ids:
+            raise SystemExit(f"resume AdamW parameter-group {i} shape mismatch")
+        if len(set(old_ids)) != len(old_ids):
+            raise SystemExit(f"resume AdamW parameter-group {i} has duplicate parameter IDs")
+        for field in ("lr", "weight_decay", "betas", "eps", "amsgrad"):
+            if field in old and old[field] != current[field]:
+                raise SystemExit(f"resume AdamW group {i} {field} mismatch")
+        for identifier, parameter in zip(old_ids, current_params):
+            state = saved_state.get(identifier, {})
+            for name in ("exp_avg", "exp_avg_sq", "max_exp_avg_sq"):
+                if name in state and tuple(state[name].shape) != tuple(parameter.shape):
+                    raise SystemExit(f"resume AdamW {name} tensor shape mismatch")
+    return saved
+
+
+def _load_checked_optimizer(optimizer, checkpoint: dict, model) -> None:
+    state = _check_optimizer_state(optimizer, checkpoint, model)
+    try:
+        optimizer.load_state_dict(copy.deepcopy(state))
+    except (ValueError, RuntimeError, KeyError) as exc:
+        raise SystemExit(f"resume AdamW state load failed: {exc}") from exc
+
+
+@dataclass(slots=True)
+class CurriculumStart:
+    role: str | None
+    epoch: int
+    level: int
+    validation_streak: int
+    catastrophic_streak: int
+    transition_epochs_remaining: int
+    history: list[dict]
+    baseline_summary: dict | None
+    best_summary: dict | None
+    best_state: dict[str, torch.Tensor]
+    best_optimizer_state: dict
+    best_epoch: int
+    best_beta: float
+    seed_output: bool
+
+
+def prepare_curriculum_start(prepared, config, model, optimizer) -> CurriculumStart:
+    """Validate source/paths and restore optimizer before writing anything."""
+    source = prepared.source_checkpoint.resolve()
+    output = prepared.output_checkpoint.resolve()
+    progress_path = prepared.output_checkpoint.with_name(
+        prepared.output_checkpoint.stem + ".progress" + prepared.output_checkpoint.suffix
+    )
+    if source == output:
+        raise SystemExit("source checkpoint and output must differ")
+    parent = prepared.parent
+    role = curriculum_checkpoint_role(parent)
+    best_checkpoint = parent
+    seed_output = False
+    if role == "selected-best":
+        if prepared.output_checkpoint.exists():
+            raise SystemExit("resume output already exists; refusing to overwrite initial best")
+        if progress_path.exists():
+            raise SystemExit(f"resume progress exists: {progress_path}; resume from that progress instead")
+        _check_validation_context(parent, config, prepared)
+        best_epoch, best_beta, level = _checkpoint_best_identity(parent)
+        epoch = best_epoch
+        _load_checked_optimizer(optimizer, parent, model)
+        streak, catastrophic_streak = 0, 0
+        transition_remaining = int(config.human_visible.transition_epochs) if level > 0 else 0
+        seed_output = True
+    elif role == "continuation-progress":
+        if source != progress_path.resolve():
+            raise SystemExit(f"progress source must be the matching progress file: {progress_path}")
+        if not prepared.output_checkpoint.is_file():
+            raise SystemExit(f"referenced selected-best output does not exist: {prepared.output_checkpoint}")
+        path_value = parent.get("human_visible_best_checkpoint_path")
+        if not path_value or Path(str(path_value)).resolve() != output:
+            raise SystemExit("progress best_checkpoint_path does not match output")
+        best_checkpoint = torch.load(prepared.output_checkpoint, map_location="cpu", weights_only=False)
+        if curriculum_checkpoint_role(best_checkpoint) != "selected-best":
+            raise SystemExit("progress referenced file is not selected-best")
+        _check_validation_context(parent, config, prepared)
+        _check_validation_context(best_checkpoint, config, prepared)
+        if parent.get("human_visible_parent_validation_summary") != best_checkpoint.get("human_visible_parent_validation_summary"):
+            raise SystemExit("progress and best have different fixed parent Validation baselines")
+        best_epoch, best_beta, _ = _checkpoint_best_identity(best_checkpoint)
+        if parent.get("human_visible_best_validation_summary") != best_checkpoint.get("human_visible_best_validation_summary"):
+            raise SystemExit("progress and selected-best Validation rankings disagree")
+        _check_optimizer_state(optimizer, best_checkpoint, model)
+        _load_checked_optimizer(optimizer, parent, model)
+        epoch = int(parent["human_visible_epoch"])
+        level = int(parent["human_visible_dagger_level"])
+        if not 0 <= level < len(BETA_SCHEDULE):
+            raise SystemExit("progress curriculum level is invalid")
+        streak = int(parent["human_visible_validation_streak"])
+        catastrophic_streak = int(parent["human_visible_catastrophic_streak"])
+        transition_remaining = int(parent.get("human_visible_transition_epochs_remaining", 0))
+        if min(epoch, streak, catastrophic_streak, transition_remaining) < 0:
+            raise SystemExit("progress has negative curriculum state")
+        if parent.get("human_visible_best_epoch") is not None and int(parent["human_visible_best_epoch"]) != best_epoch:
+            raise SystemExit("progress and selected-best epochs disagree")
+    else:
+        epoch, level, streak, catastrophic_streak, transition_remaining = 0, 0, 0, 0, 0
+        best_epoch, best_beta = 0, float(BETA_SCHEDULE[0])
+        if progress_path.exists():
+            raise SystemExit(f"progress exists: {progress_path}; refusing to overwrite it")
+
+    best_summary = (
+        best_checkpoint.get("human_visible_best_validation_summary") if role else None
+    )
+    baseline_summary = (
+        parent.get("human_visible_parent_validation_summary") if role else None
+    )
+    if role and (not isinstance(best_summary, dict) or not isinstance(baseline_summary, dict)):
+        raise SystemExit("resume checkpoint is missing baseline/best Validation summaries")
+    return CurriculumStart(
+        role=role,
+        epoch=epoch,
+        level=level,
+        validation_streak=streak,
+        catastrophic_streak=catastrophic_streak,
+        transition_epochs_remaining=transition_remaining,
+        history=list(parent.get("human_visible_history", []) if role else []),
+        baseline_summary=dict(baseline_summary) if baseline_summary is not None else None,
+        best_summary=dict(best_summary) if best_summary is not None else None,
+        best_state={name: tensor.detach().cpu().clone() for name, tensor in best_checkpoint["model_state"].items()} if role else clone_model_state(model),
+        best_optimizer_state=copy.deepcopy(best_checkpoint["human_visible_optimizer_state"] if role else optimizer.state_dict()),
+        best_epoch=best_epoch,
+        best_beta=best_beta,
+        seed_output=seed_output,
+    )
+
+
 def _checkpoint_payload(
     prepared,
     config,
@@ -670,6 +925,7 @@ def _checkpoint_payload(
     transition_epochs_remaining: int,
     history: list[dict],
     stopped_reason: str,
+    checkpoint_role: str,
 ) -> dict:
     payload = dict(prepared.parent)
     payload.update(model.checkpoint_metadata())
@@ -680,6 +936,13 @@ def _checkpoint_payload(
             "model_state": clone_model_state(model),
             "training_mode": TRAINING_MODE,
             "training_config": config.as_dict(),
+            "human_visible_checkpoint_role": str(checkpoint_role),
+            "human_visible_validation_identity": _validation_identity(prepared),
+            "human_visible_optimizer_parameter_names": [
+                [next(name for name, p in model.named_parameters() if p is param)
+                 for param in group["params"]]
+                for group in optimizer.param_groups
+            ],
             "human_visible_training_semantics": (
                 "fixed-parent+curriculum-dagger+balanced-context-v3"
             ),
@@ -832,117 +1095,59 @@ def run_human_visible_curriculum(
     )
 
     optimizer = build_human_visible_optimizer(model, visible)
-    resuming = str(
-        prepared.parent.get("training_mode", "")
-    ) == TRAINING_MODE
-    if resuming and "human_visible_optimizer_state" in prepared.parent:
-        optimizer.load_state_dict(
-            prepared.parent["human_visible_optimizer_state"]
+    start = prepare_curriculum_start(prepared, config, model, optimizer)
+    epoch = start.epoch
+    level = start.level
+    validation_streak = start.validation_streak
+    catastrophic_streak = start.catastrophic_streak
+    transition_epochs_remaining = start.transition_epochs_remaining
+    history = start.history
+    best_state = start.best_state
+    best_optimizer_state = start.best_optimizer_state
+    best_epoch = start.best_epoch
+    best_beta = start.best_beta
+
+    print("=== fixed Validation baseline / best verification ===")
+    # A progress model may not be the best model. Evaluate the referenced best
+    # separately, then restore the exact continuation model and optimizer.
+    if start.role == "continuation-progress":
+        continuation_state = clone_model_state(model)
+        model.load_state_dict(best_state)
+        model.prepare_recurrent_runtime()
+    try:
+        baseline_results = evaluate_role_continuous(
+            model,
+            prepared.validation,
+            label="resume-best-val" if start.role else "baseline-val",
+            control_dt_s=prepared.control_dt_s,
+            physics_dt_s=prepared.physics_dt_s,
+            device=prepared.device,
+            verbose=False,
         )
+        evaluated_best_summary = validation_summary(baseline_results)
+    finally:
+        if start.role == "continuation-progress":
+            model.load_state_dict(continuation_state)
+            model.prepare_recurrent_runtime()
+            freeze_human_visible_controller(model)
 
-    print("=== fixed Validation baseline ===")
-    baseline_results = evaluate_role_continuous(
-        model,
-        prepared.validation,
-        label="baseline-val",
-        control_dt_s=prepared.control_dt_s,
-        physics_dt_s=prepared.physics_dt_s,
-        device=prepared.device,
-        verbose=False,
-    )
-    current_summary = validation_summary(baseline_results)
-    stored_baseline = prepared.parent.get(
-        "human_visible_parent_validation_summary"
-    )
-    baseline_summary = (
-        dict(stored_baseline)
-        if resuming and isinstance(stored_baseline, dict)
-        else dict(current_summary)
-    )
-
-    epoch = int(
-        prepared.parent.get("human_visible_epoch", 0)
-        if resuming
-        else 0
-    )
-    level = int(
-        prepared.parent.get("human_visible_dagger_level", 0)
-        if resuming
-        else 0
-    )
-    level = min(max(level, 0), len(BETA_SCHEDULE) - 1)
-    validation_streak = int(
-        prepared.parent.get("human_visible_validation_streak", 0)
-        if resuming
-        else 0
-    )
-    catastrophic_streak = int(
-        prepared.parent.get("human_visible_catastrophic_streak", 0)
-        if resuming
-        else 0
-    )
-    history = list(
-        prepared.parent.get("human_visible_history", [])
-        if resuming
-        else []
-    )
-    transition_epochs_remaining = int(
-        prepared.parent.get("human_visible_transition_epochs_remaining", 0)
-        if resuming
-        else 0
+    if start.role:
+        _check_validation_summary(evaluated_best_summary, start.best_summary)
+        best_summary = dict(start.best_summary)
+        baseline_summary = dict(start.baseline_summary)
+        print(f"verified stored best: {_format_validation(best_summary)}")
+    else:
+        baseline_summary = dict(evaluated_best_summary)
+        best_summary = dict(evaluated_best_summary)
+    current_summary = (
+        dict(prepared.parent["human_visible_current_validation_summary"])
+        if start.role == "continuation-progress"
+        else dict(evaluated_best_summary)
     )
 
-    best_state = clone_model_state(model)
-    best_optimizer_state = copy.deepcopy(optimizer.state_dict())
-    best_summary = dict(current_summary)
-    best_epoch = int(
-        prepared.parent.get("human_visible_best_epoch", epoch)
-        if resuming
-        else epoch
-    )
-    best_beta = float(
-        prepared.parent.get("human_visible_best_beta", BETA_SCHEDULE[level])
-        if resuming
-        else BETA_SCHEDULE[level]
-    )
-
-    best_path_value = prepared.parent.get(
-        "human_visible_best_checkpoint_path"
-    )
-    if resuming and best_path_value:
-        candidate_path = Path(str(best_path_value))
-        if candidate_path.exists():
-            best_checkpoint = torch.load(
-                candidate_path,
-                map_location=prepared.device,
-                weights_only=False,
-            )
-            if (
-                str(best_checkpoint.get("training_mode", ""))
-                == TRAINING_MODE
-                and "model_state" in best_checkpoint
-            ):
-                best_state = {
-                    name: tensor.detach().cpu().clone()
-                    for name, tensor in best_checkpoint["model_state"].items()
-                }
-                if "human_visible_optimizer_state" in best_checkpoint:
-                    best_optimizer_state = copy.deepcopy(
-                        best_checkpoint["human_visible_optimizer_state"]
-                    )
-                stored_best = best_checkpoint.get(
-                    "human_visible_best_validation_summary"
-                )
-                if isinstance(stored_best, dict):
-                    best_summary = dict(stored_best)
-                best_epoch = int(
-                    best_checkpoint.get("human_visible_best_epoch", best_epoch)
-                )
-                best_beta = float(
-                    best_checkpoint.get("human_visible_best_beta", best_beta)
-                )
-
-    if not resuming:
+    # Saving a selected-best source to a new name must precede training, so a
+    # run with zero subsequent improvements still has a usable best checkpoint.
+    if start.role != "continuation-progress":
         save_checkpoint(
             prepared.output_checkpoint,
             _checkpoint_payload(
@@ -962,9 +1167,11 @@ def run_human_visible_curriculum(
                 best_beta=best_beta,
                 transition_epochs_remaining=transition_epochs_remaining,
                 history=history,
+                checkpoint_role="selected-best",
                 stopped_reason="baseline-validated",
             ),
         )
+        print(f"autosave initial best: {prepared.output_checkpoint}")
 
     print("=== collecting static expert trajectories ===")
     expert_trajectories = _collect_expert_trajectories(prepared)
@@ -1155,6 +1362,7 @@ def run_human_visible_curriculum(
                     best_beta=best_beta,
                     transition_epochs_remaining=transition_epochs_remaining,
                     history=history,
+                    checkpoint_role="selected-best",
                     stopped_reason="running-best",
                 ),
             )
@@ -1191,6 +1399,7 @@ def run_human_visible_curriculum(
                 best_beta=best_beta,
                 transition_epochs_remaining=transition_epochs_remaining,
                 history=history,
+                checkpoint_role="continuation-progress",
                 stopped_reason="running-progress",
             ),
         )
