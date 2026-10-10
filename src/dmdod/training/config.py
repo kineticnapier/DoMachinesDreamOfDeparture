@@ -64,6 +64,8 @@ class HumanVisibleConfig:
     # the more conservative controller_lr.
     controller_lr: float = 3e-5
     updates_per_epoch: int = 32
+    transition_updates_per_epoch: int = 16
+    transition_epochs: int = 3
     burn_in_steps: int = 96
     supervised_steps: int = 192
     anchors_per_batch: int = 4
@@ -184,6 +186,10 @@ def load_training_config(path: str | Path) -> TrainingConfig:
         min_lr=float(visible_raw.get("min_lr", 1e-6)),
         controller_lr=float(visible_raw.get("controller_lr", 3e-5)),
         updates_per_epoch=int(visible_raw.get("updates_per_epoch", 32)),
+        transition_updates_per_epoch=int(
+            visible_raw.get("transition_updates_per_epoch", 16)
+        ),
+        transition_epochs=int(visible_raw.get("transition_epochs", 3)),
         burn_in_steps=int(visible_raw.get("burn_in_steps", 96)),
         supervised_steps=int(visible_raw.get("supervised_steps", 192)),
         anchors_per_batch=int(visible_raw.get("anchors_per_batch", 4)),
@@ -259,6 +265,16 @@ def _validate(
         raise ValueError("human_visible.controller_lr must be positive")
     if human_visible.updates_per_epoch <= 0:
         raise ValueError("human_visible.updates_per_epoch must be positive")
+    if human_visible.transition_updates_per_epoch <= 0:
+        raise ValueError(
+            "human_visible.transition_updates_per_epoch must be positive"
+        )
+    if human_visible.transition_updates_per_epoch > human_visible.updates_per_epoch:
+        raise ValueError(
+            "human_visible.transition_updates_per_epoch cannot exceed updates_per_epoch"
+        )
+    if human_visible.transition_epochs < 0:
+        raise ValueError("human_visible.transition_epochs must be non-negative")
     if human_visible.burn_in_steps < 0:
         raise ValueError("human_visible.burn_in_steps must be non-negative")
     if human_visible.supervised_steps <= 0:
