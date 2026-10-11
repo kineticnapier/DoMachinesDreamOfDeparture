@@ -135,7 +135,9 @@ def test_rollout_observations_rnn_actions_and_privileged_labels_separate():
     assert row.hidden_states.shape[1] == 6
     assert row.actions.shape[1] == 8
     assert row.target_indices[0] == 0
-    assert row.remaining_s[0] == pytest.approx(0.5)
+    assert row.remaining_s[0] == pytest.approx(
+        _tiny_segment().targets[0].episode_time_s
+    )
     assert row.frame_times_s[0] == 0.0
     assert row.trace.termination.reason in ("Time limit", "All targets resolved")
     assert row.trace.termination.keydowns == row.stats.hits + row.stats.too_early_presses
