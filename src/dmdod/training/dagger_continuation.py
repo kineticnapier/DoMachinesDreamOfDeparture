@@ -170,6 +170,9 @@ class NKeyInterventionRollout:
     student_actions: torch.Tensor
     executed_actions: torch.Tensor
     interventions: torch.Tensor
+    # First normal evaluator terminal, before any failure-continuation steps.
+    terminal_frame_count: int = 0
+    terminal_control_time_s: float | None = None
 
 
 def collect_n_key_intervention_dagger_sequence_with_continuation(
@@ -224,6 +227,8 @@ def collect_n_key_intervention_dagger_sequence_with_continuation(
 
     terminal_stats = None
     terminal_keydowns: int | None = None
+    terminal_frame_count = 0
+    terminal_control_time_s: float | None = None
     continuing_failure = False
     max_steps = int((segment.duration_s + 2.0) / control_dt_s) + 200
 
@@ -271,6 +276,8 @@ def collect_n_key_intervention_dagger_sequence_with_continuation(
 
             terminal_stats = env.stats
             terminal_keydowns = int(env.physical_keydowns)
+            terminal_frame_count = len(observations)
+            terminal_control_time_s = float(env.privileged_episode_time_s())
             failed = bool(terminal_stats.overloaded or env._failed_on_miss)
             before_horizon = env.privileged_episode_time_s() < env._episode_end_s - 1e-12
             if continue_after_failure and failed and before_horizon:
@@ -285,6 +292,8 @@ def collect_n_key_intervention_dagger_sequence_with_continuation(
     if terminal_stats is None:
         terminal_stats = env.stats
         terminal_keydowns = int(env.physical_keydowns)
+        terminal_frame_count = len(observations)
+        terminal_control_time_s = float(env.privileged_episode_time_s())
 
     sequence = NKeyBCSequence(
         observations=torch.tensor(observations, dtype=torch.float32, device=device),
@@ -299,4 +308,6 @@ def collect_n_key_intervention_dagger_sequence_with_continuation(
         student_actions=torch.tensor(student_actions, dtype=torch.float32, device=device),
         executed_actions=torch.tensor(executed_actions, dtype=torch.float32, device=device),
         interventions=torch.tensor(interventions, dtype=torch.bool, device=device),
+        terminal_frame_count=terminal_frame_count,
+        terminal_control_time_s=terminal_control_time_s,
     )
