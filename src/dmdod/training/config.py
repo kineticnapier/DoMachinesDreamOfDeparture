@@ -77,6 +77,11 @@ class HumanVisibleConfig:
     grad_clip: float = 1.0
     seed: int = 2401
 
+    # Optional diagnostic. Does not influence optimization or checkpoint ranking.
+    alpha_sweep_enabled: bool = False
+    alpha_sweep_expected_best: tuple[int, int, int, int] | None = None
+    alpha_sweep_expected_candidate: tuple[int, int, int, int] | None = None
+
 
 @dataclass(frozen=True, slots=True)
 class TrainingConfig:
@@ -107,6 +112,22 @@ def _optional_positive_int(value, *, name: str) -> int | None:
     if value <= 0:
         raise ValueError(f"{name} must be positive")
     return value
+
+
+def _alpha_sweep_expectation(raw: dict, key: str) -> tuple[int, int, int, int] | None:
+    values = raw.get(key)
+    if values is None:
+        return None
+    if (
+        not isinstance(values, list)
+        or len(values) != 4
+        or any(type(item) is not int or item < 0 for item in values)
+    ):
+        raise ValueError(
+            f"human_visible.{key} must be [SAFE, Hits, TooEarly, Keydowns] "
+            "with four non-negative integers"
+        )
+    return tuple(values)
 
 
 def load_training_config(path: str | Path) -> TrainingConfig:
@@ -199,8 +220,22 @@ def load_training_config(path: str | Path) -> TrainingConfig:
         weight_decay=float(visible_raw.get("weight_decay", 1e-4)),
         grad_clip=float(visible_raw.get("grad_clip", 1.0)),
         seed=int(visible_raw.get("seed", 2401)),
+        alpha_sweep_enabled=bool(visible_raw.get("alpha_sweep_enabled", False)),
+        alpha_sweep_expected_best=_alpha_sweep_expectation(
+            visible_raw, "alpha_sweep_expected_best"
+        ),
+        alpha_sweep_expected_candidate=_alpha_sweep_expectation(
+            visible_raw, "alpha_sweep_expected_candidate"
+        ),
     )
 
+    if human_visible.alpha_sweep_enabled and (
+        human_visible.alpha_sweep_expected_best is None
+        or human_visible.alpha_sweep_expected_candidate is None
+    ):
+        raise ValueError(
+            "alpha sweep requires expected best and candidate endpoint counts"
+        )
     _validate(action_trust, budget, trajectory_probe, boundary_trust, human_visible)
     return TrainingConfig(
         mode=mode,

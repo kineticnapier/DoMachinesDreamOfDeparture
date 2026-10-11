@@ -28,6 +28,7 @@ from dmdod.training.n_key import (
     collect_n_key_expert_sequence,
 )
 from dmdod.n_key_real_chart import NKeyOverloadTrace
+from dmdod.training.closed_loop_alpha import run_closed_loop_alpha_sweep
 from dmdod.training.real_chart import (
     aggregate,
     clone_model_state,
@@ -1562,6 +1563,7 @@ def run_human_visible_curriculum(
     best_validation_anchors = snapshot_validation_anchors(
         prepared.validation, baseline_results
     )
+    best_validation_results = list(baseline_results)
 
     if start.role:
         _check_validation_summary(evaluated_best_summary, start.best_summary)
@@ -1677,6 +1679,10 @@ def run_human_visible_curriculum(
             grad_clip=visible.grad_clip,
             control_dt_s=prepared.control_dt_s,
         )
+        # Keep theta_1 immediately after optimizer updates, before rollback/selection.
+        candidate_alpha_state = (
+            clone_model_state(model) if visible.alpha_sweep_enabled else None
+        )
         context_text = " ".join(
             f"{name}={value:.4f}"
             for name, value in sorted(metrics.context_loss.items())
@@ -1719,6 +1725,23 @@ def run_human_visible_curriculum(
                 best_summary,
             )
         )
+
+        if visible.alpha_sweep_enabled:
+            if candidate_alpha_state is None:
+                raise RuntimeError("alpha sweep candidate state was not captured")
+            run_closed_loop_alpha_sweep(
+                model,
+                prepared,
+                best_state=best_state,
+                candidate_state=candidate_alpha_state,
+                best_results=best_validation_results,
+                candidate_results=validation_results,
+                best_traces=tuple(best_overload_traces),
+                candidate_traces=tuple(candidate_overload_traces),
+                expected_best=visible.alpha_sweep_expected_best,
+                expected_candidate=visible.alpha_sweep_expected_candidate,
+                validation_summary=validation_summary,
+            )
 
         if catastrophic:
             current_anchors = snapshot_validation_anchors(
@@ -1774,6 +1797,7 @@ def run_human_visible_curriculum(
                     print(line)
 
         if selected_best:
+            best_validation_results = list(validation_results)
             best_fixed_observations = candidate_fixed_observations
             best_overload_traces = list(select_best_trace_reference(
                 tuple(best_overload_traces),
