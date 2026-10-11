@@ -461,7 +461,7 @@ def test_micro_keydown_transition_report_has_both_risks_and_context():
         0.125: (_physical_event(1.000, "left_1"), _physical_event(1.1, "right_1")),
         0.25: (_physical_event(1.000, "left_1"), _physical_event(1.1, "left_2")),
     }
-    report = "\\n".join(format_keydown_transitions(traces))
+    report = "\n".join(format_keydown_transitions(traces))
     assert "anchor #09" in report
     assert "alpha=0.125000 vs alpha=0.250000" in report
     assert "KeyDown #2" in report

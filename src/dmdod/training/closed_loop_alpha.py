@@ -357,7 +357,7 @@ def run_closed_loop_alpha_sweep(
                 results = evaluate(
                     model,
                     prepared.validation,
-                    label=f"alpha-{alpha:.3f}",
+                    label=f"alpha-{alpha:.6f}",
                     control_dt_s=prepared.control_dt_s,
                     physics_dt_s=prepared.physics_dt_s,
                     device=prepared.device,
