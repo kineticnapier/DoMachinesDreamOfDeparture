@@ -232,7 +232,8 @@ def train_readout(
     with torch.random.fork_rng(devices=[]):
         torch.manual_seed(int(seed))
         head = LinearTimeReadout(x.shape[1]).to(device)
-    # Normalized linear regression needs a faster fit than the Student optimizer:\n    # lr=1e-3 significantly underfits even exactly linear timing labels in 300 steps.\n    opt = torch.optim.AdamW(head.parameters(), lr=1e-2, weight_decay=1e-3)
+    # The diagnostic readout needs a higher learning rate to fit linear labels.
+    opt = torch.optim.AdamW(head.parameters(), lr=1e-2, weight_decay=1e-3)
     for _ in range(steps):
         ids = torch.randint(x.shape[0], (min(batch_size, x.shape[0]),), generator=generator)
         xb = ((x[ids] - mean) / std).to(device)
