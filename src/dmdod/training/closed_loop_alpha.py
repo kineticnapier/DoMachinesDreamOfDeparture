@@ -6,6 +6,7 @@ Neither optimizer updates nor checkpoint selection depend on this module.
 """
 
 from dataclasses import dataclass
+import math
 from typing import Callable
 
 import torch
@@ -87,7 +88,7 @@ def interpolate_state(
     alpha: float,
 ) -> dict[str, torch.Tensor]:
     """Interpolate trainable floating parameters; require all other state unchanged."""
-    if float(alpha) not in ALPHAS:
+    if not math.isfinite(alpha) or not 0.0 <= alpha <= 1.0:
         raise ValueError(f"unsupported alpha: {alpha}")
     current = model.state_dict()
     if set(best) != set(candidate) or set(best) != set(current):
@@ -194,6 +195,78 @@ def _anchor_records(results, traces, segments) -> tuple[AlphaAnchorResult, ...]:
     return tuple(records)
 
 
+
+def _validate_alphas(alphas: tuple[float, ...]) -> None:
+    if (len(alphas) < 2 or alphas[0] != 0.0 or alphas[-1] != 1.0
+        or any(not math.isfinite(x) or not 0.0 <= x <= 1.0 for x in alphas)
+        or any(b <= a for a, b in zip(alphas, alphas[1:]))):
+        raise ValueError("alpha sweep grid must increase strictly from 0 to 1")
+
+
+def first_ordinal_keydown_difference(
+    left, right, *, tolerance_s: float = 0.010,
+):
+    """Return (zero-based ordinal, left event, right event), or None.
+
+    This is an ordinal comparison, not causal event matching: an extra
+    KeyDown can shift the remainder of the stream.
+    """
+    if not math.isfinite(tolerance_s) or tolerance_s < 0.0:
+        raise ValueError("invalid KeyDown timing tolerance")
+    for index in range(max(len(left), len(right))):
+        a = left[index] if index < len(left) else None
+        b = right[index] if index < len(right) else None
+        if (a is None or b is None or a.key != b.key
+            or abs(a.time_s - b.time_s) > tolerance_s):
+            return index, a, b
+    return None
+
+
+def _keydown_label(event) -> str:
+    if event is None:
+        return "none"
+    return f"t={event.time_s:.3f}s {event.key} target={event.target_index}"
+
+
+def format_keydown_transitions(
+    physical_by_alpha: dict[float, tuple],
+    *, anchor_index: int = 9,
+) -> tuple[str, ...]:
+    """#09 first physical-input differences; observational only."""
+    pairs = ((0.0, 0.125), (0.125, 0.25), (0.0, 0.25))
+    if not all(alpha in physical_by_alpha for pair in pairs for alpha in pair):
+        raise ValueError("KeyDown comparison needs alphas 0, 0.125, 0.25")
+    lines = [
+        f"=== anchor #{anchor_index:02d} first physical KeyDown differences ===",
+        "Ordinal events, same key within 10ms is treated as aligned.",
+    ]
+    for left_alpha, right_alpha in pairs:
+        left, right = physical_by_alpha[left_alpha], physical_by_alpha[right_alpha]
+        diff = first_ordinal_keydown_difference(left, right)
+        prefix = f"alpha={left_alpha:.6f} vs alpha={right_alpha:.6f}"
+        if diff is None:
+            lines.append(f"{prefix}: no ordinal divergence ({len(left)} KeyDowns)")
+            continue
+        index, a, b = diff
+        lines.append(
+            f"{prefix}: first ordinal divergence KeyDown #{index + 1}: "
+            f"{_keydown_label(a)} | {_keydown_label(b)}"
+        )
+        t = min(x.time_s for x in (a, b) if x is not None)
+        for name, stream in ((f"{left_alpha:.6f}", left), (f"{right_alpha:.6f}", right)):
+            near = tuple(e for e in stream if abs(e.time_s - t) <= 0.100)
+            lines.append(
+                f"  alpha={name} events within +/-100ms of {t:.3f}s "
+                f"({len(near)}): "
+                + (", ".join(_keydown_label(e) for e in near[:12]) or "none")
+            )
+    lines.append(
+        "NOTE: insertion, omission and timing shifts can change event ordinals; "
+        "this is not proof of the first causal divergence."
+    )
+    return tuple(lines)
+
+
 def format_sweep_results(rows: tuple[AlphaSweepRow, ...]) -> tuple[str, ...]:
     lines = ["=== closed-loop alpha sweep ==="]
     for row in rows:
@@ -201,7 +274,7 @@ def format_sweep_results(rows: tuple[AlphaSweepRow, ...]) -> tuple[str, ...]:
         mae = s["mae_ms"]
         mae_str = "inf" if mae == float("inf") else f"{mae:.2f}"
         lines.append(
-            f"alpha={row.alpha:.3f} SAFE={s['safe']}/{s['anchors']} "
+            f"alpha={row.alpha:.6f} SAFE={s['safe']}/{s['anchors']} "
             f"H={s['hits']}/{s['targets']} X={s['x']:.2f}% "
             f"PP={s['pp']:.2f}% MAE={mae_str}ms "
             f"Early={s['early']} Keydowns={s['keydowns']} "
@@ -216,14 +289,14 @@ def format_sweep_results(rows: tuple[AlphaSweepRow, ...]) -> tuple[str, ...]:
         for row in rows:
             a = row.anchors[index - 1]
             lines.append(
-                f"  alpha={row.alpha:.3f} SAFE={int(a.safe)} "
+                f"  alpha={row.alpha:.6f} SAFE={int(a.safe)} "
                 f"H={a.hits} Early={a.too_early} Keydowns={a.keydowns} "
                 f"Overload={int(a.overloaded)} end={a.termination_s:.3f}s "
                 f"reason={a.termination_reason} gauge={a.overload_gauge:.3f}"
             )
         lines.append(
             "  SAFE: " + " -> ".join(
-                f"{row.alpha:.3f}:{'SAFE' if row.anchors[index - 1].safe else 'OVERLOAD'}"
+                f"{row.alpha:.6f}:{'SAFE' if row.anchors[index - 1].safe else 'OVERLOAD'}"
                 for row in rows
             )
         )
@@ -248,16 +321,23 @@ def run_closed_loop_alpha_sweep(
     expected_candidate: EndpointCounts,
     validation_summary: Callable,
     evaluate: Callable = evaluate_role_continuous,
+    alphas: tuple[float, ...] | None = None,
+    compare_transitions: bool = False,
 ) -> tuple[AlphaSweepRow, ...]:
-    """Only three intermediate rollouts; endpoints reuse existing Validation."""
+    """Evaluate specified intermediate alpha points; reuse existing endpoints."""
+    alphas = ALPHAS if alphas is None else tuple(alphas)
+    _validate_alphas(alphas)
+    if compare_transitions and not {0.0, 0.125, 0.25}.issubset(alphas):
+        raise ValueError("KeyDown comparisons need alpha=0, 0.125 and 0.25")
     if len(prepared.validation) != 20:
         raise RuntimeError("closed-loop alpha sweep requires fixed 20 Validation anchors")
     original_candidate = {k: v.detach().clone() for k, v in candidate_state.items()}
     # Preflight state compatibility before any model loading.
     interpolate_state(model, best_state, candidate_state, 0.5)
     records: list[AlphaSweepRow] = []
+    physical_by_alpha: dict[float, tuple] = {}
     try:
-        for alpha in ALPHAS:
+        for alpha in alphas:
             state = interpolate_state(model, best_state, candidate_state, alpha)
             _load_checked_state(model, state)
             if alpha == 0.0:
@@ -291,6 +371,8 @@ def run_closed_loop_alpha_sweep(
                     reference_results=reference_results,
                     reference_traces=reference_traces,
                 )
+            if compare_transitions:
+                physical_by_alpha[alpha] = tuple(traces[8].physical_keydowns)
             summary = validation_summary(results)
             records.append(AlphaSweepRow(
                 alpha=alpha,
@@ -306,4 +388,7 @@ def run_closed_loop_alpha_sweep(
     output = tuple(records)
     for line in format_sweep_results(output):
         print(line)
+    if compare_transitions:
+        for line in format_keydown_transitions(physical_by_alpha):
+            print(line)
     return output

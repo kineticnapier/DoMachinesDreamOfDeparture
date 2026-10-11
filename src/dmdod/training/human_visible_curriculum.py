@@ -1741,6 +1741,8 @@ def run_human_visible_curriculum(
                 expected_best=visible.alpha_sweep_expected_best,
                 expected_candidate=visible.alpha_sweep_expected_candidate,
                 validation_summary=validation_summary,
+                alphas=visible.alpha_sweep_alphas,
+                compare_transitions=visible.alpha_sweep_compare_transitions,
             )
 
         if catastrophic:

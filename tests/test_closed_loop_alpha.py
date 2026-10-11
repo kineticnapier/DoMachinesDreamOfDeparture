@@ -6,13 +6,17 @@ from types import SimpleNamespace
 import pytest
 import torch
 
-from dmdod.envs.n_key import EpisodeTerminationTrace, NKeyOverloadTrace
+from dmdod.envs.n_key import (
+    EpisodeTerminationTrace, NKeyOverloadTrace, NKeyPhysicalKeyDownTrace
+)
 from dmdod.training.closed_loop_alpha import (
     ALPHAS,
     _anchor_records,
     _load_checked_state,
     _state_tensor_equal,
     check_endpoint,
+    first_ordinal_keydown_difference,
+    format_keydown_transitions,
     endpoint_counts,
     format_sweep_results,
     interpolate_state,
@@ -132,13 +136,14 @@ def test_changed_frozen_state_is_rejected(name):
 def test_mismatched_shapes_and_unsupported_alpha_are_rejected():
     model, best, candidate = _states()
     with pytest.raises(ValueError, match="unsupported alpha"):
-        interpolate_state(model, best, candidate, 0.3)
+        interpolate_state(model, best, candidate, -0.1)
     candidate["weight"] = torch.zeros(4)
     with pytest.raises(ValueError, match="shape/dtype"):
         interpolate_state(model, best, candidate, 0.25)
 
 
-def _run(*, incorrect_endpoint=False, failing_intermediate=False):
+def _run(*, incorrect_endpoint=False, failing_intermediate=False,
+         alphas=None):
     model, best, candidate = _states()
     segments, best_results, best_traces = _validation_results(12, 80, 5, 100)
     _, candidate_results, candidate_traces = _validation_results(9, 70, 4, 90)
@@ -180,6 +185,7 @@ def _run(*, incorrect_endpoint=False, failing_intermediate=False):
             expected_best=expected_best,
             expected_candidate=expected_candidate,
             validation_summary=_summary, evaluate=evaluator,
+            alphas=alphas,
         )
         return model, candidate, rows, evaluated
     finally:
@@ -373,3 +379,101 @@ def test_sparse_coo_uncoalesced_same_values_compares_equal():
     assert not unsorted.is_coalesced()
     assert _state_tensor_equal(canonical, unsorted)
     assert _state_tensor_equal(unsorted, canonical)
+
+
+MICRO_ALPHAS = (
+    0.0, 0.015625, 0.03125, 0.0625, 0.09375, 0.125, 0.25, 0.5, 1.0
+)
+
+
+def test_micro_alpha_grid_runs_seven_intermediates_and_restores_candidate(capsys):
+    model, candidate, rows, evaluated = _run(alphas=MICRO_ALPHAS)
+    assert tuple(row.alpha for row in rows) == MICRO_ALPHAS
+    assert evaluated == pytest.approx(MICRO_ALPHAS[1:-1])
+    assert model.states_initialized == 7 * 20
+    assert model.loads >= len(MICRO_ALPHAS) + 1
+    assert all(torch.equal(model.state_dict()[k], candidate[k]) for k in candidate)
+    output = capsys.readouterr().out
+    assert "alpha=0.015625" in output
+    assert "alpha=0.093750" in output
+
+
+def test_micro_alpha_smoke_uses_separate_output_and_is_opt_in():
+    cfg = load_training_config("configs/training/human_visible_micro_alpha_sweep_smoke.toml")
+    h = cfg.human_visible
+    assert h.alpha_sweep_enabled
+    assert h.alpha_sweep_alphas == MICRO_ALPHAS
+    assert h.alpha_sweep_compare_transitions
+    assert h.alpha_sweep_expected_best == (12, 1786, 278, 2064)
+    assert h.alpha_sweep_expected_candidate == (9, 1546, 250, 1796)
+    assert cfg.data.validation_limit == 20
+    assert h.max_epochs == 1 and h.updates_per_epoch == 2
+    assert cfg.run.output.endswith("real_chart_humanvisible_micro_alpha_sweep_smoke.pt")
+
+
+@pytest.mark.parametrize("grid", [
+    "[0.0, 0.125, 0.125, 1.0]",
+    "[0.1, 0.125, 1.0]",
+    "[0.0, 0.125, 0.9]",
+    "[0.0, 1.1, 1.0]",
+    "[0.0, nan, 1.0]",
+])
+def test_invalid_alpha_grids_are_rejected(tmp_path, grid):
+    config_text = (
+        __import__("pathlib").Path(
+            "configs/training/human_visible_micro_alpha_sweep_smoke.toml"
+        ).read_text(encoding="utf-8")
+    )
+    config_path = tmp_path / "bad.toml"
+    config_path.write_text(
+        config_text.replace(
+            "alpha_sweep_alphas = [0.0, 0.015625, 0.03125, 0.0625, 0.09375, 0.125, 0.25, 0.5, 1.0]",
+            f"alpha_sweep_alphas = {grid}",
+        ), encoding="utf-8",
+    )
+    with pytest.raises(ValueError):
+        load_training_config(config_path)
+
+
+def _physical_event(time_s: float, key: str):
+    return NKeyPhysicalKeyDownTrace(
+        time_s=time_s, key=key,
+        target_index=42, target_time_s=time_s + 0.05,
+    )
+
+
+def test_ordinal_keydown_difference_detects_key_and_timing():
+    base = (_physical_event(1.0, "left_1"), _physical_event(1.1, "right_2"))
+    same = (_physical_event(1.005, "left_1"), _physical_event(1.105, "right_2"))
+    assert first_ordinal_keydown_difference(base, same) is None
+    changed_key = (_physical_event(1.005, "right_4"), same[1])
+    assert first_ordinal_keydown_difference(base, changed_key)[0] == 0
+    shifted = (base[0], _physical_event(1.120, "right_2"))
+    assert first_ordinal_keydown_difference(base, shifted)[0] == 1
+    shorter = (base[0],)
+    index, left, right = first_ordinal_keydown_difference(base, shorter)
+    assert index == 1 and left is not None and right is None
+
+
+def test_micro_keydown_transition_report_has_both_risks_and_context():
+    traces = {
+        0.0: (_physical_event(1.000, "left_1"), _physical_event(1.1, "left_2")),
+        0.125: (_physical_event(1.000, "left_1"), _physical_event(1.1, "right_1")),
+        0.25: (_physical_event(1.000, "left_1"), _physical_event(1.1, "left_2")),
+    }
+    report = "\\n".join(format_keydown_transitions(traces))
+    assert "anchor #09" in report
+    assert "alpha=0.125000 vs alpha=0.250000" in report
+    assert "KeyDown #2" in report
+    assert "events within +/-100ms" in report
+    assert "not proof of the first causal divergence" in report
+
+
+def test_out_of_range_alpha_rejected_without_affecting_default_grid():
+    model, best, candidate = _states()
+    for alpha in (-0.1, 1.1, float("nan")):
+        with pytest.raises(ValueError, match="unsupported alpha"):
+            interpolate_state(model, best, candidate, alpha)
+    assert ALPHAS == (0.0, 0.125, 0.25, 0.5, 1.0)
+    assert torch.equal(interpolate_state(model, best, candidate, 0.3)["weight"],
+                       torch.tensor([1.6, 1.8]))

@@ -3,6 +3,7 @@ from __future__ import annotations
 from dataclasses import asdict, dataclass
 from pathlib import Path
 import tomllib
+import math
 
 
 @dataclass(frozen=True, slots=True)
@@ -79,6 +80,8 @@ class HumanVisibleConfig:
 
     # Optional diagnostic. Does not influence optimization or checkpoint ranking.
     alpha_sweep_enabled: bool = False
+    alpha_sweep_alphas: tuple[float, ...] | None = None
+    alpha_sweep_compare_transitions: bool = False
     alpha_sweep_expected_best: tuple[int, int, int, int] | None = None
     alpha_sweep_expected_candidate: tuple[int, int, int, int] | None = None
 
@@ -128,6 +131,23 @@ def _alpha_sweep_expectation(raw: dict, key: str) -> tuple[int, int, int, int] |
             "with four non-negative integers"
         )
     return tuple(values)
+
+
+def _alpha_sweep_grid(raw: dict) -> tuple[float, ...] | None:
+    values = raw.get("alpha_sweep_alphas")
+    if values is None:
+        return None
+    if not isinstance(values, list) or any(
+        isinstance(value, bool) or not isinstance(value, (float, int))
+        for value in values
+    ):
+        raise ValueError("human_visible.alpha_sweep_alphas must be a numeric array")
+    alphas = tuple(float(value) for value in values)
+    if (len(alphas) < 2 or alphas[0] != 0.0 or alphas[-1] != 1.0
+        or any(not math.isfinite(a) or not 0.0 <= a <= 1.0 for a in alphas)
+        or any(b <= a for a, b in zip(alphas, alphas[1:]))):
+        raise ValueError("human_visible.alpha_sweep_alphas must increase from 0 to 1")
+    return alphas
 
 
 def load_training_config(path: str | Path) -> TrainingConfig:
@@ -221,6 +241,10 @@ def load_training_config(path: str | Path) -> TrainingConfig:
         grad_clip=float(visible_raw.get("grad_clip", 1.0)),
         seed=int(visible_raw.get("seed", 2401)),
         alpha_sweep_enabled=bool(visible_raw.get("alpha_sweep_enabled", False)),
+        alpha_sweep_alphas=_alpha_sweep_grid(visible_raw),
+        alpha_sweep_compare_transitions=bool(
+            visible_raw.get("alpha_sweep_compare_transitions", False)
+        ),
         alpha_sweep_expected_best=_alpha_sweep_expectation(
             visible_raw, "alpha_sweep_expected_best"
         ),
@@ -229,6 +253,12 @@ def load_training_config(path: str | Path) -> TrainingConfig:
         ),
     )
 
+    if human_visible.alpha_sweep_compare_transitions and not human_visible.alpha_sweep_enabled:
+        raise ValueError("KeyDown alpha comparison requires alpha_sweep_enabled")
+    if (human_visible.alpha_sweep_compare_transitions
+        and human_visible.alpha_sweep_alphas is not None
+        and not {0.0, 0.125, 0.25}.issubset(human_visible.alpha_sweep_alphas)):
+        raise ValueError("KeyDown alpha comparison requires 0, 0.125 and 0.25")
     if human_visible.alpha_sweep_enabled and (
         human_visible.alpha_sweep_expected_best is None
         or human_visible.alpha_sweep_expected_candidate is None
