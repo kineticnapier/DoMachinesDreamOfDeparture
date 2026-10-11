@@ -12,6 +12,7 @@ look successful.
 """
 
 from dataclasses import dataclass
+import math
 import random
 
 import torch
@@ -190,6 +191,7 @@ def collect_n_key_intervention_dagger_sequence_with_continuation(
     source: str = "n-key-intervention-dagger-continuation",
     action_mode: str = "continuous",
     continue_after_failure: bool = True,
+    max_post_failure_s: float | None = None,
 ) -> NKeyInterventionRollout:
     """Collect labels on visited states while mixing whole action vectors.
 
@@ -199,6 +201,10 @@ def collect_n_key_intervention_dagger_sequence_with_continuation(
     is executed, otherwise the full student vector is executed.
     """
 
+    if max_post_failure_s is not None:
+        max_post_failure_s = float(max_post_failure_s)
+        if not math.isfinite(max_post_failure_s) or max_post_failure_s < 0.0:
+            raise ValueError("max_post_failure_s must be finite and non-negative")
     beta = float(beta)
     if not (0.0 <= beta <= 1.0):
         raise ValueError("beta must be in [0, 1]")
@@ -265,7 +271,14 @@ def collect_n_key_intervention_dagger_sequence_with_continuation(
 
             if continuing_failure:
                 observation = _diagnostic_step_after_failure(env, executed_action)
-                if env.privileged_episode_time_s() >= env._episode_end_s - 1e-12:
+                if (
+                    env.privileged_episode_time_s() >= env._episode_end_s - 1e-12
+                    or (
+                        max_post_failure_s is not None
+                        and (len(observations) - terminal_frame_count) * control_dt_s
+                        >= max_post_failure_s - 1e-9
+                    )
+                ):
                     break
                 continue
 
@@ -280,7 +293,10 @@ def collect_n_key_intervention_dagger_sequence_with_continuation(
             terminal_control_time_s = float(env.privileged_episode_time_s())
             failed = bool(terminal_stats.overloaded or env._failed_on_miss)
             before_horizon = env.privileged_episode_time_s() < env._episode_end_s - 1e-12
-            if continue_after_failure and failed and before_horizon:
+            if (
+                continue_after_failure and failed and before_horizon
+                and (max_post_failure_s is None or max_post_failure_s > 0.0)
+            ):
                 continuing_failure = True
                 continue
             break
