@@ -147,7 +147,7 @@ def _run(*, incorrect_endpoint=False, failing_intermediate=False):
     evaluated = []
 
     def evaluator(model, segments, *, trace_collector, **kwargs):
-        alpha = (float(model.weight[0]) - 1.0) / 2.0
+        alpha = (float(model.weight[0].detach()) - 1.0) / 2.0
         evaluated.append(alpha)
         # This mirrors the existing per-anchor _evaluate_continuous() contract:
         # a new policy.initial_state() for every chart evaluation.
@@ -216,7 +216,7 @@ def test_evaluation_exception_also_restores_candidate():
 
 
 def test_anchor_overload_end_time_is_preserved_in_results():
-    segments, results, traces = _validation_results(9, 49, 11, 60, end=3.888)
+    segments, results, traces = _validation_results(8, 49, 11, 60, end=3.888)
     records = _anchor_records(results, traces, segments)
     assert not records[8].safe
     assert records[8].overloaded
