@@ -10,6 +10,8 @@ from dmdod.envs.n_key import EpisodeTerminationTrace, NKeyOverloadTrace
 from dmdod.training.closed_loop_alpha import (
     ALPHAS,
     _anchor_records,
+    _load_checked_state,
+    _state_tensor_equal,
     check_endpoint,
     endpoint_counts,
     format_sweep_results,
@@ -305,3 +307,69 @@ def test_existing_closed_loop_evaluator_reinitializes_rnn_per_anchor():
     assert policy.reset_count == 2
     assert len(result) == len(traces) == 2
     assert result[0] == result[1]
+
+
+def _model_with_sparse_buffers():
+    model = _TinyModel()
+    indices = torch.tensor([[0, 1, 1], [1, 0, 1]], dtype=torch.long)
+    values = torch.tensor([3.0, 2.0, 4.0])
+    sparse_coo = torch.sparse_coo_tensor(indices, values, (2, 2)).coalesce()
+    model.register_buffer("sparse_coo", sparse_coo)
+    model.register_buffer("sparse_csr", sparse_coo.to_sparse_csr())
+    return model
+
+
+@pytest.mark.filterwarnings("ignore:Sparse CSR tensor support is in beta state:UserWarning")
+def test_sparse_coo_and_csr_buffers_pass_interpolation_and_load_checks():
+    model = _model_with_sparse_buffers()
+    best = model.snapshot()
+    candidate = {k: v.detach().clone() for k, v in best.items()}
+    candidate["weight"] = torch.tensor([3.0, -1.0])
+    middle = interpolate_state(model, best, candidate, 0.5)
+    assert torch.equal(middle["weight"], torch.tensor([2.0, 1.0]))
+    for key in ("sparse_coo", "sparse_csr"):
+        assert _state_tensor_equal(middle[key], best[key])
+        assert _state_tensor_equal(candidate[key], best[key])
+        assert middle[key].layout == best[key].layout
+    _load_checked_state(model, middle)
+    assert model.loads == 1
+    for key in ("sparse_coo", "sparse_csr"):
+        assert _state_tensor_equal(model.state_dict()[key], best[key])
+    _load_checked_state(model, candidate)
+    assert model.loads == 2
+    assert torch.equal(model.weight.detach(), candidate["weight"])
+
+
+@pytest.mark.filterwarnings("ignore:Sparse CSR tensor support is in beta state:UserWarning")
+@pytest.mark.parametrize("key", ["sparse_coo", "sparse_csr"])
+def test_changed_sparse_buffer_is_rejected(key):
+    model = _model_with_sparse_buffers()
+    best = model.snapshot()
+    candidate = {name: value.detach().clone() for name, value in best.items()}
+    original = candidate[key]
+    if original.layout == torch.sparse_coo:
+        changed = torch.sparse_coo_tensor(
+            original.indices(), original.values() + 1, original.shape,
+        ).coalesce()
+    else:
+        changed = torch.sparse_csr_tensor(
+            original.crow_indices(), original.col_indices(),
+            original.values() + 1, size=original.shape,
+        )
+    candidate[key] = changed
+    assert not _state_tensor_equal(best[key], changed)
+    with pytest.raises(ValueError, match="frozen/buffer/nonfloating state changed"):
+        interpolate_state(model, best, candidate, 0.5)
+
+
+@pytest.mark.filterwarnings("ignore:Sparse CSR tensor support is in beta state:UserWarning")
+def test_sparse_coo_uncoalesced_same_values_compares_equal():
+    model = _model_with_sparse_buffers()
+    canonical = model.sparse_coo
+    unsorted = torch.sparse_coo_tensor(
+        canonical.indices().flip(1), canonical.values().flip(0),
+        canonical.shape,
+    )
+    assert not unsorted.is_coalesced()
+    assert _state_tensor_equal(canonical, unsorted)
+    assert _state_tensor_equal(unsorted, canonical)

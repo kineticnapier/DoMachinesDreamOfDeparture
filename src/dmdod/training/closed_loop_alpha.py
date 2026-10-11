@@ -48,6 +48,38 @@ def _state_parameter_keys(model) -> set[str]:
             if parameter.requires_grad}
 
 
+def _state_tensor_equal(a: torch.Tensor, b: torch.Tensor) -> bool:
+    """Exact comparison for dense and sparse state, without densifying matrices."""
+    if a.shape != b.shape or a.dtype != b.dtype or a.layout != b.layout:
+        return False
+    a, b = a.detach(), b.detach()
+    if a.device != b.device:
+        a, b = a.cpu(), b.cpu()
+    if a.layout == torch.strided:
+        return bool(torch.equal(a, b))
+    if a.layout == torch.sparse_coo:
+        # COOs can be uncoalesced; canonicalize before comparing structure.
+        a, b = a.coalesce(), b.coalesce()
+        return bool(
+            torch.equal(a.indices(), b.indices())
+            and torch.equal(a.values(), b.values())
+        )
+    compressed = {
+        torch.sparse_csr: ("crow_indices", "col_indices"),
+        torch.sparse_csc: ("ccol_indices", "row_indices"),
+        torch.sparse_bsr: ("crow_indices", "col_indices"),
+        torch.sparse_bsc: ("ccol_indices", "row_indices"),
+    }
+    if a.layout not in compressed:
+        raise TypeError(f"unsupported model state tensor layout: {a.layout}")
+    row_attr, col_attr = compressed[a.layout]
+    return bool(
+        torch.equal(getattr(a, row_attr)(), getattr(b, row_attr)())
+        and torch.equal(getattr(a, col_attr)(), getattr(b, col_attr)())
+        and torch.equal(a.values(), b.values())
+    )
+
+
 def interpolate_state(
     model,
     best: dict[str, torch.Tensor],
@@ -68,7 +100,9 @@ def interpolate_state(
         a, b, now = best[key], candidate[key], current[key]
         if a.shape != b.shape or a.dtype != b.dtype or a.shape != now.shape or a.dtype != now.dtype:
             raise ValueError(f"alpha sweep state shape/dtype mismatch: {key}")
-        if (key not in trainable or not a.is_floating_point()) and not torch.equal(a, b):
+        if key in trainable and a.is_floating_point() and a.layout != torch.strided:
+            raise ValueError(f"alpha sweep trainable sparse parameter unsupported: {key}")
+        if (key not in trainable or not a.is_floating_point()) and not _state_tensor_equal(a, b):
             raise ValueError(f"alpha sweep frozen/buffer/nonfloating state changed: {key}")
 
     if alpha == 0.0:
@@ -91,7 +125,7 @@ def _load_checked_state(model, state: dict[str, torch.Tensor]) -> None:
     model.prepare_recurrent_runtime()
     actual = model.state_dict()
     if set(actual) != set(state) or any(
-        not torch.equal(actual[key].detach().cpu(), expected.detach().cpu())
+        not _state_tensor_equal(actual[key], expected)
         for key, expected in state.items()
     ):
         raise RuntimeError("alpha sweep loaded model state does not match requested state")
