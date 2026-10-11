@@ -13,6 +13,8 @@ from dmdod.motor_env import TimedKeyEvent
 from dmdod.n_key_motor import NKeyAction
 from dmdod.n_key_real_chart import (
     DiagnosticHudNKeyRealChartMotorEnv,
+    NKeyActionFrameTrace,
+    NKeyPhysicalKeyDownTrace,
     EpisodeTerminationTrace,
     NKeyOverloadTrace,
     TooEarlyKeyDownTrace,
@@ -21,6 +23,7 @@ from dmdod.training.human_visible_curriculum import (
     ValidationAnchorSnapshot,
     catastrophic_trace_anchor_indices,
     first_keydown_count_divergence,
+    format_action_output_diagnostics,
     format_overload_trace_comparison,
     select_best_trace_reference,
     validation_rank,
@@ -152,6 +155,9 @@ def test_optional_trace_collector_preserves_eval_return_and_stats(capsys):
     )
     assert plain == traced
     assert len(traces) == 1
+    assert traces[0].action_frames
+    assert traces[0].action_frames[0].action_values == (0.0,) * 4
+    assert len(traces[0].action_frames[0].positions_m) == 4
     assert traces[0].termination.keydowns == traced[0][1]
     assert traces[0].termination.reason in {
         "All targets resolved", "Time limit", "Miss failure"
@@ -214,3 +220,72 @@ def test_best_trace_reference_updates_without_changing_rank():
     }
     worse = dict(best, safe=9, hits=1400)
     assert validation_rank(worse) < validation_rank(best)
+
+
+def test_action_frame_uses_actual_command_and_post_step_motor_state():
+    env = DiagnosticHudNKeyRealChartMotorEnv(
+        _segment(), key_count=4, capture_overload_trace=True,
+    )
+    env.reset()
+    action = NKeyAction((0.6, -0.2, 0.0, 0.1))
+    env.step(action)
+    frame = env._trace_action_frames[0]
+    motor = env.motor.observe()
+    assert frame.time_s == pytest.approx(0.0)
+    assert frame.action_values == action.values
+    assert frame.positions_m == tuple(motor.positions_m)
+    assert frame.velocities_m_s == tuple(motor.velocities_m_s)
+    assert frame.pressed_flags == tuple(motor.pressed_flags)
+    assert frame.next_target_index == 0
+    assert frame.next_target_time_s == pytest.approx(_segment().targets[0].episode_time_s)
+    env._score_event(TimedKeyEvent(0.02, "left_1", KeyEvent.DOWN))
+    down = env._trace_physical_keydowns[-1]
+    assert down.time_s == pytest.approx(0.02)
+    assert down.key == "left_1"
+    assert down.target_index == 0
+    assert down.target_time_s == pytest.approx(frame.next_target_time_s)
+
+
+def test_action_output_comparison_reports_actions_motors_and_physical_events():
+    def frame(t, action):
+        return NKeyActionFrameTrace(
+            time_s=t, action_values=action,
+            positions_m=(0.001, 0.002, 0.003, 0.004),
+            velocities_m_s=(0.01, 0.02, 0.03, 0.04),
+            pressed_flags=(False, False, False, False),
+            next_target_index=3, next_target_time_s=0.3,
+        )
+    first = _trace(reason="All targets resolved", end=1.0)
+    second = _trace(reason="Overload", end=0.11)
+    first = NKeyOverloadTrace(
+        first.termination, (), (),
+        action_frames=(frame(0.0, (0.0, 0.0, 0.0, 0.0)),
+                       frame(0.1, (0.1, 0.0, 0.0, 0.0))),
+        physical_keydowns=(NKeyPhysicalKeyDownTrace(0.101, "left_2", 3, 0.3),),
+    )
+    second = NKeyOverloadTrace(
+        second.termination, (), (),
+        action_frames=(frame(0.0, (0.0, 0.0, 0.0, 0.0)),
+                       frame(0.1, (0.8, 0.0, 0.0, 0.0))),
+        physical_keydowns=(NKeyPhysicalKeyDownTrace(0.102, "left_2", 3, 0.3),),
+    )
+    report = "\n".join(format_action_output_diagnostics(
+        first, second, divergence=(0.0, 1, 4),
+    ))
+    assert "first KeyDown-count divergence" in report
+    assert "candidate FailOverload lead-up" in report
+    assert "tanh(mu)=+0.100/+0.800" in report
+    assert "position=1.00/1.00mm" in report
+    assert "next-target=#3@0.300s" in report
+    assert "physical KeyDowns" in report
+    assert "key=left_2" in report
+
+
+def test_action_comparison_handles_old_traces_and_invalid_sample_count():
+    assert format_action_output_diagnostics(
+        _trace(), _trace(), divergence=None
+    ) == ()
+    with pytest.raises(ValueError, match="positive"):
+        format_action_output_diagnostics(
+            _trace(), _trace(), divergence=None, max_frames_per_window=0
+        )

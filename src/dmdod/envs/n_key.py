@@ -89,6 +89,27 @@ class TooEarlyKeyDownTrace:
 
 
 @dataclass(frozen=True, slots=True)
+class NKeyActionFrameTrace:
+    """Executed tanh(mu) at control-step start, physical state at its end."""
+
+    time_s: float
+    action_values: tuple[float, ...]
+    positions_m: tuple[float, ...]
+    velocities_m_s: tuple[float, ...]
+    pressed_flags: tuple[bool, ...]
+    next_target_index: int | None
+    next_target_time_s: float | None
+
+
+@dataclass(frozen=True, slots=True)
+class NKeyPhysicalKeyDownTrace:
+    time_s: float
+    key: str
+    target_index: int | None
+    target_time_s: float | None
+
+
+@dataclass(frozen=True, slots=True)
 class EpisodeTerminationTrace:
     time_s: float
     reason: str
@@ -104,6 +125,8 @@ class NKeyOverloadTrace:
     termination: EpisodeTerminationTrace
     keydown_times_s: tuple[float, ...]
     too_early_events: tuple[TooEarlyKeyDownTrace, ...]
+    action_frames: tuple[NKeyActionFrameTrace, ...] = ()
+    physical_keydowns: tuple[NKeyPhysicalKeyDownTrace, ...] = ()
 
 
 class DiagnosticHudNKeyRealChartMotorEnv(NKeyRealChartMotorEnv):
@@ -126,6 +149,8 @@ class DiagnosticHudNKeyRealChartMotorEnv(NKeyRealChartMotorEnv):
         self.capture_overload_trace = bool(capture_overload_trace)
         self._trace_keydowns: list[float] = []
         self._trace_too_early: list[TooEarlyKeyDownTrace] = []
+        self._trace_action_frames: list[NKeyActionFrameTrace] = []
+        self._trace_physical_keydowns: list[NKeyPhysicalKeyDownTrace] = []
         self._trace_termination: EpisodeTerminationTrace | None = None
         self._trace_overload_event_time_s: float | None = None
         self._hud_judgement: TimingJudgement | None = None
@@ -136,6 +161,8 @@ class DiagnosticHudNKeyRealChartMotorEnv(NKeyRealChartMotorEnv):
     def reset(self) -> NKeyHudRealChartObservation:
         self._trace_keydowns = []
         self._trace_too_early = []
+        self._trace_action_frames = []
+        self._trace_physical_keydowns = []
         self._trace_termination = None
         self._trace_overload_event_time_s = None
         self._hud_judgement = None
@@ -150,6 +177,18 @@ class DiagnosticHudNKeyRealChartMotorEnv(NKeyRealChartMotorEnv):
         if self.capture_overload_trace:
             self._trace_keydowns.append(float(event.time_s))
         target_index = self._next_target_index()
+        if self.capture_overload_trace:
+            self._trace_physical_keydowns.append(
+                NKeyPhysicalKeyDownTrace(
+                    time_s=float(event.time_s),
+                    key=str(event.key),
+                    target_index=target_index,
+                    target_time_s=(
+                        float(self.segment.targets[target_index].episode_time_s)
+                        if target_index is not None else None
+                    ),
+                )
+            )
         if target_index is None:
             return super()._score_event(event)
 
@@ -183,7 +222,27 @@ class DiagnosticHudNKeyRealChartMotorEnv(NKeyRealChartMotorEnv):
         return reward
 
     def step(self, action):
+        if self.capture_overload_trace:
+            command_time_s = float(self.privileged_episode_time_s())
+            target_index = self._next_target_index()
+            target_time_s = (
+                float(self.segment.targets[target_index].episode_time_s)
+                if target_index is not None else None
+            )
         result = super().step(action)
+        if self.capture_overload_trace:
+            motor = result.observation.motor
+            self._trace_action_frames.append(
+                NKeyActionFrameTrace(
+                    time_s=command_time_s,
+                    action_values=tuple(float(x) for x in action.values),
+                    positions_m=tuple(float(x) for x in motor.positions_m),
+                    velocities_m_s=tuple(float(x) for x in motor.velocities_m_s),
+                    pressed_flags=tuple(bool(x) for x in motor.pressed_flags),
+                    next_target_index=target_index,
+                    next_target_time_s=target_time_s,
+                )
+            )
         if self.capture_overload_trace and result.done:
             all_resolved = all(
                 used or missed for used, missed in zip(self._used, self._missed)
@@ -225,6 +284,8 @@ class DiagnosticHudNKeyRealChartMotorEnv(NKeyRealChartMotorEnv):
             termination=self._trace_termination,
             keydown_times_s=tuple(self._trace_keydowns),
             too_early_events=tuple(self._trace_too_early),
+            action_frames=tuple(self._trace_action_frames),
+            physical_keydowns=tuple(self._trace_physical_keydowns),
         )
 
     def _observation(

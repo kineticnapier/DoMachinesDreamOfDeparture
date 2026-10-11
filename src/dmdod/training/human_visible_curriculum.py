@@ -713,6 +713,109 @@ def format_overload_trace_comparison(
                 f"gauge={event.overload_before:.3f}->{event.overload_after:.3f}"
                 f"{' FAIL_OVERLOAD' if event.fail_overload else ''}"
             )
+    if best.action_frames and candidate.action_frames:
+        lines.extend(format_action_output_diagnostics(
+            best, candidate, divergence=divergence
+        ))
+    return tuple(lines)
+
+
+def format_action_output_diagnostics(
+    best: NKeyOverloadTrace,
+    candidate: NKeyOverloadTrace,
+    *,
+    divergence: tuple[float, int, int] | None,
+    max_frames_per_window: int = 5,
+) -> tuple[str, ...]:
+    """Compare policy commands and resulting motor states, with no extra rollouts."""
+    if max_frames_per_window <= 0:
+        raise ValueError("max_frames_per_window must be positive")
+    windows: list[tuple[str, float, float]] = []
+    if divergence is not None:
+        start = divergence[0]
+        windows.append(("first KeyDown-count divergence", start, start + 0.25))
+    if candidate.termination.reason == "Overload":
+        end = candidate.termination.time_s
+        windows.append(("candidate FailOverload lead-up", max(0.0, end - 0.10), end))
+    if not windows:
+        return ()
+
+    from dmdod.n_key_motor import n_key_names
+
+    lines: list[str] = []
+    for label, start, end in windows:
+        # Control time and input frequency must match; compare identical steps
+        # rather than retiming one trajectory to an unrelated motor state.
+        pairs = [
+            (i, best.action_frames[i], b)
+            for i, b in enumerate(candidate.action_frames)
+            if i < len(best.action_frames)
+            and start - 1e-9 <= b.time_s <= end + 1e-9
+            and abs(best.action_frames[i].time_s - b.time_s) <= 0.001
+            and len(best.action_frames[i].action_values) == len(b.action_values)
+        ]
+        if not pairs:
+            lines.append(
+                f"    action window {label} [{start:.3f}, {end:.3f}]s: no aligned frames"
+            )
+            continue
+        priority = sorted(
+            pairs,
+            key=lambda p: (
+                -max(abs(x - y) for x, y in zip(p[1].action_values, p[2].action_values)),
+                p[0],
+            ),
+        )
+        selected = set()
+        # Keep the beginning and ending frames as well as the largest changes.
+        if max_frames_per_window > 1:
+            selected.update((pairs[0][0], pairs[-1][0]))
+        selected.update(p[0] for p in priority[:max(0, max_frames_per_window - len(selected))])
+        sampled = [p for p in pairs if p[0] in selected]
+        lines.append(
+            f"    action window {label} [{start:.3f}, {end:.3f}]s: "
+            f"{len(sampled)}/{len(pairs)} frames (command at start, motor at end)"
+        )
+        for _, a, b in sampled:
+            keys = n_key_names(len(a.action_values))
+            diffs = [abs(x - y) for x, y in zip(a.action_values, b.action_values)]
+            active = set(sorted(range(len(keys)), key=lambda i: (-diffs[i], i))[:2])
+            active.update(i for i, d in enumerate(diffs) if d >= 0.20)
+            active.update(i for i in range(len(keys)) if a.pressed_flags[i] != b.pressed_flags[i])
+            for tr in (best, candidate):
+                for e in tr.physical_keydowns:
+                    if a.time_s - 1e-9 <= e.time_s < a.time_s + 0.010001 and e.key in keys:
+                        active.add(keys.index(e.key))
+            def target(f):
+                if f.next_target_index is None:
+                    return "none"
+                return f"#{f.next_target_index}@{f.next_target_time_s:.3f}s"
+            lines.append(
+                f"      t={a.time_s:.3f}s next-target best={target(a)} "
+                f"candidate={target(b)} max-abs-action-delta={max(diffs):.3f}"
+            )
+            for i in sorted(active):
+                lines.append(
+                    f"        {keys[i]} tanh(mu)={a.action_values[i]:+.3f}/{b.action_values[i]:+.3f} "
+                    f"position={a.positions_m[i]*1000:.2f}/{b.positions_m[i]*1000:.2f}mm "
+                    f"velocity={a.velocities_m_s[i]*1000:.1f}/{b.velocities_m_s[i]*1000:.1f}mm/s "
+                    f"pressed={int(a.pressed_flags[i])}/{int(b.pressed_flags[i])}"
+                )
+        for name, tr in (("best", best), ("candidate", candidate)):
+            downs = [
+                e for e in tr.physical_keydowns
+                if start - 1e-9 <= e.time_s <= end + 1e-9
+            ]
+            if downs:
+                lines.append(f"      {name} physical KeyDowns in window: {len(downs)}")
+                for e in downs[-12:]:
+                    next_target = (
+                        f"#{e.target_index}@{e.target_time_s:.3f}s"
+                        if e.target_index is not None else "none"
+                    )
+                    lines.append(
+                        f"        t={e.time_s:.3f}s key={e.key} next-target={next_target}"
+                    )
     return tuple(lines)
 
 
