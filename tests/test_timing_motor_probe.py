@@ -193,3 +193,53 @@ def test_validation_metric_aggregation_is_frame_weighted():
     aggregate = _aggregate_readout_stats([r(10, 20.0), r(30, 40.0)], "hidden")
     assert aggregate["all"]["mae_ms"] == pytest.approx(35.0)
     assert aggregate["prehit_0_150ms"]["mae_ms"] is None
+
+
+def test_no_student_checkpoint_mutation_with_sparse_connectome_coo_and_csr():
+    # torch.equal() on SparseCPU tensors is unsupported in PyTorch.
+    class SparseModel(torch.nn.Module):
+        def __init__(self):
+            super().__init__()
+            self.register_buffer("coo", torch.sparse_coo_tensor(
+                torch.tensor([[0, 1], [1, 0]]),
+                torch.tensor([1.5, -2.0]),
+                (2, 2),
+            ).coalesce())
+            self.register_buffer("csr", self.coo.to_sparse_csr())
+            self.register_buffer("dense", torch.tensor([1.0, 2.0]))
+
+    model = SparseModel()
+    snapshot = {k: v.detach().cpu().clone() for k, v in model.state_dict().items()}
+    _check_student_unchanged(model, snapshot)
+
+    with torch.no_grad():
+        model.csr.values()[0].add_(0.5)
+    with pytest.raises(RuntimeError, match="Student checkpoint state changed"):
+        _check_student_unchanged(model, snapshot)
+    model.csr = snapshot["csr"].clone()
+    _check_student_unchanged(model, snapshot)
+
+    with torch.no_grad():
+        # COO values() is mutable when the tensor has been coalesced.
+        model.coo._values()[0].add_(0.5)
+    with pytest.raises(RuntimeError, match="Student checkpoint state changed"):
+        _check_student_unchanged(model, snapshot)
+    model.coo = snapshot["coo"].clone()
+    _check_student_unchanged(model, snapshot)
+
+
+def test_sparse_state_comparison_detects_layout_and_index_changes():
+    from dmdod.training.timing_motor_probe import _unchanged_tensor
+
+    sparse = torch.sparse_coo_tensor(
+        torch.tensor([[0, 1], [0, 1]]), torch.tensor([3.0, 4.0]), (2, 2)
+    ).coalesce()
+    assert _unchanged_tensor(sparse, sparse.clone())
+    assert not _unchanged_tensor(sparse, sparse.to_dense())
+    reordered = torch.sparse_coo_tensor(
+        torch.tensor([[0, 1], [1, 0]]), torch.tensor([3.0, 4.0]), (2, 2)
+    ).coalesce()
+    assert not _unchanged_tensor(sparse, reordered)
+    assert not _unchanged_tensor(sparse, torch.sparse_coo_tensor(
+        torch.tensor([[0, 1], [0, 1]]), torch.tensor([3.0, 5.0]), (2, 2)
+    ).coalesce())

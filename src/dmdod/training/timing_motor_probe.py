@@ -372,10 +372,37 @@ def _aggregate_readout_stats(reports: list[dict], label: str) -> dict:
     return {"all": merged("all"), "prehit_0_150ms": merged("prehit_0_150ms")}
 
 
+def _unchanged_tensor(current: torch.Tensor, original: torch.Tensor) -> bool:
+    """Check state_dict entries without densifying the fixed sparse connectome."""
+    if (
+        current.layout != original.layout
+        or current.shape != original.shape
+        or current.dtype != original.dtype
+    ):
+        return False
+    a = current.detach().cpu()
+    b = original.detach().cpu()
+    if a.layout == torch.strided:
+        return bool(torch.equal(a, b))
+    if a.layout == torch.sparse_coo:
+        a, b = a.coalesce(), b.coalesce()
+        return bool(
+            torch.equal(a.indices(), b.indices())
+            and torch.equal(a.values(), b.values())
+        )
+    if a.layout == torch.sparse_csr:
+        return bool(
+            torch.equal(a.crow_indices(), b.crow_indices())
+            and torch.equal(a.col_indices(), b.col_indices())
+            and torch.equal(a.values(), b.values())
+        )
+    raise TypeError(f"Unsupported Student state tensor layout: {a.layout}")
+
+
 def _check_student_unchanged(model, original: dict[str, torch.Tensor]):
     now = model.state_dict()
     if set(now) != set(original) or any(
-        not torch.equal(now[key].detach().cpu(), old) for key, old in original.items()
+        not _unchanged_tensor(now[key], old) for key, old in original.items()
     ):
         raise RuntimeError("Student checkpoint state changed during diagnostic probe")
 
