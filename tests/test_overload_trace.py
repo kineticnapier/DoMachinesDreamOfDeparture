@@ -390,7 +390,7 @@ def test_open_loop_report_uses_same_best_frames_and_is_diagnostic_only():
     assert "fixed best observations" in report
     assert "frames(max delta>=0.25)=2/5" in report
     assert "max_delta=0.400" in report
-    assert "left_1=+0.100/+0.500" in report
+    assert "left_2=+0.100/+0.500" in report
     assert "no physics/score/Overload outcome" in report
     with pytest.raises(ValueError, match="key count"):
         format_open_loop_action_comparison(

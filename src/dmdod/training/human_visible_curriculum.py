@@ -878,7 +878,7 @@ def format_open_loop_action_comparison(
     if divergence is not None:
         windows.append(("first KeyDown-count divergence", divergence[0], divergence[0] + 0.25))
     windows.append((
-        "candidate FailOverload lead-up",
+        "candidate termination lead-up",
         max(0.0, candidate_termination_s - 0.10),
         candidate_termination_s,
     ))
