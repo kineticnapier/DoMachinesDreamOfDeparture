@@ -205,7 +205,9 @@ def test_no_student_checkpoint_mutation_with_sparse_connectome_coo_and_csr():
                 torch.tensor([1.5, -2.0]),
                 (2, 2),
             ).coalesce())
-            self.register_buffer("csr", self.coo.to_sparse_csr())
+            # to_sparse_csr() can share COO values storage; isolate buffers
+            # so restoring one sparse buffer does not leave the other modified.
+            self.register_buffer("csr", self.coo.to_sparse_csr().clone())
             self.register_buffer("dense", torch.tensor([1.0, 2.0]))
 
     model = SparseModel()

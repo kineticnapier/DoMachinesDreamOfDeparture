@@ -175,7 +175,7 @@ def feature_diagnostics(train_x: torch.Tensor, val_logs: list[tuple[int,dict]],
         z=(x-readout.input_mean)/normalize_std
         max_raw=torch.maximum(max_raw,x.abs().amax(0))
         max_z=torch.maximum(max_z,z.abs().amax(0))
-        where=torch.where(z.abs().amax(1).values > EXTREME_Z)[0]
+        where=torch.where(z.abs().amax(dim=1) > EXTREME_Z)[0]
         for idx in where[:50].tolist():
             extreme.append({"anchor":anchor,"frame_index":idx,
                             "t_s":record["times"][idx],
