@@ -64,7 +64,7 @@ def test_train_readout_does_not_mutate_inputs_and_predicts_train_labels():
     )
     pred = predict_readout(trained, features, torch.device("cpu"))
     assert torch.equal(features, copied)
-    assert (pred - truth).abs().mean() < 0.05
+    # A genuinely linear target should converge, not merely pass a loose MAE.\n    assert (pred - truth).abs().mean() < 0.01
     assert all(not parameter.requires_grad or parameter.grad is not None
                for parameter in trained.model.parameters())
 
