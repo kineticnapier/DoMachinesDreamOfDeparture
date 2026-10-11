@@ -82,6 +82,7 @@ class HumanVisibleConfig:
     alpha_sweep_enabled: bool = False
     alpha_sweep_alphas: tuple[float, ...] | None = None
     alpha_sweep_compare_transitions: bool = False
+    alpha_sweep_recovery_probe_enabled: bool = False
     alpha_sweep_expected_best: tuple[int, int, int, int] | None = None
     alpha_sweep_expected_candidate: tuple[int, int, int, int] | None = None
 
@@ -245,6 +246,9 @@ def load_training_config(path: str | Path) -> TrainingConfig:
         alpha_sweep_compare_transitions=bool(
             visible_raw.get("alpha_sweep_compare_transitions", False)
         ),
+        alpha_sweep_recovery_probe_enabled=bool(
+            visible_raw.get("alpha_sweep_recovery_probe_enabled", False)
+        ),
         alpha_sweep_expected_best=_alpha_sweep_expectation(
             visible_raw, "alpha_sweep_expected_best"
         ),
@@ -253,6 +257,12 @@ def load_training_config(path: str | Path) -> TrainingConfig:
         ),
     )
 
+    if human_visible.alpha_sweep_recovery_probe_enabled and not human_visible.alpha_sweep_enabled:
+        raise ValueError("teacher takeover recovery probe requires alpha_sweep_enabled")
+    if (human_visible.alpha_sweep_recovery_probe_enabled
+        and human_visible.alpha_sweep_alphas is not None
+        and not {0.125, 0.25, 1.0}.issubset(human_visible.alpha_sweep_alphas)):
+        raise ValueError("teacher takeover recovery probe requires alpha 0.125, 0.25, 1.0")
     if human_visible.alpha_sweep_compare_transitions and not human_visible.alpha_sweep_enabled:
         raise ValueError("KeyDown alpha comparison requires alpha_sweep_enabled")
     if (human_visible.alpha_sweep_compare_transitions

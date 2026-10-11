@@ -1743,6 +1743,7 @@ def run_human_visible_curriculum(
                 validation_summary=validation_summary,
                 alphas=visible.alpha_sweep_alphas,
                 compare_transitions=visible.alpha_sweep_compare_transitions,
+                recovery_probe_enabled=visible.alpha_sweep_recovery_probe_enabled,
             )
 
         if catastrophic:

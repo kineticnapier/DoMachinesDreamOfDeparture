@@ -12,6 +12,9 @@ from typing import Callable
 import torch
 
 from dmdod.envs.n_key import NKeyOverloadTrace
+from dmdod.training.recovery_probe import (
+    format_recovery_probe, run_teacher_takeover_probe,
+)
 from dmdod.training.real_chart import evaluate_role_continuous
 
 
@@ -323,6 +326,7 @@ def run_closed_loop_alpha_sweep(
     evaluate: Callable = evaluate_role_continuous,
     alphas: tuple[float, ...] | None = None,
     compare_transitions: bool = False,
+    recovery_probe_enabled: bool = False,
 ) -> tuple[AlphaSweepRow, ...]:
     """Evaluate specified intermediate alpha points; reuse existing endpoints."""
     alphas = ALPHAS if alphas is None else tuple(alphas)
@@ -336,6 +340,9 @@ def run_closed_loop_alpha_sweep(
     interpolate_state(model, best_state, candidate_state, 0.5)
     records: list[AlphaSweepRow] = []
     physical_by_alpha: dict[float, tuple] = {}
+    recovery_reports: list[tuple[str, ...]] = []
+    if recovery_probe_enabled and not {0.125, 0.25, 1.0}.issubset(alphas):
+        raise ValueError("recovery probe requires alpha 0.125, 0.25, 1.0")
     try:
         for alpha in alphas:
             state = interpolate_state(model, best_state, candidate_state, alpha)
@@ -373,6 +380,17 @@ def run_closed_loop_alpha_sweep(
                 )
             if compare_transitions:
                 physical_by_alpha[alpha] = tuple(traces[8].physical_keydowns)
+            if recovery_probe_enabled and alpha in (0.125, 0.25, 1.0):
+                recovery = run_teacher_takeover_probe(
+                    model, prepared.validation[8],
+                    alpha=alpha,
+                    lead_s=prepared.lead_s,
+                    control_dt_s=prepared.control_dt_s,
+                    physics_dt_s=prepared.physics_dt_s,
+                    device=prepared.device,
+                    expected_trace=traces[8],
+                )
+                recovery_reports.append(format_recovery_probe(recovery))
             summary = validation_summary(results)
             records.append(AlphaSweepRow(
                 alpha=alpha,
@@ -390,5 +408,8 @@ def run_closed_loop_alpha_sweep(
         print(line)
     if compare_transitions:
         for line in format_keydown_transitions(physical_by_alpha):
+            print(line)
+    for report in recovery_reports:
+        for line in report:
             print(line)
     return output
