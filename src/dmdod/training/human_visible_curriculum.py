@@ -32,6 +32,7 @@ from dmdod.training.real_chart import (
     aggregate,
     clone_model_state,
     evaluate_role_continuous,
+    replay_policy_on_fixed_observations,
     safe_anchor_count,
     save_checkpoint,
     summarize,
@@ -823,6 +824,103 @@ def format_action_output_diagnostics(
     return tuple(lines)
 
 
+
+def format_open_loop_action_comparison(
+    best_trace: NKeyOverloadTrace,
+    candidate_open_loop: torch.Tensor,
+    *,
+    anchor_label: str,
+    candidate_termination_s: float,
+    divergence: tuple[float, int, int] | None = None,
+    max_frames_per_window: int = 5,
+) -> tuple[str, ...]:
+    """Quantify parameter/RNN differences under the best policy's fixed observations.
+
+    The best action values are from the original best rollout, and the
+    candidate values are from a new inference pass on those exact observations.
+    No motor or game event is simulated in this counterfactual.
+    """
+    if max_frames_per_window <= 0:
+        raise ValueError("max_frames_per_window must be positive")
+    if candidate_open_loop.ndim != 2:
+        raise ValueError("candidate open-loop actions must be 2D")
+    n = int(candidate_open_loop.shape[0])
+    if not best_trace.action_frames or n == 0:
+        return (f"  open-loop {anchor_label}: no fixed-observation frames",)
+    if n > len(best_trace.action_frames):
+        raise ValueError("open-loop actions longer than fixed observations")
+    width = len(best_trace.action_frames[0].action_values)
+    if int(candidate_open_loop.shape[1]) != width:
+        raise ValueError("open-loop key count mismatch")
+
+    reference = torch.tensor(
+        [frame.action_values for frame in best_trace.action_frames[:n]],
+        dtype=torch.float32,
+    )
+    deltas = (reference - candidate_open_loop.cpu()).abs()
+    per_step = deltas.max(dim=1).values
+    all_values = deltas.reshape(-1)
+    threshold_count = int((per_step >= 0.25).sum().item())
+    first_large = torch.nonzero(per_step >= 0.25).flatten()
+    first_t = (
+        f"{best_trace.action_frames[int(first_large[0])].time_s:.3f}s"
+        if first_large.numel() else "none"
+    )
+    lines = [
+        f"  open-loop {anchor_label}: fixed best observations, candidate model "
+        f"with independent RNN state; frames={n}",
+        f"    mean|action delta|={all_values.mean().item():.4f} "
+        f"p95={torch.quantile(all_values, 0.95).item():.4f} "
+        f"max={all_values.max().item():.4f} "
+        f"frames(max delta>=0.25)={threshold_count}/{n} first={first_t}",
+    ]
+    windows: list[tuple[str, float, float]] = []
+    if divergence is not None:
+        windows.append(("first KeyDown-count divergence", divergence[0], divergence[0] + 0.25))
+    windows.append((
+        "candidate FailOverload lead-up",
+        max(0.0, candidate_termination_s - 0.10),
+        candidate_termination_s,
+    ))
+    from dmdod.n_key_motor import n_key_names
+    keys = n_key_names(width)
+    for label, start, end in windows:
+        indices = [
+            i for i, frame in enumerate(best_trace.action_frames[:n])
+            if start - 1e-9 <= frame.time_s <= end + 1e-9
+        ]
+        if not indices:
+            lines.append(f"    fixed-input window {label}: no frames")
+            continue
+        highest = sorted(indices, key=lambda i: (-float(per_step[i]), i))
+        selected: set[int] = set()
+        if max_frames_per_window > 1:
+            selected.update((indices[0], indices[-1]))
+        selected.update(highest[:max(0, max_frames_per_window - len(selected))])
+        lines.append(
+            f"    fixed-input window {label} [{start:.3f}, {end:.3f}]s "
+            f"frames={len(selected)}/{len(indices)}"
+        )
+        for i in sorted(selected):
+            pairs = sorted(
+                ((j, float(deltas[i, j])) for j in range(width)),
+                key=lambda pair: (-pair[1], pair[0]),
+            )[:3]
+            detail = " ".join(
+                f"{keys[j]}={float(reference[i, j]):+.3f}/{float(candidate_open_loop[i, j]):+.3f}"
+                f"(d={delta:.3f})"
+                for j, delta in pairs
+            )
+            lines.append(
+                f"      t={best_trace.action_frames[i].time_s:.3f}s "
+                f"max_delta={float(per_step[i]):.3f} {detail}"
+            )
+    lines.append(
+        "    NOTE: fixed-observation replay has no physics/score/Overload outcome; "
+        "it isolates policy inference from closed-loop observation divergence."
+    )
+    return tuple(lines)
+
 def catastrophic_trace_anchor_indices(
     previous: tuple[ValidationAnchorSnapshot, ...],
     current: tuple[ValidationAnchorSnapshot, ...],
@@ -1435,6 +1533,7 @@ def run_human_visible_curriculum(
 
     print("=== fixed Validation baseline / best verification ===")
     best_overload_traces: list[NKeyOverloadTrace] = []
+    best_fixed_observations: list[torch.Tensor] = []
     # A progress model may not be the best model. Evaluate the referenced best
     # separately, then restore the exact continuation model and optimizer.
     if start.role == "continuation-progress":
@@ -1451,6 +1550,7 @@ def run_human_visible_curriculum(
             device=prepared.device,
             verbose=False,
             trace_collector=best_overload_traces,
+            observation_collector=best_fixed_observations,
         )
         evaluated_best_summary = validation_summary(baseline_results)
     finally:
@@ -1589,6 +1689,7 @@ def run_human_visible_curriculum(
         )
 
         candidate_overload_traces: list[NKeyOverloadTrace] = []
+        candidate_fixed_observations: list[torch.Tensor] = []
         validation_results = evaluate_role_continuous(
             model,
             prepared.validation,
@@ -1598,6 +1699,7 @@ def run_human_visible_curriculum(
             device=prepared.device,
             verbose=False,
             trace_collector=candidate_overload_traces,
+            observation_collector=candidate_fixed_observations,
         )
         current_summary = validation_summary(validation_results)
         current_rank = validation_rank(current_summary)
@@ -1642,8 +1744,37 @@ def run_human_visible_curriculum(
                     anchor_label=label,
                 ):
                     print(line)
+                # The candidate is replayed on the already-recorded BEST
+                # observations. No additional environment rollout occurs.
+                reference = best_overload_traces[index]
+                candidate_end = candidate_overload_traces[index].termination.time_s
+                stop_steps = sum(
+                    frame.time_s <= candidate_end + 1e-9
+                    for frame in reference.action_frames
+                )
+                if len(best_fixed_observations) != len(prepared.validation):
+                    raise RuntimeError("best fixed observation count mismatch")
+                fixed_actions = replay_policy_on_fixed_observations(
+                    model,
+                    best_fixed_observations[index],
+                    device=prepared.device,
+                    max_steps=stop_steps,
+                )
+                divergence = first_keydown_count_divergence(
+                    reference.keydown_times_s,
+                    candidate_overload_traces[index].keydown_times_s,
+                )
+                for line in format_open_loop_action_comparison(
+                    reference,
+                    fixed_actions,
+                    anchor_label=label,
+                    candidate_termination_s=candidate_end,
+                    divergence=divergence,
+                ):
+                    print(line)
 
         if selected_best:
+            best_fixed_observations = candidate_fixed_observations
             best_overload_traces = list(select_best_trace_reference(
                 tuple(best_overload_traces),
                 tuple(candidate_overload_traces),

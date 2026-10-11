@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from array import array
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -391,6 +392,7 @@ def _evaluate_continuous(
     physics_dt_s: float,
     device: torch.device,
     trace_collector: list[NKeyOverloadTrace] | None = None,
+    observation_collector: list[torch.Tensor] | None = None,
 ):
     env = DiagnosticHudNKeyRealChartMotorEnv(
         named.segment,
@@ -404,15 +406,18 @@ def _evaluate_continuous(
     observation = env.reset()
     state = model.initial_state(device)
     max_steps = int((named.segment.duration_s + 2.0) / control_dt_s) + 200
+    # Dense float32 buffer avoids retaining Python float tuples for 20 charts.
+    input_buffer = array("f") if observation_collector is not None else None
+    input_dim = 0
 
     model.eval()
     with torch.no_grad():
         for _ in range(max_steps):
-            x = torch.tensor(
-                encode_n_key_hud_real_chart_observation(observation),
-                dtype=torch.float32,
-                device=device,
-            )
+            encoded = encode_n_key_hud_real_chart_observation(observation)
+            if input_buffer is not None:
+                input_buffer.extend(encoded)
+                input_dim = len(encoded)
+            x = torch.tensor(encoded, dtype=torch.float32, device=device)
             mean, _, _, state = model.forward_step(x, state)
             action = NKeyAction(
                 tuple(float(value.item()) for value in torch.tanh(mean))
@@ -423,12 +428,50 @@ def _evaluate_continuous(
                 break
         else:
             raise RuntimeError("N-key continuous evaluation exceeded step budget")
+    if input_buffer is not None:
+        if input_dim <= 0:
+            raise RuntimeError("fixed-observation capture has no input frames")
+        observation_collector.append(
+            torch.tensor(input_buffer, dtype=torch.float32).reshape(-1, input_dim)
+        )
     if trace_collector is not None:
         trace = env.overload_trace
         if trace is None:
             raise RuntimeError("enabled overload trace was not collected")
         trace_collector.append(trace)
     return env.stats, int(env.physical_keydowns)
+
+
+def replay_policy_on_fixed_observations(
+    model,
+    observations: torch.Tensor,
+    *,
+    device: torch.device,
+    max_steps: int | None = None,
+) -> torch.Tensor:
+    """Inference only: never step the motor/game or alter the input trajectory.
+
+    Recurrent state is reset for each sequence. Both models may internally
+    evolve their RNN state; this is not a matched-hidden-state comparison.
+    """
+    if observations.ndim != 2:
+        raise ValueError("fixed observations must have shape [frames, features]")
+    count = int(observations.shape[0])
+    if max_steps is not None:
+        if max_steps < 0:
+            raise ValueError("max_steps must be non-negative")
+        count = min(count, max_steps)
+    outputs = torch.empty((count, model.key_count), dtype=torch.float32)
+    if not count:
+        return outputs
+    inputs = observations[:count].to(device=device, dtype=torch.float32)
+    state = model.initial_state(device)
+    model.eval()
+    with torch.no_grad():
+        for index in range(count):
+            mean, _, _, state = model.forward_step(inputs[index], state)
+            outputs[index].copy_(torch.tanh(mean).detach().cpu())
+    return outputs
 
 
 def evaluate_role_continuous(
@@ -441,6 +484,7 @@ def evaluate_role_continuous(
     device: torch.device,
     verbose: bool = True,
     trace_collector: list[NKeyOverloadTrace] | None = None,
+    observation_collector: list[torch.Tensor] | None = None,
 ) -> list[tuple[object, int]]:
     results: list[tuple[object, int]] = []
     total = len(segments)
@@ -452,6 +496,7 @@ def evaluate_role_continuous(
             physics_dt_s=physics_dt_s,
             device=device,
             **({"trace_collector": trace_collector} if trace_collector is not None else {}),
+            **({"observation_collector": observation_collector} if observation_collector is not None else {}),
         )
         results.append((stats, keydowns))
         if verbose:

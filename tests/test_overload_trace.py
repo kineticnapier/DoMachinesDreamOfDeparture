@@ -24,11 +24,14 @@ from dmdod.training.human_visible_curriculum import (
     catastrophic_trace_anchor_indices,
     first_keydown_count_divergence,
     format_action_output_diagnostics,
+    format_open_loop_action_comparison,
     format_overload_trace_comparison,
     select_best_trace_reference,
     validation_rank,
 )
-from dmdod.training.real_chart import NamedSegment, evaluate_role_continuous
+from dmdod.training.real_chart import (
+    NamedSegment, evaluate_role_continuous, replay_policy_on_fixed_observations,
+)
 
 
 def _segment():
@@ -288,4 +291,109 @@ def test_action_comparison_handles_old_traces_and_invalid_sample_count():
     with pytest.raises(ValueError, match="positive"):
         format_action_output_diagnostics(
             _trace(), _trace(), divergence=None, max_frames_per_window=0
+        )
+
+
+
+def test_fixed_observation_capture_matches_plain_evaluation(capsys):
+    segment = _segment()
+    named = NamedSegment("validation", "chart", "sha1", 0.0, segment.duration_s, segment)
+    model = _IdlePolicy()
+    kwargs = dict(
+        label="fixed", control_dt_s=0.01, physics_dt_s=0.001,
+        device=torch.device("cpu"), verbose=False,
+    )
+    baseline = evaluate_role_continuous(model, [named], **kwargs)
+    stored = []
+    traced = []
+    observed = evaluate_role_continuous(
+        model, [named], observation_collector=stored,
+        trace_collector=traced, **kwargs,
+    )
+    assert baseline == observed
+    assert len(stored) == len(traced) == 1
+    assert stored[0].ndim == 2
+    assert stored[0].shape[0] == len(traced[0].action_frames)
+    assert stored[0].shape[1] == 251  # 4-key HUD encoder
+    open_loop = replay_policy_on_fixed_observations(
+        model, stored[0], device=torch.device("cpu"),
+    )
+    assert torch.equal(open_loop, torch.zeros_like(open_loop))
+    assert torch.equal(open_loop, torch.tensor(
+        [frame.action_values for frame in traced[0].action_frames]
+    ))
+
+
+def test_fixed_observation_replay_changes_only_policy_not_input():
+    class StatefulPolicy(_IdlePolicy):
+        def __init__(self, weight):
+            self.weight = weight
+
+        def forward_step(self, x, state):
+            mean = torch.stack((
+                x[0] * self.weight + state[0], x[1], x[0], x[1],
+            ))
+            return mean, None, None, state + 0.1
+    observations = torch.tensor([
+        [1.0, 2.0], [1.0, 3.0], [2.0, 3.0],
+    ])
+    original = observations.clone()
+    old = replay_policy_on_fixed_observations(
+        StatefulPolicy(0.5), observations, device=torch.device("cpu"),
+    )
+    new = replay_policy_on_fixed_observations(
+        StatefulPolicy(0.75), observations, device=torch.device("cpu"),
+    )
+    repeat = replay_policy_on_fixed_observations(
+        StatefulPolicy(0.75), observations, device=torch.device("cpu"),
+    )
+    assert torch.equal(observations, original)
+    assert not torch.equal(old, new)
+    assert torch.equal(new, repeat)
+    assert replay_policy_on_fixed_observations(
+        StatefulPolicy(0.75), observations, device=torch.device("cpu"),
+        max_steps=2,
+    ).shape == (2, 4)
+    with pytest.raises(ValueError, match="shape"):
+        replay_policy_on_fixed_observations(
+            StatefulPolicy(0.75), observations[0], device=torch.device("cpu"),
+        )
+
+
+def test_open_loop_report_uses_same_best_frames_and_is_diagnostic_only():
+    old = _trace(reason="All targets resolved", end=1.0)
+    old = NKeyOverloadTrace(
+        old.termination, (), (),
+        action_frames=tuple(
+            NKeyActionFrameTrace(
+                time_s=t,
+                action_values=(0.1, 0.0, 0.0, 0.0),
+                positions_m=(0.0,) * 4,
+                velocities_m_s=(0.0,) * 4,
+                pressed_flags=(False,) * 4,
+                next_target_index=3, next_target_time_s=0.8,
+            )
+            for t in (0.0, 0.01, 0.02, 0.03, 0.04)
+        ),
+    )
+    new = torch.tensor([
+        [0.1, 0, 0, 0],
+        [0.5, 0, 0, 0],
+        [0.5, 0, 0, 0],
+        [0.1, 0, 0, 0],
+        [0.1, 0, 0, 0],
+    ])
+    report = "\n".join(format_open_loop_action_comparison(
+        old, new, anchor_label="#09",
+        candidate_termination_s=0.04, divergence=(0.0, 3, 6),
+    ))
+    assert "fixed best observations" in report
+    assert "frames(max delta>=0.25)=2/5" in report
+    assert "max_delta=0.400" in report
+    assert "left_1=+0.100/+0.500" in report
+    assert "no physics/score/Overload outcome" in report
+    with pytest.raises(ValueError, match="key count"):
+        format_open_loop_action_comparison(
+            old, torch.zeros(5, 3), anchor_label="#09",
+            candidate_termination_s=0.04,
         )
