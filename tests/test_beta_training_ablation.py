@@ -126,3 +126,100 @@ def test_ablation_config_has_fixed_20_validation_anchors_and_no_alpha_sweep():
     assert cfg.human_visible.updates_per_epoch == 2
     assert not cfg.human_visible.alpha_sweep_enabled
     assert "UNUSED_beta_training_ablation" in cfg.run.output
+
+
+def test_four_arms_restore_initial_model_and_optimizer_without_promotion(monkeypatch, tmp_path):
+    import dmdod.training.beta_training_ablation as ablation
+    from dmdod.training.human_visible_curriculum import CurriculumEpochMetrics
+
+    class DummyModel(torch.nn.Module):
+        def __init__(self):
+            super().__init__()
+            self.weight = torch.nn.Parameter(torch.tensor(3.0))
+
+        def prepare_recurrent_runtime(self):
+            pass
+
+    model = DummyModel()
+    config = SimpleNamespace(
+        human_visible=SimpleNamespace(
+            seed=2401, burn_in_steps=0, supervised_steps=1,
+            anchors_per_batch=1, grad_clip=1.0,
+        ),
+    )
+    prepared = SimpleNamespace(
+        model=model,
+        parent={"human_visible_best_validation_summary": {"safe": 12, "hits": 1786}},
+        source_checkpoint=tmp_path / "selected-best.pt",
+        validation=[object()] * 20,
+        anchors=[object()] * 20,
+        control_dt_s=0.01,
+        physics_dt_s=0.001,
+        device=torch.device("cpu"),
+    )
+    starts = []
+    schedules = []
+    eval_calls = []
+
+    class DummyOptimizer:
+        def __init__(self):
+            self.marker = -1
+
+    def checked_load(optimizer, parent, model):
+        optimizer.marker = 0
+
+    def collect_variant(prepared, model, arm, *, epoch, seed):
+        starts.append((arm.name, float(model.weight.detach().item())))
+        return [SimpleNamespace(frames=1)], ()
+
+    def train_epoch(model, windows, plan, *, optimizer, **kwargs):
+        assert optimizer.marker == 0
+        assert float(model.weight.detach().item()) == 3.0
+        optimizer.marker = 2
+        schedules.append(plan)
+        with torch.no_grad():
+            model.weight.add_(1.0)
+        return CurriculumEpochMetrics(2, 16, 0.1, 0.09, 1.0, 1.0, {})
+
+    def eval_role(model, *args, **kwargs):
+        eval_calls.append(float(model.weight.detach().item()))
+        return [object()]
+
+    def summary(results):
+        if len(eval_calls) == 1:
+            return {"safe": 12, "anchors": 20, "hits": 1786, "targets": 4682,
+                    "early": 278, "keydowns": 2064, "x": 49.62}
+        return {"safe": 9, "anchors": 20, "hits": 1546, "targets": 4682,
+                "early": 250, "keydowns": 1796, "x": 49.62}
+
+    monkeypatch.setattr(ablation, "_validate_experiment", lambda *a, **kw: 3)
+    monkeypatch.setattr(ablation, "_collect_expert_trajectories",
+                        lambda p: [SimpleNamespace(frames=4)])
+    monkeypatch.setattr(ablation, "_collect_variant", collect_variant)
+    monkeypatch.setattr(ablation, "format_beta_summary", lambda rows: ())
+    monkeypatch.setattr(ablation, "build_human_visible_optimizer",
+                        lambda *a: DummyOptimizer())
+    monkeypatch.setattr(ablation, "_load_checked_optimizer", checked_load)
+    monkeypatch.setattr(ablation, "build_replay_windows", lambda *a, **kw: [0])
+    monkeypatch.setattr(ablation, "build_balanced_epoch_plan",
+                        lambda *a, **kw: (("a",), ("b",)))
+    monkeypatch.setattr(ablation, "train_human_visible_epoch", train_epoch)
+    monkeypatch.setattr(ablation, "evaluate_role_continuous", eval_role)
+    monkeypatch.setattr(ablation, "validation_summary", summary)
+    monkeypatch.setattr(ablation, "_check_validation_summary",
+                        lambda actual, expected: None)
+
+    report_path = tmp_path / "ablation.json"
+    result = ablation.run_beta_training_ablation(
+        prepared, config, report_path=report_path, save_candidates=False,
+    )
+    assert [n for n, _ in starts] == [a.name for a in ARMS]
+    assert all(w == 3.0 for _, w in starts)
+    assert len(schedules) == 4 and all(p == schedules[0] for p in schedules)
+    assert eval_calls == [3.0, 4.0, 4.0, 4.0, 4.0]
+    assert report_path.is_file()
+    assert result["baseline_validation"]["safe"] == 12
+    assert len(result["arms"]) == 4
+    assert all(a["training"]["updates"] == 2 for a in result["arms"])
+    assert all(not a["selected_for_checkpoint"] for a in result["arms"])
+    assert not list(tmp_path.glob("*.pt"))

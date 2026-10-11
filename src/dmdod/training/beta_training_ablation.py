@@ -12,9 +12,7 @@ This is an experimental training runner, not curriculum progression:
 """
 
 from dataclasses import asdict, dataclass
-import copy
 import json
-import math
 from pathlib import Path
 import random
 
