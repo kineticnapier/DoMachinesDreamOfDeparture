@@ -730,6 +730,10 @@ def format_action_output_diagnostics(
     """Compare policy commands and resulting motor states, with no extra rollouts."""
     if max_frames_per_window <= 0:
         raise ValueError("max_frames_per_window must be positive")
+    # Legacy/minimal traces do not carry per-control-step action frames.
+    # An empty trace is not a failed alignment; there is nothing to compare.
+    if not best.action_frames or not candidate.action_frames:
+        return ()
     windows: list[tuple[str, float, float]] = []
     if divergence is not None:
         start = divergence[0]
