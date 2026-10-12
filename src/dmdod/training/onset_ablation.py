@@ -206,7 +206,7 @@ def _seed_arm(seed:int,epoch:int):
 
 
 def run_onset_learning_ablation(prepared,config,*,report_path:Path,
-                               updates:int=PILOT_UPDATES)->dict:
+                               updates:int=PILOT_UPDATES,audit=None)->dict:
     epoch=_source_preflight(prepared,config,report_path,updates)
     model=prepared.model
     visible=config.human_visible
@@ -225,6 +225,8 @@ def run_onset_learning_ablation(prepared,config,*,report_path:Path,
     baseline_onset,baseline_anchor=_early_metrics(
         baseline_results,baseline_traces,prepared.validation
     )
+    if audit is not None:
+        audit.record_baseline(model, baseline_results, baseline_traces)
     expert=_collect_expert_trajectories(prepared)
     # Beta=0: physical Student-driven Train states with Teacher-labelled
     # counterfactual actions. Same exact trajectories for BOTH training arms.
@@ -232,6 +234,8 @@ def run_onset_learning_ablation(prepared,config,*,report_path:Path,
         prepared,model,beta=0.0,epoch=epoch,base_seed=seed
     )
     trajectories=[*expert,*dagger]
+    if audit is not None:
+        audit.record_train_trajectories(trajectories)
     if {(t.anchor_id,t.source_kind) for t in trajectories}!={
         (i,source) for i in range(20) for source in ("expert","dagger")
     }:
@@ -285,6 +289,8 @@ def run_onset_learning_ablation(prepared,config,*,report_path:Path,
             )
             summary=validation_summary(results)
             onset,anchors=_early_metrics(results,traces,prepared.validation)
+            if audit is not None:
+                audit.record_arm(name, model, optimizer, stats, results, traces)
             print(f"onset {name}: SAFE={summary['safe']}/20 "
                   f"H={summary['hits']} Early={summary['early']} "
                   f"Keydowns={summary['keydowns']} "
