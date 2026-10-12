@@ -102,6 +102,20 @@ def test_replay_same_visible_frames_three_models_with_fresh_rnn_each():
     assert next(r for r in anchors if r["arm"]=="balanced")["onset_frames"]==20
 
 
+@pytest.mark.parametrize(("control_dt","expected_frames"),[
+    (0.005,40),
+    (0.01,20),
+    (0.02,10),
+    (0.03,7),
+    (0.2,1),
+])
+def test_onset_200ms_boundary_uses_full_precision(control_dt,expected_frames):
+    # Frames exactly at 200ms must not be counted in the <200ms onset.
+    target=torch.zeros((50,8))
+    pred=torch.zeros_like(target)
+    summary=_result_metrics(pred,target,pred,control_dt=control_dt)
+    assert summary["onset"]["frames"]==expected_frames
+
 def test_set_valued_loss_changes_even_without_threshold_crossing():
     t=torch.zeros((5,8))
     t[:,0]=1.

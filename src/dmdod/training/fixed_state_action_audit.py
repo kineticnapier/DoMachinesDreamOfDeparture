@@ -242,7 +242,9 @@ def _result_metrics(pred: torch.Tensor, target: torch.Tensor,
     commands=(pred>=THRESHOLD).sum(1)
     base_commands=(base>=THRESHOLD).sum(1)
     crosses=(pred>=THRESHOLD)!=(base>=THRESHOLD)
-    onset=torch.arange(n)*control_dt<INITIAL_S-1e-9
+    # Use float64 for boundary times: float32 represents 200ms as slightly
+    # below 200ms for common dt values (10ms/20ms/5ms), adding one frame.
+    onset=torch.arange(n,dtype=torch.float64)*float(control_dt)<INITIAL_S-1e-9
     def numbers(selection):
         if not bool(selection.any()):
             return {"frames":0}
