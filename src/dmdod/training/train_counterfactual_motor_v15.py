@@ -120,6 +120,18 @@ def case_from_dict(raw: dict) -> Intervention:
     return case
 
 
+
+def _assert_v12_saved_candidate_matches(
+    saved_checks: dict[tuple, Snapshot], case: Intervention, recorded: Snapshot,
+) -> None:
+    """Match v1.4 interventions to v1.2's persisted (anchor, keys, start, frames, delta)."""
+    v12_key = (case.anchor, case.keys, case.start, case.frames, round(case.delta, 8))
+    previous = saved_checks.get(v12_key)
+    if previous is None:
+        raise RuntimeError('Fail Closed: v1.2 recorded intervention missing')
+    assert_reproduced(recorded, previous, label='v1.4/1.2 candidate')
+
+
 def _saved_horizons(entry: dict, field: str, label: str) -> dict[float, Snapshot]:
     result = {}
     for horizon in HORIZONS:
@@ -219,9 +231,7 @@ def _load_previous(v12: Path, v13: Path, v14: Path, checkpoint: Path):
         for h, s in _saved_horizons(entry, 'base_snapshots', 'v1.4 base').items():
             assert_reproduced(s, saved_base[case.anchor, h], label='v1.4 saved baseline')
         recorded = _saved_horizons(entry, 'candidate_snapshots', 'v1.4 candidate')
-        if case.identity() not in saved_checks:
-            raise RuntimeError('Fail Closed: v1.2 recorded intervention missing')
-        assert_reproduced(recorded[.8], saved_checks[case.identity()], label='v1.4/1.2 candidate')
+        _assert_v12_saved_candidate_matches(saved_checks, case, recorded[.8])
     # Ensure all original near-neighbor records are present and unambiguous.
     original_neighbors = {}
     if (len(report.get('stage_b',[])) != 7 or

@@ -12,7 +12,7 @@ from dmdod.training.train_counterfactual_motor_v12 import Snapshot
 from dmdod.training.train_counterfactual_motor_v14 import HORIZONS, Intervention, Trace
 from dmdod.training.train_counterfactual_motor_v15 import (
     GRID_06, FrameContext, DetailedReplay, ReplayCache, _required_layout,
-    _snapshot, _compare_saved_metric, _load_previous, first_divergence,
+    _snapshot, _compare_saved_metric, _load_previous, _assert_v12_saved_candidate_matches, first_divergence,
     first_hit_loss, first_miss_excess, milestone_gate, persistence,
     rescue_quality, boundary_grid, run_detailed_trace,
 )
@@ -240,6 +240,38 @@ def test_saved_v14_reproduction_must_have_real_hash_and_9_cases(tmp_path,monkeyp
         path.write_text(json.dumps(body) if isinstance(body,dict) else body,encoding='utf-8')
     with pytest.raises(RuntimeError,match='Fail Closed'):
         mod._load_previous(tmp_path/'v12',tmp_path/'v13',d,tmp_path/'best.pt')
+
+
+
+@pytest.mark.parametrize('case', [
+    Intervention(6, (2,), +.02, 0, 4),
+    Intervention(6, (2,), -.2, 0, 8),
+    Intervention(18, tuple(range(8)), -.2, 8, 8),
+    Intervention(20, (6,), -.2, 0, 4),
+    Intervention(8, tuple(range(8)), -.2, 0, 8),
+])
+def test_v12_reproduction_saved_tuple_order_matches_v14_case(case):
+    """Real v1.2 reproduction_checks uses case[2:5] = start, frames, delta."""
+    baseline = snap(t=.8, hits=(0, 1), early=2, downs=3)
+    reproduced = {
+        'anchor': case.anchor,
+        'case': ['original', list(case.keys), case.start, case.frames, str(case.delta)],
+        '800ms': baseline.as_json(),
+    }
+    # Build the key in precisely the same order as v1.4 _load_inputs().
+    v12_key = (
+        int(reproduced['anchor']), tuple(reproduced['case'][1]),
+        int(reproduced['case'][2]), int(reproduced['case'][3]),
+        round(float(reproduced['case'][4]), 8),
+    )
+    assert v12_key != case.identity()
+    _assert_v12_saved_candidate_matches({v12_key: baseline}, case, baseline)
+    with pytest.raises(RuntimeError, match='physical outcome mismatch'):
+        _assert_v12_saved_candidate_matches(
+            {v12_key: replace(baseline, too_early=3)}, case, baseline
+        )
+    with pytest.raises(RuntimeError, match='v1.2 recorded intervention missing'):
+        _assert_v12_saved_candidate_matches({}, case, baseline)
 
 
 def test_hit_lag_between_milestones_can_recover_before_1600():
