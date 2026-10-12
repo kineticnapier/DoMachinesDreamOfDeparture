@@ -262,3 +262,67 @@ def test_full_validation_reproduction_strict_per_anchor():
     refs["baseline_anchors"][5]["hits"]=11
     with pytest.raises(RuntimeError,match="FAIL best anchor #06"):
         _full_baseline_reference(refs,result,[tr]*20,segments,arm="best")
+
+
+def test_partial_checkpoint_load_failure_restores_best(tmp_path):
+    from dmdod.training.motor_sensitivity_audit import _load_models
+    from dmdod.training.fixed_state_action_audit import file_sha256
+    from dmdod.training.real_chart import clone_model_state
+
+    class TestModel(torch.nn.Module):
+        def __init__(self):
+            super().__init__()
+            self.weight=torch.nn.Parameter(torch.tensor([1.0]))
+            self.frozen=torch.nn.Parameter(
+                torch.tensor([7.0]),requires_grad=False
+            )
+
+        def prepare_recurrent_runtime(self):
+            pass
+
+    model=TestModel()
+    best=clone_model_state(model)
+    origin=tmp_path/"best.pt"
+    origin.write_bytes(b"unchanged-selected-best")
+    altered={key:v.clone() for key,v in best.items()}
+    altered["weight"]=torch.tensor([2.0])
+    torch.save({
+        "human_visible_checkpoint_role":"diagnostic-candidate",
+        "diagnostic_arm":"balanced",
+        "diagnostic_source_sha256":file_sha256(origin),
+        "model_state":altered
+    },tmp_path/"balanced.diagnostic.pt")
+    prepared=SimpleNamespace(model=model,source_checkpoint=origin)
+    with pytest.raises(FileNotFoundError,match="onset_focused"):
+        _load_models(
+            prepared,tmp_path,{"source_sha256":file_sha256(origin)}
+        )
+    for key,value in best.items():
+        assert torch.equal(model.state_dict()[key],value)
+    assert origin.read_bytes()==b"unchanged-selected-best"
+
+
+def test_mechanism_summary_does_not_select_a_model():
+    from dmdod.training.motor_sensitivity_audit import mechanism_sensitivity
+    data=[
+        {
+            "arm":"best","mode":"open_loop","kind":"single_key",
+            "keydowns_delta":1,"too_early_delta":1,"hits_delta":0,
+            "overload":False,"baseline_overload_time_s":None,
+            "mean_keydown_delta_ms":10.0,
+            "classification":"undetermined","oracle":False,
+        },
+        {
+            "arm":"best","mode":"open_loop","kind":"single_key",
+            "keydowns_delta":0,"too_early_delta":0,"hits_delta":0,
+            "overload":False,"baseline_overload_time_s":None,
+            "mean_keydown_delta_ms":None,
+            "classification":"undetermined","oracle":False,
+        }
+    ]
+    report=mechanism_sensitivity(data)
+    assert len(report)==1
+    assert report[0]["n"]==2
+    assert report[0]["changed_count_or_score_fraction"]==.5
+    assert report[0]["mean_abs_matched_keydown_delta_ms"]==10.
+    assert "selected" not in report[0]

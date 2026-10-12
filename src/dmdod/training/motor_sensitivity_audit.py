@@ -395,36 +395,37 @@ def _load_models(prepared,diagnostic_dir:Path,prior:dict):
     if source_sha != prior.get("source_sha256"):
         raise RuntimeError("source Best checkpoint SHA256 differs from prior audit")
     result={"best":source_state}
-    for arm in ("balanced","onset_focused"):
-        f=diagnostic_dir/f"{arm}.diagnostic.pt"
-        if not f.is_file():
-            raise FileNotFoundError(f"saved experimental arm missing: {f}")
-        ckpt=torch.load(f,map_location="cpu",weights_only=False)
-        if ckpt.get("human_visible_checkpoint_role")!="diagnostic-candidate" or (
-            ckpt.get("diagnostic_arm")!=arm
-        ) or ckpt.get("diagnostic_source_sha256")!=source_sha:
-            raise RuntimeError(f"diagnostic arm provenance mismatch: {arm}")
-        candidate=ckpt["model_state"]
-        if set(candidate)!=set(source_state):
-            raise RuntimeError(f"diagnostic model keys differ: {arm}")
-        fixed={name for name,p in model.named_parameters(remove_duplicate=False)
-               if not p.requires_grad}
-        all_parameters={name for name,_ in model.named_parameters(remove_duplicate=False)}
-        for key in candidate:
-            if key in fixed or key not in all_parameters:
-                if not _unchanged_tensor(candidate[key],source_state[key]):
-                    raise RuntimeError(f"diagnostic frozen/buffer changed: {arm}:{key}")
-        model.load_state_dict(candidate,strict=True)
+    try:
+        for arm in ("balanced","onset_focused"):
+            f=diagnostic_dir/f"{arm}.diagnostic.pt"
+            if not f.is_file():
+                raise FileNotFoundError(f"saved experimental arm missing: {f}")
+            ckpt=torch.load(f,map_location="cpu",weights_only=False)
+            if ckpt.get("human_visible_checkpoint_role")!="diagnostic-candidate" or (
+                ckpt.get("diagnostic_arm")!=arm
+            ) or ckpt.get("diagnostic_source_sha256")!=source_sha:
+                raise RuntimeError(f"diagnostic arm provenance mismatch: {arm}")
+            candidate=ckpt["model_state"]
+            if set(candidate)!=set(source_state):
+                raise RuntimeError(f"diagnostic model keys differ: {arm}")
+            fixed={name for name,p in model.named_parameters(remove_duplicate=False)
+                   if not p.requires_grad}
+            all_parameters={name for name,_ in model.named_parameters(remove_duplicate=False)}
+            for key in candidate:
+                if key in fixed or key not in all_parameters:
+                    if not _unchanged_tensor(candidate[key],source_state[key]):
+                        raise RuntimeError(f"diagnostic frozen/buffer changed: {arm}:{key}")
+            model.load_state_dict(candidate,strict=True)
+            model.prepare_recurrent_runtime()
+            result[arm]=clone_model_state(model)
+            assert_state_equal(result[arm],candidate,
+                               context=f"candidate {arm} load mismatch")
+        return result,source_sha
+    finally:
+        model.load_state_dict(source_state,strict=True)
         model.prepare_recurrent_runtime()
-        result[arm]=clone_model_state(model)
-        assert_state_equal(result[arm],candidate,
-                           context=f"candidate {arm} load mismatch")
-    model.load_state_dict(source_state,strict=True)
-    model.prepare_recurrent_runtime()
-    assert_state_equal(clone_model_state(model),source_state,
-                       context="Best restored after loading diagnostic arms")
-    return result,source_sha
-
+        assert_state_equal(clone_model_state(model),source_state,
+                           context="Best restored after loading diagnostic arms")
 
 def write_csv(path:Path,fields:list[str],rows:list[dict]):
     with path.open("x",encoding="utf-8-sig",newline="") as f:
