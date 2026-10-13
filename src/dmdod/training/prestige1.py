@@ -56,7 +56,7 @@ class PrestigeConfig:
     device: str = 'cuda'
     train_window_s: float = 8.0
     validation_window_s: float = 8.0
-    anchors_per_chart: int = 1
+    anchors_per_chart: int = 0  # 0: derive exactly Train20 anchors from Train-chart count
     lead_s: float = .12
     stage_a_updates: int = 40
     stage_c_updates: int = 24
@@ -82,7 +82,7 @@ class PrestigeConfig:
             raise ValueError('Prestige I must retain control 10ms / physics 1ms')
         if obj.device not in ('cpu', 'cuda'):
             raise ValueError('device must be cpu or cuda')
-        if min(obj.train_window_s, obj.validation_window_s) <= 0 or obj.anchors_per_chart < 1:
+        if min(obj.train_window_s, obj.validation_window_s) <= 0 or obj.anchors_per_chart < 0:
             raise ValueError('invalid data windows')
         if min(obj.stage_a_updates, obj.stage_c_updates, obj.batch_frames, obj.temporal_hidden) < 1:
             raise ValueError('training budget and dimensions must be positive')
@@ -182,12 +182,16 @@ def load_role_sequences(config: PrestigeConfig, *, device: torch.device):
     from dmdod.data.multichart import discover_multichart_dataset
     from dmdod.training.real_chart import compile_role, build_anchor_segments, build_validation_segments
     dataset = discover_multichart_dataset(config.dataset)
+    if len(dataset.train) < 1 or len(dataset.train)>20 or 20 % len(dataset.train):
+        raise RuntimeError('Fail Closed: cannot evenly construct Train20 anchors from dataset Train charts')
+    anchor_count = (config.anchors_per_chart if config.anchors_per_chart
+                    else 20 // len(dataset.train))
     train = build_anchor_segments(compile_role(dataset.train), window_s=config.train_window_s,
-                                  anchors_per_chart=config.anchors_per_chart)
+                                  anchors_per_chart=anchor_count)
     validation = build_validation_segments(compile_role(dataset.validation), window_s=config.validation_window_s)
     if len(train) != 20 or len(validation) != 20:
         raise RuntimeError(f'Fail Closed: need Train20/Validation20, got {len(train)}/{len(validation)}')
-    if any(n.role.lower() != 'train' for n in train) or any(n.role.lower() != 'validation' for n in validation):
+    if any(not n.role.startswith('anchor-') for n in train) or any(n.role.lower() != 'validation' for n in validation):
         raise RuntimeError('Train/Validation role contamination')
     if {n.chart_sha256 for n in train} & {n.chart_sha256 for n in validation}:
         raise RuntimeError('Train/Validation overlap')

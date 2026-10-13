@@ -305,7 +305,7 @@ def test_dataset_split_detection_prevents_train_validation_contamination(monkeyp
     # Role-specific truth remains separate; detector refuses checksum overlap.
     class Chart:
         def __init__(self,role,digest):
-            self.role=role
+            self.role='anchor-1' if role=='train' else role
             self.chart_sha256=digest
             self.chart_name='chart'
     dataset=SimpleNamespace(train=[Chart('train','X')]*20,
