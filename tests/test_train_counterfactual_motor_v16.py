@@ -180,6 +180,50 @@ def test_csv_reproduction_mismatch_fails_closed():
         m._csv_equal({}, {'hits':5},('hits',),'mock')
 
 
+
+def test_v15_drift_replay_uses_saved_schema_not_conditional_runtime_keys():
+    # v1.5 has exactly these published columns even when no target lag occurs.
+    assert 'no_loss_proven_at_all_horizons' not in m.V15_DRIFT_REPLAY_FIELDS
+    assert len(m.V15_DRIFT_REPLAY_FIELDS)==20
+    original=playback()
+    first=m.first_hit_loss(original,original)
+    assert first['no_loss_proven_at_all_horizons'] is True
+    assert first['first_observed_hit_lag_s'] is None
+    computed={**first,'hit_ids_retained_3200':True}
+    saved={name:'' for name in m.V15_DRIFT_REPLAY_FIELDS}
+    saved['hit_ids_retained_3200']='True'
+    # v1.5 writes missing optional first-hit-loss columns as empty CSV cells.
+    m.verify_saved_v15_drift(saved,computed,'v1.5 no-lag case')
+
+    corrupted=dict(saved,hit_ids_retained_3200='False')
+    with pytest.raises(RuntimeError,match='physical reproduction differs'):
+        m.verify_saved_v15_drift(corrupted,computed,'tampered v1.5 drift')
+
+    missing=dict(saved)
+    missing.pop('candidate_observed_3200')
+    with pytest.raises(RuntimeError,match='missing prior'):
+        m.verify_saved_v15_drift(missing,computed,'missing published column')
+
+
+def test_v15_drift_replay_requires_real_nonempty_hit_lag_fields():
+    original=playback(s8=snap(.8,hits=(0,1)),s16=snap(1.6,hits=(0,1,2)),
+                      s32=snap(3.2,hits=(0,1,2,3)))
+    altered=playback(s8=snap(.8,hits=(0,1)),s16=snap(1.6,hits=(0,1)),
+                     s32=snap(3.2,hits=(0,1,3)))
+    first=m.first_hit_loss(original,altered)
+    assert first['lost_target_id']==2
+    assert 'no_loss_proven_at_all_horizons' not in first
+    computed={**first,'hit_ids_retained_3200':False}
+    saved={name:'' for name in m.V15_DRIFT_REPLAY_FIELDS}
+    for name,value in computed.items():
+        if name in saved and value is not None:
+            saved[name]=str(m._json_field(value))
+    m.verify_saved_v15_drift(saved,computed,'v1.5 with target lag')
+    corrupted=dict(saved,lost_target_id='3')
+    with pytest.raises(RuntimeError,match='physical reproduction differs'):
+        m.verify_saved_v15_drift(corrupted,computed,'tampered target ID')
+
+
 def test_output_existing_path_refused_without_mutation(tmp_path):
     output=tmp_path/'v16';output.mkdir()
     marker=output/'marker';marker.write_text('unchanged')

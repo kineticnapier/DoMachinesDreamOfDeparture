@@ -42,6 +42,21 @@ FEATURE_NORMALIZATION = 'signed_saturation_x_over_1_plus_abs_x'
 FEATURE_GROUP_WEIGHTS = (1.0, 1.0, 1.0, 1.0, 1.0)
 EXPECTED_V15_AGGREGATES = {'boundary_06':11,'drift_18':2,'rescue_8':4,'rescue_20':1}
 
+# v1.5 writes a FIXED CSV schema. first_hit_loss() additionally returns
+# "no_loss_proven_at_all_horizons" when no lag exists, but that runtime-only
+# field was intentionally not persisted. Compare every saved physical field,
+# never the varying set of runtime diagnostic keys.
+V15_DRIFT_REPLAY_FIELDS = (
+    'hit_ids_retained_800', 'hit_ids_retained_1600', 'hit_ids_retained_3200',
+    'first_observed_hit_lag_s', 'first_milestone_hit_loss_s',
+    'lost_target_id', 'baseline_hit_confirmed_s', 'candidate_hit_confirmed_s',
+    'candidate_miss_confirmed_s', 'candidate_target_outcome_at_3200',
+    'recovered_by_3200', 'candidate_observed_3200',
+    'first_extra_miss_s', 'first_miss_id_difference',
+    'horizon_target_id_deltas', 'too_early_reduction', 'first_divergence',
+    'paired_800_to_3200_observed', 'post800_hit_gain', 'post800_miss_gain',
+)
+
 
 def _identity(case: Intervention) -> tuple:
     return case.identity()
@@ -302,6 +317,15 @@ def _csv_equal(saved: dict, computed:dict, keys, label:str):
             raise RuntimeError(f'Fail Closed: physical reproduction differs {label}/{key}: saved={saved[key]!r} actual={value!r}')
 
 
+
+def verify_saved_v15_drift(saved:dict, computed:dict, label:str):
+    """Match the published v1.5 CSV columns, including legitimate blank cells."""
+    extra=set(computed)-set(V15_DRIFT_REPLAY_FIELDS)-{'no_loss_proven_at_all_horizons'}
+    if extra:
+        raise RuntimeError(f'Fail Closed: unexpected v1.5 drift fields {sorted(extra)}')
+    _csv_equal(saved,computed,V15_DRIFT_REPLAY_FIELDS,label)
+
+
 def _load_csv(path:Path):
     with path.open('r',encoding='utf-8-sig',newline='') as f:
         reader=csv.DictReader(f)
@@ -553,10 +577,11 @@ def run_v16(prepared, *, v12_dir:Path,v13_dir:Path,v14_dir:Path,v15_dir:Path,
                       'first_divergence':first_divergence(base,run),
                       'horizon_target_id_deltas':{str(h):horizon_target_deltas(base.trace,run.trace,h) for h in HORIZONS},
                       'too_early_reduction':too_early_reduction_duration(base,run),
+                      'paired_800_to_3200_observed':persistence(base,run)['paired_800_to_3200_observed'],
                       'post800_hit_gain':persistence(base,run)['post800_hit_gain'],
                       'post800_miss_gain':persistence(base,run)['post800_miss_gain']}
-                    _csv_equal(drift[case.identity()],computed,tuple(computed),
-                               f'v1.5 drift {case.identity()}')
+                    verify_saved_v15_drift(drift[case.identity()],computed,
+                                           f'v1.5 drift {case.identity()}')
                     known.append(add(case,'known_drift_18'))
                     reproduced['v15_drift']+=1
         rescue=_prior_case_index(prior['rescue_survival_quality.csv'],horizons=True)
