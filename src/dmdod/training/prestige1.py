@@ -145,7 +145,7 @@ def target_labels(targets, now_s: float, current_floor: int,
     if count > KEY_COUNT:
         visible = False
     near = remaining <= FORECAST_WINDOW_S + 1e-9
-    # Class 0 is only used for a negative placeholder: it has no chord loss.
+    # Chord class 0 is a placeholder on negative frames; it has no chord loss.
     return (min(remaining, FORECAST_WINDOW_S), float(near),
             float(min(count, KEY_COUNT) - 1 if near else 0)), bool(visible)
 
@@ -536,7 +536,7 @@ def run_stage_a(config:PrestigeConfig):
             'training_loss':curves,
             'training_coverage':{'fit_chunks':len(all_chunks),'updates_per_model':effective_updates,
                                  'minimum_full_pass':True,
-                                 'gru_context':'causal 96-frame (configurable) chunks; hidden reset for each Train chunk'},
+                                 'gru_context':f'causal {config.batch_frames}-frame chunks; hidden reset for each Train chunk'},
             'gate':gate,
             'label_visibility':'only next visible event; near <=200ms for time and chord, binary near-event classifier on all valid frames',
             'leakage_contract':'Only causal 263D visible HUD input; Train chart-group holdout controls gate; Validation descriptive only'}
@@ -698,7 +698,7 @@ def run_stage_c(config:PrestigeConfig, *, resume:bool=False):
     if stage['metadata']['config_sha256']!=config.signature():
         raise RuntimeError('Stage A and Stage C config differ')
     if stage.get('gate',{}).get('gate_data_role')!='train_heldout' or stage['gate'] != stage_a_gate(stage['train_heldout'],config):
-        raise RuntimeError('Stage A saved gate does not match saved Validation metrics')
+        raise RuntimeError('Stage A saved gate does not match held-out Train metrics')
     checks=stage.get('checkpoint_sha256')
     if not isinstance(checks,dict) or set(checks)!= {'single','gru'}:
         raise RuntimeError('Incomplete Stage A checkpoint provenance')
