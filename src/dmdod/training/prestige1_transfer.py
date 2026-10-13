@@ -8,12 +8,10 @@ The sole Student input is the causal 263D HUD; no privileged timing truth is
 present in the inference path.
 """
 
-from dataclasses import asdict
 from pathlib import Path
 import json
 import math
 import random
-import subprocess
 
 import torch
 
@@ -78,7 +76,6 @@ def transfer_temporal_weights(readout: p.TemporalReadout,
                               student: p.PrestigeMotorStudent) -> None:
     if not readout.recurrent:
         raise ValueError("Only Stage A recurrent GRU transfers into GRUCell")
-    expected = set(GRU_WEIGHTS) | {"head.weight", "head.bias"}
     actual = set(readout.state_dict())
     if actual != {"encoder." + x for x in GRU_WEIGHTS} | {"head.weight", "head.bias"}:
         raise RuntimeError("Unexpected Stage A GRU state layout")
@@ -175,6 +172,9 @@ def _verify_stage_b(config: p.PrestigeConfig, *, device: torch.device):
             or report.get("core_sha256") != p.sha256(Path(config.core_path))
             or report.get("stage_a_original_gate") != stage["gate"]
             or report.get("stage_a_gate_overridden") is not False
+            or report.get("validation_used_for_selection") is not False
+            or report.get("no_final") is not True
+            or report.get("no_motor_updates") is not True
             or report.get("parity", {}).get("passed") is not True):
         raise RuntimeError("Stage B v2 provenance/transfer audit altered")
     return stage, readout, report
@@ -282,6 +282,8 @@ def run_stage_c_v2(config: p.PrestigeConfig) -> dict:
         }
         item["checkpoint"] = str(paths[arm])
         item["checkpoint_sha256"] = p._save_checkpoint(paths[arm], payload)
+    if p.sha256(core) != stage_b["core_sha256"]:
+        raise RuntimeError("MaleCNS topology core changed during Stage C v2")
     if p._protect_old_best(config) != before_best:
         raise RuntimeError("Old Best identity changed")
     report = {
