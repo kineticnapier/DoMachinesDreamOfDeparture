@@ -56,7 +56,7 @@ class PrestigeConfig:
     device: str = 'cuda'
     train_window_s: float = 8.0
     validation_window_s: float = 8.0
-    anchors_per_chart: int = 0  # 0: derive exactly Train20 anchors from Train-chart count
+    anchors_per_chart: int = 0  # 0: use minimum uniform count then select legacy first-20 prefix
     lead_s: float = .12
     stage_a_updates: int = 40
     stage_c_updates: int = 24
@@ -182,15 +182,25 @@ def load_role_sequences(config: PrestigeConfig, *, device: torch.device):
     from dmdod.data.multichart import discover_multichart_dataset
     from dmdod.training.real_chart import compile_role, build_anchor_segments, build_validation_segments
     dataset = discover_multichart_dataset(config.dataset)
-    if len(dataset.train) < 1 or len(dataset.train)>20 or 20 % len(dataset.train):
-        raise RuntimeError('Fail Closed: cannot evenly construct Train20 anchors from dataset Train charts')
-    anchor_count = (config.anchors_per_chart if config.anchors_per_chart
-                    else 20 // len(dataset.train))
-    train = build_anchor_segments(compile_role(dataset.train), window_s=config.train_window_s,
-                                  anchors_per_chart=anchor_count)
-    validation = build_validation_segments(compile_role(dataset.validation), window_s=config.validation_window_s)
-    if len(train) != 20 or len(validation) != 20:
-        raise RuntimeError(f'Fail Closed: need Train20/Validation20, got {len(train)}/{len(validation)}')
+    if not dataset.train:
+        raise RuntimeError('Fail Closed: Train role is empty')
+    # The legacy runner builds a uniform number of anchor windows for EACH
+    # Train chart, then takes its deterministic first-20 prefix.  The chart
+    # count need not divide 20 (e.g. seven Train charts -> 3 each -> first 20).
+    # An explicit anchors_per_chart overrides the auto-derived minimum so a
+    # known historical partition can be reproduced without old Student weights.
+    anchor_count = config.anchors_per_chart or math.ceil(20 / len(dataset.train))
+    all_train = build_anchor_segments(
+        compile_role(dataset.train), window_s=config.train_window_s,
+        anchors_per_chart=anchor_count)
+    if len(all_train) < 20:
+        raise RuntimeError(f'Fail Closed: need 20 distinct Train anchors; only '
+                           f'{len(all_train)} generated using {anchor_count} per chart')
+    train = all_train[:20]
+    validation = build_validation_segments(compile_role(dataset.validation),
+                                           window_s=config.validation_window_s)
+    if len(validation) != 20:
+        raise RuntimeError(f'Fail Closed: need Validation20, got {len(validation)}')
     if any(not n.role.startswith('anchor-') for n in train) or any(n.role.lower() != 'validation' for n in validation):
         raise RuntimeError('Train/Validation role contamination')
     if {n.chart_sha256 for n in train} & {n.chart_sha256 for n in validation}:

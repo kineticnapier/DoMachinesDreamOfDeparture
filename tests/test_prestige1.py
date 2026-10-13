@@ -300,6 +300,73 @@ def test_stage_c_rejects_altered_stage_a_hash_before_data_loading(monkeypatch,tm
         p.run_stage_c(config)
 
 
+
+@pytest.mark.parametrize('train_charts,requested,expected_per_chart',[
+    (7,0,3), (7,4,4), (21,0,1),
+])
+def test_uneven_train_chart_count_uses_first_20_prefix(
+        monkeypatch,tmp_path,train_charts,requested,expected_per_chart):
+    # Real legacy selection makes uniform per-chart windows, then [:20].
+    config=replace(cfg(tmp_path),anchors_per_chart=requested)
+    fake_data=types.ModuleType('dmdod.data.multichart')
+    train=[SimpleNamespace(chart_name=f'train-{i}',chart_sha256=f'train-sha-{i}')
+           for i in range(train_charts)]
+    validation=[SimpleNamespace(chart_name=f'val-{i}',chart_sha256=f'val-sha-{i}')
+                for i in range(20)]
+    fake_data.discover_multichart_dataset=lambda _:SimpleNamespace(
+        train=train,validation=validation,final=())
+    fake_real=types.ModuleType('dmdod.training.real_chart')
+    fake_real.compile_role=lambda xs:xs
+    requested_counts=[]
+    def anchor_builder(charts,*,window_s,anchors_per_chart):
+        requested_counts.append(anchors_per_chart)
+        return [SimpleNamespace(role=f'anchor-{j+1}',
+                    chart_name=chart.chart_name,chart_sha256=chart.chart_sha256)
+                for chart in charts for j in range(anchors_per_chart)]
+    fake_real.build_anchor_segments=anchor_builder
+    fake_real.build_validation_segments=lambda charts,**_: [
+        SimpleNamespace(role='validation',chart_name=chart.chart_name,
+                        chart_sha256=chart.chart_sha256) for chart in charts]
+    monkeypatch.setitem(sys.modules,'dmdod.data.multichart',fake_data)
+    monkeypatch.setitem(sys.modules,'dmdod.training.real_chart',fake_real)
+    captured=[]
+    def capture(named,*,role,anchor,lead_s,device):
+        captured.append((role,anchor,named.chart_name))
+        return sequence(role=role,anchor=anchor)
+    monkeypatch.setattr(p,'_collect_one',capture)
+    sequences,signature,segments=p.load_role_sequences(config,device=torch.device('cpu'))
+    expected=[f'train-{i}' for i in range(train_charts)
+              for _ in range(expected_per_chart)][:20]
+    assert requested_counts==[expected_per_chart]
+    assert [s.chart_name for s in segments['train']]==expected
+    assert len(sequences['train'])==len(signature['train'])==20
+    assert len(sequences['validation'])==len(signature['validation'])==20
+    assert [a for role,a,_ in captured if role=='train']==list(range(1,21))
+    assert all(name.startswith('val-') for name in
+               (s.chart_name for s in segments['validation']))
+
+
+def test_uneven_train_chart_count_does_not_fabricate_missing_windows(monkeypatch,tmp_path):
+    config=cfg(tmp_path)
+    fake_data=types.ModuleType('dmdod.data.multichart')
+    fake_data.discover_multichart_dataset=lambda _:SimpleNamespace(
+        train=[SimpleNamespace(chart_name=f'train-{i}',chart_sha256=f'T{i}')
+               for i in range(7)],
+        validation=[SimpleNamespace(chart_name=f'val-{i}',chart_sha256=f'V{i}')
+                    for i in range(20)], final=())
+    fake_real=types.ModuleType('dmdod.training.real_chart')
+    fake_real.compile_role=lambda charts:charts
+    # Mimic _anchor_windows() de-duplicating windows for too-short charts.
+    fake_real.build_anchor_segments=lambda charts,**_: [
+        SimpleNamespace(role='anchor-1',chart_name=c.chart_name,chart_sha256=c.chart_sha256)
+        for c in charts]
+    fake_real.build_validation_segments=lambda charts,**_:charts
+    monkeypatch.setitem(sys.modules,'dmdod.data.multichart',fake_data)
+    monkeypatch.setitem(sys.modules,'dmdod.training.real_chart',fake_real)
+    with pytest.raises(RuntimeError,match='only 7 generated'):
+        p.load_role_sequences(config,device=torch.device('cpu'))
+
+
 def test_dataset_split_detection_prevents_train_validation_contamination(monkeypatch,tmp_path):
     c=cfg(tmp_path)
     # Role-specific truth remains separate; detector refuses checksum overlap.
