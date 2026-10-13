@@ -1,0 +1,24 @@
+# Prestige I: fresh MaleCNS4096 / visible temporal motor controller.
+# Set core_path to your existing MALECNS4096 core artifact (NOT the old checkpoint).
+# Stage A requires no core or old Student model weights.
+[prestige1]
+dataset = "data/DMDOD-v140-tuf-p11-p20"
+output_dir = "."
+core_path = "data/malecns4096_core.pt"
+old_best_path = "checkpoints/real_chart_humanvisible_school8h.pt"
+seed = 2401
+device = "cuda"
+train_window_s = 8.0
+validation_window_s = 8.0
+anchors_per_chart = 1
+lead_s = 0.12
+stage_a_updates = 40
+stage_c_updates = 24
+batch_frames = 96
+temporal_hidden = 128
+learning_rate = 0.0003
+timing_weight = 0.5
+control_dt_s = 0.01
+physics_dt_s = 0.001
+gate_mae_improvement_fraction = 0.2
+gate_fpr_tolerance = 0.05
