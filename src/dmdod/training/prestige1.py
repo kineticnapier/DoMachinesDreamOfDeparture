@@ -28,8 +28,10 @@ KEY_COUNT = 8
 CONTROL_DT = .010
 PHYSICS_DT = .001
 BEST_SHA256 = '476696a2a157c15a00d602845208a21049dcca94479cee9b91bfeb105cac62e0'
-VERSION = 'prestige1-temporal-visible-v1'
+VERSION = 'prestige1-temporal-visible-v2'
 FORECAST_WINDOW_S = .200
+STAGE_A_REPORT = 'stage_a_v2.json'
+STAGE_A_HOLDOUT_ANCHORS = 5
 CHORD_CLASSES = 8  # one through eight simultaneous input events; no key identity
 
 
@@ -124,7 +126,12 @@ class TemporalSequence:
 
 def target_labels(targets, now_s: float, current_floor: int,
                   *, behind_floors: int, ahead_floors: int):
-    """Evaluator-only truth. Never return target metadata to the Student."""
+    """Evaluator-side classification + near-event regression truth.
+
+    Every observable frame has a binary 200ms event target.  Time and chord
+    regression are *only* supervised for positive frames.  A distant visible
+    event must not dominate the motor-relevant short-horizon timing objective.
+    """
     if not targets:
         return (0., 0., 0.), False
     times = [float(target.episode_time_s) for target in targets]
@@ -137,8 +144,10 @@ def target_labels(targets, now_s: float, current_floor: int,
     count = sum(abs(t - times[index]) < 1e-7 for t in times[index:])
     if count > KEY_COUNT:
         visible = False
-    return (remaining, float(remaining <= FORECAST_WINDOW_S + 1e-9), float(min(count, KEY_COUNT) - 1)), bool(visible)
-
+    near = remaining <= FORECAST_WINDOW_S + 1e-9
+    # Class 0 is only used for a negative placeholder: it has no chord loss.
+    return (min(remaining, FORECAST_WINDOW_S), float(near),
+            float(min(count, KEY_COUNT) - 1 if near else 0)), bool(visible)
 
 def _collect_one(named, *, role: str, anchor: int, lead_s: float, device: torch.device):
     # This is an Expert-controlled *data capture*. It has no Student policy.
@@ -241,8 +250,8 @@ class TemporalReadout(nn.Module):
 
 
 def decode_temporal(raw):
-    # Time is nonnegative, event logit and chord logits unconstrained.
-    return F.softplus(raw[..., 0]) * FORECAST_WINDOW_S, raw[..., 1], raw[..., 2:]
+    # Bound regression to the 200ms forecast window.  All logits remain free.
+    return torch.sigmoid(raw[..., 0]) * FORECAST_WINDOW_S, raw[..., 1], raw[..., 2:]
 
 
 def timing_loss(raw, labels, mask):
@@ -251,43 +260,89 @@ def timing_loss(raw, labels, mask):
     if mask.shape != labels.shape[:-1] or mask.dtype != torch.bool:
         raise ValueError('Timing mask incorrect')
     if not bool(mask.any()):
-        # Creates a graph-connected zero, but callers should skip unlabeled chunks.
         return raw.sum() * 0.
     predicted_s, event_logit, chord_logits = decode_temporal(raw[mask])
     target = labels[mask]
-    return (F.smooth_l1_loss(predicted_s / FORECAST_WINDOW_S, target[:, 0] / FORECAST_WINDOW_S)
-            + F.binary_cross_entropy_with_logits(event_logit, target[:, 1])
-            + .2 * F.cross_entropy(chord_logits, target[:, 2].long()))
+    positive = target[:, 1] >= .5
+    event_loss = F.binary_cross_entropy_with_logits(event_logit, target[:, 1])
+    if not bool(positive.any()):
+        return event_loss
+    # Negative frames teach the event classifier only, never time/chord.
+    timing = F.smooth_l1_loss(
+        predicted_s[positive] / FORECAST_WINDOW_S,
+        target[positive, 0] / FORECAST_WINDOW_S)
+    chord = F.cross_entropy(chord_logits[positive], target[positive, 2].long())
+    return event_loss + timing + .2 * chord
 
 
 def _evaluation(predicted_time, event_probability, labels, mask, *, anchor: int, chord_pred=None):
-    if not bool(mask.any()):
+    valid = int(mask.sum())
+    if not valid:
         return {'anchor':anchor, 'valid_frames':0, 'masked_frames':int(mask.numel()),
-                'mae_ms':None, 'within_50ms':None, 'within_100ms':None,
-                'within_200ms':None, 'event_recall':None, 'false_positive_rate':None, 'chord_accuracy':None}
-    time_err = (predicted_time[mask] - labels[mask,0]).abs()
-    observed_events = labels[mask,1] >= .5
-    predicted_events = event_probability[mask] >= .5
-    recall = float((observed_events & predicted_events).sum()/observed_events.sum()) if bool(observed_events.any()) else None
-    negatives = ~observed_events
-    fpr = float((negatives & predicted_events).sum()/negatives.sum()) if bool(negatives.any()) else None
-    return {'anchor':anchor, 'valid_frames':int(mask.sum()), 'masked_frames':int((~mask).sum()),
-            'mae_ms':float(1000*time_err.mean()),
-            'within_50ms':float((time_err <= .050).float().mean()),
-            'within_100ms':float((time_err <= .100).float().mean()),
-            'within_200ms':float((time_err <= .200).float().mean()),
-            'event_recall':recall, 'false_positive_rate':fpr,
-            'chord_accuracy':float((chord_pred[mask]==labels[mask,2].long()).float().mean()) if chord_pred is not None else None}
+                'positive_frames':0, 'negative_frames':0, 'tp':0, 'tn':0,'fp':0,'fn':0,
+                'mae_ms':None,'within_50ms':None,'within_100ms':None,'within_200ms':None,
+                'event_recall':None,'false_positive_rate':None,'precision':None,
+                'balanced_accuracy':None,'chord_accuracy':None}
+    actual = labels[mask,1] >= .5
+    predicted = event_probability[mask] >= .5
+    positive = int(actual.sum())
+    negative = valid - positive
+    tp = int((actual & predicted).sum())
+    tn = int((~actual & ~predicted).sum())
+    fp = negative - tn
+    fn = positive - tp
+    error = (predicted_time[mask][actual] - labels[mask,0][actual]).abs()
+    # MAE/within-X/chord accuracy are meaningful ONLY near an actual event.
+    recall = tp / positive if positive else None
+    fpr = fp / negative if negative else None
+    precision = tp / (tp+fp) if tp+fp else None
+    bal = (recall+1-fpr)/2 if recall is not None and fpr is not None else None
+    chord = (float((chord_pred[mask][actual] == labels[mask,2][actual].long()).float().mean())
+             if chord_pred is not None and positive else None)
+    return {'anchor':anchor,'valid_frames':valid,'masked_frames':int(mask.numel())-valid,
+            'positive_frames':positive,'negative_frames':negative,
+            'tp':tp,'tn':tn,'fp':fp,'fn':fn,
+            'mae_ms':float(1000*error.mean()) if positive else None,
+            'within_50ms':float((error<=.050).float().mean()) if positive else None,
+            'within_100ms':float((error<=.100).float().mean()) if positive else None,
+            'within_200ms':float((error<=.200).float().mean()) if positive else None,
+            'event_recall':recall,'false_positive_rate':fpr,
+            'precision':precision,'balanced_accuracy':bal,
+            'chord_accuracy':chord}
 
 
 def summarize_metrics(rows):
-    valid = [r for r in rows if r['valid_frames']]
-    if not valid:
+    if not any(r['valid_frames'] for r in rows):
         raise RuntimeError('Fail Closed: zero temporally observable frames')
-    total=sum(x['valid_frames'] for x in valid)
-    weighted=lambda key: sum(x[key]*x['valid_frames'] for x in valid if x[key] is not None)/sum(x['valid_frames'] for x in valid if x[key] is not None) if any(x[key] is not None for x in valid) else None
-    return {key:weighted(key) for key in ('mae_ms','within_50ms','within_100ms','within_200ms','event_recall','false_positive_rate','chord_accuracy')} | {'valid_frames':total,'masked_frames':sum(x['masked_frames'] for x in rows),'observable_anchors':len(valid)}
-
+    pos=sum(r['positive_frames'] for r in rows)
+    neg=sum(r['negative_frames'] for r in rows)
+    tp=sum(r['tp'] for r in rows)
+    tn=sum(r['tn'] for r in rows)
+    fp=sum(r['fp'] for r in rows)
+    fn=sum(r['fn'] for r in rows)
+    def pos_weighted(key):
+        if not pos: return None
+        return sum((r[key] or 0.)*r['positive_frames'] for r in rows)/pos
+    recall=tp/pos if pos else None
+    fpr=fp/neg if neg else None
+    return {
+        'mae_ms':pos_weighted('mae_ms'),
+        'within_50ms':pos_weighted('within_50ms'),
+        'within_100ms':pos_weighted('within_100ms'),
+        'within_200ms':pos_weighted('within_200ms'),
+        'event_recall':recall,
+        'false_positive_rate':fpr,
+        'precision':tp/(tp+fp) if tp+fp else None,
+        'balanced_accuracy':(recall+1-fpr)/2 if recall is not None and fpr is not None else None,
+        'chord_accuracy':pos_weighted('chord_accuracy') if any(r['chord_accuracy'] is not None for r in rows) else None,
+        'valid_frames':pos+neg,
+        'masked_frames':sum(r['masked_frames'] for r in rows),
+        'positive_frames':pos,'negative_frames':neg,
+        'tp':tp,'tn':tn,'fp':fp,'fn':fn,
+        'observable_anchors':sum(r['valid_frames']>0 for r in rows),
+        'positive_anchors':sum(r['positive_frames']>0 for r in rows),
+        'negative_anchors':sum(r['negative_frames']>0 for r in rows),
+    }
 
 def _fixed_chunks(sequences, frames, *, require_labels=True):
     options=[]
@@ -340,20 +395,68 @@ def evaluate_stage_a(model, sequences, *, median_s:float, constant_probability:f
     return {'per_anchor':rows,'aggregate':{k:summarize_metrics(v) for k,v in rows.items()}}
 
 
-def stage_a_gate(validation:dict, config:PrestigeConfig):
-    scores=validation['aggregate']
-    simple=min(scores['median']['mae_ms'], scores['single']['mae_ms'])
-    gru=scores['gru']
-    simple_fpr=scores['single']['false_positive_rate']
-    reasons=[]
-    if gru['observable_anchors'] < 20: reasons.append('fewer_than_20_observable_validation_anchors')
-    if gru['mae_ms'] > simple*(1-config.gate_mae_improvement_fraction):
-        reasons.append('gru_mae_not_20pct_better_than_constant_and_single')
-    if simple_fpr is not None and (gru['false_positive_rate'] is None or gru['false_positive_rate'] > simple_fpr+config.gate_fpr_tolerance):
-        reasons.append('false_positive_rate_regression')
-    return {'passed':not reasons,'reasons':reasons, 'criterion':'GRU MAE at least 20% below best median/single; FPR <= single +0.05; 20 observable Validation anchors',
-            'validation_used_for_selection':False, 'may_run_stage_c':not reasons}
+def split_stage_a_train(train, signature, *, seed:int):
+    """Deterministic 15/5-ish Train-only chart-disjoint split.
 
+    Keep every anchor from the same chart in one partition to avoid leaking
+    near-identical chart windows into the observability audit.
+    """
+    manifest = signature['train']
+    if len(train)!=20 or len(manifest)!=20:
+        raise RuntimeError('Fail Closed: Stage A split must use Train20')
+    groups={}
+    for s, metadata in zip(train,manifest):
+        if s.anchor!=metadata['anchor']:
+            raise RuntimeError('Fail Closed: Train anchors and manifest differ')
+        groups.setdefault(metadata['sha256'],[]).append(s.anchor)
+    if len(groups)<6:
+        raise RuntimeError('Fail Closed: too few independent Train charts for a held-out audit')
+    keys=sorted(groups)
+    random.Random(seed).shuffle(keys)
+    selected=[]
+    for key in keys:
+        if len(selected)>=STAGE_A_HOLDOUT_ANCHORS:break
+        selected.extend(groups[key])
+    reserved=set(selected)
+    fit=[s for s in train if s.anchor not in reserved]
+    holdout=[s for s in train if s.anchor in reserved]
+    if len(fit)<10 or len(holdout)<3:
+        raise RuntimeError('Fail Closed: Train-heldout split is too unbalanced')
+    return fit,holdout,{
+        'seed':seed,'group_by':'Train chart SHA256',
+        'fit_anchor_ids':[s.anchor for s in fit],
+        'heldout_anchor_ids':[s.anchor for s in holdout],
+        'fit_chart_hashes':sorted(k for k,v in groups.items() if not reserved.intersection(v)),
+        'heldout_chart_hashes':sorted(k for k,v in groups.items() if reserved.intersection(v)),
+        'validation_used_for_selection':False,
+    }
+
+
+def stage_a_gate(audit:dict, config:PrestigeConfig):
+    """Decide future experiments on held-out TRAIN charts, never Validation."""
+    scores=audit['aggregate']
+    simple=min(scores['median']['mae_ms'] or math.inf,
+               scores['single']['mae_ms'] or math.inf)
+    gru=scores['gru']
+    reasons=[]
+    if gru['observable_anchors']<3:
+        reasons.append('fewer_than_three_observable_train_holdout_anchors')
+    if not gru['positive_frames'] or not gru['negative_frames']:
+        reasons.append('train_holdout_lacks_positive_or_negative_class')
+    if gru['mae_ms'] is None or gru['mae_ms']>simple*(1-config.gate_mae_improvement_fraction):
+        reasons.append('gru_near_event_mae_not_20pct_better_than_constant_and_single')
+    simple_fpr=scores['single']['false_positive_rate']
+    if simple_fpr is not None and (gru['false_positive_rate'] is None
+                                  or gru['false_positive_rate']>simple_fpr+config.gate_fpr_tolerance):
+        reasons.append('false_positive_rate_regression')
+    # Disallow a degenerate always-positive classifier passing on MAE alone.
+    if (gru['balanced_accuracy'] is None or gru['balanced_accuracy']<.55
+            or gru['false_positive_rate'] is None or gru['false_positive_rate']>=.95):
+        reasons.append('event_classifier_does_not_beat_majority_baseline')
+    return {'passed':not reasons,'reasons':reasons,
+            'criterion':'Held-out Train chart MAE >=20% better than constant/single on <=200ms positives, FPR <= single +0.05, balanced accuracy >=0.55, FPR <0.95, >=3 observable Train holdout anchors',
+            'gate_data_role':'train_heldout',
+            'validation_used_for_selection':False,'may_run_stage_c':not reasons}
 
 def _metadata(config,signature):
     git=subprocess.run(['git','rev-parse','HEAD'],capture_output=True,text=True,check=False)
@@ -389,52 +492,68 @@ def _reserve_output(path:Path):
 
 
 def run_stage_a(config:PrestigeConfig):
-    output=Path(config.output_dir)/'diagnostics'/'prestige1'/'stage_a.json'
-    if output.exists() or output.parent.exists():
-        raise FileExistsError('Stage A output already exists')
+    # v1 artifacts (stage_a.json, single.pt, gru.pt) remain untouched.
+    output=Path(config.output_dir)/'diagnostics'/'prestige1'/STAGE_A_REPORT
+    targets=[output,*[output.parent/(name+'_v2.pt') for name in ('single','gru')]]
+    if any(p.exists() for p in targets):
+        raise FileExistsError('Existing Stage A v2 result/checkpoint: '+str([p for p in targets if p.exists()]))
     old_best_verified=_protect_old_best(config)
     torch.manual_seed(config.seed)
     device=torch.device(config.device)
-    if device.type=='cuda' and not torch.cuda.is_available(): raise RuntimeError('CUDA unavailable')
+    if device.type=='cuda' and not torch.cuda.is_available():raise RuntimeError('CUDA unavailable')
     sequences,signature,_=load_role_sequences(config,device=device)
+    fit,holdout,partition=split_stage_a_train(sequences['train'],signature,seed=config.seed)
     meta=_metadata(config,signature)
     meta['old_best_verified_sha256']=old_best_verified
-    masked=torch.cat([s.truth[s.mask,0] for s in sequences['train']])
-    if masked.numel()<1:raise RuntimeError('No observable Train labels')
-    median=float(masked.median())
-    positive=torch.cat([s.truth[s.mask,1] for s in sequences['train']])
-    prob=float(positive.mean())
-    chord=int(torch.mode(torch.cat([s.truth[s.mask,2].long() for s in sequences['train']])).values)
+    positives=torch.cat([s.truth[s.mask & (s.truth[:,1]>=.5),0] for s in fit])
+    if not positives.numel():raise RuntimeError('Fail Closed: no near events in Train fit data')
+    median=float(positives.median())
+    visible_labels=torch.cat([s.truth[s.mask,1] for s in fit])
+    prob=float(visible_labels.mean())
+    chords=torch.cat([s.truth[s.mask & (s.truth[:,1]>=.5),2].long() for s in fit])
+    chord=int(torch.mode(chords).values)
+    all_chunks=_fixed_chunks(fit,config.batch_frames)
+    effective_updates=max(config.stage_a_updates,len(all_chunks))
     models={}
     curves={}
     for name,recurrent in (('single',False),('gru',True)):
         torch.manual_seed(config.seed)
         models[name]=TemporalReadout(config.temporal_hidden,recurrent=recurrent).to(device)
-        curves[name]=train_stage_a_readout(models[name],sequences['train'],updates=config.stage_a_updates,
-                                           batch_frames=config.batch_frames,learning_rate=config.learning_rate,seed=config.seed)
-    reference={'median':median,'event_frequency':prob,'train_chord_mode':chord}
-    train=evaluate_stage_a(models,sequences['train'],median_s=median,constant_probability=prob,constant_chord=chord)
-    validation=evaluate_stage_a(models,sequences['validation'],median_s=median,constant_probability=prob,constant_chord=chord)
-    gate=stage_a_gate(validation,config)
-    report={'format':VERSION,'stage':'A','metadata':meta, 'reference':reference,
+        curves[name]=train_stage_a_readout(
+            models[name],fit,updates=effective_updates,batch_frames=config.batch_frames,
+            learning_rate=config.learning_rate,seed=config.seed)
+    reference={'median_near_event_s':median,'event_frequency':prob,'train_chord_mode':chord}
+    fitting=evaluate_stage_a(models,fit,median_s=median,constant_probability=prob,constant_chord=chord)
+    audit=evaluate_stage_a(models,holdout,median_s=median,constant_probability=prob,constant_chord=chord)
+    # The decision is FINALIZED before touching Validation metrics.
+    gate=stage_a_gate(audit,config)
+    validation=evaluate_stage_a(models,sequences['validation'],
+                                median_s=median,constant_probability=prob,constant_chord=chord)
+    report={'format':VERSION,'stage':'A','metadata':meta,
+            'reference':reference,'train_fit':fitting,'train_heldout':audit,
+            'train_partition':partition,'validation':validation,
             'model_parameter_counts':{k:sum(p.numel() for p in m.parameters()) for k,m in models.items()},
-            'train':train,'validation':validation,'training_loss':curves,'gate':gate,
-            'label_visibility':'next event floor within visible floor window; unobservable frames excluded from all metrics',
-            'leakage_contract':'only 263D visible input, truth generated separately from Train/Validation targets'}
-    # Save trained Stage A baselines separately, with no motor Student checkpoint.
-    _reserve_output(output.parent)
+            'training_loss':curves,
+            'training_coverage':{'fit_chunks':len(all_chunks),'updates_per_model':effective_updates,
+                                 'minimum_full_pass':True,
+                                 'gru_context':'causal 96-frame (configurable) chunks; hidden reset for each Train chunk'},
+            'gate':gate,
+            'label_visibility':'only next visible event; near <=200ms for time and chord, binary near-event classifier on all valid frames',
+            'leakage_contract':'Only causal 263D visible HUD input; Train chart-group holdout controls gate; Validation descriptive only'}
+    output.parent.mkdir(parents=True,exist_ok=True)
     saved_hashes={}
     for name,m in models.items():
-        path=output.parent/(name+'.pt')
-        with path.open('xb') as f:torch.save({'format':VERSION,'stage':'A','name':name,'state':m.state_dict(),
-            'metadata':meta,'initial_seed':config.seed,'updates':config.stage_a_updates},f)
+        path=output.parent/(name+'_v2.pt')
+        with path.open('xb') as f:
+            torch.save({'format':VERSION,'stage':'A','name':name,'state':m.state_dict(),
+                        'metadata':meta,'initial_seed':config.seed,'updates':effective_updates,
+                        'train_partition':partition},f)
         saved_hashes[name]=sha256(path)
     report['checkpoint_sha256']=saved_hashes
     _no_replace_json(output,report)
     if _protect_old_best(config) is not None and sha256(Path(config.old_best_path))!=BEST_SHA256:
         raise RuntimeError('Best modified by Stage A')
     return report
-
 
 class PrestigeMotorStudent(nn.Module):
     """From-scratch MaleCNS4096 visual controller with causal predicted timing."""
@@ -567,7 +686,7 @@ def _aggregate_motor(rows):
 
 def run_stage_c(config:PrestigeConfig, *, resume:bool=False):
     # This file is mandatory: Stage A must explicitly pass before any BC update.
-    stage_a=Path(config.output_dir)/'diagnostics'/'prestige1'/'stage_a.json'
+    stage_a=Path(config.output_dir)/'diagnostics'/'prestige1'/STAGE_A_REPORT
     completed_report=stage_a.parent/'stage_c.json'
     if completed_report.exists():raise FileExistsError('Stage C report already exists')
     if not resume and any(_checkpoint_path(config,arm).exists() for arm in ('control','prestige')):
@@ -578,13 +697,13 @@ def run_stage_c(config:PrestigeConfig, *, resume:bool=False):
         raise RuntimeError('Fail Closed: Stage A temporal observability gate did not pass')
     if stage['metadata']['config_sha256']!=config.signature():
         raise RuntimeError('Stage A and Stage C config differ')
-    if stage['gate'] != stage_a_gate(stage['validation'],config):
+    if stage.get('gate',{}).get('gate_data_role')!='train_heldout' or stage['gate'] != stage_a_gate(stage['train_heldout'],config):
         raise RuntimeError('Stage A saved gate does not match saved Validation metrics')
     checks=stage.get('checkpoint_sha256')
     if not isinstance(checks,dict) or set(checks)!= {'single','gru'}:
         raise RuntimeError('Incomplete Stage A checkpoint provenance')
     for name,expected in checks.items():
-        checkpoint=stage_a.parent/(name+'.pt')
+        checkpoint=stage_a.parent/(name+'_v2.pt')
         if not checkpoint.is_file() or sha256(checkpoint)!=expected:
             raise RuntimeError('Stage A checkpoint altered or absent')
     old_best_verified=_protect_old_best(config)
