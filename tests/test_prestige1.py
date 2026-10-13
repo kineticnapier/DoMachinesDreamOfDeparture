@@ -96,15 +96,22 @@ def test_all_metrics_mask_unobservable_frames():
 
 def test_gate_requires_clear_outperformance_not_assumption(tmp_path):
     config=cfg(tmp_path)
-    score={'median':{'mae_ms':110,'false_positive_rate':.1},
+    score={'median':{'mae_ms':110,'false_positive_rate':1.},
            'single':{'mae_ms':90,'false_positive_rate':.2},
-           'gru':{'mae_ms':80,'false_positive_rate':.21,'observable_anchors':20}}
-    assert not p.stage_a_gate({'aggregate':score},config)['passed']
+           'gru':{'mae_ms':80,'false_positive_rate':.21,'observable_anchors':5,
+                  'positive_frames':50,'negative_frames':50,'balanced_accuracy':.75}}
+    gate=p.stage_a_gate({'aggregate':score},config)
+    assert not gate['passed'] and gate['gate_data_role']=='train_heldout'
     score['gru']['mae_ms']=60
     assert p.stage_a_gate({'aggregate':score},config)['passed']
-    score['gru']['observable_anchors']=19
+    score['gru']['balanced_accuracy']=.5
     assert not p.stage_a_gate({'aggregate':score},config)['passed']
-
+    score['gru']['balanced_accuracy']=.75
+    score['gru']['false_positive_rate']=.96
+    assert not p.stage_a_gate({'aggregate':score},config)['passed']
+    score['gru']['false_positive_rate']=.2
+    score['gru']['observable_anchors']=2
+    assert not p.stage_a_gate({'aggregate':score},config)['passed']
 
 def test_config_enforces_no_physics_change(tmp_path):
     c=cfg(tmp_path)
@@ -120,7 +127,7 @@ def test_stage_c_rejects_missing_or_failed_stage_a(tmp_path):
     with pytest.raises(RuntimeError,match='Stage A not yet completed'):
         p.run_stage_c(c)
     dst=tmp_path/'diagnostics'/'prestige1';dst.mkdir(parents=True)
-    (dst/'stage_a.json').write_text(json.dumps({'format':p.VERSION,'stage':'A','gate':{'passed':False}}))
+    (dst/p.STAGE_A_REPORT).write_text(json.dumps({'format':p.VERSION,'stage':'A','gate':{'passed':False}}))
     with pytest.raises(RuntimeError,match='gate did not pass'):
         p.run_stage_c(c)
 
@@ -223,16 +230,17 @@ def test_stage_a_cpu_integrated_no_motor_training(monkeypatch,tmp_path):
     monkeypatch.setattr(p,'_metadata',lambda config,signature:{'seed':config.seed,'config_sha256':config.signature(),'split':signature})
     monkeypatch.setattr(p,'_protect_old_best',lambda *_:None)
     result=p.run_stage_a(config)
-    assert result['train']['aggregate']['gru']['observable_anchors']==20
+    assert result['train_fit']['aggregate']['gru']['observable_anchors']==15
+    assert result['train_heldout']['aggregate']['gru']['observable_anchors']==5
     assert result['validation']['aggregate']['gru']['observable_anchors']==20
-    assert result['gate']['passed'] is False or result['gate']['passed'] is True
-    assert all(len(h)==2 for h in result['training_loss'].values())
+    assert result['gate']['gate_data_role']=='train_heldout'
+    assert result['training_coverage']['minimum_full_pass'] is True
+    assert all(len(h)==30 for h in result['training_loss'].values())
     root=tmp_path/'diagnostics'/'prestige1'
-    assert (root/'stage_a.json').exists()
+    assert (root/p.STAGE_A_REPORT).exists()
     for name in ('single','gru'):
-        assert p.sha256(root/(name+'.pt'))==result['checkpoint_sha256'][name]
+        assert p.sha256(root/(name+'_v2.pt'))==result['checkpoint_sha256'][name]
     with pytest.raises(FileExistsError):p.run_stage_a(config)
-
 
 def test_stage_c_mock_fair_budgets_and_no_validation_updates(monkeypatch,tmp_path):
     fake_backbone(monkeypatch)
@@ -245,7 +253,6 @@ def test_stage_c_mock_fair_budgets_and_no_validation_updates(monkeypatch,tmp_pat
     monkeypatch.setattr(p,'load_role_sequences',lambda *args,**kwargs:(data,split,{'validation':[SimpleNamespace(chart_name='chart')]*20}))
     monkeypatch.setattr(p,'_metadata',lambda config,signature:{'seed':config.seed,'config_sha256':config.signature(),'split':signature})
     monkeypatch.setattr(p,'_protect_old_best',lambda *_:None)
-    # Install official project module entry points as CPU-only stand-ins.
     fake_n_key=types.ModuleType('dmdod.training.n_key')
     fake_n_key.n_key_actuation_loss=lambda pred,target:(pred-target).square().mean()
     monkeypatch.setitem(sys.modules,'dmdod.training.n_key',fake_n_key)
@@ -259,17 +266,19 @@ def test_stage_c_mock_fair_budgets_and_no_validation_updates(monkeypatch,tmp_pat
     fake_real=types.ModuleType('dmdod.training.real_chart')
     fake_real.evaluate_role_continuous=mock_evaluate
     monkeypatch.setitem(sys.modules,'dmdod.training.real_chart',fake_real)
-    # Build a valid, self-consistent Stage A gate + integrity checks.
     root=tmp_path/'diagnostics'/'prestige1';root.mkdir(parents=True)
-    scores={'median':{'mae_ms':150,'false_positive_rate':.1},
-            'single':{'mae_ms':120,'false_positive_rate':.1},
-            'gru':{'mae_ms':60,'false_positive_rate':.1,'observable_anchors':20}}
+    scores={'median':{'mae_ms':150,'false_positive_rate':1.},
+            'single':{'mae_ms':120,'false_positive_rate':.15},
+            'gru':{'mae_ms':60,'false_positive_rate':.1,'observable_anchors':5,
+                   'positive_frames':40,'negative_frames':50,'balanced_accuracy':.85}}
     stage={'format':p.VERSION,'stage':'A','metadata':{**p._metadata(config,split),'old_best_verified_sha256':None},
-           'validation':{'aggregate':scores},'gate':p.stage_a_gate({'aggregate':scores},config)}
+           'train_heldout':{'aggregate':scores},
+           'validation':{'aggregate':{'gru':{'mae_ms':9999.}}},
+           'gate':p.stage_a_gate({'aggregate':scores},config)}
     for name in ('single','gru'):
-        (root/(name+'.pt')).write_bytes(b'staged fake readout')
-    stage['checkpoint_sha256']={name:p.sha256(root/(name+'.pt')) for name in ('single','gru')}
-    (root/'stage_a.json').write_text(json.dumps(stage))
+        (root/(name+'_v2.pt')).write_bytes(b'staged fake readout')
+    stage['checkpoint_sha256']={name:p.sha256(root/(name+'_v2.pt')) for name in ('single','gru')}
+    (root/p.STAGE_A_REPORT).write_text(json.dumps(stage))
     result=p.run_stage_c(config)
     assert len(captured)==2
     assert result['fixed_budget']==2
@@ -281,23 +290,24 @@ def test_stage_c_mock_fair_budgets_and_no_validation_updates(monkeypatch,tmp_pat
         assert result['models'][arm]['timing_validation']['aggregate']['observable_anchors']==20
         cp=tmp_path/'checkpoints'/'prestige1'/(arm+'.pt')
         assert cp.exists() and p.sha256(cp)==result['models'][arm]['checkpoint_sha256']
-    # Validation used only after all updates; never chosen as optimizer labels.
-    assert len(captured)==2
     with pytest.raises(FileExistsError):p.run_stage_c(config)
-
 
 def test_stage_c_rejects_altered_stage_a_hash_before_data_loading(monkeypatch,tmp_path):
     config=cfg(tmp_path)
     root=tmp_path/'diagnostics'/'prestige1';root.mkdir(parents=True)
-    scores={'median':{'mae_ms':150,'false_positive_rate':.1},
-            'single':{'mae_ms':120,'false_positive_rate':.1},
-            'gru':{'mae_ms':60,'false_positive_rate':.1,'observable_anchors':20}}
+    scores={'median':{'mae_ms':150,'false_positive_rate':1.},
+            'single':{'mae_ms':120,'false_positive_rate':.15},
+            'gru':{'mae_ms':60,'false_positive_rate':.1,'observable_anchors':5,
+                   'positive_frames':40,'negative_frames':50,'balanced_accuracy':.85}}
     stage={'format':p.VERSION,'stage':'A','metadata':{'config_sha256':config.signature()},
-           'validation':{'aggregate':scores},'gate':p.stage_a_gate({'aggregate':scores},config),
+           'train_heldout':{'aggregate':scores},
+           'validation':{'aggregate':{'gru':{'mae_ms':9999.}}},
+           'gate':p.stage_a_gate({'aggregate':scores},config),
            'checkpoint_sha256':{'single':'0'*64,'gru':'0'*64}}
-    (root/'stage_a.json').write_text(json.dumps(stage))
+    (root/p.STAGE_A_REPORT).write_text(json.dumps(stage))
     with pytest.raises(RuntimeError,match='altered or absent'):
         p.run_stage_c(config)
+
 
 
 
