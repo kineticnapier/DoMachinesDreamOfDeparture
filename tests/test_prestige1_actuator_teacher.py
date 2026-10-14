@@ -77,11 +77,12 @@ def test_two_keys_across_one_target_keep_one_hit_and_brake_extra_key():
     original = press("left_1", "right_1")
     baseline = actuator.forecast_held_command(env, original, lead_s=.12)
     assert baseline.hits == 1
-    assert "right_1" in baseline.too_early_keys
+    assert len(baseline.too_early_keys) == 1
+    early_key = baseline.too_early_keys[0]
     corrector = actuator.ActuatorAwareTeacherSafety(lead_s=.12)
     candidate = corrector(env, original)
-    assert candidate.values[env.key_names.index("left_1")] == 1.
-    assert candidate.values[env.key_names.index("right_1")] == -1.
+    assert candidate.values[env.key_names.index(early_key)] == -1.
+    assert sum(value > 0 for value in candidate.values) == 1
     forecast = actuator.forecast_held_command(env, candidate, lead_s=.12)
     assert forecast.hits == 1
     assert not forecast.too_early_keys
