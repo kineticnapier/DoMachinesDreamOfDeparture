@@ -121,8 +121,8 @@ class ActuatorAwareTeacherSafety:
                 proposed[index] = -1.0
                 candidate = NKeyAction(tuple(proposed))
                 predicted = forecast_held_command(env, candidate, lead_s=self.lead_s)
-                # Do not trade a reduced predicted early count for a larger
-                # predicted miss count when another option may exist.
+                # When safety gains tie, prefer fewer forecast misses
+                # and retain more forecast Hits.
                 rank = (len(predicted.too_early_keys),
                         predicted.misses, -predicted.hits)
                 if len(predicted.too_early_keys) >= len(forecast.too_early_keys):
