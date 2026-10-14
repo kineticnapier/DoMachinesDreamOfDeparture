@@ -367,10 +367,12 @@ def run_train_teacher_quality(config):
             "alignment_examples": recorder.examples,
             "action_frames": recorder.action_frames,
         })
+        old_mae = original["quality"]["mae_ms"]
+        new_mae = candidate["quality"]["mae_ms"]
         print(
             f"Stage C v2.5 Train {i:02d}/20: "
-            f"MAE old={original['quality']['mae_ms']:.2f}ms "
-            f"new={candidate['quality']['mae_ms']:.2f}ms "
+            f"MAE old={f'{old_mae:.2f}' if old_mae is not None else 'n/a'}ms "
+            f"new={f'{new_mae:.2f}' if new_mae is not None else 'n/a'}ms "
             f"mismatch={recorder.counters['mismatch_frames']}/"
             f"{recorder.counters['frames']} "
             f"action-changes={recorder.filter.changed_frames}",
