@@ -161,10 +161,11 @@ def test_v24_provenance_refuses_validation_or_changed_gate():
     ):
         with pytest.raises(RuntimeError, match="provenance"):
             quality._check_v24_report(altered, old, stage_a, config, manifest)
+    changed_gate = dict(passed=True, gate_data_role="train_heldout")
     with pytest.raises(RuntimeError, match="FAIL"):
-        quality._check_v24_report(previous, old, {
-            "gate": dict(passed=True, gate_data_role="train_heldout")
-        }, config, manifest)
+        quality._check_v24_report(
+            {**previous, "original_stage_a_gate": changed_gate},
+            old, {"gate": changed_gate}, config, manifest)
 
 
 def test_existing_report_is_never_replaced_even_if_inputs_missing(tmp_path, monkeypatch):
