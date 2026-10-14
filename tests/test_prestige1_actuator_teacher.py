@@ -37,13 +37,17 @@ def press(*keys):
 
 
 def test_future_outside_pass_is_detected_at_physical_not_command_time():
-    env = SmallTeacherEnvironment([.20])
+    # At 120 BPM the real pass radius is 60/(3*120) = 1/6s,
+    # so .20s is not necessarily TooEarly for a ~50ms actuator delay.
+    env = SmallTeacherEnvironment([.40])
     original = press("left_1")
     before = env.motor.observe()
     forecast = actuator.forecast_held_command(env, original, lead_s=.12)
+    assert forecast.keydowns, "Physical KeyDown absent in forecast horizon"
+    assert forecast.keydowns[0][3] == "too_early"
     assert forecast.too_early_keys == ("left_1",)
     assert forecast.keydowns[0][0] > 0.
-    assert forecast.keydowns[0][0] < .20
+    assert forecast.keydowns[0][0] < .40 - timing_windows(120.).pass_s
     assert env.motor.time_s == 0.
     assert env.motor.observe() == before
     assert env._used == [False] and env._missed == [False]
@@ -60,7 +64,8 @@ def test_safe_pre_acceleration_is_preserved():
 
 
 def test_early_keydown_is_braked_without_changing_live_motor():
-    env = SmallTeacherEnvironment([.20])
+    # Force a real TooEarly, rather than an allowed 120 BPM early-pass hit.
+    env = SmallTeacherEnvironment([.40])
     original = press("left_1")
     corrector = actuator.ActuatorAwareTeacherSafety(lead_s=.12)
     new = corrector(env, original)
