@@ -50,20 +50,25 @@ def forecast_held_command(env, action: NKeyAction, *, lead_s: float) -> MotorFor
     early: list[str] = []
     hit_count = 0
     miss_count = 0
+
+    def expire(now):
+        nonlocal miss_count
+        # RealChartMotorEnv expires notes before every event and at the
+        # end of each 10ms step, even when no KeyDown occurs.
+        for idx, target in enumerate(targets):
+            if not used[idx] and not missed[idx] and (
+                float(target.episode_time_s) + env._windows(target).pass_s < now
+            ):
+                missed[idx] = True
+                miss_count += 1
+
     for _ in range(steps):
         transition = simulated.step(action)
         for event in transition.evaluator_events:
+            expire(float(event.time_s))
             if event.event is not KeyEvent.DOWN:
                 continue
             now = float(event.time_s)
-            # Mirror _expire_misses before the event: an overdue unresolved
-            # target cannot consume a later KeyDown.
-            for idx, target in enumerate(targets):
-                if not used[idx] and not missed[idx] and (
-                    float(target.episode_time_s) + env._windows(target).pass_s < now
-                ):
-                    missed[idx] = True
-                    miss_count += 1
             idx = next((i for i in range(len(targets))
                         if not used[i] and not missed[i]), None)
             if idx is None:
@@ -80,6 +85,7 @@ def forecast_held_command(env, action: NKeyAction, *, lead_s: float) -> MotorFor
                 used[idx] = True
                 hit_count += 1
             downs.append((now, event.key, idx, judgement.value))
+        expire(float(transition.diagnostics.time_s))
     return MotorForecast(tuple(downs), tuple(early), hit_count, miss_count)
 
 
