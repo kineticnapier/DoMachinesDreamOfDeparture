@@ -147,3 +147,71 @@ def test_safety_refuses_existing_report_before_reading_paths(monkeypatch, tmp_pa
     with pytest.raises(FileExistsError):
         safety.run_train_teacher_safety(config)
     assert (root / safety.REPORT).read_text(encoding="utf-8") == "original"
+
+
+def test_train_teacher_physical_keydown_trace_separate_from_command(monkeypatch):
+    from dmdod.envs.n_key import (
+        EpisodeTerminationTrace, NKeyActionFrameTrace, NKeyOverloadTrace,
+        NKeyPhysicalKeyDownTrace, TooEarlyKeyDownTrace,
+    )
+    early = TooEarlyKeyDownTrace(
+        time_s=.003, key="left_4", target_index=0, error_ms=-97.,
+        overload_before=.6, overload_after=1.1, fail_overload=True)
+    down = NKeyPhysicalKeyDownTrace(
+        time_s=.003, key="left_4", target_index=0, target_time_s=.1)
+    termination = EpisodeTerminationTrace(
+        time_s=.003, reason="Overload", hits=0, too_early=1,
+        keydowns=1, next_target_index=0, overload_value=1.1)
+    frame = NKeyActionFrameTrace(
+        time_s=0., action_values=(1.,)+(0.,)*7,
+        positions_m=(0.,)*8, velocities_m_s=(0.,)*8,
+        pressed_flags=(False,)*8,
+        next_target_index=0, next_target_time_s=.1)
+    trace = NKeyOverloadTrace(
+        termination=termination, keydown_times_s=(.003,),
+        too_early_events=(early,), action_frames=(frame,),
+        physical_keydowns=(down,))
+    motor = SimpleNamespace(
+        positions_m=(0.,)*8, velocities_m_s=(0.,)*8,
+        pressed_flags=(False,)*8)
+    class FakeEnv:
+        key_names=("left_4","left_3","left_2","left_1",
+                   "right_1","right_2","right_3","right_4")
+        def __init__(self, *args, **kwargs):
+            assert kwargs["capture_overload_trace"] is True
+            self.physical_keydowns=1
+            self.stats=SimpleNamespace(
+                hits=0, misses=0, targets=1, too_early_presses=1,
+                overloaded=True)
+            self.overload_trace=trace
+        def reset(self):
+            return SimpleNamespace(motor=motor)
+        def privileged_episode_time_s(self):
+            return 0.
+        def step(self, cmd):
+            assert len(cmd.values)==8
+            return SimpleNamespace(done=True, observation=SimpleNamespace(motor=motor))
+    monkeypatch.setattr(safety, "DiagnosticHudNKeyRealChartMotorEnv", FakeEnv)
+    monkeypatch.setattr(safety, "CenterFirstNKeyTeacher", lambda count: object())
+    monkeypatch.setattr(
+        safety, "encode_n_key_hud_real_chart_observation",
+        lambda obs: (0.,)*263)
+    monkeypatch.setattr(safety, "contract_from_env", lambda env, now:
+        SimpleNamespace(phase="future_outside_pass",
+                        to_json=lambda: {"phase":"future_outside_pass"}))
+    monkeypatch.setattr(safety, "_teacher_action", lambda *a, **kw:
+        SimpleNamespace(values=(1.,)+(0.,)*7))
+    named=SimpleNamespace(segment=SimpleNamespace(duration_s=1.),
+                          chart_name="Synthetic", chart_sha256="synthetic")
+    config=p.PrestigeConfig(
+        dataset="none", output_dir="none", core_path="none",
+        old_best_path="none", device="cpu")
+    result=safety._run_teacher(named,config,anchor=1)
+    assert result["termination"]["time_s"]==pytest.approx(.003)
+    assert result["failure_event"]["overload_after"]==pytest.approx(1.1)
+    assert result["stats"]["unjudged"]==1
+    assert result["stats"]["keydowns"]==1
+    assert result["stats"]["too_early"]==1
+    assert result["last_12_control_frames"][0]["command_time_s"]==0.
+    assert result["physical_keydowns_last_150ms"][0]["time_s"]==pytest.approx(.003)
+    assert result["positive_command_frames_by_phase"]["future_outside_pass"]==1
