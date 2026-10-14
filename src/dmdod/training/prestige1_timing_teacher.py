@@ -134,8 +134,8 @@ class TimingCenteredActuatorTeacher:
     """Greedy, frozen one-step defer after the v2.4 safety shield.
 
     One-step delayed proposals are evaluated against the *same* v2.4 command
-    sequence assumption. Neutral (0) is preferred over reverse (-1) when
-    quality ties, avoiding needless rapid sign reversals.
+    sequence assumption. Timing delays use neutral (0) only; reverse (-1)
+    commands remain exclusively the responsibility of the v2.4 safety shield.
     """
 
     def __init__(self, *, lead_s: float):
@@ -147,8 +147,12 @@ class TimingCenteredActuatorTeacher:
         self.safety_transitions = CommandTransitions(8)
         self.timing_transitions = CommandTransitions(8)
         self.changed_examples = []
+        self.env = None
 
     def __call__(self, env, original: NKeyAction) -> NKeyAction:
+        if self.env is not None and self.env is not env:
+            raise RuntimeError("Timing controller cannot span different episodes")
+        self.env = env
         safe = self.safety(env, original)
         self.counts["frames"] += 1
         self.safety_transitions.observe(safe.values)
@@ -182,7 +186,9 @@ class TimingCenteredActuatorTeacher:
                            for target_idx, error in reference.hit_errors_ms
                            if target_idx in key_hits):
                     continue
-                for proposed_value in (0.0, -1.0):
+                # Neutral delay only; do not introduce extra +1 -> -1
+                # reversals beyond the unchanged v2.4 safety shield.
+                for proposed_value in (0.0,):
                     values = list(selected.values)
                     values[index] = proposed_value
                     candidate = NKeyAction(tuple(values))
