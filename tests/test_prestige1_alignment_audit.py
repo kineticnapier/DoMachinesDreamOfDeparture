@@ -79,3 +79,33 @@ def test_refuse_existing_output_before_touching_sources(monkeypatch, tmp_path):
     with pytest.raises(FileExistsError):
         audit.run_train_alignment_audit(config)
     assert path.read_text() == "do not replace"
+
+
+def test_train_manifest_reads_only_train_not_validation(monkeypatch, tmp_path):
+    # Deliberately fail if production audit accesses the Validation split.
+    class TrainOnlyDataset:
+        train = [object()]
+
+        @property
+        def validation(self):
+            raise AssertionError("Validation must not be inspected")
+
+        @property
+        def final(self):
+            raise AssertionError("FINAL must not be inspected")
+
+    from dmdod.data import multichart
+    monkeypatch.setattr(multichart, "discover_multichart_dataset",
+                        lambda path: TrainOnlyDataset())
+    monkeypatch.setattr(audit, "compile_role", lambda items: items)
+    def fake_anchors(items, *, window_s, anchors_per_chart):
+        assert len(items) == 1 and anchors_per_chart == 20
+        return [SimpleNamespace(role="anchor-1", chart_name=f"chart-{i}",
+                                chart_sha256=f"sha-{i}") for i in range(20)]
+    monkeypatch.setattr(audit, "build_anchor_segments", fake_anchors)
+    config = p.PrestigeConfig(
+        dataset="Train20-only", output_dir=str(tmp_path),
+        core_path="unused", old_best_path="unused", device="cpu")
+    segments, manifest = audit._train_manifest(config)
+    assert len(segments) == len(manifest) == 20
+    assert manifest[-1]["anchor"] == 20

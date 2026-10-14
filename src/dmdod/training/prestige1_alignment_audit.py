@@ -8,7 +8,7 @@ are never captured or evaluated.
 """
 
 from bisect import bisect_left
-from dataclasses import asdict, dataclass
+from dataclasses import dataclass
 from pathlib import Path
 import json
 import math
@@ -201,6 +201,8 @@ def _frames_for_train_anchor(named, config, *, anchor):
     stats = env.stats
     if len(trace.physical_keydowns) != env.physical_keydowns:
         raise RuntimeError("Expert physical KeyDown trace mismatch")
+    if len(trace.too_early_events) != stats.too_early_presses:
+        raise RuntimeError("Expert Too Early trace mismatch")
     return {
         "anchor": anchor, "chart": named.chart_name,
         "chart_sha256": named.chart_sha256,
