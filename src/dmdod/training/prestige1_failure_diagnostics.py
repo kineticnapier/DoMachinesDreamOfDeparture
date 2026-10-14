@@ -124,13 +124,14 @@ def _closed_loop(model, named, *, device, anchor):
     masks = []
     max_steps = int((named.segment.duration_s + 2.0) / p.CONTROL_DT) + 200
     model.eval()
-    with torch.inference_mode():
+    # Mirror the original Stage C evaluator's no_grad and tensor construction.
+    with torch.no_grad():
         for index in range(max_steps):
             now = float(env.privileged_episode_time_s())
             visible = encode_n_key_hud_real_chart_observation(observation)
             if len(visible) != p.INPUT_DIM:
                 raise RuntimeError("Expected only 263D visible HUD input")
-            x = torch.as_tensor(visible, dtype=torch.float32, device=device)
+            x = torch.tensor(visible, dtype=torch.float32, device=device)
             means, _std, _value, state, raw = model.forward_step_with_timing(x, state)
             executed = torch.tanh(means)
             predicted_s, event_logit, chord_logits = p.decode_temporal(raw)
@@ -204,9 +205,9 @@ def _closed_loop(model, named, *, device, anchor):
         })
     event_from = float(termination.time_s) - TRAILING_EVENTS_S
     early = [asdict(event) for event in trace.too_early_events
-             if event.time_s >= event_from - 1e-8]
+             if event_from - 1e-8 <= event.time_s <= termination.time_s + 1e-8]
     down = [asdict(event) for event in trace.physical_keydowns
-            if event.time_s >= event_from - 1e-8]
+            if event_from - 1e-8 <= event.time_s <= termination.time_s + 1e-8]
     if int(stats.too_early_presses) != len(trace.too_early_events):
         raise RuntimeError("Too Early count differs from physics event trace")
     if int(env.physical_keydowns) != len(trace.physical_keydowns):
