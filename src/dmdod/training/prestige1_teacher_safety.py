@@ -28,7 +28,7 @@ LAST_FRAMES = 12
 LAST_EVENT_WINDOW_S = .150
 
 
-def _run_teacher(named, config, *, anchor):
+def _run_teacher(named, config, *, anchor, action_filter=None):
     env = DiagnosticHudNKeyRealChartMotorEnv(
         named.segment, key_count=p.KEY_COUNT, capture_overload_trace=True,
         control_dt_s=p.CONTROL_DT, physics_dt_s=p.PHYSICS_DT,
@@ -51,6 +51,8 @@ def _run_teacher(named, config, *, anchor):
         phase = contract.phase if contract is not None else "all_resolved"
         phase_counts[phase] += 1
         command = _teacher_action(env, teacher, obs, lead_s=config.lead_s)
+        if action_filter is not None:
+            command = action_filter(env, command)
         pressed_commands = [k for k, value in zip(env.key_names, command.values)
                             if value > 0]
         if pressed_commands:
