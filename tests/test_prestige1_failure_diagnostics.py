@@ -33,7 +33,7 @@ def test_checkpoint_digest_rejects_mutated_checkpoint(tmp_path):
     }
     with pytest.raises(RuntimeError, match="hash mismatch"):
         diag._load_model(c, arm="control", device=torch.device("cpu"),
-                         stage_b={}, stage_c=stage_c)
+                         stage_b={}, stage_c=stage_c, expected_train_manifest=[])
 
 
 def test_replay_fails_closed_on_different_hits_or_chart():

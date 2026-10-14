@@ -9,7 +9,6 @@ training, selection, or FINAL evaluation.  Nothing writes to checkpoint files.
 from dataclasses import asdict
 from pathlib import Path
 import json
-import math
 
 import torch
 
@@ -57,7 +56,7 @@ def _load_provenance(config, *, device):
     return stage_a, stage_b, stage_c
 
 
-def _load_model(config, *, arm, device, stage_b, stage_c):
+def _load_model(config, *, arm, device, stage_b, stage_c, expected_train_manifest):
     item = stage_c["results"][arm]
     expected = item.get("checkpoint_sha256")
     path = transfer.checkpoint_dir(config) / f"{arm}_v2.pt"
@@ -74,7 +73,7 @@ def _load_model(config, *, arm, device, stage_b, stage_c):
             or payload.get("seed") != config.seed
             or payload.get("updates") != stage_c["effective_updates_per_arm"]
             or payload.get("train_anchor_manifest") !=
-               stage_c["_validated_train_anchor_manifest"]):
+               expected_train_manifest):
         raise RuntimeError(f"Stage C v2 {arm} checkpoint metadata mismatch")
     # Instantiate a fresh model and load ONLY this frozen model state.
     torch.manual_seed(config.seed)
@@ -258,7 +257,6 @@ def run_readonly_diagnostics(config: p.PrestigeConfig, *,
         raise RuntimeError("CUDA unavailable")
     stage_a, stage_b, stage_c = _load_provenance(config, device=device)
     validation = _manifest(config, stage_a)
-    stage_c["_validated_train_anchor_manifest"] = stage_a["metadata"]["dataset_split"]["train"]
     originals = {"stage_a": transfer.output_dir(config) / p.STAGE_A_REPORT,
                  "stage_b": transfer.output_dir(config) / transfer.TRANSFER_REPORT,
                  "stage_c": transfer.output_dir(config) / transfer.MOTOR_REPORT,
@@ -271,7 +269,8 @@ def run_readonly_diagnostics(config: p.PrestigeConfig, *,
     checkpoints = {}
     for arm in ("control", "prestige"):
         model, path, digest = _load_model(
-            config, arm=arm, device=device, stage_b=stage_b, stage_c=stage_c)
+            config, arm=arm, device=device, stage_b=stage_b, stage_c=stage_c,
+            expected_train_manifest=stage_a["metadata"]["dataset_split"]["train"])
         models[arm] = model
         checkpoints[arm] = {"path": path, "sha256": digest}
     results = {}
