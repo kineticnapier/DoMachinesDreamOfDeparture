@@ -73,7 +73,7 @@ def test_missing_checkpoint_or_frozen_ablation_fails_closed(tmp_path):
 
 def _add_floor(frame, slot: int):
     i = old.SLOT_START + slot * old.FLOOR_DIM
-    frame[i+2:i+6] = [sin(0), cos(0), sin(pi), cos(pi)]
+    frame[i+2:i+6] = torch.tensor([sin(0), cos(0), sin(pi), cos(pi)])
     frame[i+14] = 1.
 
 
