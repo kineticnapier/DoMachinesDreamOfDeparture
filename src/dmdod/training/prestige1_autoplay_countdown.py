@@ -295,6 +295,70 @@ def geometry_comparison(group: list[stage_t.TimingSequence], models: dict,
     }
 
 
+def loss_contributions(model: stage_t.TimingReadout | None,
+                       group: list[stage_t.TimingSequence], reference: dict) -> dict:
+    """Decompose the ORIGINAL Stage T objective by true distance bin.
+
+    This is an evaluator-side aggregate loss accounting, NOT the exact SGD
+    chunk-mean history. It uses the original smooth-L1 scaling and fixed
+    near/far weights (1.0/0.25) plus per-valid-frame near-class BCE.
+    """
+    sums = {
+        name: {"frames": 0, "weight": 0., "time_weighted_sum": 0., "bce_sum": 0.}
+        for name in base.BINS
+    }
+    for seq in group:
+        if model is None:
+            predicted = [float(reference["time_s"])] * len(seq.event_indices)
+            probabilities = [float(reference["near_probability"])] * len(seq.event_indices)
+        else:
+            model.eval()
+            with torch.no_grad():
+                times, chance = stage_t.decode(model(seq.visible))
+            predicted = [float(x) for x in times.cpu().tolist()]
+            probabilities = [float(x) for x in chance.cpu().tolist()]
+        masks = base._bin_masks(seq)
+        for name, mask in masks.items():
+            indices = torch.where(mask)[0].cpu().tolist()
+            for i in indices:
+                truth = float(seq.remaining_s[i])
+                delta = abs(predicted[i] - truth)/stage_t.TIME_UNIT_S
+                smooth = .5 * delta * delta if delta < 1. else delta - .5
+                weight = 1. if bool(seq.near[i]) else stage_t.FAR_TIME_WEIGHT
+                probability = max(1e-7, min(1-1e-7, probabilities[i]))
+                bce = -math.log(probability) if bool(seq.near[i]) else -math.log1p(-probability)
+                entry = sums[name]
+                entry["frames"] += 1
+                entry["weight"] += weight
+                entry["time_weighted_sum"] += weight*smooth
+                entry["bce_sum"] += bce
+    denom_weight = sum(x["weight"] for x in sums.values())
+    denom_frames = sum(x["frames"] for x in sums.values())
+    all_time = sum(x["time_weighted_sum"] for x in sums.values())
+    all_bce = sum(x["bce_sum"] for x in sums.values())
+    if denom_weight <= 0 or denom_frames <= 0:
+        raise RuntimeError("No observable frames for loss decomposition")
+    result = {}
+    for name, row in sums.items():
+        result[name] = {
+            "frames": row["frames"],
+            "time_term_normalized_contribution": row["time_weighted_sum"]/denom_weight,
+            "time_term_fraction": row["time_weighted_sum"]/all_time if all_time else None,
+            "near_event_bce_normalized_contribution": row["bce_sum"]/denom_frames,
+            "bce_fraction": row["bce_sum"]/all_bce if all_bce else None,
+        }
+    return {
+        "normalization": (
+            "Original per-frame smooth-L1 normalized by global sum of 1/.25 "
+            "weights and event BCE by global visible frame count; NOT the exact "
+            "per-SGD-chunk-mean objective"
+        ),
+        "time_term_total": all_time/denom_weight,
+        "event_bce_total": all_bce/denom_frames,
+        "by_distance": result,
+    }
+
+
 def _representative_window(seq: stage_t.TimingSequence, width: int = 61):
     valid_switches = [
         i for i in range(1, len(seq.event_indices))
@@ -381,6 +445,13 @@ def run_countdown_audit(config: p.PrestigeConfig) -> dict:
         "timing_dynamics": {
             split: {
                 name: dynamics(model, group, source.reference)
+                for name, model in (("constant", None), *source.models.items())
+            }
+            for split, group in groups
+        },
+        "loss_contributions": {
+            split: {
+                name: loss_contributions(model, group, source.reference)
                 for name, model in (("constant", None), *source.models.items())
             }
             for split, group in groups
