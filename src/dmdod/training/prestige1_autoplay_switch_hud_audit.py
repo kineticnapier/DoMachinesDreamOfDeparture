@@ -10,10 +10,8 @@ This is NOT a trained or deployed event detector. No new model is fit.
 
 from collections import Counter
 import json
-from math import atan2, degrees
+from math import atan2, degrees, isfinite
 from pathlib import Path
-
-import torch
 
 from . import prestige1 as p
 from . import prestige1_autoplay_countdown as cd
@@ -48,7 +46,7 @@ def hud_delta(previous: tuple[float, ...], current: tuple[float, ...]) -> dict:
     """HUD-only deterministic pair features. No oracle time or event identity."""
     if len(previous) != p.INPUT_DIM or len(current) != p.INPUT_DIM:
         raise ValueError("HUD delta needs two visible 263D frames")
-    if not all(__import__("math").isfinite(x) for x in previous + current):
+    if not all(isfinite(x) for x in previous + current):
         raise ValueError("Nonfinite HUD delta input")
     off, n = cd.SLOT_START, cd.FLOOR_DIM
     floor_slots = cd.FLOORS.floor_slots
