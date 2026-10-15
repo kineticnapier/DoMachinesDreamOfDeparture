@@ -263,10 +263,10 @@ def geometry_comparison(group: list[stage_t.TimingSequence], models: dict,
                 near_eligible += 1
             truth = float(seq.remaining_s[i])
             for name, candidate in (("geometry", value), *[(n, p[i]) for n, p in pred.items()]):
-                abs_error = abs(candidate - truth) * 1000.
-                errors[name].append(abs_error)
+                signed_error = (candidate - truth) * 1000.
+                errors[name].append(signed_error)
                 if bool(seq.near[i]):
-                    near_errors[name].append(abs_error)
+                    near_errors[name].append(signed_error)
         per_anchor.append({
             "anchor": seq.anchor, "chart_sha256": seq.chart_sha256,
             "eligible_frames": eligible, "near_eligible_frames": near_eligible,
