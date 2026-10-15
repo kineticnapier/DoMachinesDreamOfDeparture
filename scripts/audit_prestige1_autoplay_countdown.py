@@ -29,6 +29,19 @@ def main() -> None:
                 f"switch-rise recall={aggregate['upward_switch_recall']}",
                 flush=True,
             )
+        for model_name in ("mlp", "gru"):
+            loss = report["loss_contributions"][split][model_name]
+            print(
+                f"  {model_name} original-loss contributions: "
+                f"time_total={loss['time_term_total']:.4f} "
+                f"bce_total={loss['event_bce_total']:.4f}", flush=True,
+            )
+            for label, contribution in loss["by_distance"].items():
+                print(
+                    f"    {label}: timing-term share="
+                    f"{contribution['time_term_fraction']} "
+                    f"BCE share={contribution['bce_fraction']}", flush=True,
+                )
         geometry = report["geometry_baseline"][split]
         print(
             f"  Geometry eligible={geometry['eligible_frames']} "
