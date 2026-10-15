@@ -209,7 +209,8 @@ def audit_documents(report: dict, plans: dict, *, plan_file_sha256: str) -> dict
         or report.get("stage") != "C-v3.0"
         or plans.get("format") != PLAN_FORMAT
         or plans.get("stage") != "C-v3.0"
-        or report.get("role") != plans.get("role") != "Train20 only"
+        or report.get("role") != "Train20 only"
+        or plans.get("role") != "Train20 only"
     ):
         raise ValueError("Unexpected v3.0 source formats/roles")
     required_false = (
