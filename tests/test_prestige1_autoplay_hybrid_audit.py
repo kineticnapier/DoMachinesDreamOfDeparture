@@ -62,7 +62,8 @@ def test_hybrid_selects_geometry_by_hud_only_and_falls_back_on_events():
     trace = hy.infer_hybrid(seq.visible, FrozenStub())
     assert trace.mode == ("gru", "geometry", "geometry", "gru", "gru", "geometry")
     assert trace.abstain_reasons[0] == "no_previous_hud_frame"
-    assert trace.abstain_reasons[3] == "special_event"
+    # Current floor differs from preceding HUD: floor_changed takes precedence.
+    assert trace.abstain_reasons[3] == "floor_changed"
     assert trace.abstain_reasons[4] == "floor_changed"
     for i, mode in enumerate(trace.mode):
         if mode == "geometry":
@@ -71,6 +72,15 @@ def test_hybrid_selects_geometry_by_hud_only_and_falls_back_on_events():
         else:
             assert trace.geometry_s[i] is None
             assert trace.chosen_s[i] == pytest.approx(.09, abs=1e-6)
+
+
+def test_special_event_rejection_on_stable_special_floor():
+    # With no floor feature change, the explicit special-event guard applies.
+    prev = tuple(hud(2.65, twirl=True).tolist())
+    now = tuple(hud(2.65 + 2*pi*.01, twirl=True).tolist())
+    prediction, reason = cd.geometry_one(prev, now)
+    assert prediction is None
+    assert reason == "special_event"
 
 
 def test_predictions_are_independent_of_hidden_oracle_labels_and_ids():
@@ -122,7 +132,8 @@ def test_transition_residual_separates_model_change_from_true_note_change():
     pair = result["by_mode_transition_and_oracle_event"]
     assert pair["geometry->gru"]["event_changed"]["pairs"] == 1
     assert pair["geometry->gru"]["same_event"]["pairs"] == 0
-    assert pair["gru->geometry"]["same_event"]["pairs"] == 1
+    # GRU -> Geometry occurs after both the initial frame and the special event.
+    assert pair["gru->geometry"]["same_event"]["pairs"] == 2
     assert result["event_switches_observed"] == 1
     assert result["positive_oracle_event_jumps"] == 1
     assert result["same_oracle_event_pairs"] == 4
