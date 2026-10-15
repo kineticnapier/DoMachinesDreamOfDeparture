@@ -146,6 +146,23 @@ def test_svg_creates_static_honest_visualization_with_switch_markers():
     assert "display capped at 350ms" in svg
 
 
+def test_original_stage_t_loss_contribution_sums_to_total():
+    source = sequence()
+    breakdown = clock.loss_contributions(
+        None, [source], {"time_s": .070, "near_probability": .5})
+    rows = breakdown["by_distance"]
+    assert sum(rows[name]["frames"] for name in rows) == 6
+    assert sum(rows[name]["time_term_normalized_contribution"]
+               for name in rows) == pytest.approx(breakdown["time_term_total"])
+    assert sum(rows[name]["near_event_bce_normalized_contribution"]
+               for name in rows) == pytest.approx(breakdown["event_bce_total"])
+    assert sum(rows[name]["time_term_fraction"]
+               for name in rows) == pytest.approx(1.)
+    assert sum(rows[name]["bce_fraction"]
+               for name in rows) == pytest.approx(1.)
+    assert breakdown["event_bce_total"] == pytest.approx(.69314718, abs=1e-5)
+
+
 def test_countdown_audit_never_unlocks_stage_a():
     assert clock.FORMAT != readout.FORMAT
     assert clock.REPORT != readout.REPORT
