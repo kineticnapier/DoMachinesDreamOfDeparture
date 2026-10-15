@@ -281,6 +281,8 @@ def anneal_chart(
         "rejected_unsafe": 0, "accepted_uphill": 0,
         "accepted_not_uphill": 0, "rejected_sa": 0,
         "new_bests": 0, "no_op": 0,
+        "unsafe_miss_candidates": 0, "unsafe_early_candidates": 0,
+        "unsafe_overload_candidates": 0, "unsafe_extra_down_candidates": 0,
     }
     for step in range(proposals):
         proposal = mutate_schedule(current_delays, runs, rng)
@@ -294,6 +296,11 @@ def anneal_chart(
         counts["proposals"] += 1
         if not trial.safe:
             counts["rejected_unsafe"] += 1
+            counts["unsafe_miss_candidates"] += int(trial.stats["misses"] > 0)
+            counts["unsafe_early_candidates"] += int(trial.stats["too_early"] > 0)
+            counts["unsafe_overload_candidates"] += int(trial.stats["overload"])
+            counts["unsafe_extra_down_candidates"] += int(
+                trial.stats["keydowns"] > trial.stats["targets"])
             continue
         counts["physically_safe"] += 1
         previous = current.objective_ms
