@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from dataclasses import replace
 from math import cos, pi, sin
+from pathlib import Path
 
 import pytest
 import torch
@@ -186,6 +187,27 @@ def test_hybrid_plot_reuses_same_frame_predictions_and_event_labels_only_as_anno
     assert "Near-only GRU" in svg
     assert "stroke-dasharray" in svg
     assert "view capped at 350ms" in svg
+
+
+def test_heldout_svg_coverage_compares_path_values_not_anchor_ids(tmp_path):
+    paths = {
+        anchor: tmp_path / f"hybrid_holdout_{anchor:02d}.svg"
+        for anchor in (2, 7, 13, 14, 20)
+    }
+    rendered = {path: "<svg/>" for path in paths.values()}
+    # Regression: set(paths) is integers while set(rendered) is Paths.
+    assert set(paths) != set(rendered)
+    hy._verify_heldout_plot_coverage(rendered, paths)
+
+    missing = dict(rendered)
+    missing.pop(paths[13])
+    with pytest.raises(RuntimeError, match="missing=.*13"):
+        hy._verify_heldout_plot_coverage(missing, paths)
+
+    unexpected = dict(rendered)
+    unexpected[tmp_path / "unexpected.svg"] = "<svg/>"
+    with pytest.raises(RuntimeError, match="unexpected=.*unexpected"):
+        hy._verify_heldout_plot_coverage(unexpected, paths)
 
 
 def test_hybrid_research_only_and_fixed():
