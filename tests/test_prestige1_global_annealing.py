@@ -199,3 +199,38 @@ def test_real_1ms_motor_replay_and_prefix_snapshot_match():
     assert from_prefix.hit_events == from_start.hit_events
     assert from_prefix.termination == from_start.termination
     assert from_prefix.timing == from_start.timing
+
+
+def test_annealer_keeps_full_safe_start_when_every_trial_misses(monkeypatch):
+    """Never accept an infeasible SA proposal, regardless of temperature."""
+    base = actions(*([(1, 0)] * 8 + [(0, 0)]))
+    calls = []
+
+    def fake_replay(named, tape, *, parent=None, first_changed_frame=0):
+        calls.append((tape, parent is not None, first_changed_frame))
+        feasible = tape == base
+        n = 1 if feasible else 0
+        stats = {
+            "hits": n, "misses": 1 - n, "targets": 1,
+            "too_early": 0, "keydowns": n,
+            "unjudged": 0, "overload": False,
+        }
+        return sa.PhysicalReplay(
+            env=None, checkpoints={0: object()}, stats=stats,
+            hit_events=[{"target_index": 0, "error_ms": -50.}] if feasible else [],
+            timing={"hits": n, "mae_ms": 50. if feasible else None},
+            termination={"reason": "All targets resolved"},
+            safe=feasible,
+            objective_ms=50. if feasible else None,
+        )
+
+    monkeypatch.setattr(sa, "replay_commands", fake_replay)
+    result = sa.anneal_chart(None, base, seed=100, proposals=8)
+    assert result["best_commands"] == base
+    assert result["best"].safe
+    assert result["best"].objective_ms == 50.
+    assert result["counts"]["rejected_unsafe"] == 8
+    assert result["counts"]["unsafe_miss_candidates"] == 8
+    assert result["counts"]["new_bests"] == 0
+    assert len(calls) == 10, "one baseline, eight trials, one final full replay"
+    assert calls[-1][1] is False, "best tape must be independently replayed"
