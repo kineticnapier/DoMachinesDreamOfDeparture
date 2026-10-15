@@ -80,17 +80,6 @@ def infer_hybrid(
                        tuple(modes), tuple(reasons))
 
 
-def _base_scores(seq: stage_t.TimingSequence, trace: HybridTrace) -> dict:
-    """Oracle evaluation only. Do not feed any result back to infer_hybrid."""
-    groups = {
-        name: {"all_visible": [], "near": [], "far": []}
-        for name in ("hybrid", "near_only_gru", "geometry", "constant")
-    }
-    per_mode = {name: {"all_visible": [], "near": []} for name in MODES}
-    reference_time = None
-    return {"groups": groups, "per_mode": per_mode}
-
-
 def _aggregate_scores(group: list[stage_t.TimingSequence],
                       traces: dict[int, HybridTrace],
                       reference: dict) -> dict:
