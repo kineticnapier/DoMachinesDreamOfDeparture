@@ -47,6 +47,22 @@ jumps upward. Events <10ms apart can have a **nonpositive** inter-sample
 true jump, even though the target changed; report these separately
 rather than falsely marking all non-increasing changes as failures.
 
+## Where does the old loss come from?
+
+The read-only audit also decomposes the **original frozen Stage T**
+objective into the same four true-distance bins:
+
+- time-regression component: Smooth L1 on predicted/true seconds scaled
+  by 200ms, weighted 1.0 for <=200ms and 0.25 for >200ms
+- near-event classification: BCE for the true <=200ms indicator
+
+Report each bin's absolute normalized contribution and proportion of
+the entire time-regression or BCE component. This is the loss summed
+over all observable Train-fit or Train-heldout frames with a global
+normalizer. It is **not** exactly the chunk-specific minibatch gradient
+in the 118-step optimization; claims about gradient domination require
+additional work.
+
 ## Visual plots (no optional plotting dependencies)
 
 Five write-once **SVG** traces, one per heldout Train chart (#02, #07,
