@@ -386,6 +386,18 @@ def _validate_prior(
     return p.sha256(path)
 
 
+def _verify_heldout_plot_coverage(plots: dict[Path, str], paths: dict[int, Path]) -> None:
+    """Compare destination paths to destination paths, not to anchor IDs."""
+    expected = set(paths.values())
+    actual = set(plots)
+    if actual != expected:
+        missing = sorted(str(item.name) for item in expected - actual)
+        extra = sorted(str(item.name) for item in actual - expected)
+        raise RuntimeError(
+            f"Missing Train-heldout Hybrid SVG overlay: missing={missing}, unexpected={extra}"
+        )
+
+
 def run_hybrid_audit(config: p.PrestigeConfig) -> dict:
     root = transfer.output_dir(config)
     report_path = root / REPORT
@@ -424,8 +436,7 @@ def run_hybrid_audit(config: p.PrestigeConfig) -> dict:
                 if seq.anchor not in paths:
                     raise RuntimeError("Unexpected chart-disjoint heldout anchor")
                 plots[paths[seq.anchor]] = _plot(seq, traces[seq.anchor])
-    if set(plots) != set(paths):
-        raise RuntimeError("Missing Train-heldout Hybrid SVG overlay")
+    _verify_heldout_plot_coverage(plots, paths)
     expected_snapshots = {
         **source.source_sha256,
         "near_only_report": p.sha256(root / ablation.REPORT),
