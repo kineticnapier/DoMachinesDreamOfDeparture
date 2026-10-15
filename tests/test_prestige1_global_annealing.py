@@ -161,7 +161,7 @@ def test_real_1ms_motor_replay_and_prefix_snapshot_match():
 
     chart = parse_adofai_text(
         '{"angleData":[0,0,0],'
-        '"settings":{"bpm":120,"pitch":100,"countdownTicks":0,'
+        '"settings":{"bpm":60,"pitch":100,"countdownTicks":0,'
         '"separateCountdownTime":false},"actions":[]}'
     )
     compiled = compile_adofai(chart)
