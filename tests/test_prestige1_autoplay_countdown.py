@@ -60,17 +60,22 @@ def test_predictions_can_count_down_but_be_offset():
 
 def test_event_switch_is_excluded_even_when_next_event_within_ten_ms():
     s = sequence()
-    new = readout.TimingSequence(
+    # The next target comes only 8ms after the old one. Its observed
+    # remaining time can decrease across the event-index boundary.
+    changed = readout.TimingSequence(
         anchor=s.anchor, chart_sha256=s.chart_sha256, visible=s.visible,
         remaining_s=torch.tensor([.025, .015, .005, .003, .0, .0]),
-        near=s.near, mask=s.mask,
-        event_indices=(0,0,0,1,1,1),
+        near=s.near,
+        mask=torch.tensor([True, True, True, True, False, False]),
+        event_indices=(0, 0, 0, 1, 1, 1),
     )
-    # At a multi-event boundary the target-time step need not be +10ms.
-    # Reuse only first pair; last few have zero labels not physically valid,
-    # so direct check that switched pair is not a same-event countdown.
-    with pytest.raises(RuntimeError, match="clock drifted"):
-        clock._pair_dynamics(new, [float(v) for v in new.remaining_s])
+    result = clock._pair_dynamics(
+        changed, [float(v) for v in changed.remaining_s])
+    assert len(result["same_residuals"]) == 2
+    assert len(result["switch_residuals"]) == 1
+    assert result["switch_truth_positive"] == 0
+    assert result["switch_truth_nonpositive"] == 1
+    assert result["switch_residuals"][0] == pytest.approx(0., abs=1e-5)
 
 
 def _floor(slot: int, features: list[float], *,
