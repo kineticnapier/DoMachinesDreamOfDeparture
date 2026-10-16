@@ -151,6 +151,7 @@ def _phase_audit(samples:tuple[Observed,...],segment,*,dt_s:float)->dict:
     )
     codes=Counter()
     same=0
+    tail_or_clamped=0
     good=0
     wrong=0
     max_err=0.
@@ -164,6 +165,13 @@ def _phase_audit(samples:tuple[Observed,...],segment,*,dt_s:float)->dict:
         b=segment.chart.floors[
             max(0,_floor_index(segment,current))]
         if a.index!=b.index or a.index==0:
+            continue
+        # The renderer clamps the final planet to its exit angle when the
+        # last floor ends. Same floor index alone does not mean active orbit
+        # motion: the episode has a post-chart tail. Exclude any interval
+        # that reaches or exceeds exit_time_s from constant-speed scoring.
+        if current>=b.exit_time_s-1e-10:
+            tail_or_clamped+=1
             continue
         same+=1
         codes[guess.status]+=1
@@ -190,6 +198,7 @@ def _phase_audit(samples:tuple[Observed,...],segment,*,dt_s:float)->dict:
         "sample_ms":dt_s*1000.,
         "total_pairs":max(0,len(samples)-1),
         "posthoc_same_floor_pairs":same,
+        "posthoc_tail_or_clamped_pairs_excluded":tail_or_clamped,
         "eligible":good+wrong,
         "correct_within_0p05deg":good,
         "wrong_above_0p05deg":wrong,
