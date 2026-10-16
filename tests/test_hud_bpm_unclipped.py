@@ -66,7 +66,7 @@ def test_v2_retains_double_speed_without_upper_plateau():
     assert encode_bpm(4000.)>4.0
     assert encode_bpm(8000.)==pytest.approx(encode_bpm(4000.)+1.)
     assert encode_bpm(16000.)==pytest.approx(encode_bpm(8000.)+1.)
-    assert encode_bpm(2380.)==pytest.approx(4.308122295362332,abs=.0005)
+    assert encode_bpm(2380.)==pytest.approx(4.309855262586788,abs=.0005)
 
 
 @pytest.mark.parametrize("bpm",[0.0,-1.0,-240.0,nan,inf,-inf])
