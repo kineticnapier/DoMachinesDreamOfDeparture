@@ -10,7 +10,7 @@ Neither candidate is adopted for inference or used for Motor training.
 
 from collections import Counter
 from dataclasses import dataclass
-from math import atan2, isfinite, pi, sin
+from math import atan2, cos, isfinite, pi, sin
 import json
 from pathlib import Path
 
