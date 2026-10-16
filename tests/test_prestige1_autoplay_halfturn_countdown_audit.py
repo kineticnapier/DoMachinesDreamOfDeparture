@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import replace
-from math import atan2, cos, pi, sin
+from math import atan2, pi, sin
 
 import pytest
 import torch
@@ -51,11 +51,13 @@ def truth_after_switch() -> float:
 def seq(anchor:int,*,event_switch:bool, true_remaining:float|None=None):
     visible=torch.tensor(input_frames(),dtype=torch.float32)
     remaining=truth_after_switch() if true_remaining is None else true_remaining
+    samples = ((.30,.29,remaining,remaining-.01) if event_switch
+               else (.30,.29,.28,.27))
     return stage_t.TimingSequence(
         anchor=anchor,
         chart_sha256=(str(anchor)*64)[:64],
         visible=visible,
-        remaining_s=torch.tensor((.30,.29,remaining,remaining-.01)),
+        remaining_s=torch.tensor(samples),
         near=torch.tensor((False,False,True,True)),
         mask=torch.ones(4,dtype=torch.bool),
         event_indices=(0,0,1,1) if event_switch else (0,0,0,0),
