@@ -203,9 +203,14 @@ def test_same_event_and_true_switch_accounting_is_posthoc():
         assert info["switch"]["timing"]["mae_ms"]<.001
         # In high-BPM ordinary same-event frames, Geometry may also make
         # valid timing proposals. They are never filtered using oracle labels.
+        # Score the same-event indices of BOTH synthetic sequences.
+        # The predictions were computed from HUD only, before oracle labels.
         eligible_same=sum(
-            proposals[name][k].seconds is not None for k in (2,3)
-        ) + int(proposals[name][3].seconds is not None)
+            values[name][k].seconds is not None
+            for ids in ((0,0,1,1),(0,0,0,0))
+            for k in range(1,len(ids))
+            if ids[k-1]==ids[k]
+        )
         assert info["same_event"]["eligible"]==eligible_same
         assert info["same_event_false_positive_rate"]==pytest.approx(
             eligible_same/5)
