@@ -28,11 +28,13 @@ from dmdod.features.hud_features import (
     HUD_FEATURE_DIM,
     HUD_JUDGEMENTS,
     encode_bpm,
+    encode_bpm_legacy_v1,
 )
 
 
 N_KEY_REAL_CHART_FEATURE_VERSION = "n-key-visible-geometry-v1"
-N_KEY_HUD_FEATURE_VERSION = "n-key-tbpm-rbpm-feedback-v1"
+N_KEY_HUD_FEATURE_VERSION = "n-key-tbpm-rbpm-feedback-v2-unclipped"
+LEGACY_N_KEY_HUD_FEATURE_VERSION = "n-key-tbpm-rbpm-feedback-v1"
 
 
 def n_key_motor_observation_dim(key_count: int) -> int:
@@ -355,7 +357,8 @@ def _clip(value: float, low: float, high: float) -> float:
 
 
 def encode_n_key_hud_real_chart_observation(
-    observation: NKeyHudRealChartObservation,
+    observation: NKeyHudRealChartObservation, *,
+    legacy_bpm_encoding: bool = False,
 ) -> tuple[float, ...]:
     key_count = len(observation.motor.key_names)
     base = NKeyRealChartObservation(
@@ -365,11 +368,12 @@ def encode_n_key_hud_real_chart_observation(
         floors=observation.floors,
     )
     values = list(encode_n_key_real_chart_observation(base))
+    bpm_encoder = encode_bpm_legacy_v1 if legacy_bpm_encoding else encode_bpm
     visible = bool(observation.feedback_visible and observation.last_judgement is not None)
     values.extend(
         (
-            encode_bpm(observation.tile_bpm),
-            encode_bpm(observation.real_bpm),
+            bpm_encoder(observation.tile_bpm),
+            bpm_encoder(observation.real_bpm),
             1.0 if visible else 0.0,
             _clip(
                 observation.last_timing_error_ms / HUD_ERROR_SCALE_MS,
