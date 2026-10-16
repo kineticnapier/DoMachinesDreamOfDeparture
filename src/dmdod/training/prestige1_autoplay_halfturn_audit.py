@@ -10,7 +10,6 @@ geometry guard, network, checkpoint or motor policy is changed.
 from collections import Counter
 import json
 from math import atan2, ceil, isfinite, pi
-from pathlib import Path
 from statistics import mean, median
 
 from . import prestige1 as p
@@ -210,6 +209,7 @@ def run_halfturn_audit(config:p.PrestigeConfig) -> dict:
     prior_path=root/special.REPORT
     if not prior_path.is_file():
         raise FileNotFoundError("Run special/motion audit first")
+    saved_sha=p.sha256(prior_path)
     saved=json.loads(prior_path.read_text(encoding="utf-8"))
     required={
         **source.source_sha256,
