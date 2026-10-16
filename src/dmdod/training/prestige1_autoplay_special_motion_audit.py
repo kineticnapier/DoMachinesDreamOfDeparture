@@ -356,6 +356,7 @@ def _verify_frozen_first_frame(
     initial_sources: dict,
     scores: dict,
     switches: dict,
+    traces: dict,
 ) -> str:
     path = source.root / previous.REPORT
     if not path.is_file():
@@ -383,21 +384,32 @@ def _verify_frozen_first_frame(
         ("train_fit",source.fit),("train_heldout",source.heldout)
     ):
         recorded = saved["results"][split]
-        actual = previous._score_split(
-            group,
-            # expensive frozen GRU inference is already replayed by caller,
-            # but this verification only needs original abstention + candidates.
-            # Scores/counts will be checked against the saved report downstream.
-            # The caller provides this via separate precomputed traces.
-            # Placeholder must never be used here.
-            {},
-        ) if False else None
-        # Re-check the exact frozen event/Geometry count already verified
-        # against the near-only and HUD reports.
-        if recorded["oracle_true_switches"] != switches[split]["event_switches_observed"]:
+        actual = previous._score_split(group, traces[split])
+        for field in (
+            "oracle_true_switches", "original_floor_changed_at_switch",
+            "original_geometry_abstention_at_switch",
+        ):
+            if recorded[field] != actual[field]:
+                raise RuntimeError(f"Frozen first-frame replay drifted: {split}/{field}")
+        for candidate in previous.CANDIDATES:
+            old = recorded["candidates_on_same_oracle_switch_frames"][candidate]
+            new = actual["candidates_on_same_oracle_switch_frames"][candidate]
+            if old["eligible_switches"] != new["eligible_switches"]:
+                raise RuntimeError("Frozen first-frame candidate eligibility changed")
+            for score_key in ("absolute_time_error", "near_time_error",
+                              "same_frame_frozen_gru"):
+                before, after = old[score_key], new[score_key]
+                if before["count"] != after["count"]:
+                    raise RuntimeError(f"Frozen first-frame sample changed: {candidate}")
+                if before["mae_ms"] is None:
+                    if after["mae_ms"] is not None:
+                        raise RuntimeError("Frozen empty first-frame metric changed")
+                elif after["mae_ms"] is None or abs(
+                    before["mae_ms"]-after["mae_ms"]
+                ) > .05:
+                    raise RuntimeError(f"Frozen first-frame MAE changed: {candidate}")
+        if actual["oracle_true_switches"] != switches[split]["event_switches_observed"]:
             raise RuntimeError("First-frame switch count drifted")
-        if recorded["original_floor_changed_at_switch"] > recorded["oracle_true_switches"]:
-            raise RuntimeError("Invalid frozen Geometry counts")
         if scores[split]["near_frames"] <= 0:
             raise RuntimeError("Frozen Hybrid near-event coverage missing")
     return p.sha256(path)
@@ -412,7 +424,7 @@ def run_special_motion_audit(config: p.PrestigeConfig) -> dict:
     previous_sha = hybrid._validate_prior(
         root,source,near_report,fingerprints,frozen)
     inputs = {**fingerprints,"near_only_countdown":previous_sha}
-    scores,switches,results = {},{},{}
+    scores,switches,results,traces_by_split = {},{},{},{}
     for split, group in (
         ("train_fit",source.fit),("train_heldout",source.heldout)
     ):
@@ -420,6 +432,7 @@ def run_special_motion_audit(config: p.PrestigeConfig) -> dict:
             seq.anchor:hybrid.infer_hybrid(seq.visible,frozen)
             for seq in group
         }
+        traces_by_split[split] = traces
         scores[split] = hybrid._aggregate_scores(group,traces,source.reference)
         switches[split] = hybrid._switching_scores(group,traces)
         results[split] = _describe_split(group)
@@ -430,7 +443,7 @@ def run_special_motion_audit(config: p.PrestigeConfig) -> dict:
     switch_hud_sha = previous._verify_prior_report(
         source,config,inputs,scores,switches)
     first_frame_sha = _verify_frozen_first_frame(
-        source,config,inputs,scores,switches)
+        source,config,inputs,scores,switches,traces_by_split)
     protected = {
         **source.source_sha256,
         "near_only_report":p.sha256(root/ablation.REPORT),
