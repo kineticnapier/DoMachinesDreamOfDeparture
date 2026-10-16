@@ -35,8 +35,9 @@ def main() -> None:
         )
         print(
             "  Orbit step difference (crossing - previous): "
-            f"MAE={fmt(continuity['crossing_step_minus_previous_step_deg']['mae_ms'])}"
-            " (degrees, not milliseconds); "
+            f"mean absolute difference="
+            f"{continuity['crossing_step_minus_previous_step_deg']['mae_ms']:.3f}deg"
+            " (angular quantity); "
             f"flipped direction={continuity['direction_flips']}",
             flush=True,
         )
