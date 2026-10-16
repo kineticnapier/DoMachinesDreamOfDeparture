@@ -23,6 +23,7 @@ def test_real_physics_and_renderer_1ms_recovers_signed_angle(bpm,reverse):
     result=audit._one(bpm,reverse)
     assert result["target_count"]>=24
     assert result["episode_done"] is True
+    assert result["independent_10ms_replay_verified"] is True
     assert result["hud_decoded_tile_bpm"]==pytest.approx(bpm,abs=.03)
     assert result["hud_encoded_tile_bpm"]>4.
     assert result["samples_1ms"]>10*result["samples_10ms"]-10
