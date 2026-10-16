@@ -164,7 +164,7 @@ def test_no_finite_motion_input_rejects_before_scoring():
 
 def test_empty_population_reports_are_well_defined_without_division_by_zero():
     assert audit._motion_report([])["count"] == 0
-    assert audit._motion_report([])["quantities"]["crossing_speed_ratio"]["mae_ms"] is None
+    assert audit._motion_report([])["quantities"]["crossing_speed_ratio"]["mean_abs"] is None
     markers = audit._marker_report([])
     assert markers["count"] == 0
     assert all(value == 0 for value in markers["marker_occurrences_by_slot"]["next"].values())
