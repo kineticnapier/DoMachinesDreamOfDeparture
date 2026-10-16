@@ -161,7 +161,7 @@ def _collect_one(named, *, role: str, anchor: int, lead_s: float, device: torch.
     xs, actions, labels, masks = [], [], [], []
     max_steps = math.ceil((named.segment.duration_s + 2.0) / CONTROL_DT) + 200
     for _ in range(max_steps):
-        visible = encode_n_key_hud_real_chart_observation(observation)
+        visible = encode_n_key_hud_real_chart_observation(observation, legacy_bpm_encoding=True)
         if len(visible) != INPUT_DIM:
             raise RuntimeError('263D visible HUD changed')
         # Access to episode clock and chart is confined to truth generation.
