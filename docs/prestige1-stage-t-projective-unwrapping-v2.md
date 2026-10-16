@@ -28,8 +28,10 @@ On each observed frame pair, compute the usual RP1 step r in
 
 from the human-visible unclipped v2 Tile BPM feature.
 
-Build candidates r+k*pi over integer k from
--ceil(expected/pi)-3 to +ceil(expected/pi)+3.
+Build candidates r+k*pi around the two closest signed-speed branches,
+k~round((+expected-r)/pi) and k~round((-expected-r)/pi), plus their
+fixed +-2 neighbors (no loop proportional to BPM). If the phase count
+exceeds floating-point exact resolution, abstain as numerical ambiguity.
 
 The candidate with minimum |abs(r+k*pi)-expected| is accepted ONLY if:
 
