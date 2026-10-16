@@ -15,7 +15,7 @@ exact times only segment/score the resulting diagnostics AFTER inference.
 
 from collections import Counter
 import json
-from math import atan2, isfinite, pi
+from math import atan2, ceil, isfinite, pi
 from pathlib import Path
 import statistics
 
@@ -36,7 +36,6 @@ from . import prestige1_transfer as transfer
 FORMAT = "prestige1-stage-t-special-and-motion-failure-classification-train20-v1"
 REPORT = "stage_timing_autoplay_special_motion_train20.json"
 MARKERS = tuple(REAL_CHART_EVENT_MARKERS)
-GROUPS = ("carried_special_event", "original_inconsistent_orbit_motion")
 SPEED_BAND = (0.5, 1.5)  # EXACT existing frozen geometry_one guard
 EXAMPLE_COUNT = 8
 
@@ -129,11 +128,23 @@ def hud_motion_snapshot(
 
 
 def _number_summary(values: list[float], *, unit: str) -> dict:
+    """Dimensionally honest summary: angles are degrees; speeds are ratios."""
+    if not values:
+        return {
+            "unit":unit, "count":0, "mean":None, "mean_abs":None,
+            "median":None, "p95_abs":None, "min":None, "max":None,
+        }
+    ascending = sorted(values)
+    absolute = sorted(abs(v) for v in values)
     return {
-        "unit": unit, **cd._summary(values),
-        "signed_mean": statistics.mean(values) if values else None,
-        "min": min(values) if values else None,
-        "max": max(values) if values else None,
+        "unit": unit,
+        "count": len(values),
+        "mean": statistics.mean(values),
+        "mean_abs": statistics.mean(absolute),
+        "median": statistics.median(ascending),
+        "p95_abs": absolute[ceil(.95*len(values))-1],
+        "min": ascending[0],
+        "max": ascending[-1],
     }
 
 
