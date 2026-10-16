@@ -9,7 +9,7 @@ changes the predictor, its thresholds, checkpoints, Geometry, or Stage A.
 
 from collections import Counter, defaultdict
 import json
-from math import atan2, ceil, isfinite, pi
+from math import atan2, ceil, pi
 from statistics import mean
 
 from . import prestige1 as p
@@ -141,7 +141,6 @@ def _replay_split(group: list, traces:dict) -> dict:
     floor_errors={name:[] for name in CANDIDATES}
     floor_rows={name:[] for name in CANDIDATES}
     all_rows={name:[] for name in CANDIDATES}
-    unadopted=Counter()
     by_status=Counter()
     by_original=Counter()
     same_event=0
@@ -180,6 +179,12 @@ def _replay_split(group: list, traces:dict) -> dict:
                     "predicted_remaining_ms":candidate.seconds*1000,
                     "oracle_remaining_ms":true_s*1000,
                     "error_ms":(candidate.seconds-true_s)*1000,
+                    "error_in_control_frames":(candidate.seconds-true_s)/p.CONTROL_DT,
+                    "phase_equivalent_error_deg":(
+                        (candidate.seconds-true_s)
+                        * pi * cd.HUD_BPM_REFERENCE * 2.**hud[k][cd.HUD_OFFSET]
+                        / 60. * 180./pi
+                    ),
                     "matched_gru_error_ms":(trace.fallback_s[k]-true_s)*1000,
                     "matched_hybrid_error_ms":(trace.chosen_s[k]-true_s)*1000,
                     **_frame_properties(hud[k-1],hud[k],snapshots[k]),
@@ -212,7 +217,9 @@ def _replay_split(group: list, traces:dict) -> dict:
             for (orig,status),cnt in sorted(by_original.items())
         ],
         "noneligible_original_reasons":dict(sorted(Counter(
-            row["original_status"] for row in [] # empty placeholder below
+            {origin:sum(n for (reason_origin,_),n in by_original.items()
+                        if reason_origin==origin)
+             for origin in {reason_origin for (reason_origin,_) in by_original}}
         ).items())),
     }
 
