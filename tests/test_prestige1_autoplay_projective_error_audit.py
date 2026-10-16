@@ -134,10 +134,6 @@ def test_oracle_label_changes_affect_only_scoring_not_hud_predictions():
     assert projective.causal_projective_candidates(original)==projective.causal_projective_candidates(new)
     output=audit._replay_split([seq],{seq.anchor:_trace(seq)})
     assert output["switch_count"]==1
-    with pytest.raises(RuntimeError,match="No valid"):
-        # This lower-level replay has no minimum positive-case restriction;
-        # its empty-switch count is instead asserted below.
-        raise RuntimeError("No valid")
     negative=audit._replay_split([same],{same.anchor:_trace(same)})
     assert negative["switch_count"]==0
     assert negative["same_event_pair_count"]==3
