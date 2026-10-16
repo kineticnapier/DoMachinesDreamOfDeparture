@@ -1,6 +1,11 @@
 from dmdod.motor.contact_16k import ContactAction, Coupled16ContactMotor, PHYSICAL_AXES
 from dmdod.planning.fingering_reservation_counterfactual import forecast_reservation_swap
-from scripts.compare_nerfed_fingering_v05 import score_future_readiness
+from pathlib import Path
+import sys
+
+# scripts/ contains standalone entry points with sibling imports, not a package.
+sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "scripts"))
+from compare_nerfed_fingering_v05 import score_future_readiness
 
 
 def test_no_future_note_no_penalty():
