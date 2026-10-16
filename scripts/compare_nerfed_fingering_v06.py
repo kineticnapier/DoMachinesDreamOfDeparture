@@ -142,7 +142,7 @@ def next_note_rollout(motor, action, forecast, note_times, reservations,
             "evaluated": len(eligible_axes)}
 
 
-def choose_swap(motor, action, reservations, note_times, source, *, horizon_frames=7):
+def choose_swap(motor, action, reservations, note_times, source, *, horizon_frames=7, candidate_scores=None):
     """Rank swap by scored first-note forecast plus simulated next-note press."""
     results = []
     rejections = 0
@@ -159,8 +159,11 @@ def choose_swap(motor, action, reservations, note_times, source, *, horizon_fram
             continue
         results.append(forecast)
     ranked = []
+    scores = []
     for r in results:
         if not r.feasible:
+            scores.append({"axis": r.candidate_axis, "feasible": False,
+                           "first_error_ms": r.timing_mae_ms, "reason": "local_forecast_failed"})
             continue
         future = next_note_rollout(motor, action, r, note_times, reservations,
                                   horizon_frames=horizon_frames)
@@ -168,8 +171,22 @@ def choose_swap(motor, action, reservations, note_times, source, *, horizon_fram
         # the unchanged oracle teacher's actual subsequent choice.
         combined = (float("inf") if r.timing_mae_ms is None else r.timing_mae_ms)
         combined += future["second_error_ms"]
+        scores.append({"axis": r.candidate_axis, "feasible": True,
+                       "first_error_ms": r.timing_mae_ms,
+                       "second_error_ms": future["second_error_ms"],
+                       "next_ordinal": future["next_ordinal"],
+                       "next_axis": future["next_axis"],
+                       "second_down_ms": future["second_down_ms"],
+                       "next_axes_evaluated": future["evaluated"],
+                       "combined_error_ms": combined})
         ranked.append((combined, r.candidate_axis, r))
     ranked.sort(key=lambda x: (x[0], x[1]))
+    if candidate_scores is not None:
+        winner = ranked[0][1] if ranked else None
+        candidate_scores.extend({**row, "selected": row["axis"] == winner,
+                                 "reason": "minimum_combined_error" if row["axis"] == winner
+                                           else row.get("reason", "higher_combined_error")}
+                                for row in scores)
     return (ranked[0][2] if ranked else None), len(results), rejections
 
 
@@ -206,9 +223,10 @@ def compare(chart: Path, *, end_s: float = 15., after_s: float = 0.,
                 ix = PHYSICAL_AXES.index(source)
                 if actual_action.commands[ix] <= 0:
                     continue
+                candidate_scores = []
                 chosen, evaluated, rejected = choose_swap(
                     self.motor, actual_action, assigned, note_times, source,
-                    horizon_frames=horizon_frames)
+                    horizon_frames=horizon_frames, candidate_scores=candidate_scores)
                 counts["candidate_evaluations"] += evaluated
                 counts["candidate_rejections"] += rejected
                 if chosen is None:
@@ -231,6 +249,7 @@ def compare(chart: Path, *, end_s: float = 15., after_s: float = 0.,
                     "from": source, "to": dest,
                     "forecast": asdict(chosen),
                     "local_candidates_evaluated": evaluated,
+                    "candidate_scores": candidate_scores,
                 })
                 counts["attempted_swaps"] += 1
                 assigned.pop(source)
@@ -248,7 +267,7 @@ def compare(chart: Path, *, end_s: float = 15., after_s: float = 0.,
             "margin": credited[n]["margin"] if n in credited else None,
         } for n in item["ordinals"]]
     return {
-        "format": "dmdod-stage-c-fingering-closed-loop-v06",
+        "format": "dmdod-stage-c-fingering-closed-loop-v06-candidate-diagnostics",
         "chart_sha256": sha256(raw).hexdigest(),
         "segment_end_s": end_s, "swap_after_s": after_s,
         "max_swaps": max_swaps, "horizon_frames": horizon_frames,
@@ -270,7 +289,7 @@ def compare(chart: Path, *, end_s: float = 15., after_s: float = 0.,
             "One selected reservation is altered at a time; future teacher reservations are recomputed.",
             "Real simulator scoring is used, but ADOFAI Multipress is not fully reproduced.",
             "Only explicitly sampled segment and candidate budget are evaluated.",
-            "Future readiness penalty tests axis reset only; not a full upcoming note allocation.",
+            "Two-event lookahead is only a local physical surrogate, not a committed next-note allocation.",
         ],
     }
 
