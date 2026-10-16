@@ -139,7 +139,7 @@ def capture_one(named, anchor: int, config: p.PrestigeConfig, *, device: torch.d
     max_steps = math.ceil((named.segment.duration_s + 2.0) / p.CONTROL_DT) + 200
     last_time = -math.inf
     for _ in range(max_steps):
-        features = tuple(encode_n_key_hud_real_chart_observation(observation))
+        features = tuple(encode_n_key_hud_real_chart_observation(observation, legacy_bpm_encoding=True))
         if len(features) != p.INPUT_DIM or not all(math.isfinite(x) for x in features):
             raise RuntimeError("Causal 263D HUD observation failed")
         now = float(env.privileged_episode_time_s())
