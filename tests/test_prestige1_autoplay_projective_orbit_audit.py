@@ -201,10 +201,27 @@ def test_original_special_guard_and_input_validation():
     bad=tuple(float("nan") if i==3 else value for i,value in enumerate(data[2]))
     with pytest.raises(ValueError,match="Nonfinite"):
         projective.causal_projective_candidates((data[0],data[1],bad))
-    special=(data[0],data[1],hud(.4+2*STEP+2*pi,special=True))
-    values,reasons,_=projective.causal_projective_candidates(special)
+    # Twirl introduced at k=2 also changes the current-floor 15D HUD.
+    # Frozen geometry checks floor_changed BEFORE special_event.
+    newly_marked=(data[0],data[1],hud(.4+2*STEP+2*pi,special=True))
+    values,reasons,_=projective.causal_projective_candidates(newly_marked)
+    assert reasons[2]=="floor_changed"
+    for name in projective.CANDIDATES:
+        assert values[name][2].status=="special_event"
+        assert values[name][2].seconds is None
+
+    # When the Twirl marker was already present before the transition,
+    # the original Geometry itself must abstain as special_event.
+    already_marked=(
+        hud(.4,special=True),
+        hud(.4+STEP+pi,special=True),
+        hud(.4+2*STEP+2*pi,special=True),
+    )
+    values,reasons,_=projective.causal_projective_candidates(already_marked)
     assert reasons[2]=="special_event"
-    assert values["projective_speed"][2].status=="not_target_guard"
+    for name in projective.CANDIDATES:
+        assert values[name][2].status=="not_target_guard"
+        assert values[name][2].seconds is None
 
 
 def test_zero_orbit_and_status_guards():
