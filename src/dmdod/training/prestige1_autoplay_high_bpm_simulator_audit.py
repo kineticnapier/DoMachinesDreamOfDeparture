@@ -31,7 +31,7 @@ from . import prestige1_autoplay_countdown as cd
 from . import prestige1_autoplay_projective_unwrap_audit as unwrap
 from . import prestige1_transfer as transfer
 
-FORMAT = "prestige1-stage-t-physical-simulator-bpm-through-20000-v1"
+FORMAT = "prestige1-stage-t-physical-simulator-bpm-through-20000-readonly-v1"
 REPORT = "stage_timing_simulator_20000bpm_readonly.json"
 PHYSICS_DT_S = 0.001
 CONTROL_DT_S = 0.010
