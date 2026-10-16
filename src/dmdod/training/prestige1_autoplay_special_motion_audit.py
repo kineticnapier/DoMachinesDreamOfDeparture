@@ -368,6 +368,7 @@ def _verify_frozen_first_frame(
     scores: dict,
     switches: dict,
     traces: dict,
+    breakdown: dict,
 ) -> str:
     path = source.root / previous.REPORT
     if not path.is_file():
@@ -402,6 +403,13 @@ def _verify_frozen_first_frame(
         ):
             if recorded[field] != actual[field]:
                 raise RuntimeError(f"Frozen first-frame replay drifted: {split}/{field}")
+        if (breakdown[split]["original_geometry_first_rejection"]
+                != actual["original_geometry_abstention_at_switch"]):
+            raise RuntimeError("New original Geometry status counts changed")
+        if (breakdown[split]["counterfactual_carried_first_rejection"]
+                != actual["candidates_on_same_oracle_switch_frames"]
+                ["carried_previous_step"]["statuses_at_true_switch"]):
+            raise RuntimeError("New carried Geometry status counts changed")
         for candidate in previous.CANDIDATES:
             old = recorded["candidates_on_same_oracle_switch_frames"][candidate]
             new = actual["candidates_on_same_oracle_switch_frames"][candidate]
@@ -454,7 +462,7 @@ def run_special_motion_audit(config: p.PrestigeConfig) -> dict:
     switch_hud_sha = previous._verify_prior_report(
         source,config,inputs,scores,switches)
     first_frame_sha = _verify_frozen_first_frame(
-        source,config,inputs,scores,switches,traces_by_split)
+        source,config,inputs,scores,switches,traces_by_split,results)
     protected = {
         **source.source_sha256,
         "near_only_report":p.sha256(root/ablation.REPORT),
