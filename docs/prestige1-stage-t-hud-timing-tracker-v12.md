@@ -29,3 +29,21 @@ uv run pytest -q tests/test_hud_timing_tracker_v1.py tests/test_hud_timing_track
 
 Run read-only chart audit:
 uv run python -u scripts/audit_hud_timing_tracker_current_speed_v12.py PATH_TO_NERFED.adofai --end-s 65 --output diagnostics/timing-tracker-v12-nerfed65s.json
+
+
+## Missed-target attribution on the fixed real-chart clip
+
+Read-only posthoc diagnosis of the 61 untracked target times, assigning the
+tracker status at each due instant:
+
+- 34: full_turn_or_zero_arc
+- 24: special_future_floor
+- 2: special_event
+- 1: eligible despite the target remaining untracked
+
+These are status correlations, not a proof of exact failure cause.
+Last-30ms context grouped 18 all-full-turn, 16 mixed full-turn,
+24 future-special, 2 current-special, and 1 other. Next high-value work is
+a conservative HUD-only full-turn interpretation, then special-event
+timing with separate speed/pause contracts. Do not invent progress when the
+input does not resolve the ambiguity.
