@@ -142,7 +142,7 @@ def _frames_for_train_anchor(named, config, *, anchor):
     examples = []
     max_steps = int((named.segment.duration_s + 2.0) / p.CONTROL_DT) + 200
     for frame in range(max_steps):
-        visible = encode_n_key_hud_real_chart_observation(obs)
+        visible = encode_n_key_hud_real_chart_observation(obs, legacy_bpm_encoding=True)
         if len(visible) != p.INPUT_DIM:
             raise RuntimeError("Visible 263D HUD changed")
         now_s = float(env.privileged_episode_time_s())
