@@ -168,3 +168,57 @@ def test_metadata_guard_contract():
     assert p.CONTROL_DT==.010
     assert u.MAX_SPEED_REL_ERROR<.5
     assert u.MIN_UNIQUENESS_REL_GAP>0
+
+
+def test_same_event_and_true_switch_accounting_is_posthoc():
+    from dmdod.training.prestige1_autoplay_readout import TimingSequence
+
+    hud=sequence(4000.,floor_changed=True)
+    values,orig=u.causal_candidates(hud)
+    assert orig[2]=="floor_changed"
+    oracle=values["unwrap_speed"][2].seconds
+    assert oracle is not None
+
+    def make(anchor:int,*,switch:bool,remaining:float):
+        return TimingSequence(
+            anchor=anchor,chart_sha256=f"{anchor:064x}",
+            visible=torch.tensor(hud,dtype=torch.float32),
+            remaining_s=torch.tensor(
+                (.20,.19,remaining,remaining-.01) if switch else
+                (.20,.19,.18,.17),dtype=torch.float32),
+            near=torch.zeros(4,dtype=torch.bool),
+            mask=torch.ones(4,dtype=torch.bool),
+            event_indices=(0,0,1,1) if switch else (0,0,0,0),
+        )
+
+    scored=u._score([
+        make(1,switch=True,remaining=oracle),
+        make(2,switch=False,remaining=oracle),
+    ])
+    assert scored["oracle_pair_counts"]=={"switch":1,"same_event":5}
+    assert scored["original_geometry_switch_reasons"]=={"floor_changed":1}
+    for name in u.CANDIDATES:
+        info=scored["candidate_results"][name]
+        assert info["switch"]["eligible"]==1
+        assert info["switch"]["timing"]["mae_ms"]<.001
+        assert info["same_event"]["eligible"]==1
+        assert info["same_event_false_positive_rate"]==pytest.approx(.2)
+        assert info["precision_descriptive"]==pytest.approx(.5)
+
+
+def test_very_large_finite_bpm_candidate_search_is_bounded():
+    # No candidate loop linear in BPM and, crucially, no BPM clipping.
+    frames=sequence(1e9,floor_changed=True)
+    result=u.unwrap_step(frames[1],frames[2])
+    assert result.status in (
+        "eligible","speed_not_credible","sign_or_alias_ambiguous",
+        "numerical_phase_ambiguity",
+    )
+
+
+def test_countdown_error_must_not_be_hidden_by_correct_unwrapped_angle():
+    frames=sequence(4000.)
+    proposals,_=u.causal_candidates(frames)
+    estimate=proposals["unwrap_speed"][2].seconds
+    assert estimate is not None
+    assert u._metric([1000*(estimate-(estimate+.02))])["mae_ms"]==pytest.approx(20.)
