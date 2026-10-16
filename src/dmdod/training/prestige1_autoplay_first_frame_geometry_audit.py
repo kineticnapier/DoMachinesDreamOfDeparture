@@ -10,7 +10,7 @@ Neither candidate is adopted for inference or used for Motor training.
 
 from collections import Counter
 from dataclasses import dataclass
-from math import atan2, cos, isfinite, pi, sin
+from math import atan2, isfinite, pi, sin
 import json
 from pathlib import Path
 
@@ -124,7 +124,7 @@ def _score_split(
         name: {
             "error": [], "near_error": [],
             "same_frame_gru_error": [], "same_frame_hybrid_error": [],
-            "eligible_true_switch": 0, "eligible_same_event": 0,
+            "eligible_true_switch": 0,
         }
         for name in CANDIDATES
     }
@@ -141,7 +141,6 @@ def _score_split(
     nonrecovery_reasons = Counter()
     nonrecovery_first_frame = Counter()
     first_frame_errors = []
-    new_event_special = Counter()
     per_anchor = []
 
     for seq in group:
@@ -216,7 +215,6 @@ def _score_split(
                     "next_geometry_delay_frames": (
                         first_stable-k if first_stable is not None else None),
                 })
-            new_event_special[statuses[k]] += 1
         per_anchor.append({
             "anchor": seq.anchor, "chart_sha256": seq.chart_sha256,
             "true_switches": anchor_switch,
