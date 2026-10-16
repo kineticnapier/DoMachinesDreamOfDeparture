@@ -127,7 +127,7 @@ def _closed_loop(model, named, *, device, anchor):
     with torch.no_grad():
         for index in range(max_steps):
             now = float(env.privileged_episode_time_s())
-            visible = encode_n_key_hud_real_chart_observation(observation)
+            visible = encode_n_key_hud_real_chart_observation(observation, legacy_bpm_encoding=True)
             if len(visible) != p.INPUT_DIM:
                 raise RuntimeError("Expected only 263D visible HUD input")
             x = torch.tensor(visible, dtype=torch.float32, device=device)
