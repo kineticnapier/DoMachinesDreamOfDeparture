@@ -81,7 +81,8 @@ def _bin(bpm:float)->str:
 
 
 def unwrap_step(
-    before: tuple[float, ...], now: tuple[float, ...],
+    before: tuple[float, ...], now: tuple[float, ...], *,
+    sample_dt_s: float = p.CONTROL_DT,
 ) -> Step:
     """Choose unique signed r+k*pi closest in MAGNITUDE to HUD Tile BPM.
 
@@ -89,6 +90,8 @@ def unwrap_step(
     The floor's is_ccw flag is NOT available in the 263D HUD. Therefore the
     ambiguous +speed/-speed case must abstain, never assume a direction.
     """
+    if not isfinite(sample_dt_s) or sample_dt_s <= 0.:
+        raise ValueError("sample_dt_s must be positive and finite")
     r = rp1.projective_step(before, now)
     bpm = _bpm(now)
     if r is None:
@@ -99,7 +102,7 @@ def unwrap_step(
     # instantaneous current Tile BPM does not describe its integral.
     if abs(now[cd.HUD_OFFSET] - before[cd.HUD_OFFSET]) > 1e-6:
         return Step(None, "bpm_changed_across_sample")
-    expected = pi*bpm/60. * p.CONTROL_DT
+    expected = pi*bpm/60. * sample_dt_s
     if not isfinite(expected) or expected <= 0.:
         return Step(None, "invalid_expected_step")
     # The two nearest signed-magnitude branches are at approximately
