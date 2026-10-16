@@ -10,11 +10,6 @@ from dmdod.training.prestige1_autoplay_special_motion_audit import (
 )
 
 
-def _mae(row: dict) -> str:
-    value = row["mae_ms"]
-    return f"{value:.3f}" if value is not None else "none"
-
-
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--config", default="configs/training/prestige1.toml")
@@ -51,9 +46,9 @@ def main() -> None:
                 flush=True,
             )
             print(
-                f"    crossing ratio mean={quantities['crossing_speed_ratio']['signed_mean']}, "
+                f"    crossing ratio mean={quantities['crossing_speed_ratio']['mean']}, "
                 f"prior/current ratio mean="
-                f"{quantities['prior_to_current_speed_ratio']['signed_mean']}, "
+                f"{quantities['prior_to_current_speed_ratio']['mean']}, "
                 f"direction flips={row['direction_flips']}, "
                 f"Tile BPM changed={row['tile_bpm_changed_count']}, "
                 f"Real BPM changed={row['real_bpm_changed_count']}",
