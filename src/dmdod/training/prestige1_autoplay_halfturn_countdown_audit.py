@@ -11,8 +11,7 @@ oracle truth is used only after all candidate estimates are calculated.
 from collections import Counter
 from dataclasses import dataclass
 import json
-from math import atan2, cos, isfinite, pi, radians, sin
-from pathlib import Path
+from math import atan2, isfinite, pi, radians, sin
 
 from . import prestige1 as p
 from . import prestige1_autoplay_countdown as cd
