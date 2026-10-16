@@ -8,9 +8,9 @@ are produced and v2 frames are independently matched to frozen v1 frames.
 The pretrained Stage A/Stage T models, Geometry and Hybrid are NEVER updated.
 """
 
-from collections import Counter, defaultdict
+from collections import Counter
 from dataclasses import dataclass, replace
-from math import atan2, ceil, cos, isfinite, log2, pi, sin
+from math import atan2, ceil, isfinite, pi
 import json
 from statistics import mean
 
@@ -20,6 +20,7 @@ from dmdod.envs.n_key import encode_n_key_hud_real_chart_observation
 from dmdod.features.hud_features import encode_bpm
 from dmdod.motor.capacity import CenterFirstNKeyTeacher
 from . import prestige1 as p
+from . import prestige1_alignment_audit as alignment
 from . import prestige1_autoplay_countdown as cd
 from . import prestige1_autoplay_diagnostics as frozen_source
 from . import prestige1_autoplay_projective_orbit_audit as rp1
@@ -179,7 +180,12 @@ def causal_candidates(
         orig=cd.geometry_one(frames[t-1],hud)[1] if t else "no_previous_hud_frame"
         original_statuses.append(orig)
         choices={name:Proposal(None,"not_original_guard",empty_step) for name in CANDIDATES}
-        if orig in ("floor_changed","inconsistent_orbit_motion"):
+        expected_bpm=_bpm(hud)
+        high_speed_ordinary = (
+            expected_bpm is not None and expected_bpm>=3000. and
+            orig in ("eligible_simple_floor","stopped_orbit")
+        )
+        if orig in ("floor_changed","inconsistent_orbit_motion") or high_speed_ordinary:
             if t<2:
                 choices={name:Proposal(None,"insufficient_history",empty_step)
                          for name in CANDIDATES}
@@ -198,7 +204,7 @@ def causal_candidates(
                     if prior.radians is None:
                         choices["unwrap_prior_agreement"]=Proposal(None,
                             "prior_"+prior.status,step)
-                    elif abs(cd._wrap(step.radians-prior.radians))> (
+                    elif abs(step.radians-prior.radians)> (
                             PRIOR_AGREEMENT_DEG*pi/180.):
                         # Wrap difference only because constant signed speed could
                         # vary by 2pi with a different k; report abstention.
@@ -239,10 +245,15 @@ def _capture_v2_visible(named, config:p.PrestigeConfig,
             if j not in (cd.HUD_OFFSET,cd.HUD_OFFSET+1) and abs(x-y)>COMPARE_HUD_TOL:
                 raise RuntimeError(
                     f"v2 replay altered non-BPM HUD anchor={expected.anchor} t={t} j={j}")
-        if abs(hud[cd.HUD_OFFSET]-old[cd.HUD_OFFSET])>1e-5 and (
-            old[cd.HUD_OFFSET]<3.999 or hud[cd.HUD_OFFSET]<4.
-        ):
-            raise RuntimeError("Unexpected non-saturation Tile BPM divergence")
+        # The old codec may differ ONLY by historical saturation at +-4.
+        for j in (cd.HUD_OFFSET,cd.HUD_OFFSET+1):
+            new_value=hud[j]
+            old_value=old[j]
+            if abs(new_value-old_value)>COMPARE_HUD_TOL and not (
+                (abs(old_value-4.)<COMPARE_HUD_TOL and new_value>4.)
+                or (abs(old_value+4.)<COMPARE_HUD_TOL and new_value< -4.)
+            ):
+                raise RuntimeError("v2 BPM differs outside frozen v1 clipping")
         now=float(env.privileged_episode_time_s())
         if now<=last_clock:
             raise RuntimeError("Non-monotonic v2 expert capture")
@@ -376,9 +387,7 @@ def run_unwrap_audit(config:p.PrestigeConfig)->dict:
         raise RuntimeError("Frozen RP1 provenance changed")
     # Independently recapture the same Train20 with the default (unclipped) v2
     # encoder and verify identical trajectories except for the two BPM slots.
-    selected,manifest=__import__(
-        "dmdod.training.prestige1_alignment_audit",fromlist=["_train_manifest"]
-    )._train_manifest(config)
+    selected,manifest=alignment._train_manifest(config)
     if manifest!=source.stage_report["train_manifest"]:
         raise RuntimeError("Train manifest has changed")
     frozen_by_id={s.anchor:s for s in [*source.fit,*source.heldout]}
@@ -427,6 +436,7 @@ def run_unwrap_audit(config:p.PrestigeConfig)->dict:
             "Stage T Train-heldout has already been repeatedly inspected",
             "An unclipped BPM may resolve aliasing but does not reveal unobserved floor/planet parity",
             "Signed speed ties, speed changes, special events and full turns abstain",
+            "At >=3000 BPM unwrapping also audits originally-eligible simple floors (old wrapped direction can be wrong)",
             "Multiple notes per frame / hidden phase counts remain possible",
             "Frozen v1 artifacts are NOT fed v2 inputs and Stage A gate stays FAIL",
         ],
