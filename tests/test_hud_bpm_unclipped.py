@@ -119,3 +119,33 @@ def test_eight_key_invalid_bpm_is_not_silently_clamped():
 def test_subnormal_positive_bpm_does_not_underflow_during_log_conversion():
     low=float.fromhex("0x0.0000000000001p-1022")
     assert encode_bpm(low)==pytest.approx(log2(low)-log2(120.))
+
+
+def test_projective_alias_guard_sees_real_4000_bpm_in_v2():
+    """Guard must receive 4000 BPM, not the frozen 1920 BPM plateau."""
+    from math import sin, cos, pi
+    from dmdod.training import prestige1 as prestige
+    from dmdod.training import prestige1_autoplay_projective_orbit_audit as rp1
+    from dmdod.training import prestige1_autoplay_countdown as countdown
+
+    def frame(theta: float, *, legacy: bool) -> tuple[float, ...]:
+        f=[0.0]*prestige.INPUT_DIM
+        f[countdown.MOTOR_FEATURES]=sin(theta)
+        f[countdown.MOTOR_FEATURES+1]=cos(theta)
+        f[countdown.HUD_OFFSET]=(
+            encode_bpm_legacy_v1(4000.) if legacy else encode_bpm(4000.)
+        )
+        return tuple(f)
+
+    # In 10 ms at 4000 BPM the physical step is 120 degrees. RP1 alone
+    # aliases this to -60 degrees and must not be treated as a safe step.
+    physical=pi*4000./60.*prestige.CONTROL_DT
+    v2=tuple(frame(i*physical,legacy=False) for i in range(3))
+    v1=tuple(frame(i*physical,legacy=True) for i in range(3))
+    current=rp1._snapshot(v2,2)
+    frozen=rp1._snapshot(v1,2)
+    assert current["tile_bpm"]==pytest.approx(4000.)
+    assert current["alias_risk"] is True
+    assert frozen["tile_bpm"]==pytest.approx(1920.)
+    assert frozen["alias_risk"] is False
+    assert current["current_step"]==pytest.approx(-pi/3.,abs=1e-7)
