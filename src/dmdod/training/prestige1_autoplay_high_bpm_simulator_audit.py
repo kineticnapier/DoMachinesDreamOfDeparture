@@ -114,6 +114,33 @@ def _capture(segment)->tuple[tuple[Observed,...],bool]:
     return tuple(data),done
 
 
+def _verify_direct_10ms(segment,coarse:tuple[Observed,...])->None:
+    """Require independent real 10ms physics/control replay to match 1ms decimation."""
+    env=DiagnosticHudNKeyRealChartMotorEnv(
+        segment,key_count=p.KEY_COUNT,
+        control_dt_s=CONTROL_DT_S,physics_dt_s=PHYSICS_DT_S,
+        behind_floors=FLOORS.behind_floors,
+        ahead_floors=FLOORS.ahead_floors,tail_s=.04,
+    )
+    observation=env.reset()
+    no_press=NKeyAction((0.,)*p.KEY_COUNT)
+    for index,expected in enumerate(coarse):
+        now=float(env.privileged_episode_time_s())
+        hud=encode_n_key_hud_real_chart_observation(observation)
+        if abs(now-expected.seconds)>1e-7:
+            raise RuntimeError("Independent 10ms control clock differs from 1ms trace")
+        if len(hud)!=len(expected.hud) or any(
+            abs(a-b)>1e-5 for a,b in zip(hud,expected.hud)
+        ):
+            raise RuntimeError(
+                f"Independent 10ms HUD differs from physical 1ms decimation at {index}")
+        if index<len(coarse)-1:
+            state=env.step(no_press)
+            if state.done:
+                raise RuntimeError("Independent 10ms environment ended early")
+            observation=state.observation
+
+
 def _phase_audit(samples:tuple[Observed,...],segment,*,dt_s:float)->dict:
     """Score only posthoc same-floor pairs against compiled renderer physics."""
     # Candidate inference uses ONLY adjacent HUDs, no floor index or truth.
@@ -250,6 +277,7 @@ def _one(bpm:float,reverse:bool)->dict:
     coarse=samples[::10]
     if not 5<len(coarse)<len(samples):
         raise RuntimeError("Insufficient 1ms/10ms HUD samples")
+    _verify_direct_10ms(segment,coarse)
     # Output range must be finite and unclipped, including at 20k.
     expected=unwrap._bpm(samples[0].hud)
     if expected is None or abs(expected-bpm)>.03 or (
@@ -267,6 +295,7 @@ def _one(bpm:float,reverse:bool)->dict:
         "hud_encoded_tile_bpm":samples[0].hud[cd.HUD_OFFSET],
         "hud_decoded_tile_bpm":expected,
         "episode_done":done,
+        "independent_10ms_replay_verified":True,
         "samples_1ms":len(samples),"samples_10ms":len(coarse),
         "phase_1ms":highres,
         "phase_10ms":regular,
