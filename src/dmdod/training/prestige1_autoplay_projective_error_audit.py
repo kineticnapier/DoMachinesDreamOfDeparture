@@ -266,6 +266,12 @@ def run_projective_error_audit(config:p.PrestigeConfig) -> dict:
                         or abs(prior_result["mae_ms"]-now_result["mae_ms"])>.05):
                         raise RuntimeError("Frozen RP1 MAE drift")
         results[split]=_replay_split(group,traces)
+        detailed=results[split]
+        excluded=sum(detailed["noneligible_projective_speed_by_status"].values())
+        accepted=detailed["eligible_all_by_candidate"]["projective_speed"]
+        if (excluded+accepted!=detailed["switch_count"]
+            or sum(detailed["noneligible_original_reasons"].values())!=excluded):
+            raise RuntimeError(f"Noneligible projective cases do not partition switches: {split}")
         if (results[split]["switch_count"]!=old["pair_totals"]["all_switch"]
             or results[split]["same_event_pair_count"]!=old["pair_totals"]["same_event"]):
             raise RuntimeError("RP1 detailed oracle cohort count drift")
@@ -274,8 +280,12 @@ def run_projective_error_audit(config:p.PrestigeConfig) -> dict:
             for section,old_label in (("all","all_switch"),("floor","original_floor")):
                 prev=old["double_angle_candidates"][name][old_label]
                 current=metrics[section]
-                if (current["count"]!=prev["eligible"]
-                    or abs(current["mean_abs"]-prev["candidate_timing"]["mae_ms"])>.01):
+                before_mae=prev["candidate_timing"]["mae_ms"]
+                after_mae=current["mean_abs"]
+                if (current["count"]!=prev["eligible"] or
+                    (before_mae is None)!=(after_mae is None) or
+                    (before_mae is not None and
+                     abs(after_mae-before_mae)>.01)):
                     raise RuntimeError(f"Detailed RP1 MAE drift: {split}/{name}/{section}")
     hybrid_sha=switch._check_saved_hybrid(
         root/hybrid.REPORT,config,source,initial,scores,switching)
