@@ -257,13 +257,15 @@ def _score_split(
         if len(trace.fallback_s)!=len(frames):
             raise RuntimeError("Frozen Hybrid frame count mismatch")
         anchor_total=Counter()
-        for k in range(2,len(frames)):
+        for k in range(1,len(frames)):
             if not(bool(seq.mask[k-1]) and bool(seq.mask[k])):
                 continue
             a,b=seq.event_indices[k-1:k+1]
             if a<0 or b<0:
                 continue
             is_switch=a!=b
+            if is_switch and k<2:
+                raise RuntimeError("Prior halfturn cohort cannot label frame 1 switch")
             primary="all_switch" if is_switch else "same_event"
             if is_switch:
                 status_counts["switch"][original[k]]+=1
@@ -298,12 +300,13 @@ def _score_split(
                     bucket=metrics[name][label]
                     bucket["total"]+=1
                     bucket["proposed"][c.status]+=1
-                    if snapshots[k]["projective_step_difference_abs_deg"] is not None:
+                    snap = snapshots[k]
+                    if snap is not None and snap["projective_step_difference_abs_deg"] is not None:
                         bucket["angular_residual_deg"].append(
-                            snapshots[k]["projective_step_difference_abs_deg"])
-                    if snapshots[k]["current_speed_ratio"] is not None:
+                            snap["projective_step_difference_abs_deg"])
+                    if snap is not None and snap["current_speed_ratio"] is not None:
                         bucket["angular_speed_ratio"].append(
-                            snapshots[k]["current_speed_ratio"])
+                            snap["current_speed_ratio"])
                     if c.seconds is None:
                         continue
                     error=(c.seconds-true_s)*1000.
