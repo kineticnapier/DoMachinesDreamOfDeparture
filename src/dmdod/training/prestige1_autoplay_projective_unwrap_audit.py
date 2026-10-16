@@ -10,7 +10,7 @@ The pretrained Stage A/Stage T models, Geometry and Hybrid are NEVER updated.
 
 from collections import Counter
 from dataclasses import dataclass, replace
-from math import atan2, ceil, isfinite, pi
+from math import atan2, isfinite, pi
 import json
 from statistics import mean
 
@@ -102,11 +102,16 @@ def unwrap_step(
     expected = pi*bpm/60. * p.CONTROL_DT
     if not isfinite(expected) or expected <= 0.:
         return Step(None, "invalid_expected_step")
-    # k need only span +-expected/pi plus a buffer; no artificial BPM cap.
-    max_k = ceil(expected/pi) + 3
+    # The two nearest signed-magnitude branches are at approximately
+    # +expected and -expected. Enumerate fixed neighboring lattice points
+    # around BOTH, not a range proportional to BPM (which could be huge).
+    # Extremely large phase counts exceed float resolution; fail closed.
+    if expected/pi >= 2.**52:
+        return Step(None, "numerical_phase_ambiguity")
+    bases=(round((expected-r)/pi),round((-expected-r)/pi))
+    indices={int(center+offset) for center in bases for offset in (-2,-1,0,1,2)}
     candidates = sorted(
-        ((abs(abs(r+k*pi)-expected), r+k*pi, k)
-         for k in range(-max_k, max_k+1)),
+        ((abs(abs(r+k*pi)-expected), r+k*pi, k) for k in indices),
         key=lambda candidate:(candidate[0],abs(candidate[1]),candidate[2])
     )
     first, second = candidates[0], candidates[1]
@@ -240,6 +245,10 @@ def _capture_v2_visible(named, config:p.PrestigeConfig,
             abs(hud[cd.HUD_OFFSET+1]-encode_bpm(observation.real_bpm))>1e-9
         ):
             raise RuntimeError("v2 encoded BPM mismatches the human-visible HUD")
+        for raw,code in ((observation.tile_bpm,hud[cd.HUD_OFFSET]),
+                         (observation.real_bpm,hud[cd.HUD_OFFSET+1])):
+            if raw>1920. and code<=4.:
+                raise RuntimeError("New v2 BPM HUD was unexpectedly clipped")
         old=expected.visible[t].detach().cpu().tolist()
         for j,(x,y) in enumerate(zip(hud,old)):
             if j not in (cd.HUD_OFFSET,cd.HUD_OFFSET+1) and abs(x-y)>COMPARE_HUD_TOL:
@@ -379,6 +388,8 @@ def run_unwrap_audit(config:p.PrestigeConfig)->dict:
     if (old.get("format")!=rp1.FORMAT or
         old.get("config_sha256")!=config.signature() or
         old.get("train_partition")!=source.partition or
+        any(old.get("source_sha256",{}).get(k)!=v
+            for k,v in source.source_sha256.items()) or
         old.get("no_training") is not True or
         old.get("motor_student_training_permitted") is not False or
         old.get("validation_evaluated") is not False or
