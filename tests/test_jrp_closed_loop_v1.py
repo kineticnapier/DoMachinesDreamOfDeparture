@@ -132,3 +132,16 @@ def test_frozen_prestige_adapter_rejects_changed_legacy_contract():
     model.input_dim = 264
     with pytest.raises(ValueError, match='263D / 8-key'):
         FrozenPrestigeMotorPolicy(model)
+
+
+def test_checkpoint_loader_rejects_core_provenance_before_model_load(tmp_path):
+    core=tmp_path/'core.pt'
+    core.write_bytes(b'not-the-trained-core')
+    checkpoint=tmp_path/'prestige.pt'
+    torch.save({
+        'format':'prestige1-bc-pretrained-transfer-v2','stage':'C','arm':'prestige',
+        'model':{'x':torch.tensor(1.)},'seed':2401,'config_sha256':'c',
+        'pretrained_sha256':'p','core_sha256':'wrong','updates':1,
+    },checkpoint)
+    with pytest.raises(RuntimeError,match='core mismatch'):
+        FrozenPrestigeMotorPolicy.load(checkpoint,core,expected_arm='prestige')

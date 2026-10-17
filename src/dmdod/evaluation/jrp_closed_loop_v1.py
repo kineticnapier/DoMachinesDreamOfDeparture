@@ -69,7 +69,7 @@ class FrozenPrestigeMotorPolicy:
     def load(cls, checkpoint: str | Path, core_path: str | Path, *,
              device: torch.device | str = 'cpu', expected_arm: str | None = None):
         """Load only a provenance-bearing Stage C v2 Motor checkpoint."""
-        from dmdod.training.prestige1 import PrestigeMotorStudent
+        from dmdod.training.prestige1 import PrestigeMotorStudent, sha256
 
         checkpoint = Path(checkpoint)
         core_path = Path(core_path)
@@ -90,6 +90,8 @@ class FrozenPrestigeMotorPolicy:
             raise RuntimeError('Prestige checkpoint arm mismatch')
         if not isinstance(payload['model'], dict) or not payload['model']:
             raise RuntimeError('empty Prestige checkpoint model state')
+        if payload['core_sha256'] != sha256(core_path):
+            raise RuntimeError('Prestige checkpoint MaleCNS core mismatch')
         model = PrestigeMotorStudent(core_path)
         model.load_state_dict(payload['model'], strict=True)
         policy = cls(model, device=device)
