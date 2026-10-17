@@ -42,3 +42,32 @@ predeclared Development selection, not a sweep.  Qualification must be run only
 after the 0.5 gate and its tests are committed and pushed.
 
 Qualification and Reserve metrics must not be used to change this threshold.
+
+## v3 Development result: safe but no improvement
+
+The frozen 0.5 gate removed the v2 JRP-only false forecast, but it also emitted
+no additional forecasts.  Both arms remained 1310/1340 matched with three
+baseline false events.  Motor remained 224 Hit / 1096 Miss / 62 Too Early /
+one Overload.  This is a safety recovery, not improvement.
+
+Report: `reports/prestige1-jrp-unseen-v3-development-4f9afdf.json`.
+
+## v4 phase continuation: rejected counterexample
+
+An isolated one-step phase hypothesis required two reconfirmed baseline elapsed
+events, agreement with displayed CBPM, no visible special marker, and confidence
+at least 0.5.  It was intended to bridge one v1.4 miss without recursive drift.
+
+Development decisively rejected it: 45 additions, **0 correct and 45 false**.
+Examples missed the nearest event by 93.75ms, 20.83ms, 88.24ms and 20.83ms.
+The displayed CBPM is the interval after the floor whose Hit last refreshed the
+overlay; when held on screen it is not a periodic cadence promise.  ADOFAI may
+change ordinary floor angles without any SetSpeed/Pause marker.  Agreement with
+past intervals therefore cannot license extrapolation into the next ordinary
+floor.
+
+Report: `reports/prestige1-jrp-unseen-v4-development-73f17ae.json`.
+
+The v4 code is retained as an isolated, tested rejected hypothesis.  It is not
+the adopted bridge.  Qualification20 and Reserve20 remain unopened because no
+Development candidate demonstrated improvement.

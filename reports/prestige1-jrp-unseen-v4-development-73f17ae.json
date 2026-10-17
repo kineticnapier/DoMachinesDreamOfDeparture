@@ -1,0 +1,2149 @@
+{
+  "version": "prestige1-jrp-checkpoint-unseen-v2",
+  "bridge_version": "stage-t-jrp-cbpm-phase-v4",
+  "status": "FAIL",
+  "generated_at_utc": "2026-10-17T02:35:07.225130+00:00",
+  "partition": "development",
+  "qualification_claim_permitted": false,
+  "selection": {
+    "source_role": "Train",
+    "checkpoint_train_excluded": true,
+    "ordering": "content_sha256",
+    "partition_sizes": [
+      20,
+      20,
+      20
+    ],
+    "window": "middle 8 seconds",
+    "no_metric_based_selection": true
+  },
+  "checkpoint": "checkpoints\\prestige1\\prestige_v2.pt",
+  "checkpoint_sha256": "241dc764ddde547edfe434e60bc9b78a125b0ebd4751575729c48033a1043a3e",
+  "core_sha256": "a9d00a26c24ad19e815a0d768851f8040e00748e3a6474a31ce786576f53c710",
+  "physical_outcome_parity": true,
+  "baseline": {
+    "charts": 20,
+    "targets": 1340,
+    "baseline_matches": 1310,
+    "baseline_tracking_rate": 0.9776119402985075,
+    "baseline_false": 3,
+    "combined_matches": 1310,
+    "combined_tracking_rate": 0.9776119402985075,
+    "combined_false": 3,
+    "jrp_added": 0,
+    "jrp_matched": 0,
+    "jrp_false": 0,
+    "motor_hits": 224,
+    "motor_misses": 1096,
+    "motor_too_early": 62,
+    "motor_overloads": 1,
+    "physical_keydowns": 286
+  },
+  "jrp_visible": {
+    "charts": 20,
+    "targets": 1340,
+    "baseline_matches": 1310,
+    "baseline_tracking_rate": 0.9776119402985075,
+    "baseline_false": 3,
+    "combined_matches": 1310,
+    "combined_tracking_rate": 0.9776119402985075,
+    "combined_false": 48,
+    "jrp_added": 45,
+    "jrp_matched": 0,
+    "jrp_false": 45,
+    "motor_hits": 224,
+    "motor_misses": 1096,
+    "motor_too_early": 62,
+    "motor_overloads": 1,
+    "physical_keydowns": 286
+  },
+  "improved": false,
+  "rows": [
+    {
+      "index": 1,
+      "chart": "05665 - ENERGY SYNERGY MATRIX - rKizCora _ kernby & 1 more",
+      "chart_sha256": "03ab197d0c74854a1d84561025156e11fe6b568c8a30e7e6538c772967271f7e",
+      "window_s": [
+        57.500000323945024,
+        65.50000032394502
+      ],
+      "same_physical_outcome": true,
+      "hidden": {
+        "policy_label": "prestige_v2_jrp_hidden",
+        "jrp_mode": "normal",
+        "jrp_visible": false,
+        "visible_delay_frames": 0,
+        "frames": 807,
+        "actual_hits": 8,
+        "actual_misses": 40,
+        "actual_too_early": 3,
+        "actual_overload": false,
+        "physical_keydowns": 11,
+        "actual_display_hit_hooks": 8,
+        "observed_text_changes": 0,
+        "anchored_frames": 0,
+        "jrp_added_frames": 0,
+        "unique_jrp_candidates": 0,
+        "matched_jrp_candidates": 0,
+        "false_jrp_candidates": 0,
+        "unique_jrp_forecasts": 0,
+        "matched_jrp_forecasts": 0,
+        "false_jrp_forecasts": 0,
+        "unique_baseline_elapsed": 46,
+        "matched_baseline_elapsed": 46,
+        "target_count": 48,
+        "matched_combined": 46,
+        "false_combined": 0,
+        "baseline_mae_ms": 8.045630255474624e-06,
+        "combined_mae_ms": 8.045630255474624e-06,
+        "mean_jrp_confidence": null,
+        "cbpm_statuses": [
+          [
+            "no_confirmed_phase",
+            309
+          ],
+          [
+            "special_or_unseen_floor",
+            498
+          ]
+        ],
+        "first_jrp_due_s": []
+      },
+      "visible": {
+        "policy_label": "prestige_v2_stage-t-jrp-cbpm-phase-v4",
+        "jrp_mode": "normal",
+        "jrp_visible": true,
+        "visible_delay_frames": 0,
+        "frames": 807,
+        "actual_hits": 8,
+        "actual_misses": 40,
+        "actual_too_early": 3,
+        "actual_overload": false,
+        "physical_keydowns": 11,
+        "actual_display_hit_hooks": 8,
+        "observed_text_changes": 4,
+        "anchored_frames": 9,
+        "jrp_added_frames": 3,
+        "unique_jrp_candidates": 3,
+        "matched_jrp_candidates": 2,
+        "false_jrp_candidates": 1,
+        "unique_jrp_forecasts": 1,
+        "matched_jrp_forecasts": 0,
+        "false_jrp_forecasts": 1,
+        "unique_baseline_elapsed": 46,
+        "matched_baseline_elapsed": 46,
+        "target_count": 48,
+        "matched_combined": 46,
+        "false_combined": 1,
+        "baseline_mae_ms": 8.045630255474624e-06,
+        "combined_mae_ms": 8.045630255474624e-06,
+        "mean_jrp_confidence": 0.9960928202465484,
+        "cbpm_statuses": [
+          [
+            "eligible",
+            9
+          ],
+          [
+            "no_confirmed_phase",
+            243
+          ],
+          [
+            "outside_horizon",
+            56
+          ],
+          [
+            "phase_expired",
+            1
+          ],
+          [
+            "special_or_unseen_floor",
+            498
+          ]
+        ],
+        "first_jrp_due_s": [
+          0.9999998418839359
+        ]
+      }
+    },
+    {
+      "index": 2,
+      "chart": "04042 - bool - vo[ICE]",
+      "chart_sha256": "04981e92f74288b8aac7286e83420b933036d2caead9c157bc33b706779ad1b1",
+      "window_s": [
+        28.067572838110458,
+        36.06757283811046
+      ],
+      "same_physical_outcome": true,
+      "hidden": {
+        "policy_label": "prestige_v2_jrp_hidden",
+        "jrp_mode": "normal",
+        "jrp_visible": false,
+        "visible_delay_frames": 0,
+        "frames": 806,
+        "actual_hits": 24,
+        "actual_misses": 184,
+        "actual_too_early": 1,
+        "actual_overload": false,
+        "physical_keydowns": 25,
+        "actual_display_hit_hooks": 24,
+        "observed_text_changes": 0,
+        "anchored_frames": 0,
+        "jrp_added_frames": 0,
+        "unique_jrp_candidates": 0,
+        "matched_jrp_candidates": 0,
+        "false_jrp_candidates": 0,
+        "unique_jrp_forecasts": 0,
+        "matched_jrp_forecasts": 0,
+        "false_jrp_forecasts": 0,
+        "unique_baseline_elapsed": 208,
+        "matched_baseline_elapsed": 208,
+        "target_count": 208,
+        "matched_combined": 208,
+        "false_combined": 0,
+        "baseline_mae_ms": 2.1318261208475127e-06,
+        "combined_mae_ms": 2.1318261208475127e-06,
+        "mean_jrp_confidence": null,
+        "cbpm_statuses": [
+          [
+            "no_confirmed_phase",
+            584
+          ],
+          [
+            "special_or_unseen_floor",
+            222
+          ]
+        ],
+        "first_jrp_due_s": []
+      },
+      "visible": {
+        "policy_label": "prestige_v2_stage-t-jrp-cbpm-phase-v4",
+        "jrp_mode": "normal",
+        "jrp_visible": true,
+        "visible_delay_frames": 0,
+        "frames": 806,
+        "actual_hits": 24,
+        "actual_misses": 184,
+        "actual_too_early": 1,
+        "actual_overload": false,
+        "physical_keydowns": 25,
+        "actual_display_hit_hooks": 24,
+        "observed_text_changes": 11,
+        "anchored_frames": 8,
+        "jrp_added_frames": 8,
+        "unique_jrp_candidates": 4,
+        "matched_jrp_candidates": 0,
+        "false_jrp_candidates": 4,
+        "unique_jrp_forecasts": 4,
+        "matched_jrp_forecasts": 0,
+        "false_jrp_forecasts": 4,
+        "unique_baseline_elapsed": 208,
+        "matched_baseline_elapsed": 208,
+        "target_count": 208,
+        "matched_combined": 208,
+        "false_combined": 4,
+        "baseline_mae_ms": 2.1318261208475127e-06,
+        "combined_mae_ms": 2.1318261208475127e-06,
+        "mean_jrp_confidence": 0.9999455579432031,
+        "cbpm_statuses": [
+          [
+            "eligible",
+            8
+          ],
+          [
+            "no_confirmed_phase",
+            550
+          ],
+          [
+            "outside_horizon",
+            22
+          ],
+          [
+            "phase_expired",
+            4
+          ],
+          [
+            "special_or_unseen_floor",
+            222
+          ]
+        ],
+        "first_jrp_due_s": [
+          0.9692551239447874,
+          2.469005180869403,
+          2.9689218665109416,
+          3.7187968949732513
+        ]
+      }
+    },
+    {
+      "index": 3,
+      "chart": "05652 - VANGUARD-1 - 〈Geodetics〉",
+      "chart_sha256": "07af3b1617656716ca5b31e4a6f77341a70414723728198784f03782ca417fe9",
+      "window_s": [
+        53.26470585825292,
+        61.26470585825292
+      ],
+      "same_physical_outcome": true,
+      "hidden": {
+        "policy_label": "prestige_v2_jrp_hidden",
+        "jrp_mode": "normal",
+        "jrp_visible": false,
+        "visible_delay_frames": 0,
+        "frames": 795,
+        "actual_hits": 6,
+        "actual_misses": 31,
+        "actual_too_early": 5,
+        "actual_overload": false,
+        "physical_keydowns": 11,
+        "actual_display_hit_hooks": 6,
+        "observed_text_changes": 0,
+        "anchored_frames": 0,
+        "jrp_added_frames": 0,
+        "unique_jrp_candidates": 0,
+        "matched_jrp_candidates": 0,
+        "false_jrp_candidates": 0,
+        "unique_jrp_forecasts": 0,
+        "matched_jrp_forecasts": 0,
+        "false_jrp_forecasts": 0,
+        "unique_baseline_elapsed": 37,
+        "matched_baseline_elapsed": 37,
+        "target_count": 37,
+        "matched_combined": 37,
+        "false_combined": 0,
+        "baseline_mae_ms": 4.460056334014455e-06,
+        "combined_mae_ms": 4.460056334014455e-06,
+        "mean_jrp_confidence": null,
+        "cbpm_statuses": [
+          [
+            "no_confirmed_phase",
+            406
+          ],
+          [
+            "special_or_unseen_floor",
+            389
+          ]
+        ],
+        "first_jrp_due_s": []
+      },
+      "visible": {
+        "policy_label": "prestige_v2_stage-t-jrp-cbpm-phase-v4",
+        "jrp_mode": "normal",
+        "jrp_visible": true,
+        "visible_delay_frames": 0,
+        "frames": 795,
+        "actual_hits": 6,
+        "actual_misses": 31,
+        "actual_too_early": 5,
+        "actual_overload": false,
+        "physical_keydowns": 11,
+        "actual_display_hit_hooks": 6,
+        "observed_text_changes": 5,
+        "anchored_frames": 9,
+        "jrp_added_frames": 3,
+        "unique_jrp_candidates": 3,
+        "matched_jrp_candidates": 2,
+        "false_jrp_candidates": 1,
+        "unique_jrp_forecasts": 1,
+        "matched_jrp_forecasts": 0,
+        "false_jrp_forecasts": 1,
+        "unique_baseline_elapsed": 37,
+        "matched_baseline_elapsed": 37,
+        "target_count": 37,
+        "matched_combined": 37,
+        "false_combined": 1,
+        "baseline_mae_ms": 4.460056334014455e-06,
+        "combined_mae_ms": 4.460056334014455e-06,
+        "mean_jrp_confidence": 0.9991317389216451,
+        "cbpm_statuses": [
+          [
+            "eligible",
+            9
+          ],
+          [
+            "no_confirmed_phase",
+            299
+          ],
+          [
+            "outside_horizon",
+            97
+          ],
+          [
+            "phase_expired",
+            1
+          ],
+          [
+            "special_or_unseen_floor",
+            389
+          ]
+        ],
+        "first_jrp_due_s": [
+          3.2941176677508475
+        ]
+      }
+    },
+    {
+      "index": 4,
+      "chart": "08810 - Shploink Overdose - CCNekona",
+      "chart_sha256": "10c8c3536bb77e6eacd51d4fd82355bde87313788bdae040f99462a599241143",
+      "window_s": [
+        39.0000004474902,
+        47.0000004474902
+      ],
+      "same_physical_outcome": true,
+      "hidden": {
+        "policy_label": "prestige_v2_jrp_hidden",
+        "jrp_mode": "normal",
+        "jrp_visible": false,
+        "visible_delay_frames": 0,
+        "frames": 797,
+        "actual_hits": 29,
+        "actual_misses": 62,
+        "actual_too_early": 3,
+        "actual_overload": false,
+        "physical_keydowns": 32,
+        "actual_display_hit_hooks": 29,
+        "observed_text_changes": 0,
+        "anchored_frames": 0,
+        "jrp_added_frames": 0,
+        "unique_jrp_candidates": 0,
+        "matched_jrp_candidates": 0,
+        "false_jrp_candidates": 0,
+        "unique_jrp_forecasts": 0,
+        "matched_jrp_forecasts": 0,
+        "false_jrp_forecasts": 0,
+        "unique_baseline_elapsed": 90,
+        "matched_baseline_elapsed": 90,
+        "target_count": 91,
+        "matched_combined": 90,
+        "false_combined": 0,
+        "baseline_mae_ms": 3.9668188955843675e-06,
+        "combined_mae_ms": 3.9668188955843675e-06,
+        "mean_jrp_confidence": null,
+        "cbpm_statuses": [
+          [
+            "no_confirmed_phase",
+            249
+          ],
+          [
+            "special_or_unseen_floor",
+            548
+          ]
+        ],
+        "first_jrp_due_s": []
+      },
+      "visible": {
+        "policy_label": "prestige_v2_stage-t-jrp-cbpm-phase-v4",
+        "jrp_mode": "normal",
+        "jrp_visible": true,
+        "visible_delay_frames": 0,
+        "frames": 797,
+        "actual_hits": 29,
+        "actual_misses": 62,
+        "actual_too_early": 3,
+        "actual_overload": false,
+        "physical_keydowns": 32,
+        "actual_display_hit_hooks": 29,
+        "observed_text_changes": 20,
+        "anchored_frames": 11,
+        "jrp_added_frames": 3,
+        "unique_jrp_candidates": 4,
+        "matched_jrp_candidates": 3,
+        "false_jrp_candidates": 1,
+        "unique_jrp_forecasts": 1,
+        "matched_jrp_forecasts": 0,
+        "false_jrp_forecasts": 1,
+        "unique_baseline_elapsed": 90,
+        "matched_baseline_elapsed": 90,
+        "target_count": 91,
+        "matched_combined": 90,
+        "false_combined": 1,
+        "baseline_mae_ms": 3.9668188955843675e-06,
+        "combined_mae_ms": 3.9668188955843675e-06,
+        "mean_jrp_confidence": 0.9987923581535623,
+        "cbpm_statuses": [
+          [
+            "eligible",
+            11
+          ],
+          [
+            "no_confirmed_phase",
+            198
+          ],
+          [
+            "outside_horizon",
+            39
+          ],
+          [
+            "phase_expired",
+            1
+          ],
+          [
+            "special_or_unseen_floor",
+            548
+          ]
+        ],
+        "first_jrp_due_s": [
+          3.729166701556338
+        ]
+      }
+    },
+    {
+      "index": 5,
+      "chart": "13131 - 『계획 이상 有!』 (feat. 重音テト) - Team Name",
+      "chart_sha256": "167e781dca406fcec3a0ee754a173d40a50b23f1714ee93758ca3eaf53564d64",
+      "window_s": [
+        87.52777829855263,
+        95.52777829855263
+      ],
+      "same_physical_outcome": true,
+      "hidden": {
+        "policy_label": "prestige_v2_jrp_hidden",
+        "jrp_mode": "normal",
+        "jrp_visible": false,
+        "visible_delay_frames": 0,
+        "frames": 791,
+        "actual_hits": 9,
+        "actual_misses": 34,
+        "actual_too_early": 4,
+        "actual_overload": false,
+        "physical_keydowns": 13,
+        "actual_display_hit_hooks": 9,
+        "observed_text_changes": 0,
+        "anchored_frames": 0,
+        "jrp_added_frames": 0,
+        "unique_jrp_candidates": 0,
+        "matched_jrp_candidates": 0,
+        "false_jrp_candidates": 0,
+        "unique_jrp_forecasts": 0,
+        "matched_jrp_forecasts": 0,
+        "false_jrp_forecasts": 0,
+        "unique_baseline_elapsed": 43,
+        "matched_baseline_elapsed": 43,
+        "target_count": 43,
+        "matched_combined": 43,
+        "false_combined": 0,
+        "baseline_mae_ms": 6.466357202601668e-06,
+        "combined_mae_ms": 6.466357202601668e-06,
+        "mean_jrp_confidence": null,
+        "cbpm_statuses": [
+          [
+            "no_confirmed_phase",
+            763
+          ],
+          [
+            "special_or_unseen_floor",
+            28
+          ]
+        ],
+        "first_jrp_due_s": []
+      },
+      "visible": {
+        "policy_label": "prestige_v2_stage-t-jrp-cbpm-phase-v4",
+        "jrp_mode": "normal",
+        "jrp_visible": true,
+        "visible_delay_frames": 0,
+        "frames": 791,
+        "actual_hits": 9,
+        "actual_misses": 34,
+        "actual_too_early": 4,
+        "actual_overload": false,
+        "physical_keydowns": 13,
+        "actual_display_hit_hooks": 9,
+        "observed_text_changes": 4,
+        "anchored_frames": 69,
+        "jrp_added_frames": 6,
+        "unique_jrp_candidates": 23,
+        "matched_jrp_candidates": 21,
+        "false_jrp_candidates": 2,
+        "unique_jrp_forecasts": 2,
+        "matched_jrp_forecasts": 0,
+        "false_jrp_forecasts": 2,
+        "unique_baseline_elapsed": 43,
+        "matched_baseline_elapsed": 43,
+        "target_count": 43,
+        "matched_combined": 43,
+        "false_combined": 2,
+        "baseline_mae_ms": 6.466357202601668e-06,
+        "combined_mae_ms": 6.466357202601668e-06,
+        "mean_jrp_confidence": 0.9976161444711757,
+        "cbpm_statuses": [
+          [
+            "eligible",
+            69
+          ],
+          [
+            "no_confirmed_phase",
+            280
+          ],
+          [
+            "outside_horizon",
+            412
+          ],
+          [
+            "phase_expired",
+            2
+          ],
+          [
+            "special_or_unseen_floor",
+            28
+          ]
+        ],
+        "first_jrp_due_s": [
+          1.3611108719573637,
+          4.5092590174054346
+        ]
+      }
+    },
+    {
+      "index": 6,
+      "chart": "09173 - minefield surfing - GMDMachine",
+      "chart_sha256": "199276716bd3cd7b2ae5ebddeb4773c5737cf6118771f9a4d51f8e3802a513f9",
+      "window_s": [
+        50.94113599019425,
+        58.94113599019425
+      ],
+      "same_physical_outcome": true,
+      "hidden": {
+        "policy_label": "prestige_v2_jrp_hidden",
+        "jrp_mode": "normal",
+        "jrp_visible": false,
+        "visible_delay_frames": 0,
+        "frames": 805,
+        "actual_hits": 9,
+        "actual_misses": 64,
+        "actual_too_early": 2,
+        "actual_overload": false,
+        "physical_keydowns": 11,
+        "actual_display_hit_hooks": 9,
+        "observed_text_changes": 0,
+        "anchored_frames": 0,
+        "jrp_added_frames": 0,
+        "unique_jrp_candidates": 0,
+        "matched_jrp_candidates": 0,
+        "false_jrp_candidates": 0,
+        "unique_jrp_forecasts": 0,
+        "matched_jrp_forecasts": 0,
+        "false_jrp_forecasts": 0,
+        "unique_baseline_elapsed": 74,
+        "matched_baseline_elapsed": 73,
+        "target_count": 73,
+        "matched_combined": 73,
+        "false_combined": 1,
+        "baseline_mae_ms": 5.812953961028149e-06,
+        "combined_mae_ms": 5.812953961028149e-06,
+        "mean_jrp_confidence": null,
+        "cbpm_statuses": [
+          [
+            "special_or_unseen_floor",
+            805
+          ]
+        ],
+        "first_jrp_due_s": []
+      },
+      "visible": {
+        "policy_label": "prestige_v2_stage-t-jrp-cbpm-phase-v4",
+        "jrp_mode": "normal",
+        "jrp_visible": true,
+        "visible_delay_frames": 0,
+        "frames": 805,
+        "actual_hits": 9,
+        "actual_misses": 64,
+        "actual_too_early": 2,
+        "actual_overload": false,
+        "physical_keydowns": 11,
+        "actual_display_hit_hooks": 9,
+        "observed_text_changes": 8,
+        "anchored_frames": 0,
+        "jrp_added_frames": 0,
+        "unique_jrp_candidates": 0,
+        "matched_jrp_candidates": 0,
+        "false_jrp_candidates": 0,
+        "unique_jrp_forecasts": 0,
+        "matched_jrp_forecasts": 0,
+        "false_jrp_forecasts": 0,
+        "unique_baseline_elapsed": 74,
+        "matched_baseline_elapsed": 73,
+        "target_count": 73,
+        "matched_combined": 73,
+        "false_combined": 1,
+        "baseline_mae_ms": 5.812953961028149e-06,
+        "combined_mae_ms": 5.812953961028149e-06,
+        "mean_jrp_confidence": null,
+        "cbpm_statuses": [
+          [
+            "special_or_unseen_floor",
+            805
+          ]
+        ],
+        "first_jrp_due_s": []
+      }
+    },
+    {
+      "index": 7,
+      "chart": "07099 - Oracle - Lupel_2 _ 얼불망",
+      "chart_sha256": "1c1876ad02ec741179f9d170d86cb9ffac3ee2cc041a8f066f3e1cd525acf054",
+      "window_s": [
+        65.32021844893355,
+        73.32021844893355
+      ],
+      "same_physical_outcome": true,
+      "hidden": {
+        "policy_label": "prestige_v2_jrp_hidden",
+        "jrp_mode": "normal",
+        "jrp_visible": false,
+        "visible_delay_frames": 0,
+        "frames": 779,
+        "actual_hits": 14,
+        "actual_misses": 37,
+        "actual_too_early": 1,
+        "actual_overload": false,
+        "physical_keydowns": 15,
+        "actual_display_hit_hooks": 14,
+        "observed_text_changes": 0,
+        "anchored_frames": 0,
+        "jrp_added_frames": 0,
+        "unique_jrp_candidates": 0,
+        "matched_jrp_candidates": 0,
+        "false_jrp_candidates": 0,
+        "unique_jrp_forecasts": 0,
+        "matched_jrp_forecasts": 0,
+        "false_jrp_forecasts": 0,
+        "unique_baseline_elapsed": 50,
+        "matched_baseline_elapsed": 50,
+        "target_count": 51,
+        "matched_combined": 50,
+        "false_combined": 0,
+        "baseline_mae_ms": 5.583511787227158e-06,
+        "combined_mae_ms": 5.583511787227158e-06,
+        "mean_jrp_confidence": null,
+        "cbpm_statuses": [
+          [
+            "no_confirmed_phase",
+            380
+          ],
+          [
+            "special_or_unseen_floor",
+            398
+          ],
+          [
+            "unconfirmed_elapsed_event",
+            1
+          ]
+        ],
+        "first_jrp_due_s": []
+      },
+      "visible": {
+        "policy_label": "prestige_v2_stage-t-jrp-cbpm-phase-v4",
+        "jrp_mode": "normal",
+        "jrp_visible": true,
+        "visible_delay_frames": 0,
+        "frames": 779,
+        "actual_hits": 14,
+        "actual_misses": 37,
+        "actual_too_early": 1,
+        "actual_overload": false,
+        "physical_keydowns": 15,
+        "actual_display_hit_hooks": 14,
+        "observed_text_changes": 9,
+        "anchored_frames": 15,
+        "jrp_added_frames": 6,
+        "unique_jrp_candidates": 5,
+        "matched_jrp_candidates": 3,
+        "false_jrp_candidates": 2,
+        "unique_jrp_forecasts": 2,
+        "matched_jrp_forecasts": 0,
+        "false_jrp_forecasts": 2,
+        "unique_baseline_elapsed": 50,
+        "matched_baseline_elapsed": 50,
+        "target_count": 51,
+        "matched_combined": 50,
+        "false_combined": 2,
+        "baseline_mae_ms": 5.583511787227158e-06,
+        "combined_mae_ms": 5.583511787227158e-06,
+        "mean_jrp_confidence": 0.999247021384084,
+        "cbpm_statuses": [
+          [
+            "eligible",
+            15
+          ],
+          [
+            "no_confirmed_phase",
+            314
+          ],
+          [
+            "outside_horizon",
+            49
+          ],
+          [
+            "phase_expired",
+            2
+          ],
+          [
+            "special_or_unseen_floor",
+            398
+          ],
+          [
+            "unconfirmed_elapsed_event",
+            1
+          ]
+        ],
+        "first_jrp_due_s": [
+          0.3870188663023764,
+          1.1764925575194443
+        ]
+      }
+    },
+    {
+      "index": 8,
+      "chart": "11663 - Nameless Garden - oSKYo _ oSKYo",
+      "chart_sha256": "2117f03d532c3019749653afce90500426b121d9f09ed9286268c168e54de0f8",
+      "window_s": [
+        65.38081210460062,
+        73.38081210460062
+      ],
+      "same_physical_outcome": true,
+      "hidden": {
+        "policy_label": "prestige_v2_jrp_hidden",
+        "jrp_mode": "normal",
+        "jrp_visible": false,
+        "visible_delay_frames": 0,
+        "frames": 799,
+        "actual_hits": 6,
+        "actual_misses": 38,
+        "actual_too_early": 10,
+        "actual_overload": false,
+        "physical_keydowns": 16,
+        "actual_display_hit_hooks": 6,
+        "observed_text_changes": 0,
+        "anchored_frames": 0,
+        "jrp_added_frames": 0,
+        "unique_jrp_candidates": 0,
+        "matched_jrp_candidates": 0,
+        "false_jrp_candidates": 0,
+        "unique_jrp_forecasts": 0,
+        "matched_jrp_forecasts": 0,
+        "false_jrp_forecasts": 0,
+        "unique_baseline_elapsed": 44,
+        "matched_baseline_elapsed": 44,
+        "target_count": 44,
+        "matched_combined": 44,
+        "false_combined": 0,
+        "baseline_mae_ms": 6.35297280841135e-06,
+        "combined_mae_ms": 6.35297280841135e-06,
+        "mean_jrp_confidence": null,
+        "cbpm_statuses": [
+          [
+            "no_confirmed_phase",
+            762
+          ],
+          [
+            "special_or_unseen_floor",
+            37
+          ]
+        ],
+        "first_jrp_due_s": []
+      },
+      "visible": {
+        "policy_label": "prestige_v2_stage-t-jrp-cbpm-phase-v4",
+        "jrp_mode": "normal",
+        "jrp_visible": true,
+        "visible_delay_frames": 0,
+        "frames": 799,
+        "actual_hits": 6,
+        "actual_misses": 38,
+        "actual_too_early": 10,
+        "actual_overload": false,
+        "physical_keydowns": 16,
+        "actual_display_hit_hooks": 6,
+        "observed_text_changes": 5,
+        "anchored_frames": 42,
+        "jrp_added_frames": 21,
+        "unique_jrp_candidates": 14,
+        "matched_jrp_candidates": 7,
+        "false_jrp_candidates": 7,
+        "unique_jrp_forecasts": 7,
+        "matched_jrp_forecasts": 0,
+        "false_jrp_forecasts": 7,
+        "unique_baseline_elapsed": 44,
+        "matched_baseline_elapsed": 44,
+        "target_count": 44,
+        "matched_combined": 44,
+        "false_combined": 7,
+        "baseline_mae_ms": 6.35297280841135e-06,
+        "combined_mae_ms": 6.35297280841135e-06,
+        "mean_jrp_confidence": 0.9984066560363033,
+        "cbpm_statuses": [
+          [
+            "eligible",
+            42
+          ],
+          [
+            "no_confirmed_phase",
+            545
+          ],
+          [
+            "outside_horizon",
+            168
+          ],
+          [
+            "phase_expired",
+            7
+          ],
+          [
+            "special_or_unseen_floor",
+            37
+          ]
+        ],
+        "first_jrp_due_s": [
+          0.4191879437190167,
+          1.7191879472764913,
+          2.019187950833909,
+          3.8191879579488575,
+          4.719187951608578,
+          5.019187965063366,
+          5.519187954391028
+        ]
+      }
+    },
+    {
+      "index": 9,
+      "chart": "05664 - gur yvsr (仮) - yeetyote",
+      "chart_sha256": "25da98ff8051190b1a7da17c9b1326d53b0d54a1e1ab1a54977df895c50aa75f",
+      "window_s": [
+        62.08203112412957,
+        70.08203112412957
+      ],
+      "same_physical_outcome": true,
+      "hidden": {
+        "policy_label": "prestige_v2_jrp_hidden",
+        "jrp_mode": "normal",
+        "jrp_visible": false,
+        "visible_delay_frames": 0,
+        "frames": 783,
+        "actual_hits": 8,
+        "actual_misses": 33,
+        "actual_too_early": 6,
+        "actual_overload": false,
+        "physical_keydowns": 14,
+        "actual_display_hit_hooks": 8,
+        "observed_text_changes": 0,
+        "anchored_frames": 0,
+        "jrp_added_frames": 0,
+        "unique_jrp_candidates": 0,
+        "matched_jrp_candidates": 0,
+        "false_jrp_candidates": 0,
+        "unique_jrp_forecasts": 0,
+        "matched_jrp_forecasts": 0,
+        "false_jrp_forecasts": 0,
+        "unique_baseline_elapsed": 39,
+        "matched_baseline_elapsed": 39,
+        "target_count": 41,
+        "matched_combined": 39,
+        "false_combined": 0,
+        "baseline_mae_ms": 9.031506570033585e-06,
+        "combined_mae_ms": 9.031506570033585e-06,
+        "mean_jrp_confidence": null,
+        "cbpm_statuses": [
+          [
+            "no_confirmed_phase",
+            615
+          ],
+          [
+            "special_or_unseen_floor",
+            168
+          ]
+        ],
+        "first_jrp_due_s": []
+      },
+      "visible": {
+        "policy_label": "prestige_v2_stage-t-jrp-cbpm-phase-v4",
+        "jrp_mode": "normal",
+        "jrp_visible": true,
+        "visible_delay_frames": 0,
+        "frames": 783,
+        "actual_hits": 8,
+        "actual_misses": 33,
+        "actual_too_early": 6,
+        "actual_overload": false,
+        "physical_keydowns": 14,
+        "actual_display_hit_hooks": 8,
+        "observed_text_changes": 7,
+        "anchored_frames": 15,
+        "jrp_added_frames": 15,
+        "unique_jrp_candidates": 5,
+        "matched_jrp_candidates": 0,
+        "false_jrp_candidates": 5,
+        "unique_jrp_forecasts": 5,
+        "matched_jrp_forecasts": 0,
+        "false_jrp_forecasts": 5,
+        "unique_baseline_elapsed": 39,
+        "matched_baseline_elapsed": 39,
+        "target_count": 41,
+        "matched_combined": 39,
+        "false_combined": 5,
+        "baseline_mae_ms": 9.031506570033585e-06,
+        "combined_mae_ms": 9.031506570033585e-06,
+        "mean_jrp_confidence": 0.9972691328315342,
+        "cbpm_statuses": [
+          [
+            "eligible",
+            15
+          ],
+          [
+            "no_confirmed_phase",
+            446
+          ],
+          [
+            "outside_horizon",
+            149
+          ],
+          [
+            "phase_expired",
+            5
+          ],
+          [
+            "special_or_unseen_floor",
+            168
+          ]
+        ],
+        "first_jrp_due_s": [
+          2.5273435795135577,
+          5.199218604578458,
+          5.574218604717477,
+          5.949218604578216,
+          6.324218604717221
+        ]
+      }
+    },
+    {
+      "index": 10,
+      "chart": "10704 - Melted Snow (Hard) - seeker",
+      "chart_sha256": "2a546a85100849c56f30d7a9f4e2ff6a5fc6d49cb1e43942ba91785c1672f147",
+      "window_s": [
+        59.91304377241806,
+        67.91304377241806
+      ],
+      "same_physical_outcome": true,
+      "hidden": {
+        "policy_label": "prestige_v2_jrp_hidden",
+        "jrp_mode": "normal",
+        "jrp_visible": false,
+        "visible_delay_frames": 0,
+        "frames": 798,
+        "actual_hits": 11,
+        "actual_misses": 62,
+        "actual_too_early": 2,
+        "actual_overload": false,
+        "physical_keydowns": 13,
+        "actual_display_hit_hooks": 11,
+        "observed_text_changes": 0,
+        "anchored_frames": 0,
+        "jrp_added_frames": 0,
+        "unique_jrp_candidates": 0,
+        "matched_jrp_candidates": 0,
+        "false_jrp_candidates": 0,
+        "unique_jrp_forecasts": 0,
+        "matched_jrp_forecasts": 0,
+        "false_jrp_forecasts": 0,
+        "unique_baseline_elapsed": 72,
+        "matched_baseline_elapsed": 72,
+        "target_count": 73,
+        "matched_combined": 72,
+        "false_combined": 0,
+        "baseline_mae_ms": 3.2926370728485007e-06,
+        "combined_mae_ms": 3.2926370728485007e-06,
+        "mean_jrp_confidence": null,
+        "cbpm_statuses": [
+          [
+            "no_confirmed_phase",
+            596
+          ],
+          [
+            "special_or_unseen_floor",
+            202
+          ]
+        ],
+        "first_jrp_due_s": []
+      },
+      "visible": {
+        "policy_label": "prestige_v2_stage-t-jrp-cbpm-phase-v4",
+        "jrp_mode": "normal",
+        "jrp_visible": true,
+        "visible_delay_frames": 0,
+        "frames": 798,
+        "actual_hits": 11,
+        "actual_misses": 62,
+        "actual_too_early": 2,
+        "actual_overload": false,
+        "physical_keydowns": 13,
+        "actual_display_hit_hooks": 11,
+        "observed_text_changes": 5,
+        "anchored_frames": 87,
+        "jrp_added_frames": 0,
+        "unique_jrp_candidates": 29,
+        "matched_jrp_candidates": 29,
+        "false_jrp_candidates": 0,
+        "unique_jrp_forecasts": 0,
+        "matched_jrp_forecasts": 0,
+        "false_jrp_forecasts": 0,
+        "unique_baseline_elapsed": 72,
+        "matched_baseline_elapsed": 72,
+        "target_count": 73,
+        "matched_combined": 72,
+        "false_combined": 0,
+        "baseline_mae_ms": 3.2926370728485007e-06,
+        "combined_mae_ms": 3.2926370728485007e-06,
+        "mean_jrp_confidence": null,
+        "cbpm_statuses": [
+          [
+            "eligible",
+            87
+          ],
+          [
+            "no_confirmed_phase",
+            277
+          ],
+          [
+            "outside_horizon",
+            232
+          ],
+          [
+            "special_or_unseen_floor",
+            202
+          ]
+        ],
+        "first_jrp_due_s": []
+      }
+    },
+    {
+      "index": 11,
+      "chart": "04432 - ADOFAI Regular Dan - 2nd Dan - yzuio & 5 more",
+      "chart_sha256": "2ada1d0a06b5bd4ed259b9b6a480b15a7e964fa2e8ca25e5f0bc50db306b34c0",
+      "window_s": [
+        244.52525838673935,
+        252.52525838673935
+      ],
+      "same_physical_outcome": true,
+      "hidden": {
+        "policy_label": "prestige_v2_jrp_hidden",
+        "jrp_mode": "normal",
+        "jrp_visible": false,
+        "visible_delay_frames": 0,
+        "frames": 795,
+        "actual_hits": 9,
+        "actual_misses": 43,
+        "actual_too_early": 1,
+        "actual_overload": false,
+        "physical_keydowns": 10,
+        "actual_display_hit_hooks": 9,
+        "observed_text_changes": 0,
+        "anchored_frames": 0,
+        "jrp_added_frames": 0,
+        "unique_jrp_candidates": 0,
+        "matched_jrp_candidates": 0,
+        "false_jrp_candidates": 0,
+        "unique_jrp_forecasts": 0,
+        "matched_jrp_forecasts": 0,
+        "false_jrp_forecasts": 0,
+        "unique_baseline_elapsed": 52,
+        "matched_baseline_elapsed": 52,
+        "target_count": 52,
+        "matched_combined": 52,
+        "false_combined": 0,
+        "baseline_mae_ms": 7.45368743062439e-06,
+        "combined_mae_ms": 7.45368743062439e-06,
+        "mean_jrp_confidence": null,
+        "cbpm_statuses": [
+          [
+            "no_confirmed_phase",
+            461
+          ],
+          [
+            "special_or_unseen_floor",
+            334
+          ]
+        ],
+        "first_jrp_due_s": []
+      },
+      "visible": {
+        "policy_label": "prestige_v2_stage-t-jrp-cbpm-phase-v4",
+        "jrp_mode": "normal",
+        "jrp_visible": true,
+        "visible_delay_frames": 0,
+        "frames": 795,
+        "actual_hits": 9,
+        "actual_misses": 43,
+        "actual_too_early": 1,
+        "actual_overload": false,
+        "physical_keydowns": 10,
+        "actual_display_hit_hooks": 9,
+        "observed_text_changes": 6,
+        "anchored_frames": 21,
+        "jrp_added_frames": 15,
+        "unique_jrp_candidates": 7,
+        "matched_jrp_candidates": 2,
+        "false_jrp_candidates": 5,
+        "unique_jrp_forecasts": 5,
+        "matched_jrp_forecasts": 0,
+        "false_jrp_forecasts": 5,
+        "unique_baseline_elapsed": 52,
+        "matched_baseline_elapsed": 52,
+        "target_count": 52,
+        "matched_combined": 52,
+        "false_combined": 5,
+        "baseline_mae_ms": 7.45368743062439e-06,
+        "combined_mae_ms": 7.45368743062439e-06,
+        "mean_jrp_confidence": 0.9977120363965953,
+        "cbpm_statuses": [
+          [
+            "eligible",
+            21
+          ],
+          [
+            "no_confirmed_phase",
+            354
+          ],
+          [
+            "outside_horizon",
+            81
+          ],
+          [
+            "phase_expired",
+            5
+          ],
+          [
+            "special_or_unseen_floor",
+            334
+          ]
+        ],
+        "first_jrp_due_s": [
+          0.6492721733370741,
+          2.7064150109381084,
+          4.6778435621607715,
+          6.734986381744251,
+          7.506414935033099
+        ]
+      }
+    },
+    {
+      "index": 12,
+      "chart": "07322 - Runaway - smy258",
+      "chart_sha256": "2e67ce666b72d72e61f353be22467eef60a10a6cbc935adc73baf833d3cdb27e",
+      "window_s": [
+        39.673611511148984,
+        47.673611511148984
+      ],
+      "same_physical_outcome": true,
+      "hidden": {
+        "policy_label": "prestige_v2_jrp_hidden",
+        "jrp_mode": "normal",
+        "jrp_visible": false,
+        "visible_delay_frames": 0,
+        "frames": 806,
+        "actual_hits": 15,
+        "actual_misses": 110,
+        "actual_too_early": 0,
+        "actual_overload": false,
+        "physical_keydowns": 15,
+        "actual_display_hit_hooks": 15,
+        "observed_text_changes": 0,
+        "anchored_frames": 0,
+        "jrp_added_frames": 0,
+        "unique_jrp_candidates": 0,
+        "matched_jrp_candidates": 0,
+        "false_jrp_candidates": 0,
+        "unique_jrp_forecasts": 0,
+        "matched_jrp_forecasts": 0,
+        "false_jrp_forecasts": 0,
+        "unique_baseline_elapsed": 125,
+        "matched_baseline_elapsed": 124,
+        "target_count": 125,
+        "matched_combined": 124,
+        "false_combined": 1,
+        "baseline_mae_ms": 2.1349924253466133e-06,
+        "combined_mae_ms": 2.1349924253466133e-06,
+        "mean_jrp_confidence": null,
+        "cbpm_statuses": [
+          [
+            "no_confirmed_phase",
+            618
+          ],
+          [
+            "special_or_unseen_floor",
+            180
+          ],
+          [
+            "unconfirmed_elapsed_event",
+            8
+          ]
+        ],
+        "first_jrp_due_s": []
+      },
+      "visible": {
+        "policy_label": "prestige_v2_stage-t-jrp-cbpm-phase-v4",
+        "jrp_mode": "normal",
+        "jrp_visible": true,
+        "visible_delay_frames": 0,
+        "frames": 806,
+        "actual_hits": 15,
+        "actual_misses": 110,
+        "actual_too_early": 0,
+        "actual_overload": false,
+        "physical_keydowns": 15,
+        "actual_display_hit_hooks": 15,
+        "observed_text_changes": 8,
+        "anchored_frames": 29,
+        "jrp_added_frames": 5,
+        "unique_jrp_candidates": 13,
+        "matched_jrp_candidates": 8,
+        "false_jrp_candidates": 5,
+        "unique_jrp_forecasts": 5,
+        "matched_jrp_forecasts": 0,
+        "false_jrp_forecasts": 5,
+        "unique_baseline_elapsed": 125,
+        "matched_baseline_elapsed": 124,
+        "target_count": 125,
+        "matched_combined": 124,
+        "false_combined": 6,
+        "baseline_mae_ms": 2.1349924253466133e-06,
+        "combined_mae_ms": 2.1349924253466133e-06,
+        "mean_jrp_confidence": 0.9999938253206689,
+        "cbpm_statuses": [
+          [
+            "eligible",
+            29
+          ],
+          [
+            "no_confirmed_phase",
+            504
+          ],
+          [
+            "outside_horizon",
+            80
+          ],
+          [
+            "phase_expired",
+            5
+          ],
+          [
+            "special_or_unseen_floor",
+            180
+          ],
+          [
+            "unconfirmed_elapsed_event",
+            8
+          ]
+        ],
+        "first_jrp_due_s": [
+          2.3402778820572485,
+          2.4236112154833513,
+          2.590277882057284,
+          2.673611215483387,
+          2.8402778820573196
+        ]
+      }
+    },
+    {
+      "index": 13,
+      "chart": "09315 - Lunar Gateway - hotduck _ oSKYo",
+      "chart_sha256": "30d68709804bb2eb5487bc149b3f1ae483c711638afff4949c030989ae226b26",
+      "window_s": [
+        76.8332556593549,
+        84.8332556593549
+      ],
+      "same_physical_outcome": true,
+      "hidden": {
+        "policy_label": "prestige_v2_jrp_hidden",
+        "jrp_mode": "normal",
+        "jrp_visible": false,
+        "visible_delay_frames": 0,
+        "frames": 822,
+        "actual_hits": 2,
+        "actual_misses": 8,
+        "actual_too_early": 2,
+        "actual_overload": false,
+        "physical_keydowns": 4,
+        "actual_display_hit_hooks": 2,
+        "observed_text_changes": 0,
+        "anchored_frames": 0,
+        "jrp_added_frames": 0,
+        "unique_jrp_candidates": 0,
+        "matched_jrp_candidates": 0,
+        "false_jrp_candidates": 0,
+        "unique_jrp_forecasts": 0,
+        "matched_jrp_forecasts": 0,
+        "false_jrp_forecasts": 0,
+        "unique_baseline_elapsed": 10,
+        "matched_baseline_elapsed": 10,
+        "target_count": 10,
+        "matched_combined": 10,
+        "false_combined": 0,
+        "baseline_mae_ms": 3.3526185534704656e-05,
+        "combined_mae_ms": 3.3526185534704656e-05,
+        "mean_jrp_confidence": null,
+        "cbpm_statuses": [
+          [
+            "no_confirmed_phase",
+            654
+          ],
+          [
+            "special_or_unseen_floor",
+            168
+          ]
+        ],
+        "first_jrp_due_s": []
+      },
+      "visible": {
+        "policy_label": "prestige_v2_stage-t-jrp-cbpm-phase-v4",
+        "jrp_mode": "normal",
+        "jrp_visible": true,
+        "visible_delay_frames": 0,
+        "frames": 822,
+        "actual_hits": 2,
+        "actual_misses": 8,
+        "actual_too_early": 2,
+        "actual_overload": false,
+        "physical_keydowns": 4,
+        "actual_display_hit_hooks": 2,
+        "observed_text_changes": 0,
+        "anchored_frames": 0,
+        "jrp_added_frames": 0,
+        "unique_jrp_candidates": 0,
+        "matched_jrp_candidates": 0,
+        "false_jrp_candidates": 0,
+        "unique_jrp_forecasts": 0,
+        "matched_jrp_forecasts": 0,
+        "false_jrp_forecasts": 0,
+        "unique_baseline_elapsed": 10,
+        "matched_baseline_elapsed": 10,
+        "target_count": 10,
+        "matched_combined": 10,
+        "false_combined": 0,
+        "baseline_mae_ms": 3.3526185534704656e-05,
+        "combined_mae_ms": 3.3526185534704656e-05,
+        "mean_jrp_confidence": null,
+        "cbpm_statuses": [
+          [
+            "no_confirmed_phase",
+            654
+          ],
+          [
+            "special_or_unseen_floor",
+            168
+          ]
+        ],
+        "first_jrp_due_s": []
+      }
+    },
+    {
+      "index": 14,
+      "chart": "03665 - Nyarlathotep's Dreamland - Silis",
+      "chart_sha256": "3b527ee716a396ab919ac7b563ac5d89f8fa963680dc17a7b3882b5105201ace",
+      "window_s": [
+        68.90000087334529,
+        76.90000087334529
+      ],
+      "same_physical_outcome": true,
+      "hidden": {
+        "policy_label": "prestige_v2_jrp_hidden",
+        "jrp_mode": "normal",
+        "jrp_visible": false,
+        "visible_delay_frames": 0,
+        "frames": 802,
+        "actual_hits": 13,
+        "actual_misses": 129,
+        "actual_too_early": 0,
+        "actual_overload": false,
+        "physical_keydowns": 13,
+        "actual_display_hit_hooks": 13,
+        "observed_text_changes": 0,
+        "anchored_frames": 0,
+        "jrp_added_frames": 0,
+        "unique_jrp_candidates": 0,
+        "matched_jrp_candidates": 0,
+        "false_jrp_candidates": 0,
+        "unique_jrp_forecasts": 0,
+        "matched_jrp_forecasts": 0,
+        "false_jrp_forecasts": 0,
+        "unique_baseline_elapsed": 142,
+        "matched_baseline_elapsed": 142,
+        "target_count": 142,
+        "matched_combined": 142,
+        "false_combined": 0,
+        "baseline_mae_ms": 2.0626522364141882e-06,
+        "combined_mae_ms": 2.0626522364141882e-06,
+        "mean_jrp_confidence": null,
+        "cbpm_statuses": [
+          [
+            "no_confirmed_phase",
+            513
+          ],
+          [
+            "special_or_unseen_floor",
+            267
+          ],
+          [
+            "unconfirmed_elapsed_event",
+            22
+          ]
+        ],
+        "first_jrp_due_s": []
+      },
+      "visible": {
+        "policy_label": "prestige_v2_stage-t-jrp-cbpm-phase-v4",
+        "jrp_mode": "normal",
+        "jrp_visible": true,
+        "visible_delay_frames": 0,
+        "frames": 802,
+        "actual_hits": 13,
+        "actual_misses": 129,
+        "actual_too_early": 0,
+        "actual_overload": false,
+        "physical_keydowns": 13,
+        "actual_display_hit_hooks": 13,
+        "observed_text_changes": 5,
+        "anchored_frames": 60,
+        "jrp_added_frames": 0,
+        "unique_jrp_candidates": 22,
+        "matched_jrp_candidates": 22,
+        "false_jrp_candidates": 0,
+        "unique_jrp_forecasts": 0,
+        "matched_jrp_forecasts": 0,
+        "false_jrp_forecasts": 0,
+        "unique_baseline_elapsed": 142,
+        "matched_baseline_elapsed": 142,
+        "target_count": 142,
+        "matched_combined": 142,
+        "false_combined": 0,
+        "baseline_mae_ms": 2.0626522364141882e-06,
+        "combined_mae_ms": 2.0626522364141882e-06,
+        "mean_jrp_confidence": null,
+        "cbpm_statuses": [
+          [
+            "eligible",
+            60
+          ],
+          [
+            "no_confirmed_phase",
+            341
+          ],
+          [
+            "outside_horizon",
+            112
+          ],
+          [
+            "special_or_unseen_floor",
+            267
+          ],
+          [
+            "unconfirmed_elapsed_event",
+            22
+          ]
+        ],
+        "first_jrp_due_s": []
+      }
+    },
+    {
+      "index": 15,
+      "chart": "04173 - Beyond Your Words (feat. vally.exe) - 연석이2 _ Sprout & 2 more",
+      "chart_sha256": "3c73cca4921893eabc3a642508af8892ea741082299666535668ebddd2595fd3",
+      "window_s": [
+        137.79775309742976,
+        145.79775309742976
+      ],
+      "same_physical_outcome": true,
+      "hidden": {
+        "policy_label": "prestige_v2_jrp_hidden",
+        "jrp_mode": "normal",
+        "jrp_visible": false,
+        "visible_delay_frames": 0,
+        "frames": 41,
+        "actual_hits": 0,
+        "actual_misses": 0,
+        "actual_too_early": 3,
+        "actual_overload": true,
+        "physical_keydowns": 3,
+        "actual_display_hit_hooks": 0,
+        "observed_text_changes": 0,
+        "anchored_frames": 0,
+        "jrp_added_frames": 0,
+        "unique_jrp_candidates": 0,
+        "matched_jrp_candidates": 0,
+        "false_jrp_candidates": 0,
+        "unique_jrp_forecasts": 0,
+        "matched_jrp_forecasts": 0,
+        "false_jrp_forecasts": 0,
+        "unique_baseline_elapsed": 0,
+        "matched_baseline_elapsed": 0,
+        "target_count": 20,
+        "matched_combined": 0,
+        "false_combined": 0,
+        "baseline_mae_ms": null,
+        "combined_mae_ms": null,
+        "mean_jrp_confidence": null,
+        "cbpm_statuses": [
+          [
+            "special_or_unseen_floor",
+            41
+          ]
+        ],
+        "first_jrp_due_s": []
+      },
+      "visible": {
+        "policy_label": "prestige_v2_stage-t-jrp-cbpm-phase-v4",
+        "jrp_mode": "normal",
+        "jrp_visible": true,
+        "visible_delay_frames": 0,
+        "frames": 41,
+        "actual_hits": 0,
+        "actual_misses": 0,
+        "actual_too_early": 3,
+        "actual_overload": true,
+        "physical_keydowns": 3,
+        "actual_display_hit_hooks": 0,
+        "observed_text_changes": 0,
+        "anchored_frames": 0,
+        "jrp_added_frames": 0,
+        "unique_jrp_candidates": 0,
+        "matched_jrp_candidates": 0,
+        "false_jrp_candidates": 0,
+        "unique_jrp_forecasts": 0,
+        "matched_jrp_forecasts": 0,
+        "false_jrp_forecasts": 0,
+        "unique_baseline_elapsed": 0,
+        "matched_baseline_elapsed": 0,
+        "target_count": 20,
+        "matched_combined": 0,
+        "false_combined": 0,
+        "baseline_mae_ms": null,
+        "combined_mae_ms": null,
+        "mean_jrp_confidence": null,
+        "cbpm_statuses": [
+          [
+            "special_or_unseen_floor",
+            41
+          ]
+        ],
+        "first_jrp_due_s": []
+      }
+    },
+    {
+      "index": 16,
+      "chart": "07827 - 24eeev0-$ - hotduck _ COMMON",
+      "chart_sha256": "3e93ec4afae58c516b367a45e1e504cf31628afd205e9f87b0f7f8de465782b3",
+      "window_s": [
+        64.91545605190683,
+        72.91545605190683
+      ],
+      "same_physical_outcome": true,
+      "hidden": {
+        "policy_label": "prestige_v2_jrp_hidden",
+        "jrp_mode": "normal",
+        "jrp_visible": false,
+        "visible_delay_frames": 0,
+        "frames": 782,
+        "actual_hits": 3,
+        "actual_misses": 38,
+        "actual_too_early": 5,
+        "actual_overload": false,
+        "physical_keydowns": 8,
+        "actual_display_hit_hooks": 3,
+        "observed_text_changes": 0,
+        "anchored_frames": 0,
+        "jrp_added_frames": 0,
+        "unique_jrp_candidates": 0,
+        "matched_jrp_candidates": 0,
+        "false_jrp_candidates": 0,
+        "unique_jrp_forecasts": 0,
+        "matched_jrp_forecasts": 0,
+        "false_jrp_forecasts": 0,
+        "unique_baseline_elapsed": 41,
+        "matched_baseline_elapsed": 41,
+        "target_count": 41,
+        "matched_combined": 41,
+        "false_combined": 0,
+        "baseline_mae_ms": 5.100932530702139e-06,
+        "combined_mae_ms": 5.100932530702139e-06,
+        "mean_jrp_confidence": null,
+        "cbpm_statuses": [
+          [
+            "no_confirmed_phase",
+            706
+          ],
+          [
+            "special_or_unseen_floor",
+            76
+          ]
+        ],
+        "first_jrp_due_s": []
+      },
+      "visible": {
+        "policy_label": "prestige_v2_stage-t-jrp-cbpm-phase-v4",
+        "jrp_mode": "normal",
+        "jrp_visible": true,
+        "visible_delay_frames": 0,
+        "frames": 782,
+        "actual_hits": 3,
+        "actual_misses": 38,
+        "actual_too_early": 5,
+        "actual_overload": false,
+        "physical_keydowns": 8,
+        "actual_display_hit_hooks": 3,
+        "observed_text_changes": 2,
+        "anchored_frames": 18,
+        "jrp_added_frames": 3,
+        "unique_jrp_candidates": 6,
+        "matched_jrp_candidates": 5,
+        "false_jrp_candidates": 1,
+        "unique_jrp_forecasts": 1,
+        "matched_jrp_forecasts": 0,
+        "false_jrp_forecasts": 1,
+        "unique_baseline_elapsed": 41,
+        "matched_baseline_elapsed": 41,
+        "target_count": 41,
+        "matched_combined": 41,
+        "false_combined": 1,
+        "baseline_mae_ms": 5.100932530702139e-06,
+        "combined_mae_ms": 5.100932530702139e-06,
+        "mean_jrp_confidence": 0.998460422961075,
+        "cbpm_statuses": [
+          [
+            "eligible",
+            18
+          ],
+          [
+            "no_confirmed_phase",
+            512
+          ],
+          [
+            "outside_horizon",
+            175
+          ],
+          [
+            "phase_expired",
+            1
+          ],
+          [
+            "special_or_unseen_floor",
+            76
+          ]
+        ],
+        "first_jrp_due_s": [
+          7.69238122786017
+        ]
+      }
+    },
+    {
+      "index": 17,
+      "chart": "09853 - Rocky Buinne [Featured ver.] - 2seehyun",
+      "chart_sha256": "3fc3ebfaa773b50e3ed607e2bf0ee7efd865fd8f809a5bb18ee6303b59ddc61e",
+      "window_s": [
+        42.13681857829268,
+        50.13681857829268
+      ],
+      "same_physical_outcome": true,
+      "hidden": {
+        "policy_label": "prestige_v2_jrp_hidden",
+        "jrp_mode": "normal",
+        "jrp_visible": false,
+        "visible_delay_frames": 0,
+        "frames": 794,
+        "actual_hits": 23,
+        "actual_misses": 77,
+        "actual_too_early": 2,
+        "actual_overload": false,
+        "physical_keydowns": 25,
+        "actual_display_hit_hooks": 23,
+        "observed_text_changes": 0,
+        "anchored_frames": 0,
+        "jrp_added_frames": 0,
+        "unique_jrp_candidates": 0,
+        "matched_jrp_candidates": 0,
+        "false_jrp_candidates": 0,
+        "unique_jrp_forecasts": 0,
+        "matched_jrp_forecasts": 0,
+        "false_jrp_forecasts": 0,
+        "unique_baseline_elapsed": 98,
+        "matched_baseline_elapsed": 98,
+        "target_count": 100,
+        "matched_combined": 98,
+        "false_combined": 0,
+        "baseline_mae_ms": 3.369019259572627e-06,
+        "combined_mae_ms": 3.369019259572627e-06,
+        "mean_jrp_confidence": null,
+        "cbpm_statuses": [
+          [
+            "no_confirmed_phase",
+            221
+          ],
+          [
+            "special_or_unseen_floor",
+            573
+          ]
+        ],
+        "first_jrp_due_s": []
+      },
+      "visible": {
+        "policy_label": "prestige_v2_stage-t-jrp-cbpm-phase-v4",
+        "jrp_mode": "normal",
+        "jrp_visible": true,
+        "visible_delay_frames": 0,
+        "frames": 794,
+        "actual_hits": 23,
+        "actual_misses": 77,
+        "actual_too_early": 2,
+        "actual_overload": false,
+        "physical_keydowns": 25,
+        "actual_display_hit_hooks": 23,
+        "observed_text_changes": 10,
+        "anchored_frames": 21,
+        "jrp_added_frames": 9,
+        "unique_jrp_candidates": 7,
+        "matched_jrp_candidates": 4,
+        "false_jrp_candidates": 3,
+        "unique_jrp_forecasts": 3,
+        "matched_jrp_forecasts": 0,
+        "false_jrp_forecasts": 3,
+        "unique_baseline_elapsed": 98,
+        "matched_baseline_elapsed": 98,
+        "target_count": 100,
+        "matched_combined": 98,
+        "false_combined": 3,
+        "baseline_mae_ms": 3.369019259572627e-06,
+        "combined_mae_ms": 3.369019259572627e-06,
+        "mean_jrp_confidence": 0.9996715793075811,
+        "cbpm_statuses": [
+          [
+            "eligible",
+            21
+          ],
+          [
+            "no_confirmed_phase",
+            158
+          ],
+          [
+            "outside_horizon",
+            39
+          ],
+          [
+            "phase_expired",
+            3
+          ],
+          [
+            "special_or_unseen_floor",
+            573
+          ]
+        ],
+        "first_jrp_due_s": [
+          1.7794172052061068,
+          2.8624497193819245,
+          7.1945797601162225
+        ]
+      }
+    },
+    {
+      "index": 18,
+      "chart": "05661 - Head BONK ache - kernby & yeetyote",
+      "chart_sha256": "4443e64c8622fcb83fe684d57f77ff023c382be246654a3a02f66122210a5ed0",
+      "window_s": [
+        63.72840899317433,
+        71.72840899317433
+      ],
+      "same_physical_outcome": true,
+      "hidden": {
+        "policy_label": "prestige_v2_jrp_hidden",
+        "jrp_mode": "normal",
+        "jrp_visible": false,
+        "visible_delay_frames": 0,
+        "frames": 798,
+        "actual_hits": 14,
+        "actual_misses": 36,
+        "actual_too_early": 6,
+        "actual_overload": false,
+        "physical_keydowns": 20,
+        "actual_display_hit_hooks": 14,
+        "observed_text_changes": 0,
+        "anchored_frames": 0,
+        "jrp_added_frames": 0,
+        "unique_jrp_candidates": 0,
+        "matched_jrp_candidates": 0,
+        "false_jrp_candidates": 0,
+        "unique_jrp_forecasts": 0,
+        "matched_jrp_forecasts": 0,
+        "false_jrp_forecasts": 0,
+        "unique_baseline_elapsed": 50,
+        "matched_baseline_elapsed": 50,
+        "target_count": 50,
+        "matched_combined": 50,
+        "false_combined": 0,
+        "baseline_mae_ms": 5.80883422196532e-06,
+        "combined_mae_ms": 5.80883422196532e-06,
+        "mean_jrp_confidence": null,
+        "cbpm_statuses": [
+          [
+            "no_confirmed_phase",
+            798
+          ]
+        ],
+        "first_jrp_due_s": []
+      },
+      "visible": {
+        "policy_label": "prestige_v2_stage-t-jrp-cbpm-phase-v4",
+        "jrp_mode": "normal",
+        "jrp_visible": true,
+        "visible_delay_frames": 0,
+        "frames": 798,
+        "actual_hits": 14,
+        "actual_misses": 36,
+        "actual_too_early": 6,
+        "actual_overload": false,
+        "physical_keydowns": 20,
+        "actual_display_hit_hooks": 14,
+        "observed_text_changes": 8,
+        "anchored_frames": 87,
+        "jrp_added_frames": 24,
+        "unique_jrp_candidates": 29,
+        "matched_jrp_candidates": 21,
+        "false_jrp_candidates": 8,
+        "unique_jrp_forecasts": 8,
+        "matched_jrp_forecasts": 0,
+        "false_jrp_forecasts": 8,
+        "unique_baseline_elapsed": 50,
+        "matched_baseline_elapsed": 50,
+        "target_count": 50,
+        "matched_combined": 50,
+        "false_combined": 8,
+        "baseline_mae_ms": 5.80883422196532e-06,
+        "combined_mae_ms": 5.80883422196532e-06,
+        "mean_jrp_confidence": 0.9980323132117215,
+        "cbpm_statuses": [
+          [
+            "eligible",
+            87
+          ],
+          [
+            "no_confirmed_phase",
+            392
+          ],
+          [
+            "outside_horizon",
+            311
+          ],
+          [
+            "phase_expired",
+            8
+          ]
+        ],
+        "first_jrp_due_s": [
+          0.3647727108493153,
+          1.5465908998650648,
+          2.5768939232560393,
+          3.3041666569209323,
+          4.0314393776498685,
+          5.092045444514151,
+          6.213257565985933,
+          7.364772717995521
+        ]
+      }
+    },
+    {
+      "index": 19,
+      "chart": "13945 - Tempest - 冰神 _ NeRvOus",
+      "chart_sha256": "482bf91ff6bbd791093906141377b89031e24da4b4e2e369c0905ec9fee08be0",
+      "window_s": [
+        65.28571470743763,
+        73.28571470743763
+      ],
+      "same_physical_outcome": true,
+      "hidden": {
+        "policy_label": "prestige_v2_jrp_hidden",
+        "jrp_mode": "normal",
+        "jrp_visible": false,
+        "visible_delay_frames": 0,
+        "frames": 796,
+        "actual_hits": 10,
+        "actual_misses": 26,
+        "actual_too_early": 2,
+        "actual_overload": false,
+        "physical_keydowns": 12,
+        "actual_display_hit_hooks": 10,
+        "observed_text_changes": 0,
+        "anchored_frames": 0,
+        "jrp_added_frames": 0,
+        "unique_jrp_candidates": 0,
+        "matched_jrp_candidates": 0,
+        "false_jrp_candidates": 0,
+        "unique_jrp_forecasts": 0,
+        "matched_jrp_forecasts": 0,
+        "false_jrp_forecasts": 0,
+        "unique_baseline_elapsed": 36,
+        "matched_baseline_elapsed": 36,
+        "target_count": 36,
+        "matched_combined": 36,
+        "false_combined": 0,
+        "baseline_mae_ms": 1.18400723130173e-05,
+        "combined_mae_ms": 1.18400723130173e-05,
+        "mean_jrp_confidence": null,
+        "cbpm_statuses": [
+          [
+            "no_confirmed_phase",
+            297
+          ],
+          [
+            "special_or_unseen_floor",
+            499
+          ]
+        ],
+        "first_jrp_due_s": []
+      },
+      "visible": {
+        "policy_label": "prestige_v2_stage-t-jrp-cbpm-phase-v4",
+        "jrp_mode": "normal",
+        "jrp_visible": true,
+        "visible_delay_frames": 0,
+        "frames": 796,
+        "actual_hits": 10,
+        "actual_misses": 26,
+        "actual_too_early": 2,
+        "actual_overload": false,
+        "physical_keydowns": 12,
+        "actual_display_hit_hooks": 10,
+        "observed_text_changes": 3,
+        "anchored_frames": 15,
+        "jrp_added_frames": 0,
+        "unique_jrp_candidates": 5,
+        "matched_jrp_candidates": 5,
+        "false_jrp_candidates": 0,
+        "unique_jrp_forecasts": 0,
+        "matched_jrp_forecasts": 0,
+        "false_jrp_forecasts": 0,
+        "unique_baseline_elapsed": 36,
+        "matched_baseline_elapsed": 36,
+        "target_count": 36,
+        "matched_combined": 36,
+        "false_combined": 0,
+        "baseline_mae_ms": 1.18400723130173e-05,
+        "combined_mae_ms": 1.18400723130173e-05,
+        "mean_jrp_confidence": null,
+        "cbpm_statuses": [
+          [
+            "eligible",
+            15
+          ],
+          [
+            "no_confirmed_phase",
+            139
+          ],
+          [
+            "outside_horizon",
+            143
+          ],
+          [
+            "special_or_unseen_floor",
+            499
+          ]
+        ],
+        "first_jrp_due_s": []
+      }
+    },
+    {
+      "index": 20,
+      "chart": "09981 - Chronosynchronism - 토끼로봇 & 1 more _ RinkiRin & 2 more",
+      "chart_sha256": "4990095ea658a259d12d5ee78084a80d0bda8eb66e5957c39a32a53ab8400b34",
+      "window_s": [
+        69.71428611752232,
+        77.71428611752232
+      ],
+      "same_physical_outcome": true,
+      "hidden": {
+        "policy_label": "prestige_v2_jrp_hidden",
+        "jrp_mode": "normal",
+        "jrp_visible": false,
+        "visible_delay_frames": 0,
+        "frames": 807,
+        "actual_hits": 11,
+        "actual_misses": 44,
+        "actual_too_early": 4,
+        "actual_overload": false,
+        "physical_keydowns": 15,
+        "actual_display_hit_hooks": 11,
+        "observed_text_changes": 0,
+        "anchored_frames": 0,
+        "jrp_added_frames": 0,
+        "unique_jrp_candidates": 0,
+        "matched_jrp_candidates": 0,
+        "false_jrp_candidates": 0,
+        "unique_jrp_forecasts": 0,
+        "matched_jrp_forecasts": 0,
+        "false_jrp_forecasts": 0,
+        "unique_baseline_elapsed": 56,
+        "matched_baseline_elapsed": 55,
+        "target_count": 55,
+        "matched_combined": 55,
+        "false_combined": 1,
+        "baseline_mae_ms": 5.502349766726346e-06,
+        "combined_mae_ms": 5.502349766726346e-06,
+        "mean_jrp_confidence": null,
+        "cbpm_statuses": [
+          [
+            "no_confirmed_phase",
+            572
+          ],
+          [
+            "special_or_unseen_floor",
+            235
+          ]
+        ],
+        "first_jrp_due_s": []
+      },
+      "visible": {
+        "policy_label": "prestige_v2_stage-t-jrp-cbpm-phase-v4",
+        "jrp_mode": "normal",
+        "jrp_visible": true,
+        "visible_delay_frames": 0,
+        "frames": 807,
+        "actual_hits": 11,
+        "actual_misses": 44,
+        "actual_too_early": 4,
+        "actual_overload": false,
+        "physical_keydowns": 15,
+        "actual_display_hit_hooks": 11,
+        "observed_text_changes": 5,
+        "anchored_frames": 12,
+        "jrp_added_frames": 0,
+        "unique_jrp_candidates": 4,
+        "matched_jrp_candidates": 4,
+        "false_jrp_candidates": 0,
+        "unique_jrp_forecasts": 0,
+        "matched_jrp_forecasts": 0,
+        "false_jrp_forecasts": 0,
+        "unique_baseline_elapsed": 56,
+        "matched_baseline_elapsed": 55,
+        "target_count": 55,
+        "matched_combined": 55,
+        "false_combined": 1,
+        "baseline_mae_ms": 5.502349766726346e-06,
+        "combined_mae_ms": 5.502349766726346e-06,
+        "mean_jrp_confidence": null,
+        "cbpm_statuses": [
+          [
+            "eligible",
+            12
+          ],
+          [
+            "no_confirmed_phase",
+            426
+          ],
+          [
+            "outside_horizon",
+            134
+          ],
+          [
+            "special_or_unseen_floor",
+            235
+          ]
+        ],
+        "first_jrp_due_s": []
+      }
+    }
+  ]
+}
