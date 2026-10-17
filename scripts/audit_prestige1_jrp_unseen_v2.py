@@ -8,6 +8,7 @@ import hashlib
 import json
 import os
 from pathlib import Path
+import sys
 
 import torch
 
@@ -103,6 +104,10 @@ def audit(config_path:Path,checkpoint:Path,*,device:str,partition:str):
 
 
 def main():
+    if hasattr(sys.stdout,'reconfigure'):
+        sys.stdout.reconfigure(encoding='utf-8',errors='backslashreplace')
+    if hasattr(sys.stderr,'reconfigure'):
+        sys.stderr.reconfigure(encoding='utf-8',errors='backslashreplace')
     p=argparse.ArgumentParser()
     p.add_argument('--config',type=Path,default=Path('configs/training/prestige1.toml'))
     p.add_argument('--checkpoint',type=Path,default=Path('checkpoints/prestige1/prestige_v2.pt'))
