@@ -119,13 +119,17 @@ class JrpCbpmHitEpochTracker:
 class CausalJrpTimingBridgeV2:
     """Timing v1.4 plus hit-epoch JRP forecasts, without changing v1.4."""
 
-    def __init__(self, *, baseline=None, overlay=None, tolerance_s=.00075):
+    def __init__(self, *, baseline=None, overlay=None, tolerance_s=.00075,
+                 min_confidence=0.):
         if baseline is None:
             from dmdod.planning.hud_timing_tracker_transition_v14 import CausalTimingTracker
             baseline = CausalTimingTracker()
         self.baseline = baseline
         self.overlay = overlay or JrpCbpmHitEpochTracker()
         self.tolerance = tolerance_s
+        if not 0. <= min_confidence <= 1.:
+            raise ValueError('min_confidence must be within 0..1')
+        self.min_confidence = float(min_confidence)
 
     def reset(self):
         self.baseline.reset()
@@ -137,7 +141,8 @@ class CausalJrpTimingBridgeV2:
         now = frame * self.overlay.dt
         pending = sorted(p.due_s for p in base.pending if p.due_s > now)
         jrp_added = False
-        if derived.eligible and derived.due_s is not None:
+        if (derived.eligible and derived.due_s is not None and
+                derived.confidence >= self.min_confidence):
             if not any(abs(t - derived.due_s) <= self.tolerance for t in pending):
                 pending.append(derived.due_s)
                 pending.sort()

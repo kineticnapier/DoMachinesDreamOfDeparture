@@ -15,7 +15,8 @@ import torch
 from dmdod.data.multichart import discover_multichart_dataset
 from dmdod.evaluation.jrp_closed_loop_v1 import FrozenPrestigeMotorPolicy, run_jrp_closed_loop
 from dmdod.evaluation.jrp_unseen_split_v2 import select_unseen_charts
-from dmdod.planning.jrp_cbpm_anchor_v2 import CausalJrpTimingBridgeV2, VERSION as BRIDGE_VERSION
+from dmdod.planning.jrp_cbpm_anchor_v2 import CausalJrpTimingBridgeV2, VERSION as V2_VERSION
+from dmdod.planning.jrp_cbpm_anchor_v3 import CausalJrpTimingBridgeV3, VERSION as V3_VERSION
 from dmdod.training.prestige1 import PrestigeConfig
 from dmdod.training.real_chart import compile_role, build_validation_segments
 
@@ -54,7 +55,7 @@ def aggregate(rows):
     }
 
 
-def audit(config_path:Path,checkpoint:Path,*,device:str,partition:str):
+def audit(config_path:Path,checkpoint:Path,*,device:str,partition:str,bridge_version:str):
     config=PrestigeConfig.load(config_path)
     payload=torch.load(checkpoint,map_location='cpu',weights_only=True)
     manifest=payload.get('train_anchor_manifest')
@@ -66,15 +67,21 @@ def audit(config_path:Path,checkpoint:Path,*,device:str,partition:str):
     segments=build_validation_segments(compile_role(selected),window_s=config.validation_window_s)
     policy=FrozenPrestigeMotorPolicy.load(
         checkpoint,config.core_path,device=device,expected_arm='prestige')
+    if bridge_version=='v2':
+        bridge_factory=CausalJrpTimingBridgeV2; bridge_label=V2_VERSION
+    elif bridge_version=='v3':
+        bridge_factory=CausalJrpTimingBridgeV3; bridge_label=V3_VERSION
+    else:
+        raise ValueError('unsupported bridge version')
     rows=[]
     parity=True
     for index,named in enumerate(segments,1):
         hidden=asdict(run_jrp_closed_loop(
             named.segment,policy,policy_label='prestige_v2_jrp_hidden',
-            jrp_visible=False,timing_bridge=CausalJrpTimingBridgeV2()))
+            jrp_visible=False,timing_bridge=bridge_factory()))
         visible=asdict(run_jrp_closed_loop(
-            named.segment,policy,policy_label='prestige_v2_jrp_hit_epoch_v2',
-            jrp_visible=True,timing_bridge=CausalJrpTimingBridgeV2()))
+            named.segment,policy,policy_label='prestige_v2_'+bridge_label,
+            jrp_visible=True,timing_bridge=bridge_factory()))
         physical=('actual_hits','actual_misses','actual_too_early','actual_overload',
                   'physical_keydowns','frames')
         same=all(hidden[k]==visible[k] for k in physical)
@@ -90,7 +97,7 @@ def audit(config_path:Path,checkpoint:Path,*,device:str,partition:str):
     visible=aggregate([r['visible'] for r in rows])
     improved=(visible['combined_matches']>base['baseline_matches'] and
               visible['combined_false']<=base['baseline_false'])
-    return {'version':VERSION,'bridge_version':BRIDGE_VERSION,
+    return {'version':VERSION,'bridge_version':bridge_label,
         'status':'PASS' if improved and parity else 'FAIL',
         'generated_at_utc':datetime.now(timezone.utc).isoformat(),
         'partition':partition,
@@ -113,13 +120,15 @@ def main():
     p.add_argument('--checkpoint',type=Path,default=Path('checkpoints/prestige1/prestige_v2.pt'))
     p.add_argument('--device',default='cuda')
     p.add_argument('--partition',choices=('development','qualification'),required=True)
+    p.add_argument('--bridge-version',choices=('v2','v3'),required=True)
     p.add_argument('--output',type=Path,required=True)
     p.add_argument('--status-file',type=Path,required=True)
     args=p.parse_args()
     if args.output.exists() or args.status_file.exists():p.error('refusing to overwrite output/status')
     started=datetime.now(timezone.utc);args.status_file.parent.mkdir(parents=True,exist_ok=True)
     try:
-        report=audit(args.config,args.checkpoint,device=args.device,partition=args.partition)
+        report=audit(args.config,args.checkpoint,device=args.device,
+                     partition=args.partition,bridge_version=args.bridge_version)
         args.output.parent.mkdir(parents=True,exist_ok=True)
         with args.output.open('x',encoding='utf-8') as f:json.dump(report,f,indent=2,ensure_ascii=False)
         code=0 if report['status']=='PASS' else 1
