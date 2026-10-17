@@ -1,0 +1,8 @@
+{
+  "pid": 21772,
+  "started_at_utc": "2026-10-17T22:31:36.458488+00:00",
+  "finished_at_utc": "2026-10-17T22:31:39.695359+00:00",
+  "exit_code": 0,
+  "output_dir": "artifacts\\fingering_replay_v01\\pilot-2437517-r2",
+  "cases": 4
+}

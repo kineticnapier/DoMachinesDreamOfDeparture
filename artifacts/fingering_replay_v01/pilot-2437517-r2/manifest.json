@@ -1,0 +1,42 @@
+{
+  "format": "dmdod-real-chart-fingering-replay-v0.1",
+  "generated_at_utc": "2026-10-17T22:31:39.687125+00:00",
+  "source_report": "reports\\fingering-real-chart-v02-pilot-010fc19-r4.json",
+  "source_report_sha256": "f6764d1d289df04fb8b554a24b176cf032ff481d6e4469218ee35d3b1737f60c",
+  "checkpoint": "checkpoints\\fingering\\fingering_network_v01-4fa2ae1.pt",
+  "checkpoint_sha256": "cca1bfcc2d8e2988eeabf602a57211c8d8b66a54bfbbcbe0e3a9409ec167d2d8",
+  "cases": [
+    {
+      "chart": "15535 - ▷ixel-mem□ry-dia[ll] - EPC Chart Team ⟪bey◇nd-○ld-S△veFile⟫.adofai",
+      "difficulty": "P17",
+      "duration_s": 1.3599999939526697,
+      "file": "replay-01-748968a2a3.html",
+      "data": "replay-01-748968a2a3.json"
+    },
+    {
+      "chart": "02993 - 碧空の約束 - 한가지 _ oSKYo.adofai",
+      "difficulty": "P19",
+      "duration_s": 1.4397872945938488,
+      "file": "replay-02-58c7ec74df.html",
+      "data": "replay-02-58c7ec74df.json"
+    },
+    {
+      "chart": "04913 - Ciforance MEGAMIX - Ciforance _ 白zhi12 & 4 more.adofai",
+      "difficulty": "P17",
+      "duration_s": 1.2350002178409767,
+      "file": "replay-03-5bb8736e96.html",
+      "data": "replay-03-5bb8736e96.json"
+    },
+    {
+      "chart": "03640 - 東 - prisMKa _ Sprout.adofai",
+      "difficulty": "P16",
+      "duration_s": 1.9392683122052148,
+      "file": "replay-04-e23c48c66e.html",
+      "data": "replay-04-e23c48c66e.json"
+    }
+  ],
+  "training_performed": false,
+  "physical_metrics_recomputed_for_display": false,
+  "fixed_decision_replay_verified_against_saved_metrics": true,
+  "external_dependencies": []
+}
