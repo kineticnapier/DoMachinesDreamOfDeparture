@@ -176,6 +176,7 @@ def _collect_teacher(segment, *, focus_from_s: float):
         "too_early": env.stats.too_early_presses, "overloaded": env.stats.overloaded,
         "x_accuracy_percent": env.stats.x_accuracy_percent,
         "timing_mae_ms": env.stats.mean_abs_error_ms,
+        "physical_keydowns": env.physical_keydowns,
     }
     return {
         "stats": stats, "focus_from_s": focus_from_s,
@@ -214,13 +215,18 @@ def _aggregate(rows: list[dict]) -> dict:
         "hit_rate": hits / targets if targets else None,
         "timing_mae_ms": (sum(row["timing_mae_ms"] * row["hits"] for row in rows
                                if row["timing_mae_ms"] is not None) / hits if hits else None),
+        "x_accuracy_percent": (sum(row["x_accuracy_percent"] * row["hits"] for row in rows) / hits
+                               if hits else None),
+        "physical_keydowns": sum(row.get("physical_keydowns", 0) for row in rows),
     }
 
 
-def _ranking_regret(result: dict) -> dict:
+def _ranking_regret(result: dict, event_ids: set[int] | None = None) -> dict:
     regrets = []
     equivalent_good = exact = 0
     for decision in result["decisions"]:
+        if event_ids is not None and decision["event_index"] not in event_ids:
+            continue
         candidates = [row for row in decision.get("candidates", [])
                       if row.get("teacher_eligible") and row.get("teacher_score") is not None]
         chosen = next((row for row in candidates if row["finger"] == decision["chosen"]), None)
@@ -286,18 +292,19 @@ def run(args) -> dict:
             row, max_focus_events=args.max_focus_events, prefix_events=args.prefix_events,
         )
         teacher_result, collected = _collect_teacher(segment, focus_from_s=focus_from_s)
+        focus_event_ids = {decision["event_index"] for decision in teacher_result["decisions"]}
         window_id = f'{row["sha256"][:12]}-{row["first_event"]}-{row["last_event"]}'
         examples[row["split"]].extend(
             _replace_example_identity(value, window_id=window_id, chart_sha256=row["sha256"])
             for value in collected
         )
         center = v01.run_policy(segment, "center_first")
-        center["ranking"] = _ranking_regret(center)
+        center["ranking"] = _ranking_regret(center, focus_event_ids)
         physical["center_first"].append(center)
         physical["teacher_v0_2"].append(teacher_result["stats"])
         network_result = v01.run_policy(segment, "network_v0_1", model) if model else None
         if network_result:
-            network_result["ranking"] = _ranking_regret(network_result)
+            network_result["ranking"] = _ranking_regret(network_result, focus_event_ids)
         if network_result:
             physical["network_v0_1"].append(network_result)
         candidate_reasons = Counter(candidate["reason"] for decision in teacher_result["decisions"]
