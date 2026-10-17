@@ -90,6 +90,22 @@ def test_loss_uses_all_present_slots_and_backpropagates():
     assert all(parameter.grad is not None for parameter in model.parameters())
 
 
+def test_fixed_train_loop_and_threshold_selection_use_only_supplied_sequences():
+    torch.manual_seed(17)
+    fit = [_sequence([
+        student.FutureEventLabels((0.012, 0.031), (1, 1), False),
+        student.FutureEventLabels((0.022,), (1,), False),
+        student.FutureEventLabels((), (), False),
+    ])]
+    model = student.MultiEventTimingStudent(hidden=8)
+    history = student.train_student(model, fit, epochs=2, seed=3)
+    threshold, rows = student.select_threshold(model, fit)
+    assert len(history) == 2
+    assert threshold in student.THRESHOLD_CANDIDATES
+    assert [row["threshold"] for row in rows] == list(student.THRESHOLD_CANDIDATES)
+    assert all(0 <= row["slot_f1"] <= 1 for row in rows)
+
+
 def test_decoder_confidence_prefix_and_abstention():
     offsets = torch.linspace(0.004, 0.076, student.MAX_EVENTS)
     logits = torch.full((student.MAX_EVENTS,), -8.0)

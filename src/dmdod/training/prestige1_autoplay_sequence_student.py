@@ -9,7 +9,8 @@ Exact target timestamps are used solely by label construction and scoring.
 
 from bisect import bisect_right
 from dataclasses import dataclass
-from math import isfinite
+from math import ceil, isfinite, pi
+import random
 
 import torch
 from torch import nn
@@ -24,6 +25,9 @@ CONTROL_DT_S = 0.010
 HORIZON_S = 0.080
 MAX_EVENTS = 16
 TIME_EPS_S = 1e-9
+TRAIN_EPOCHS = 8
+LEARNING_RATE = 3e-4
+THRESHOLD_CANDIDATES = (0.50, 0.65, 0.80, 0.90, 0.95)
 
 
 @dataclass(frozen=True, slots=True)
@@ -236,3 +240,189 @@ def decode_forecast(
     ):
         raise RuntimeError("model violated ordered timing contract")
     return NeuralForecast(selected, tuple(float(x) for x in probabilities[:count]), False)
+
+
+def _event_tags(segment, teacher: AutoplayTimingTeacher) -> tuple[tuple[str, ...], ...]:
+    """Evaluator-only cohorts; these values never enter the neural network."""
+
+    tags = []
+    for event in teacher.events:
+        found: set[str] = set()
+        for floor_index in event.floor_indices:
+            floor = segment.chart.floors[floor_index]
+            found.update(marker for marker in floor.event_markers if marker in {
+                "Pause", "SetSpeed", "Twirl", "MultiPlanet",
+            })
+            arc = (floor.exit_angle_rad - floor.entry_angle_rad) % (2 * pi)
+            if min(abs(arc), abs(2 * pi - arc)) < 1e-5 and not floor.midspin:
+                found.add("FullTurn")
+            if floor.bpm >= 600.0:
+                found.add("HighBPM")
+        tags.append(tuple(sorted(found)) or ("Ordinary",))
+    return tuple(tags)
+
+
+def capture_sequence(named, config, *, device: torch.device | str = "cpu") -> MultiEventTimingSequence:
+    """Capture the same expert-driven public HUD used by the saved MLP/GRU.
+
+    The expert action affects the visible motor-state trajectory but is never
+    passed as a model feature or label. This retained collection condition is
+    required for a matched comparison to the saved baselines and is reported
+    as a behavioral-cue limitation.
+    """
+
+    from dmdod.envs.n_key import encode_n_key_hud_real_chart_observation
+    from dmdod.motor.capacity import CenterFirstNKeyTeacher
+    from dmdod.training.n_key import _make_env, _teacher_action
+    from . import prestige1 as frozen
+
+    teacher = AutoplayTimingTeacher.from_segment(named.segment)
+    env = _make_env(
+        named.segment, key_count=frozen.KEY_COUNT,
+        control_dt_s=frozen.CONTROL_DT, physics_dt_s=frozen.PHYSICS_DT,
+    )
+    actuator = CenterFirstNKeyTeacher(frozen.KEY_COUNT)
+    observation = env.reset()
+    visible_rows: list[tuple[float, ...]] = []
+    labels: list[FutureEventLabels] = []
+    previous_time = -1.0
+    max_steps = ceil((named.segment.duration_s + 2.0) / CONTROL_DT_S) + 200
+    for _ in range(max_steps):
+        visible = tuple(encode_n_key_hud_real_chart_observation(
+            observation, legacy_bpm_encoding=True
+        ))
+        if len(visible) != INPUT_DIM or any(not isfinite(value) for value in visible):
+            raise RuntimeError("causal 263D HUD capture failed")
+        now_s = float(env.privileged_episode_time_s())
+        if not isfinite(now_s) or now_s <= previous_time:
+            raise RuntimeError("capture clock is not strictly monotonic")
+        previous_time = now_s
+        visible_rows.append(visible)
+        labels.append(future_labels(teacher, now_s))
+        action = _teacher_action(env, actuator, observation, lead_s=config.lead_s)
+        step = env.step(action)
+        observation = step.observation
+        if step.done:
+            break
+    else:
+        raise RuntimeError("multi-event capture exceeded step budget")
+    offsets, present, chords, overflow = pack_label_rows(labels, device=device)
+    return MultiEventTimingSequence(
+        chart_sha256=named.chart_sha256,
+        visible=torch.tensor(visible_rows, dtype=torch.float32, device=device),
+        offsets_s=offsets,
+        present=present,
+        chord_sizes=chords,
+        overflow=overflow,
+        exact_event_times_s=tuple(event.episode_time_s for event in teacher.events),
+        special_event_tags=_event_tags(named.segment, teacher),
+    )
+
+
+def sequence_to(sequence: MultiEventTimingSequence, device: torch.device | str) -> MultiEventTimingSequence:
+    return MultiEventTimingSequence(
+        sequence.chart_sha256,
+        sequence.visible.to(device),
+        sequence.offsets_s.to(device),
+        sequence.present.to(device),
+        sequence.chord_sizes.to(device),
+        sequence.overflow.to(device),
+        sequence.exact_event_times_s,
+        sequence.special_event_tags,
+    )
+
+
+def train_student(
+    model: MultiEventTimingStudent,
+    fit: list[MultiEventTimingSequence],
+    *,
+    epochs: int = TRAIN_EPOCHS,
+    learning_rate: float = LEARNING_RATE,
+    seed: int = 2401,
+) -> list[float]:
+    """Fixed small budget, with no evaluation-chart checkpoint selection."""
+
+    if not fit or epochs < 1 or not 0.0 < learning_rate <= 0.01:
+        raise ValueError("invalid fixed training run")
+    optimizer = torch.optim.AdamW(model.parameters(), lr=learning_rate)
+    rng = random.Random(seed)
+    order = list(range(len(fit)))
+    history: list[float] = []
+    model.train()
+    for _ in range(epochs):
+        rng.shuffle(order)
+        for index in order:
+            sequence = fit[index]
+            optimizer.zero_grad(set_to_none=True)
+            predicted, logits = model(sequence.visible)
+            loss = sequence_loss(predicted, logits, sequence, 0, len(sequence.visible))
+            if not bool(torch.isfinite(loss)):
+                raise RuntimeError("nonfinite multi-event Timing loss")
+            loss.backward()
+            torch.nn.utils.clip_grad_norm_(model.parameters(), 1.0, error_if_nonfinite=True)
+            optimizer.step()
+            history.append(float(loss.detach().cpu()))
+    return history
+
+
+@torch.no_grad()
+def frame_metrics(
+    model: MultiEventTimingStudent,
+    sequences: list[MultiEventTimingSequence],
+    *,
+    threshold: float,
+) -> dict:
+    """Training-selection diagnostic only; event-level scoring is separate."""
+
+    model.eval()
+    tp = fp = fn = tn = 0
+    errors: list[torch.Tensor] = []
+    predicted_count_error = []
+    overflow = 0
+    for sequence in sequences:
+        offsets, logits = model(sequence.visible)
+        probability = torch.sigmoid(logits)
+        raw = probability >= threshold
+        # Enforce prefix cardinality at inference.
+        predicted_present = torch.cumprod(raw.to(torch.int64), dim=1).bool()
+        actual = sequence.present
+        tp += int((predicted_present & actual).sum())
+        fp += int((predicted_present & ~actual).sum())
+        fn += int((~predicted_present & actual).sum())
+        tn += int((~predicted_present & ~actual).sum())
+        if bool(predicted_present.any() & actual.any()):
+            jointly_present = predicted_present & actual
+            if bool(jointly_present.any()):
+                errors.append((offsets[jointly_present] - sequence.offsets_s[jointly_present]).abs().cpu() * 1000)
+        predicted_count_error.extend(
+            (predicted_present.sum(1) - actual.sum(1)).abs().cpu().tolist()
+        )
+        overflow += int(sequence.overflow.sum())
+    precision = tp / (tp + fp) if tp + fp else 0.0
+    recall = tp / (tp + fn) if tp + fn else 0.0
+    f1 = 2 * precision * recall / (precision + recall) if precision + recall else 0.0
+    all_errors = torch.cat(errors) if errors else torch.empty(0)
+    return {
+        "threshold": threshold,
+        "slot_tp": tp, "slot_fp": fp, "slot_fn": fn, "slot_tn": tn,
+        "slot_precision": precision, "slot_recall": recall, "slot_f1": f1,
+        "matched_slot_mae_ms": float(all_errors.mean()) if len(all_errors) else None,
+        "matched_slot_p95_ms": float(torch.quantile(all_errors, 0.95)) if len(all_errors) else None,
+        "mean_absolute_count_error": (
+            sum(predicted_count_error) / len(predicted_count_error)
+            if predicted_count_error else None
+        ),
+        "label_overflow_frames": overflow,
+    }
+
+
+def select_threshold(
+    model: MultiEventTimingStudent,
+    calibration: list[MultiEventTimingSequence],
+) -> tuple[float, list[dict]]:
+    """Select on the prior Train-heldout split only, never Development."""
+
+    rows = [frame_metrics(model, calibration, threshold=value) for value in THRESHOLD_CANDIDATES]
+    # F1 primary, lower false positives secondary, higher threshold final tie.
+    best = max(rows, key=lambda row: (row["slot_f1"], -row["slot_fp"], row["threshold"]))
+    return float(best["threshold"]), rows
