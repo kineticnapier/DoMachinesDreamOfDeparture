@@ -1,0 +1,7 @@
+{
+  "pid": 42612,
+  "started_at_utc": "2026-10-17T14:05:10.848900+00:00",
+  "finished_at_utc": "2026-10-17T14:06:46.279178+00:00",
+  "exit_code": 0,
+  "report": "reports\\fingering-network-v01-4fa2ae1.json"
+}

@@ -1,0 +1,93 @@
+{
+  "format": "dmdod-fingering-network-v0.1-final-analysis",
+  "status": "PASS",
+  "success_criteria": {
+    "hit_rate_not_below_center_first": true,
+    "misses_not_above_center_first": true,
+    "too_early_not_above_center_first": true,
+    "overload_not_above_center_first": true,
+    "timing_mae_below_center_first": true,
+    "different_teacher_choice_can_hit": true
+  },
+  "comparison": {
+    "center_first": {
+      "charts": 3,
+      "targets": 48,
+      "hits": 48,
+      "misses": 0,
+      "too_early": 0,
+      "overloaded_charts": 0,
+      "physical_keydowns": 48,
+      "hit_rate": 1.0,
+      "timing_mae_ms": 18.071427888977908,
+      "x_accuracy_percent": 90.20833333333333,
+      "different_from_teacher": 0,
+      "different_from_teacher_but_hit": 0
+    },
+    "teacher_v0_2": {
+      "charts": 3,
+      "targets": 48,
+      "hits": 48,
+      "misses": 0,
+      "too_early": 0,
+      "overloaded_charts": 0,
+      "physical_keydowns": 48,
+      "hit_rate": 1.0,
+      "timing_mae_ms": 8.591269252812376,
+      "x_accuracy_percent": 97.70833333333333,
+      "different_from_teacher": 0,
+      "different_from_teacher_but_hit": 0
+    },
+    "network_v0_1": {
+      "charts": 3,
+      "targets": 48,
+      "hits": 48,
+      "misses": 0,
+      "too_early": 0,
+      "overloaded_charts": 0,
+      "physical_keydowns": 48,
+      "hit_rate": 1.0,
+      "timing_mae_ms": 10.12599153103056,
+      "x_accuracy_percent": 98.4375,
+      "different_from_teacher": 35,
+      "different_from_teacher_but_hit": 35
+    }
+  },
+  "teacher_timing_mae_gap_ms": 1.5347222782181849,
+  "ranking_metrics": {
+    "train": {
+      "examples": 56,
+      "exact_teacher_choice_rate": 0.5535714285714286,
+      "equivalent_good_rate": 0.9642857142857143,
+      "different_but_equivalent_good": 23,
+      "mean_teacher_cost_regret": 0.39285714285714285,
+      "max_teacher_cost_regret": 8.0
+    },
+    "validation": {
+      "examples": 15,
+      "exact_teacher_choice_rate": 0.4666666666666667,
+      "equivalent_good_rate": 0.5333333333333333,
+      "different_but_equivalent_good": 1,
+      "mean_teacher_cost_regret": 2.8,
+      "max_teacher_cost_regret": 15.0
+    },
+    "test": {
+      "examples": 19,
+      "exact_teacher_choice_rate": 0.47368421052631576,
+      "equivalent_good_rate": 0.7368421052631579,
+      "different_but_equivalent_good": 5,
+      "mean_teacher_cost_regret": 2.263157894736842,
+      "max_teacher_cost_regret": 19.0
+    }
+  },
+  "artifacts": {
+    "raw_report": "reports\\fingering-network-v01-4fa2ae1.json",
+    "raw_report_sha256": "d54b7f7e44f793ff0a56705de41ac1822ee56c266bbec14f7a41661b13b6813c",
+    "checkpoint": "checkpoints\\fingering\\fingering_network_v01-4fa2ae1.pt",
+    "checkpoint_sha256": "cca1bfcc2d8e2988eeabf602a57211c8d8b66a54bfbbcbe0e3a9409ec167d2d8",
+    "dataset": "artifacts\\fingering_network_v01\\dataset-4fa2ae1.pt",
+    "dataset_sha256": "df0a8b0d07c8433652d51bbd5c6c0848c2ab3b90a95023117e4738d5144e4f49"
+  },
+  "interpretation": "v0.1 improves physical timing over CenterFirst and succeeds with different teacher choices, but does not match Teacher v0.2 timing MAE.",
+  "retraining_performed_by_finalizer": false
+}
