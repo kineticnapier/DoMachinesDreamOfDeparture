@@ -186,6 +186,71 @@ def run(chart_path: Path, checkpoint: Path, output_dir: Path, *,
     return report
 
 
+def run_single_policy(chart_path: Path, checkpoint: Path, output_dir: Path, *,
+                      policy: str, stop_after_s: float | None,
+                      wall_timeout_s: float) -> dict:
+    if policy not in {"free", "human_proxy"}:
+        raise ValueError("single policy must be free or human_proxy")
+    if v01.file_sha256(chart_path) != runner.SELECTED_SHA256:
+        raise RuntimeError("P16 chart SHA256 mismatch")
+    compiled = compile_adofai(load_adofai(chart_path))
+    segment = build_playable_segment(compiled)
+    model = runner.load_model(checkpoint)
+    alpha = 0.0 if policy == "free" else FIXED_HUMAN_ALPHA
+    started = time.perf_counter()
+    result = runner.run_network(segment, model, stop_after_s=stop_after_s,
+                                wall_timeout_s=wall_timeout_s, style_alpha=alpha,
+                                policy_name=policy)
+    artifact = {"format": FORMAT + "-single-policy", "policy": policy,
+                "style_alpha": alpha, "chart_sha256": v01.file_sha256(chart_path),
+                "checkpoint_sha256": v01.file_sha256(checkpoint),
+                "runtime_s": round(time.perf_counter() - started, 3), "result": result}
+    output_dir.mkdir(parents=True, exist_ok=False)
+    _write_once(output_dir / "policy-result.json", json.dumps(artifact, ensure_ascii=False, indent=2) + "\n")
+    return artifact
+
+
+def assemble_saved_policies(chart_path: Path, checkpoint: Path, output_dir: Path,
+                            free_path: Path, human_path: Path) -> dict:
+    free_artifact = json.loads(free_path.read_text(encoding="utf-8"))
+    human_artifact = json.loads(human_path.read_text(encoding="utf-8"))
+    if free_artifact["policy"] != "free" or human_artifact["policy"] != "human_proxy":
+        raise ValueError("saved policy roles are reversed or invalid")
+    expected_chart = v01.file_sha256(chart_path)
+    expected_checkpoint = v01.file_sha256(checkpoint)
+    for artifact in (free_artifact, human_artifact):
+        if artifact["chart_sha256"] != expected_chart or artifact["checkpoint_sha256"] != expected_checkpoint:
+            raise RuntimeError("saved policy provenance mismatch")
+    compiled = compile_adofai(load_adofai(chart_path))
+    segment = build_playable_segment(compiled)
+    free, human = free_artifact["result"], human_artifact["result"]
+    oracle = AutoplayTimingTeacher.from_segment(segment)
+    times = {event.event_index: event.episode_time_s for event in oracle.events}
+    comparison = compare_results(free, human, times)
+    payload = build_payload(chart_path, checkpoint, compiled, segment, free, human)
+    report = {"format": FORMAT, "generated_at_utc": datetime.now(timezone.utc).isoformat(),
+              "chart": chart_path.name, "chart_sha256": expected_chart,
+              "checkpoint_sha256": expected_checkpoint, "duration_s": segment.duration_s,
+              "events": len(oracle.events),
+              "runtime_s": free_artifact["runtime_s"] + human_artifact["runtime_s"],
+              "fixed_human_proxy_alpha": FIXED_HUMAN_ALPHA,
+              "alpha_selected_before_full_run": True, "hyperparameter_search": False,
+              "free": {"stats": free["stats"], "termination_reason": free["termination_reason"],
+                       "replay_end_s": free["replay_end_s"]},
+              "human_proxy": {"stats": human["stats"],
+                              "termination_reason": human["termination_reason"],
+                              "replay_end_s": human["replay_end_s"]},
+              "comparison": comparison, "training_performed": False,
+              "teacher_shadow_rollout_used": False, "failure_continuation": False,
+              "assembled_without_inference": True,
+              "source_policy_results": {"free": str(free_path), "human_proxy": str(human_path)}}
+    output_dir.mkdir(parents=True, exist_ok=False)
+    _write_once(output_dir / "comparison.json", json.dumps(report, ensure_ascii=False, indent=2) + "\n")
+    _write_once(output_dir / "replay-v011.json", json.dumps(payload, ensure_ascii=False, indent=2) + "\n")
+    _write_once(output_dir / "replay-v011.html", v03.render_html(payload))
+    return report
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--chart", type=Path, required=True)
@@ -194,18 +259,36 @@ def main() -> None:
     parser.add_argument("--status-file", type=Path, required=True)
     parser.add_argument("--stop-after-s", type=float)
     parser.add_argument("--wall-timeout-s", type=float, default=300.0)
+    parser.add_argument("--mode", choices=("both", "single", "assemble"), default="both")
+    parser.add_argument("--policy", choices=("free", "human_proxy"))
+    parser.add_argument("--free-result", type=Path)
+    parser.add_argument("--human-result", type=Path)
     args = parser.parse_args()
     if args.output_dir.exists() or args.status_file.exists():
         parser.error("refusing to overwrite output")
     started = datetime.now(timezone.utc)
     try:
-        report = run(args.chart, args.checkpoint, args.output_dir,
-                     stop_after_s=args.stop_after_s, wall_timeout_s=args.wall_timeout_s)
+        if args.mode == "single":
+            if args.policy is None:
+                parser.error("--policy is required for single mode")
+            artifact = run_single_policy(args.chart, args.checkpoint, args.output_dir,
+                                         policy=args.policy, stop_after_s=args.stop_after_s,
+                                         wall_timeout_s=args.wall_timeout_s)
+            report = {args.policy: {"termination_reason": artifact["result"]["termination_reason"]}}
+        elif args.mode == "assemble":
+            if args.free_result is None or args.human_result is None:
+                parser.error("--free-result and --human-result are required for assemble mode")
+            report = assemble_saved_policies(args.chart, args.checkpoint, args.output_dir,
+                                             args.free_result, args.human_result)
+        else:
+            report = run(args.chart, args.checkpoint, args.output_dir,
+                         stop_after_s=args.stop_after_s, wall_timeout_s=args.wall_timeout_s)
         status = {"pid": os.getpid(), "started_at_utc": started.isoformat(),
                   "finished_at_utc": datetime.now(timezone.utc).isoformat(), "exit_code": 0,
                   "output_dir": str(args.output_dir),
-                  "free_termination": report["free"]["termination_reason"],
-                  "human_proxy_termination": report["human_proxy"]["termination_reason"]}
+                  "mode": args.mode,
+                  "free_termination": report.get("free", {}).get("termination_reason"),
+                  "human_proxy_termination": report.get("human_proxy", {}).get("termination_reason")}
     except BaseException as error:
         status = {"pid": os.getpid(), "started_at_utc": started.isoformat(),
                   "finished_at_utc": datetime.now(timezone.utc).isoformat(), "exit_code": 1,

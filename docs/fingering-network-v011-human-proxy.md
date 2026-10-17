@@ -40,6 +40,12 @@ Human-Proxy receive independent Motor environments.  Run a two-second smoke
 test before one full comparison.  Miss, TooEarly, Overload and degradation are
 reported without rerunning at a different alpha.
 
+For long runs, use `--mode single --policy free` and `--mode single --policy
+human_proxy` with separate create-once output/status paths.  Then use `--mode
+assemble --free-result ... --human-result ...` to build the comparison without
+rerunning either policy.  This keeps each physical process below the execution
+session lifetime and leaves a resumable artifact after each policy.
+
 ```powershell
 .\.venv\Scripts\python.exe scripts/run_fingering_network_v011_comparison.py `
   --chart "data/DMDOD-v140-tuf-p11-p20/Train/03640 - 東 - prisMKa _ Sprout.adofai" `

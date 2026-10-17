@@ -29,3 +29,19 @@ def test_comparison_reports_differences_worsening_and_dense_specials():
 
 def test_fixed_alpha_is_declared_without_search():
     assert compare.FIXED_HUMAN_ALPHA == 0.5
+
+
+def test_saved_policy_roles_must_be_distinct(tmp_path):
+    # Validation occurs before chart/checkpoint access.
+    row = {"policy": "free"}
+    left = tmp_path / "left.json"
+    right = tmp_path / "right.json"
+    left.write_text(__import__("json").dumps(row), encoding="utf-8")
+    right.write_text(__import__("json").dumps(row), encoding="utf-8")
+    try:
+        compare.assemble_saved_policies(Path("missing-chart"), Path("missing-checkpoint"),
+                                        tmp_path / "out", left, right)
+    except ValueError as error:
+        assert "roles" in str(error)
+    else:
+        raise AssertionError("duplicate saved policy role accepted")
