@@ -1,0 +1,117 @@
+{
+  "format": "dmdod-fingering-network-v0.1.1-human-proxy-comparison",
+  "generated_at_utc": "2026-10-17T23:53:27.198455+00:00",
+  "chart": "03640 - 東 - prisMKa _ Sprout.adofai",
+  "chart_sha256": "e23c48c66e956a6e820fff2a5ed352718efb7f5e861094207cc49f6dcabdd622",
+  "checkpoint_sha256": "cca1bfcc2d8e2988eeabf602a57211c8d8b66a54bfbbcbe0e3a9409ec167d2d8",
+  "duration_s": 129.63414733881555,
+  "events": 1222,
+  "runtime_s": 2.352,
+  "fixed_human_proxy_alpha": 0.5,
+  "alpha_selected_before_full_run": true,
+  "hyperparameter_search": false,
+  "free": {
+    "stats": {
+      "targets": 1222,
+      "hits": 14,
+      "misses": 0,
+      "too_early": 0,
+      "overloaded": false,
+      "overload_counter": 0.0,
+      "x_accuracy_percent": 100.0,
+      "timing_mae_ms": 7.372813025801443,
+      "physical_keydowns": 14
+    },
+    "termination_reason": "diagnostic_prefix_complete",
+    "replay_end_s": 2.01
+  },
+  "human_proxy": {
+    "stats": {
+      "targets": 1222,
+      "hits": 15,
+      "misses": 0,
+      "too_early": 0,
+      "overloaded": false,
+      "overload_counter": 0.0,
+      "x_accuracy_percent": 100.0,
+      "timing_mae_ms": 6.458527028582687,
+      "physical_keydowns": 15
+    },
+    "termination_reason": "diagnostic_prefix_complete",
+    "replay_end_s": 2.01
+  },
+  "comparison": {
+    "different_events": [
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      12,
+      13,
+      14
+    ],
+    "different_event_count": 9,
+    "human_proxy_worsened_events": [
+      {
+        "event_index": 4,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 8.439,
+        "human_error_ms": 19.439,
+        "free": "right_5/tip",
+        "human_proxy": "left_1"
+      },
+      {
+        "event_index": 5,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 5.976,
+        "human_error_ms": 9.976,
+        "free": "left_4",
+        "human_proxy": "right_1"
+      },
+      {
+        "event_index": 10,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 0.683,
+        "human_error_ms": 1.683,
+        "free": "left_2",
+        "human_proxy": "left_2"
+      },
+      {
+        "event_index": 12,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": -1.268,
+        "human_error_ms": 15.732,
+        "free": "right_2",
+        "human_proxy": "left_1"
+      }
+    ],
+    "human_proxy_worsened_event_count": 4,
+    "free_style": {
+      "decisions": 15,
+      "index_proxy_uses": 6,
+      "ordinary_proxy_uses": 12,
+      "thumb_or_side_uses": 3,
+      "index_proxy_rate": 0.4,
+      "ordinary_proxy_rate": 0.8,
+      "thumb_or_side_rate": 0.2,
+      "dense_le_35ms_special_events": [
+        3
+      ]
+    },
+    "human_proxy_style": {
+      "decisions": 15,
+      "index_proxy_uses": 8,
+      "ordinary_proxy_uses": 15,
+      "thumb_or_side_uses": 0,
+      "index_proxy_rate": 0.5333333333333333,
+      "ordinary_proxy_rate": 1.0,
+      "thumb_or_side_rate": 0.0,
+      "dense_le_35ms_special_events": []
+    }
+  },
+  "training_performed": false,
+  "teacher_shadow_rollout_used": false,
+  "failure_continuation": false
+}

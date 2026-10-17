@@ -1,0 +1,9 @@
+{
+  "pid": 47956,
+  "started_at_utc": "2026-10-17T23:53:24.718775+00:00",
+  "finished_at_utc": "2026-10-17T23:53:27.248792+00:00",
+  "exit_code": 0,
+  "output_dir": "artifacts\\fingering_network_v011\\smoke-20261018-r1",
+  "free_termination": "diagnostic_prefix_complete",
+  "human_proxy_termination": "diagnostic_prefix_complete"
+}
