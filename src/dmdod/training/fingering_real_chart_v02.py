@@ -36,6 +36,8 @@ class CurriculumWindow:
     last_event: int
     score: float
     reasons: tuple[str, ...]
+    events: int
+    min_interval_ms: float | None
 
     def __post_init__(self) -> None:
         if not (
@@ -46,6 +48,8 @@ class CurriculumWindow:
             and 0 <= self.first_event <= self.last_event
             and isfinite(self.score)
             and self.reasons
+            and self.events >= 1
+            and (self.min_interval_ms is None or self.min_interval_ms >= 0)
         ):
             raise ValueError("invalid real-chart curriculum window")
 
@@ -147,12 +151,17 @@ def select_complex_windows(
             reasons.append("short_interval")
         if very_short:
             reasons.append("burst")
+        if local_intervals and min(local_intervals) < 10.0 - 1e-7:
+            reasons.append("sub_control_interval")
         if chord_surplus:
             reasons.append("multi_contact")
         if jump >= 1.8:
             reasons.append("density_change")
         reasons.extend(f"marker:{value}" for value in markers)
-        score = short + 1.5 * very_short + 3.0 * chord_surplus + max(0.0, jump - 1.0)
+        # A near-zero interval is an important physical counterexample, but it
+        # must not numerically swamp every other curriculum category.
+        score = short + 1.5 * very_short + 3.0 * chord_surplus
+        score += min(9.0, max(0.0, jump - 1.0))
         score += 1.5 * len(markers)
         if score < minimum_score or not reasons:
             continue
@@ -161,9 +170,12 @@ def select_complex_windows(
         start = max(0.0, end - window_s)
         first = next((i for i, value in enumerate(times) if value >= start - 1e-9), index)
         last = max(i for i, value in enumerate(times) if value <= end + 1e-9)
+        window_intervals = [1000.0 * (times[i] - times[i - 1])
+                            for i in range(first + 1, last + 1)]
         candidates.append(CurriculumWindow(
             chart_sha256, round(start, 9), round(end, 9), first, last,
-            round(score, 6), tuple(dict.fromkeys(reasons)),
+            round(score, 6), tuple(dict.fromkeys(reasons)), last - first + 1,
+            min(window_intervals) if window_intervals else None,
         ))
     chosen = []
     for candidate in sorted(candidates, key=lambda row: (-row.score, row.start_s, row.first_event)):
@@ -267,3 +279,56 @@ def build_inventory(dataset: Path, *, max_charts: int | None = None,
         },
         "holdout_roles_opened": [],
     }
+
+
+def chart_split(chart_sha256: str) -> str:
+    """Stable Train-internal split; no evaluation role participates."""
+
+    if len(chart_sha256) != 64:
+        raise ValueError("invalid chart SHA256")
+    return "quality" if int(chart_sha256[:8], 16) % 4 == 0 else "fit"
+
+
+def select_dataset_windows(inventory: Mapping[str, object], *, max_windows: int) -> list[dict]:
+    """Choose a small, category-diverse, one-window-per-chart pilot."""
+
+    if max_windows < 1:
+        raise ValueError("max_windows must be positive")
+    candidates = []
+    for chart in inventory.get("charts", []):
+        if chart.get("excluded_reason") or not chart.get("complex_windows"):
+            continue
+        best = max(chart["complex_windows"], key=lambda row: (row["score"], -row["start_s"]))
+        candidates.append({
+            "chart": chart["name"], "path": chart["path"], "sha256": chart["sha256"],
+            "family": chart["family"], "difficulty": chart["difficulty"],
+            "verified_g10_or_harder": chart["g10_or_harder_verified"],
+            "split": chart_split(chart["sha256"]), **best,
+        })
+    selected: list[dict] = []
+
+    def take(pool) -> None:
+        for row in sorted(pool, key=lambda item: (-item["score"], item["sha256"])):
+            if all(old["sha256"] != row["sha256"] for old in selected):
+                selected.append(row)
+                return
+
+    actionable = [row for row in candidates
+                  if row["min_interval_ms"] is None or row["min_interval_ms"] >= 10.0]
+    sub_control = [row for row in candidates if row["min_interval_ms"] is not None
+                   and row["min_interval_ms"] < 10.0]
+    marker = [row for row in candidates
+              if any(reason.startswith("marker:") for reason in row["reasons"])]
+    take(row for row in actionable if row["split"] == "fit")
+    if len(selected) < max_windows:
+        take(row for row in actionable if row["split"] == "quality")
+    if len(selected) < max_windows:
+        take(sub_control)
+    if len(selected) < max_windows:
+        take(marker)
+    while len(selected) < max_windows:
+        before = len(selected)
+        take(candidates)
+        if len(selected) == before:
+            break
+    return selected[:max_windows]
