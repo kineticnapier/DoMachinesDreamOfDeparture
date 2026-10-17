@@ -130,6 +130,7 @@ class FrozenPrestigeMotorPolicy:
 class ClosedLoopJrpResult:
     policy_label: str
     jrp_mode: str
+    jrp_visible: bool
     visible_delay_frames: int
     frames: int
     actual_hits: int
@@ -149,6 +150,12 @@ class ClosedLoopJrpResult:
     false_jrp_forecasts: int
     unique_baseline_elapsed: int
     matched_baseline_elapsed: int
+    target_count: int
+    matched_combined: int
+    false_combined: int
+    baseline_mae_ms: float | None
+    combined_mae_ms: float | None
+    mean_jrp_confidence: float | None
     cbpm_statuses: tuple[tuple[str, int], ...]
     first_jrp_due_s: tuple[float, ...]
     # These fields summarize evaluator-only truth. Never pass result to policy.
@@ -167,9 +174,24 @@ def _match_unique(forecasts: list[float], targets: tuple[float, ...], *, tol=50e
     return matches
 
 
+def _matched_errors_ms(forecasts: list[float], targets: tuple[float, ...], *, tol=50e-6):
+    unmatched = set(range(len(targets)))
+    errors = []
+    for due in sorted(forecasts):
+        if not unmatched:
+            break
+        near = min(unmatched, key=lambda i: abs(targets[i] - due))
+        error = abs(targets[near] - due)
+        if error <= tol:
+            errors.append(error * 1000.)
+            unmatched.remove(near)
+    return (sum(errors) / len(errors)) if errors else None
+
+
 def run_jrp_closed_loop(
     segment, policy: CausalJrpPolicy, *, policy_label: str,
     jrp_mode: str = 'normal', visible_delay_frames: int = 0,
+    jrp_visible: bool = True,
     max_frames: int | None = None,
 ) -> ClosedLoopJrpResult:
     """Evaluate one actual physically stepped environment, no oracle actions.
@@ -199,6 +221,7 @@ def run_jrp_closed_loop(
     anchored = 0
     cbpm_statuses: dict[str, int] = {}
     seen_jrp: list[float] = []
+    seen_jrp_confidence: list[float] = []
     seen_candidates: list[float] = []
     seen_base: list[float] = []
     frames = 0
@@ -209,7 +232,7 @@ def run_jrp_closed_loop(
         # the only values copied across the policy/renderer boundary.
         text_history.append(env.overlay_visible)
         read_at = max(0, f - visible_delay_frames)
-        seen_text = text_history[read_at]
+        seen_text = text_history[read_at] if jrp_visible else None
         if f > 0 and seen_text != previous_seen_text:
             display_changes += 1
         previous_seen_text = seen_text
@@ -228,6 +251,7 @@ def run_jrp_closed_loop(
             due = update.cbpm_update.due_s
             if not any(abs(x - due) <= .00075 for x in seen_jrp):
                 seen_jrp.append(due)
+                seen_jrp_confidence.append(update.cbpm_update.confidence)
         action = policy.act(CausalJrpPolicyInput(f, hud, seen_text, update))
         if not isinstance(action, NKeyAction) or len(action.values) != 8 or not all(
             isfinite(v) and -1. <= v <= 1. for v in action.values
@@ -248,8 +272,14 @@ def run_jrp_closed_loop(
     actual_reported = [t for t in seen_jrp if 0 < t <= (frames*.01+1e-7)]
     candidate_reported = [t for t in seen_candidates if 0 < t <= (frames*.01+1e-7)]
     baseline_reported = list(seen_base)
+    combined_reported = list(baseline_reported)
+    for due in actual_reported:
+        if not any(abs(x - due) <= .00075 for x in combined_reported):
+            combined_reported.append(due)
+    matched_combined = _match_unique(combined_reported, target_times)
     return ClosedLoopJrpResult(
         policy_label=policy_label, jrp_mode=jrp_mode,
+        jrp_visible=jrp_visible,
         visible_delay_frames=visible_delay_frames, frames=frames,
         actual_hits=stats.hits, actual_misses=stats.misses,
         actual_too_early=stats.too_early_presses, actual_overload=stats.overloaded,
@@ -265,6 +295,12 @@ def run_jrp_closed_loop(
         false_jrp_forecasts=len(actual_reported)-_match_unique(actual_reported, target_times),
         unique_baseline_elapsed=len(baseline_reported),
         matched_baseline_elapsed=_match_unique(baseline_reported, target_times),
+        target_count=len(target_times), matched_combined=matched_combined,
+        false_combined=len(combined_reported)-matched_combined,
+        baseline_mae_ms=_matched_errors_ms(baseline_reported, target_times),
+        combined_mae_ms=_matched_errors_ms(combined_reported, target_times),
+        mean_jrp_confidence=(sum(seen_jrp_confidence)/len(seen_jrp_confidence)
+                             if seen_jrp_confidence else None),
         cbpm_statuses=tuple(sorted(cbpm_statuses.items())),
         first_jrp_due_s=tuple(actual_reported[:12]),
     )

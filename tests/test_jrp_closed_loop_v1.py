@@ -59,6 +59,19 @@ def test_idle_motor_yields_no_accepted_hooks_or_cbpm_anchor():
     assert result.unique_jrp_candidates==0
 
 
+def test_hidden_jrp_is_matched_baseline_with_same_physical_motor_outcome():
+    visible=run_jrp_closed_loop(fixture(),ScheduledMotorFixture(PULSES),
+                                policy_label='visible',jrp_visible=True)
+    hidden=run_jrp_closed_loop(fixture(),ScheduledMotorFixture(PULSES),
+                               policy_label='hidden',jrp_visible=False)
+    assert (hidden.actual_hits,hidden.actual_misses,hidden.actual_overload)==(
+        visible.actual_hits,visible.actual_misses,visible.actual_overload)
+    assert hidden.jrp_visible is False and visible.jrp_visible is True
+    assert hidden.unique_jrp_forecasts==0 and hidden.mean_jrp_confidence is None
+    assert hidden.matched_combined==hidden.matched_baseline_elapsed
+    assert visible.matched_combined>=hidden.matched_combined
+
+
 def test_policy_receives_public_immutable_values_not_segment_or_renderer():
     class Inspector:
         def __init__(self):self.n=0

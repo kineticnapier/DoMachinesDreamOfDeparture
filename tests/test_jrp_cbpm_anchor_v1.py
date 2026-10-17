@@ -86,6 +86,7 @@ def test_rounded_visible_text_is_only_cbpm_input():
     v=step(t,1,2,('120','2000','33.33'),[ElapsedVisibleEvent(.01)])
     assert v.due_s==pytest.approx(.04)
     assert v.uncertainty_s < .00075
+    assert 0. < v.confidence <= 1.
 
 
 def test_skipped_intermediate_floor_rejects_stale_baseline_event():
@@ -143,5 +144,6 @@ def test_combined_bridge_inserts_one_next_event_without_duplicate():
     assert not a.jrp_added
     b=bridge.observe(1,frame(2),('120','3000','50'))
     assert b.jrp_added and b.future_due_s==pytest.approx((.03,))
+    assert b.cbpm_update.confidence > 0.
     bridge.reset()
     assert not bridge.observe(0,frame(1),('120','1000','16.67')).jrp_added

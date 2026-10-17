@@ -35,10 +35,20 @@ class CbpmForecast:
     due_s: float | None
     remaining_s: float | None
     uncertainty_s: float | None
+    confidence: float = 0.0
 
     @property
     def eligible(self) -> bool:
         return self.status == 'eligible'
+
+
+def _evidence_confidence(error_s: float | None, limit_s: float) -> float:
+    """Conservative causal evidence score, not a calibrated probability."""
+    if error_s is None or error_s < 0 or not isfinite(error_s):
+        return 0.0
+    if limit_s <= 0:
+        return 1.0 if error_s == 0 else 0.0
+    return max(0.0, min(1.0, 1.0 - error_s / limit_s))
 
 
 @dataclass(frozen=True)
@@ -200,9 +210,11 @@ class JrpCbpmAnchoredTracker:
             self._due = self._error = None
             return CbpmForecast(frame, 'anchor_expired', None, None, None)
         if remaining <= 0:
-            return CbpmForecast(frame, 'at_boundary', self._due, 0., self._error)
+            return CbpmForecast(frame, 'at_boundary', self._due, 0., self._error,
+                                _evidence_confidence(self._error, self.max_error))
         return CbpmForecast(frame, 'eligible' if remaining <= self.horizon else 'outside_horizon',
-                            self._due, remaining, self._error)
+                            self._due, remaining, self._error,
+                            _evidence_confidence(self._error, self.max_error))
 
 
 @dataclass(frozen=True)
