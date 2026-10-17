@@ -1,0 +1,5806 @@
+{
+  "format": "dmdod-fingering-real-chart-inventory-v0.2",
+  "source_role": "Train only",
+  "dataset": "F:\\dev\\DoMachinesDreamOfDeparture\\data\\DMDOD-v140-tuf-p11-p20",
+  "limits": {
+    "max_charts": null,
+    "max_windows_per_chart": 2
+  },
+  "charts": [
+    {
+      "name": "05665 - ENERGY SYNERGY MATRIX - rKizCora _ kernby & 1 more.adofai",
+      "path": "F:\\dev\\DoMachinesDreamOfDeparture\\data\\DMDOD-v140-tuf-p11-p20\\Train\\05665 - ENERGY SYNERGY MATRIX - rKizCora _ kernby & 1 more.adofai",
+      "sha256": "03ab197d0c74854a1d84561025156e11fe6b568c8a30e7e6538c772967271f7e",
+      "family": "energy synergy matrix",
+      "level_id": 5665,
+      "difficulty": "P11",
+      "difficulty_source": "saved_dataset_manifest",
+      "g10_or_harder_verified": false,
+      "excluded_reason": null,
+      "duration_s": 123.000001,
+      "events": 707,
+      "targets": 707,
+      "mean_events_per_s": 5.747967,
+      "bpm": {
+        "manifest": 160.0,
+        "compiled_min": 160.0,
+        "compiled_max": 640.0,
+        "distinct_rounded": 3
+      },
+      "interval_ms": {
+        "minimum": 93.74998332472728,
+        "p10": 93.75,
+        "median": 187.5,
+        "under_35": 0,
+        "under_60": 0
+      },
+      "multi_contact_events": 0,
+      "max_chord_size": 1,
+      "midspins": 39,
+      "full_rotations": 39,
+      "markers": {
+        "MultiPlanet": 0,
+        "Pause": 0,
+        "SetSpeed": 38,
+        "Twirl": 58
+      },
+      "complex_windows": [
+        {
+          "chart_sha256": "03ab197d0c74854a1d84561025156e11fe6b568c8a30e7e6538c772967271f7e",
+          "start_s": 6.585000088,
+          "end_s": 7.785000088,
+          "first_event": 24,
+          "last_event": 31,
+          "score": 6.0,
+          "reasons": [
+            "density_change",
+            "marker:SetSpeed",
+            "marker:Twirl"
+          ],
+          "events": 8,
+          "min_interval_ms": 93.74998999484063
+        },
+        {
+          "chart_sha256": "03ab197d0c74854a1d84561025156e11fe6b568c8a30e7e6538c772967271f7e",
+          "start_s": 73.335000464,
+          "end_s": 74.535000464,
+          "first_event": 426,
+          "last_event": 430,
+          "score": 4.500001,
+          "reasons": [
+            "density_change",
+            "marker:SetSpeed"
+          ],
+          "events": 5,
+          "min_interval_ms": 93.74998332472728
+        }
+      ]
+    },
+    {
+      "name": "03062 - Prominence - seeker & Sparitbrc.adofai",
+      "path": "F:\\dev\\DoMachinesDreamOfDeparture\\data\\DMDOD-v140-tuf-p11-p20\\Train\\03062 - Prominence - seeker & Sparitbrc.adofai",
+      "sha256": "e87ba3a5d0de01262b19a9e1072c1db1f5879a953fbf7383f18c63ad22a7d1ca",
+      "family": "prominence",
+      "level_id": 3062,
+      "difficulty": "P11",
+      "difficulty_source": "saved_dataset_manifest",
+      "g10_or_harder_verified": false,
+      "excluded_reason": null,
+      "duration_s": 284.200001,
+      "events": 951,
+      "targets": 951,
+      "mean_events_per_s": 3.346235,
+      "bpm": {
+        "manifest": 150.0,
+        "compiled_min": 150.0,
+        "compiled_max": 150.0,
+        "distinct_rounded": 1
+      },
+      "interval_ms": {
+        "minimum": 99.99998221303485,
+        "p10": 100.00001067217568,
+        "median": 300.0000035573862,
+        "under_35": 0,
+        "under_60": 0
+      },
+      "multi_contact_events": 0,
+      "max_chord_size": 1,
+      "midspins": 3,
+      "full_rotations": 2,
+      "markers": {
+        "MultiPlanet": 0,
+        "Pause": 0,
+        "SetSpeed": 415,
+        "Twirl": 63
+      },
+      "complex_windows": [
+        {
+          "chart_sha256": "e87ba3a5d0de01262b19a9e1072c1db1f5879a953fbf7383f18c63ad22a7d1ca",
+          "start_s": 43.460000168,
+          "end_s": 44.660000168,
+          "first_event": 144,
+          "last_event": 147,
+          "score": 8.499999,
+          "reasons": [
+            "density_change",
+            "marker:Twirl"
+          ],
+          "events": 4,
+          "min_interval_ms": 100.00001067216857
+        },
+        {
+          "chart_sha256": "e87ba3a5d0de01262b19a9e1072c1db1f5879a953fbf7383f18c63ad22a7d1ca",
+          "start_s": 53.16000025,
+          "end_s": 54.36000025,
+          "first_event": 174,
+          "last_event": 177,
+          "score": 8.999999,
+          "reasons": [
+            "density_change",
+            "marker:SetSpeed",
+            "marker:Twirl"
+          ],
+          "events": 4,
+          "min_interval_ms": 100.00001067216857
+        }
+      ]
+    },
+    {
+      "name": "04423 - Shall We Dance_ - pinball.adofai",
+      "path": "F:\\dev\\DoMachinesDreamOfDeparture\\data\\DMDOD-v140-tuf-p11-p20\\Train\\04423 - Shall We Dance_ - pinball.adofai",
+      "sha256": "eb85517640a24a959e3edacf0fc35118fb427a61a145f2f6283cc1dc40b54862",
+      "family": "shall we dance?",
+      "level_id": 4423,
+      "difficulty": "P11",
+      "difficulty_source": "saved_dataset_manifest",
+      "g10_or_harder_verified": false,
+      "excluded_reason": null,
+      "duration_s": 171.093752,
+      "events": 973,
+      "targets": 973,
+      "mean_events_per_s": 5.686941,
+      "bpm": {
+        "manifest": 128.0,
+        "compiled_min": 32.0,
+        "compiled_max": 256.0,
+        "distinct_rounded": 3
+      },
+      "interval_ms": {
+        "minimum": 19.53124096755232,
+        "p10": 19.53125764282504,
+        "median": 214.8437506947971,
+        "under_35": 200,
+        "under_60": 264
+      },
+      "multi_contact_events": 0,
+      "max_chord_size": 1,
+      "midspins": 0,
+      "full_rotations": 6,
+      "markers": {
+        "MultiPlanet": 0,
+        "Pause": 0,
+        "SetSpeed": 5,
+        "Twirl": 298
+      },
+      "complex_windows": [
+        {
+          "chart_sha256": "eb85517640a24a959e3edacf0fc35118fb427a61a145f2f6283cc1dc40b54862",
+          "start_s": 49.167031759,
+          "end_s": 50.367031759,
+          "first_event": 250,
+          "last_event": 260,
+          "score": 16.5,
+          "reasons": [
+            "short_interval",
+            "burst",
+            "density_change",
+            "marker:Twirl"
+          ],
+          "events": 11,
+          "min_interval_ms": 19.531257642832145
+        },
+        {
+          "chart_sha256": "eb85517640a24a959e3edacf0fc35118fb427a61a145f2f6283cc1dc40b54862",
+          "start_s": 52.917031842,
+          "end_s": 54.117031842,
+          "first_event": 277,
+          "last_event": 287,
+          "score": 16.5,
+          "reasons": [
+            "short_interval",
+            "burst",
+            "density_change",
+            "marker:Twirl"
+          ],
+          "events": 11,
+          "min_interval_ms": 19.531257642832145
+        }
+      ]
+    },
+    {
+      "name": "04349 - ヒアソビ (feat. 初音ミク) - Zedwards.adofai",
+      "path": "F:\\dev\\DoMachinesDreamOfDeparture\\data\\DMDOD-v140-tuf-p11-p20\\Train\\04349 - ヒアソビ (feat. 初音ミク) - Zedwards.adofai",
+      "sha256": "baaf6bff3cd012d8b0e4f123f58868c1cd4f262a35394e32eb2ebcba898caab9",
+      "family": "ヒアソビ (feat. 初音ミク)",
+      "level_id": 4349,
+      "difficulty": "P11",
+      "difficulty_source": "saved_dataset_manifest",
+      "g10_or_harder_verified": false,
+      "excluded_reason": null,
+      "duration_s": 238.880597,
+      "events": 1065,
+      "targets": 1065,
+      "mean_events_per_s": 4.458294,
+      "bpm": {
+        "manifest": 268.0,
+        "compiled_min": 134.0,
+        "compiled_max": 268.0,
+        "distinct_rounded": 2
+      },
+      "interval_ms": {
+        "minimum": 69.96267611400953,
+        "p10": 83.95522885828655,
+        "median": 223.8805970149258,
+        "under_35": 0,
+        "under_60": 0
+      },
+      "multi_contact_events": 0,
+      "max_chord_size": 1,
+      "midspins": 0,
+      "full_rotations": 16,
+      "markers": {
+        "MultiPlanet": 0,
+        "Pause": 0,
+        "SetSpeed": 8,
+        "Twirl": 16
+      },
+      "complex_windows": [
+        {
+          "chart_sha256": "baaf6bff3cd012d8b0e4f123f58868c1cd4f262a35394e32eb2ebcba898caab9",
+          "start_s": 11.10179107,
+          "end_s": 12.30179107,
+          "first_event": 51,
+          "last_event": 55,
+          "score": 5.833334,
+          "reasons": [
+            "density_change",
+            "marker:SetSpeed"
+          ],
+          "events": 5,
+          "min_interval_ms": 83.95521292967523
+        },
+        {
+          "chart_sha256": "baaf6bff3cd012d8b0e4f123f58868c1cd4f262a35394e32eb2ebcba898caab9",
+          "start_s": 167.594328543,
+          "end_s": 168.794328543,
+          "first_event": 731,
+          "last_event": 734,
+          "score": 5.000001,
+          "reasons": [
+            "density_change"
+          ],
+          "events": 4,
+          "min_interval_ms": 111.94027859670541
+        }
+      ]
+    },
+    {
+      "name": "05661 - Head BONK ache - kernby & yeetyote.adofai",
+      "path": "F:\\dev\\DoMachinesDreamOfDeparture\\data\\DMDOD-v140-tuf-p11-p20\\Train\\05661 - Head BONK ache - kernby & yeetyote.adofai",
+      "sha256": "4443e64c8622fcb83fe684d57f77ff023c382be246654a3a02f66122210a5ed0",
+      "family": "head bonk ache",
+      "level_id": 5661,
+      "difficulty": "P11",
+      "difficulty_source": "saved_dataset_manifest",
+      "g10_or_harder_verified": false,
+      "excluded_reason": null,
+      "duration_s": 135.456818,
+      "events": 575,
+      "targets": 575,
+      "mean_events_per_s": 4.244895,
+      "bpm": {
+        "manifest": 165.0,
+        "compiled_min": 82.5,
+        "compiled_max": 330.0,
+        "distinct_rounded": 5
+      },
+      "interval_ms": {
+        "minimum": 56.818170865302164,
+        "p10": 90.90909414307902,
+        "median": 181.81818181817988,
+        "under_35": 0,
+        "under_60": 1
+      },
+      "multi_contact_events": 0,
+      "max_chord_size": 1,
+      "midspins": 8,
+      "full_rotations": 7,
+      "markers": {
+        "MultiPlanet": 0,
+        "Pause": 4,
+        "SetSpeed": 11,
+        "Twirl": 50
+      },
+      "complex_windows": [
+        {
+          "chart_sha256": "4443e64c8622fcb83fe684d57f77ff023c382be246654a3a02f66122210a5ed0",
+          "start_s": 6.732727313,
+          "end_s": 7.932727313,
+          "first_event": 19,
+          "last_event": 20,
+          "score": 12.0,
+          "reasons": [
+            "density_change",
+            "marker:Pause",
+            "marker:SetSpeed"
+          ],
+          "events": 2,
+          "min_interval_ms": 363.6363636363633
+        },
+        {
+          "chart_sha256": "4443e64c8622fcb83fe684d57f77ff023c382be246654a3a02f66122210a5ed0",
+          "start_s": 14.735000033,
+          "end_s": 15.935000033,
+          "first_event": 21,
+          "last_event": 22,
+          "score": 12.0,
+          "reasons": [
+            "density_change",
+            "marker:Pause",
+            "marker:SetSpeed"
+          ],
+          "events": 2,
+          "min_interval_ms": 454.5454477721993
+        }
+      ]
+    },
+    {
+      "name": "10907 - Remote Access Trojan - 0mni & Trippy.adofai",
+      "path": "F:\\dev\\DoMachinesDreamOfDeparture\\data\\DMDOD-v140-tuf-p11-p20\\Train\\10907 - Remote Access Trojan - 0mni & Trippy.adofai",
+      "sha256": "d7e5a1cb5abc8ea1104116ac154f5f1e0b9fd889fdf2650ed1fe1d27510f4b82",
+      "family": "remote access trojan",
+      "level_id": 10907,
+      "difficulty": "P11",
+      "difficulty_source": "saved_dataset_manifest",
+      "g10_or_harder_verified": false,
+      "excluded_reason": null,
+      "duration_s": 299.373403,
+      "events": 889,
+      "targets": 889,
+      "mean_events_per_s": 2.969536,
+      "bpm": {
+        "manifest": 120.0,
+        "compiled_min": 65.00000238418579,
+        "compiled_max": 410.00000953674316,
+        "distinct_rounded": 15
+      },
+      "interval_ms": {
+        "minimum": 71.42855872360343,
+        "p10": 142.85712761118674,
+        "median": 285.7142857142847,
+        "under_35": 0,
+        "under_60": 0
+      },
+      "multi_contact_events": 0,
+      "max_chord_size": 1,
+      "midspins": 4,
+      "full_rotations": 4,
+      "markers": {
+        "MultiPlanet": 0,
+        "Pause": 104,
+        "SetSpeed": 17,
+        "Twirl": 118
+      },
+      "complex_windows": [
+        {
+          "chart_sha256": "d7e5a1cb5abc8ea1104116ac154f5f1e0b9fd889fdf2650ed1fe1d27510f4b82",
+          "start_s": 13.245714296,
+          "end_s": 14.445714296,
+          "first_event": 17,
+          "last_event": 19,
+          "score": 12.0,
+          "reasons": [
+            "density_change",
+            "marker:Pause",
+            "marker:SetSpeed"
+          ],
+          "events": 3,
+          "min_interval_ms": 142.85714793912874
+        },
+        {
+          "chart_sha256": "d7e5a1cb5abc8ea1104116ac154f5f1e0b9fd889fdf2650ed1fe1d27510f4b82",
+          "start_s": 155.241023633,
+          "end_s": 156.441023633,
+          "first_event": 459,
+          "last_event": 461,
+          "score": 13.5,
+          "reasons": [
+            "density_change",
+            "marker:Pause",
+            "marker:SetSpeed",
+            "marker:Twirl"
+          ],
+          "events": 3,
+          "min_interval_ms": 166.66667259565315
+        }
+      ]
+    },
+    {
+      "name": "10359 - Entanglement - HanB _ RinkiRin.adofai",
+      "path": "F:\\dev\\DoMachinesDreamOfDeparture\\data\\DMDOD-v140-tuf-p11-p20\\Train\\10359 - Entanglement - HanB _ RinkiRin.adofai",
+      "sha256": "937f4ebdab68fba0ee9a2571fe7117832685848218fda14a37d1ea52b1784e97",
+      "family": "entanglement",
+      "level_id": 10359,
+      "difficulty": "P11",
+      "difficulty_source": "saved_dataset_manifest",
+      "g10_or_harder_verified": false,
+      "excluded_reason": null,
+      "duration_s": 139.602888,
+      "events": 979,
+      "targets": 979,
+      "mean_events_per_s": 7.012749,
+      "bpm": {
+        "manifest": 277.0,
+        "compiled_min": 138.5,
+        "compiled_max": 554.0,
+        "distinct_rounded": 3
+      },
+      "interval_ms": {
+        "minimum": 54.15161491680465,
+        "p10": 108.30323753916815,
+        "median": 108.30324909747446,
+        "under_35": 0,
+        "under_60": 54
+      },
+      "multi_contact_events": 0,
+      "max_chord_size": 1,
+      "midspins": 3,
+      "full_rotations": 5,
+      "markers": {
+        "MultiPlanet": 0,
+        "Pause": 4,
+        "SetSpeed": 49,
+        "Twirl": 22
+      },
+      "complex_windows": [
+        {
+          "chart_sha256": "937f4ebdab68fba0ee9a2571fe7117832685848218fda14a37d1ea52b1784e97",
+          "start_s": 6.60801449,
+          "end_s": 7.80801449,
+          "first_event": 32,
+          "last_event": 40,
+          "score": 10.499997,
+          "reasons": [
+            "short_interval",
+            "density_change",
+            "marker:Twirl"
+          ],
+          "events": 9,
+          "min_interval_ms": 54.15161491681353
+        },
+        {
+          "chart_sha256": "937f4ebdab68fba0ee9a2571fe7117832685848218fda14a37d1ea52b1784e97",
+          "start_s": 137.005126484,
+          "end_s": 138.205126484,
+          "first_event": 953,
+          "last_event": 965,
+          "score": 10.000001,
+          "reasons": [
+            "short_interval",
+            "density_change",
+            "marker:SetSpeed",
+            "marker:Twirl"
+          ],
+          "events": 13,
+          "min_interval_ms": 54.15161491680465
+        }
+      ]
+    },
+    {
+      "name": "05659 - SPIRAL - yeetyote.adofai",
+      "path": "F:\\dev\\DoMachinesDreamOfDeparture\\data\\DMDOD-v140-tuf-p11-p20\\Train\\05659 - SPIRAL - yeetyote.adofai",
+      "sha256": "4b7f1f72a463fc6daafb64d8bc959f73ad3aeb903550c8a4c172dbf900d9a75d",
+      "family": "spiral",
+      "level_id": 5659,
+      "difficulty": "P11",
+      "difficulty_source": "saved_dataset_manifest",
+      "g10_or_harder_verified": false,
+      "excluded_reason": null,
+      "duration_s": 134.600001,
+      "events": 844,
+      "targets": 844,
+      "mean_events_per_s": 6.270431,
+      "bpm": {
+        "manifest": 150.0,
+        "compiled_min": 150.0,
+        "compiled_max": 300.0,
+        "distinct_rounded": 2
+      },
+      "interval_ms": {
+        "minimum": 66.66667140984828,
+        "p10": 99.99998932783072,
+        "median": 100.00000355739758,
+        "under_35": 0,
+        "under_60": 0
+      },
+      "multi_contact_events": 0,
+      "max_chord_size": 1,
+      "midspins": 0,
+      "full_rotations": 4,
+      "markers": {
+        "MultiPlanet": 0,
+        "Pause": 1,
+        "SetSpeed": 3,
+        "Twirl": 108
+      },
+      "complex_windows": [
+        {
+          "chart_sha256": "4b7f1f72a463fc6daafb64d8bc959f73ad3aeb903550c8a4c172dbf900d9a75d",
+          "start_s": 2.960000037,
+          "end_s": 4.160000037,
+          "first_event": 1,
+          "last_event": 5,
+          "score": 5.0,
+          "reasons": [
+            "density_change",
+            "marker:Pause",
+            "marker:SetSpeed"
+          ],
+          "events": 5,
+          "min_interval_ms": 99.99998932782984
+        },
+        {
+          "chart_sha256": "4b7f1f72a463fc6daafb64d8bc959f73ad3aeb903550c8a4c172dbf900d9a75d",
+          "start_s": 72.260000303,
+          "end_s": 73.460000303,
+          "first_event": 415,
+          "last_event": 418,
+          "score": 6.0,
+          "reasons": [
+            "density_change",
+            "marker:SetSpeed",
+            "marker:Twirl"
+          ],
+          "events": 4,
+          "min_interval_ms": 100.00001067217568
+        }
+      ]
+    },
+    {
+      "name": "08543 - Little Rabbit and Deliverance - 3.14.adofai",
+      "path": "F:\\dev\\DoMachinesDreamOfDeparture\\data\\DMDOD-v140-tuf-p11-p20\\Train\\08543 - Little Rabbit and Deliverance - 3.14.adofai",
+      "sha256": "4ca8c049d57f0797037ef8f306d9bcd8cfc4fe3a2251ad1afaf4b1140bf48747",
+      "family": "little rabbit and deliverance",
+      "level_id": 8543,
+      "difficulty": "P12",
+      "difficulty_source": "saved_dataset_manifest",
+      "g10_or_harder_verified": false,
+      "excluded_reason": null,
+      "duration_s": 184.504457,
+      "events": 1197,
+      "targets": 1197,
+      "mean_events_per_s": 6.487648,
+      "bpm": {
+        "manifest": 218.0,
+        "compiled_min": 55.00000190734863,
+        "compiled_max": 280.00000262260437,
+        "distinct_rounded": 25
+      },
+      "interval_ms": {
+        "minimum": 53.571418540940385,
+        "p10": 59.999991216102444,
+        "median": 120.0000080454231,
+        "under_35": 0,
+        "under_60": 169
+      },
+      "multi_contact_events": 0,
+      "max_chord_size": 1,
+      "midspins": 14,
+      "full_rotations": 0,
+      "markers": {
+        "MultiPlanet": 0,
+        "Pause": 0,
+        "SetSpeed": 25,
+        "Twirl": 533
+      },
+      "complex_windows": [
+        {
+          "chart_sha256": "4ca8c049d57f0797037ef8f306d9bcd8cfc4fe3a2251ad1afaf4b1140bf48747",
+          "start_s": 154.120581184,
+          "end_s": 155.320581184,
+          "first_event": 1008,
+          "last_event": 1022,
+          "score": 8.5,
+          "reasons": [
+            "short_interval",
+            "density_change",
+            "marker:Twirl"
+          ],
+          "events": 15,
+          "min_interval_ms": 53.571433786885336
+        },
+        {
+          "chart_sha256": "4ca8c049d57f0797037ef8f306d9bcd8cfc4fe3a2251ad1afaf4b1140bf48747",
+          "start_s": 168.692010267,
+          "end_s": 169.892010267,
+          "first_event": 1172,
+          "last_event": 1181,
+          "score": 14.0,
+          "reasons": [
+            "short_interval",
+            "density_change",
+            "marker:SetSpeed",
+            "marker:Twirl"
+          ],
+          "events": 10,
+          "min_interval_ms": 53.571433786885336
+        }
+      ]
+    },
+    {
+      "name": "05652 - VANGUARD-1 - 〈Geodetics〉.adofai",
+      "path": "F:\\dev\\DoMachinesDreamOfDeparture\\data\\DMDOD-v140-tuf-p11-p20\\Train\\05652 - VANGUARD-1 - 〈Geodetics〉.adofai",
+      "sha256": "07af3b1617656716ca5b31e4a6f77341a70414723728198784f03782ca417fe9",
+      "family": "vanguard-1",
+      "level_id": 5652,
+      "difficulty": "P12",
+      "difficulty_source": "saved_dataset_manifest",
+      "g10_or_harder_verified": false,
+      "excluded_reason": null,
+      "duration_s": 114.529412,
+      "events": 550,
+      "targets": 550,
+      "mean_events_per_s": 4.80226,
+      "bpm": {
+        "manifest": 170.0,
+        "compiled_min": 42.5,
+        "compiled_max": 340.0,
+        "distinct_rounded": 4
+      },
+      "interval_ms": {
+        "minimum": 88.2352847010246,
+        "p10": 88.23530981202055,
+        "median": 176.4705882352935,
+        "under_35": 0,
+        "under_60": 0
+      },
+      "multi_contact_events": 0,
+      "max_chord_size": 1,
+      "midspins": 0,
+      "full_rotations": 1,
+      "markers": {
+        "MultiPlanet": 0,
+        "Pause": 0,
+        "SetSpeed": 6,
+        "Twirl": 49
+      },
+      "complex_windows": [
+        {
+          "chart_sha256": "07af3b1617656716ca5b31e4a6f77341a70414723728198784f03782ca417fe9",
+          "start_s": 39.695294182,
+          "end_s": 40.895294182,
+          "first_event": 168,
+          "last_event": 171,
+          "score": 5.499999,
+          "reasons": [
+            "density_change",
+            "marker:SetSpeed"
+          ],
+          "events": 4,
+          "min_interval_ms": 88.2353035342689
+        },
+        {
+          "chart_sha256": "07af3b1617656716ca5b31e4a6f77341a70414723728198784f03782ca417fe9",
+          "start_s": 68.636470502,
+          "end_s": 69.836470502,
+          "first_event": 300,
+          "last_event": 302,
+          "score": 8.4,
+          "reasons": [
+            "density_change",
+            "marker:SetSpeed",
+            "marker:Twirl"
+          ],
+          "events": 3,
+          "min_interval_ms": 220.5882337246834
+        }
+      ]
+    },
+    {
+      "name": "11385 - Static - ScarletEmber _ MollyMolly.adofai",
+      "path": "F:\\dev\\DoMachinesDreamOfDeparture\\data\\DMDOD-v140-tuf-p11-p20\\Train\\11385 - Static - ScarletEmber _ MollyMolly.adofai",
+      "sha256": "7c5dcf17b49cfe1168f3197a7a0aba44dca47b7756d439dec5dac5963b21aa93",
+      "family": "static",
+      "level_id": 11385,
+      "difficulty": "P12",
+      "difficulty_source": "saved_dataset_manifest",
+      "g10_or_harder_verified": false,
+      "excluded_reason": null,
+      "duration_s": 243.841951,
+      "events": 1056,
+      "targets": 1056,
+      "mean_events_per_s": 4.330674,
+      "bpm": {
+        "manifest": 95.0,
+        "compiled_min": 47.5,
+        "compiled_max": 380.0,
+        "distinct_rounded": 5
+      },
+      "interval_ms": {
+        "minimum": 78.94735999565228,
+        "p10": 78.94737122951767,
+        "median": 157.89473684210975,
+        "under_35": 0,
+        "under_60": 0
+      },
+      "multi_contact_events": 0,
+      "max_chord_size": 1,
+      "midspins": 0,
+      "full_rotations": 8,
+      "markers": {
+        "MultiPlanet": 0,
+        "Pause": 10,
+        "SetSpeed": 21,
+        "Twirl": 125
+      },
+      "complex_windows": [
+        {
+          "chart_sha256": "7c5dcf17b49cfe1168f3197a7a0aba44dca47b7756d439dec5dac5963b21aa93",
+          "start_s": 175.552105178,
+          "end_s": 176.752105178,
+          "first_event": 774,
+          "last_event": 777,
+          "score": 13.5,
+          "reasons": [
+            "density_change",
+            "marker:Pause",
+            "marker:SetSpeed",
+            "marker:Twirl"
+          ],
+          "events": 4,
+          "min_interval_ms": 78.94737684645747
+        },
+        {
+          "chart_sha256": "7c5dcf17b49cfe1168f3197a7a0aba44dca47b7756d439dec5dac5963b21aa93",
+          "start_s": 197.00721399,
+          "end_s": 198.20721399,
+          "first_event": 814,
+          "last_event": 816,
+          "score": 13.5,
+          "reasons": [
+            "density_change",
+            "marker:Pause",
+            "marker:SetSpeed",
+            "marker:Twirl"
+          ],
+          "events": 3,
+          "min_interval_ms": 176.47055994021343
+        }
+      ]
+    },
+    {
+      "name": "10556 - Oyasmy - shun.adofai",
+      "path": "F:\\dev\\DoMachinesDreamOfDeparture\\data\\DMDOD-v140-tuf-p11-p20\\Train\\10556 - Oyasmy - shun.adofai",
+      "sha256": "641d09cf9dd37e42997a5e92f005027e9912925f260f0184be58c5f0ddfc0522",
+      "family": "oyasmy",
+      "level_id": 10556,
+      "difficulty": "P12",
+      "difficulty_source": "saved_dataset_manifest",
+      "g10_or_harder_verified": false,
+      "excluded_reason": null,
+      "duration_s": 135.863251,
+      "events": 827,
+      "targets": 827,
+      "mean_events_per_s": 6.087003,
+      "bpm": {
+        "manifest": 156.0,
+        "compiled_min": 69.3333431482315,
+        "compiled_max": 156.0,
+        "distinct_rounded": 6
+      },
+      "interval_ms": {
+        "minimum": 2.136765743003366,
+        "p10": 126.0683852658957,
+        "median": 128.2051373266455,
+        "under_35": 63,
+        "under_60": 63
+      },
+      "multi_contact_events": 0,
+      "max_chord_size": 1,
+      "midspins": 0,
+      "full_rotations": 1,
+      "markers": {
+        "MultiPlanet": 0,
+        "Pause": 2,
+        "SetSpeed": 5,
+        "Twirl": 0
+      },
+      "complex_windows": [
+        {
+          "chart_sha256": "641d09cf9dd37e42997a5e92f005027e9912925f260f0184be58c5f0ddfc0522",
+          "start_s": 25.61598303,
+          "end_s": 26.81598303,
+          "first_event": 114,
+          "last_event": 117,
+          "score": 14.0,
+          "reasons": [
+            "short_interval",
+            "burst",
+            "sub_control_interval",
+            "density_change"
+          ],
+          "events": 4,
+          "min_interval_ms": 2.1367657430104714
+        },
+        {
+          "chart_sha256": "641d09cf9dd37e42997a5e92f005027e9912925f260f0184be58c5f0ddfc0522",
+          "start_s": 27.154444569,
+          "end_s": 28.354444569,
+          "first_event": 120,
+          "last_event": 123,
+          "score": 14.0,
+          "reasons": [
+            "short_interval",
+            "burst",
+            "sub_control_interval",
+            "density_change"
+          ],
+          "events": 4,
+          "min_interval_ms": 2.1367657430104714
+        }
+      ]
+    },
+    {
+      "name": "10051 - Fly High (CDF Cut ver.) - 연석이2.adofai",
+      "path": "F:\\dev\\DoMachinesDreamOfDeparture\\data\\DMDOD-v140-tuf-p11-p20\\Train\\10051 - Fly High (CDF Cut ver.) - 연석이2.adofai",
+      "sha256": "639a399a6102b66420134270830710b403de7bb28661ceadabe51647adec6ba2",
+      "family": "fly high (cdf cut ver.)",
+      "level_id": 10051,
+      "difficulty": "P12",
+      "difficulty_source": "saved_dataset_manifest",
+      "g10_or_harder_verified": false,
+      "excluded_reason": null,
+      "duration_s": 70.841086,
+      "events": 520,
+      "targets": 520,
+      "mean_events_per_s": 7.340373,
+      "bpm": {
+        "manifest": 180.0,
+        "compiled_min": 90.0,
+        "compiled_max": 720.0,
+        "distinct_rounded": 5
+      },
+      "interval_ms": {
+        "minimum": 13.888891359300715,
+        "p10": 27.777782718594324,
+        "median": 138.88888592439486,
+        "under_35": 112,
+        "under_60": 131
+      },
+      "multi_contact_events": 0,
+      "max_chord_size": 1,
+      "midspins": 27,
+      "full_rotations": 4,
+      "markers": {
+        "MultiPlanet": 0,
+        "Pause": 1,
+        "SetSpeed": 23,
+        "Twirl": 98
+      },
+      "complex_windows": [
+        {
+          "chart_sha256": "639a399a6102b66420134270830710b403de7bb28661ceadabe51647adec6ba2",
+          "start_s": 32.46000025,
+          "end_s": 33.66000025,
+          "first_event": 130,
+          "last_event": 137,
+          "score": 17.0,
+          "reasons": [
+            "short_interval",
+            "burst",
+            "density_change",
+            "marker:SetSpeed",
+            "marker:Twirl"
+          ],
+          "events": 8,
+          "min_interval_ms": 27.777782718594324
+        },
+        {
+          "chart_sha256": "639a399a6102b66420134270830710b403de7bb28661ceadabe51647adec6ba2",
+          "start_s": 43.48777823,
+          "end_s": 44.68777823,
+          "first_event": 252,
+          "last_event": 266,
+          "score": 17.0,
+          "reasons": [
+            "short_interval",
+            "burst",
+            "density_change",
+            "marker:SetSpeed",
+            "marker:Twirl"
+          ],
+          "events": 15,
+          "min_interval_ms": 13.888891359300715
+        }
+      ]
+    },
+    {
+      "name": "06062 - The Avenue of Ash (Heads Finale) - TeoC.adofai",
+      "path": "F:\\dev\\DoMachinesDreamOfDeparture\\data\\DMDOD-v140-tuf-p11-p20\\Train\\06062 - The Avenue of Ash (Heads Finale) - TeoC.adofai",
+      "sha256": "83cd605819c0f1d11cb1d280d5666d16bd2cdbe1da32423aac17c24c536f664f",
+      "family": "the avenue of ash (heads finale)",
+      "level_id": 6062,
+      "difficulty": "P12",
+      "difficulty_source": "saved_dataset_manifest",
+      "g10_or_harder_verified": false,
+      "excluded_reason": null,
+      "duration_s": 409.245883,
+      "events": 680,
+      "targets": 680,
+      "mean_events_per_s": 1.661593,
+      "bpm": {
+        "manifest": 110.0,
+        "compiled_min": 5.833333916962147,
+        "compiled_max": 35839.99938964844,
+        "distinct_rounded": 19
+      },
+      "interval_ms": {
+        "minimum": 0.8370535817050495,
+        "p10": 107.14286277897145,
+        "median": 272.72727272726627,
+        "under_35": 14,
+        "under_60": 14
+      },
+      "multi_contact_events": 0,
+      "max_chord_size": 1,
+      "midspins": 227,
+      "full_rotations": 5,
+      "markers": {
+        "MultiPlanet": 0,
+        "Pause": 3,
+        "SetSpeed": 75,
+        "Twirl": 43
+      },
+      "complex_windows": [
+        {
+          "chart_sha256": "83cd605819c0f1d11cb1d280d5666d16bd2cdbe1da32423aac17c24c536f664f",
+          "start_s": 26.732727178,
+          "end_s": 27.932727178,
+          "first_event": 71,
+          "last_event": 75,
+          "score": 14.5,
+          "reasons": [
+            "short_interval",
+            "burst",
+            "sub_control_interval",
+            "density_change",
+            "marker:SetSpeed",
+            "marker:Twirl"
+          ],
+          "events": 5,
+          "min_interval_ms": 2.1306818939770267
+        },
+        {
+          "chart_sha256": "83cd605819c0f1d11cb1d280d5666d16bd2cdbe1da32423aac17c24c536f664f",
+          "start_s": 35.463195899,
+          "end_s": 36.663195899,
+          "first_event": 104,
+          "last_event": 108,
+          "score": 14.5,
+          "reasons": [
+            "short_interval",
+            "burst",
+            "sub_control_interval",
+            "density_change",
+            "marker:SetSpeed",
+            "marker:Twirl"
+          ],
+          "events": 5,
+          "min_interval_ms": 2.1306818939805794
+        }
+      ]
+    },
+    {
+      "name": "05664 - gur yvsr (仮) - yeetyote.adofai",
+      "path": "F:\\dev\\DoMachinesDreamOfDeparture\\data\\DMDOD-v140-tuf-p11-p20\\Train\\05664 - gur yvsr (仮) - yeetyote.adofai",
+      "sha256": "25da98ff8051190b1a7da17c9b1326d53b0d54a1e1ab1a54977df895c50aa75f",
+      "family": "gur yvsr (仮)",
+      "level_id": 5664,
+      "difficulty": "P12",
+      "difficulty_source": "saved_dataset_manifest",
+      "g10_or_harder_verified": false,
+      "excluded_reason": null,
+      "duration_s": 132.164062,
+      "events": 669,
+      "targets": 669,
+      "mean_events_per_s": 5.06189,
+      "bpm": {
+        "manifest": 160.0,
+        "compiled_min": 40.0,
+        "compiled_max": 640.0,
+        "distinct_rounded": 5
+      },
+      "interval_ms": {
+        "minimum": 70.31249082859858,
+        "p10": 93.75,
+        "median": 187.4999866597875,
+        "under_35": 0,
+        "under_60": 0
+      },
+      "multi_contact_events": 0,
+      "max_chord_size": 1,
+      "midspins": 0,
+      "full_rotations": 27,
+      "markers": {
+        "MultiPlanet": 0,
+        "Pause": 0,
+        "SetSpeed": 21,
+        "Twirl": 54
+      },
+      "complex_windows": [
+        {
+          "chart_sha256": "25da98ff8051190b1a7da17c9b1326d53b0d54a1e1ab1a54977df895c50aa75f",
+          "start_s": 39.959999761,
+          "end_s": 41.159999761,
+          "first_event": 239,
+          "last_event": 241,
+          "score": 5.833333,
+          "reasons": [
+            "density_change",
+            "marker:SetSpeed"
+          ],
+          "events": 3,
+          "min_interval_ms": 187.5
+        },
+        {
+          "chart_sha256": "25da98ff8051190b1a7da17c9b1326d53b0d54a1e1ab1a54977df895c50aa75f",
+          "start_s": 57.209999681,
+          "end_s": 58.409999681,
+          "first_event": 280,
+          "last_event": 285,
+          "score": 6.0,
+          "reasons": [
+            "density_change",
+            "marker:SetSpeed",
+            "marker:Twirl"
+          ],
+          "events": 6,
+          "min_interval_ms": 93.75000333505312
+        }
+      ]
+    },
+    {
+      "name": "07923 - Rainbow Chaser - 树赤TreeRed _ 树赤TreeRed.adofai",
+      "path": "F:\\dev\\DoMachinesDreamOfDeparture\\data\\DMDOD-v140-tuf-p11-p20\\Train\\07923 - Rainbow Chaser - 树赤TreeRed _ 树赤TreeRed.adofai",
+      "sha256": "5ba7a57ce57cb5b8d2f526b275d0c141cb7923220a07d2a034793e443dfa253d",
+      "family": "rainbow chaser",
+      "level_id": 7923,
+      "difficulty": "P12",
+      "difficulty_source": "saved_dataset_manifest",
+      "g10_or_harder_verified": false,
+      "excluded_reason": null,
+      "duration_s": 250.447369,
+      "events": 1509,
+      "targets": 1509,
+      "mean_events_per_s": 6.025218,
+      "bpm": {
+        "manifest": 96.0,
+        "compiled_min": 24.384000778198242,
+        "compiled_max": 799.9999694824219,
+        "distinct_rounded": 24
+      },
+      "interval_ms": {
+        "minimum": 12.500002700193136,
+        "p10": 25.000005400414693,
+        "median": 150.00000572203476,
+        "under_35": 275,
+        "under_60": 275
+      },
+      "multi_contact_events": 0,
+      "max_chord_size": 1,
+      "midspins": 41,
+      "full_rotations": 20,
+      "markers": {
+        "MultiPlanet": 0,
+        "Pause": 0,
+        "SetSpeed": 234,
+        "Twirl": 351
+      },
+      "complex_windows": [
+        {
+          "chart_sha256": "5ba7a57ce57cb5b8d2f526b275d0c141cb7923220a07d2a034793e443dfa253d",
+          "start_s": 76.631260806,
+          "end_s": 77.831260806,
+          "first_event": 350,
+          "last_event": 357,
+          "score": 18.0,
+          "reasons": [
+            "short_interval",
+            "burst",
+            "density_change",
+            "marker:Twirl"
+          ],
+          "events": 8,
+          "min_interval_ms": 25.000005400414693
+        },
+        {
+          "chart_sha256": "5ba7a57ce57cb5b8d2f526b275d0c141cb7923220a07d2a034793e443dfa253d",
+          "start_s": 95.831261721,
+          "end_s": 97.031261721,
+          "first_event": 502,
+          "last_event": 511,
+          "score": 18.0,
+          "reasons": [
+            "short_interval",
+            "burst",
+            "density_change",
+            "marker:Twirl"
+          ],
+          "events": 10,
+          "min_interval_ms": 25.000005400414693
+        }
+      ]
+    },
+    {
+      "name": "02280 - Beautiful Lullaby - NfK.adofai",
+      "path": "F:\\dev\\DoMachinesDreamOfDeparture\\data\\DMDOD-v140-tuf-p11-p20\\Train\\02280 - Beautiful Lullaby - NfK.adofai",
+      "sha256": "476336e473f8b43aca1ab7a186cf370f91859125f753a57aed7094cda9fed149",
+      "family": "beautiful lullaby",
+      "level_id": 2280,
+      "difficulty": "P13",
+      "difficulty_source": "saved_dataset_manifest",
+      "g10_or_harder_verified": false,
+      "excluded_reason": null,
+      "duration_s": 2657.142925,
+      "events": 3217,
+      "targets": 3217,
+      "mean_events_per_s": 1.210699,
+      "bpm": {
+        "manifest": 31.5,
+        "compiled_min": 31.5,
+        "compiled_max": 31.5,
+        "distinct_rounded": 1
+      },
+      "interval_ms": {
+        "minimum": 476.1903914904906,
+        "p10": 476.19039149071796,
+        "median": 476.19052701043074,
+        "under_35": 0,
+        "under_60": 0
+      },
+      "multi_contact_events": 0,
+      "max_chord_size": 1,
+      "midspins": 0,
+      "full_rotations": 0,
+      "markers": {
+        "MultiPlanet": 0,
+        "Pause": 0,
+        "SetSpeed": 0,
+        "Twirl": 1176
+      },
+      "complex_windows": [
+        {
+          "chart_sha256": "476336e473f8b43aca1ab7a186cf370f91859125f753a57aed7094cda9fed149",
+          "start_s": 8.507619176,
+          "end_s": 9.707619176,
+          "first_event": 4,
+          "last_event": 5,
+          "score": 4.5,
+          "reasons": [
+            "density_change",
+            "marker:Twirl"
+          ],
+          "events": 2,
+          "min_interval_ms": 476.1905270103348
+        },
+        {
+          "chart_sha256": "476336e473f8b43aca1ab7a186cf370f91859125f753a57aed7094cda9fed149",
+          "start_s": 12.793333784,
+          "end_s": 13.993333784,
+          "first_event": 10,
+          "last_event": 11,
+          "score": 4.5,
+          "reasons": [
+            "density_change",
+            "marker:Twirl"
+          ],
+          "events": 2,
+          "min_interval_ms": 476.1905270103348
+        }
+      ]
+    },
+    {
+      "name": "03810 - Parallel Universe Shifter - Eraser.adofai",
+      "path": "F:\\dev\\DoMachinesDreamOfDeparture\\data\\DMDOD-v140-tuf-p11-p20\\Train\\03810 - Parallel Universe Shifter - Eraser.adofai",
+      "sha256": "71d90e02647c91a749154697ae6f337b5faca337bfb75d234873fe652480f2d2",
+      "family": "parallel universe shifter",
+      "level_id": 3810,
+      "difficulty": "P13",
+      "difficulty_source": "saved_dataset_manifest",
+      "g10_or_harder_verified": false,
+      "excluded_reason": null,
+      "duration_s": 417.754096,
+      "events": 1976,
+      "targets": 1976,
+      "mean_events_per_s": 4.730055,
+      "bpm": {
+        "manifest": 150.0,
+        "compiled_min": 25.00000074505806,
+        "compiled_max": 280.0000011920929,
+        "distinct_rounded": 243
+      },
+      "interval_ms": {
+        "minimum": 57.25189810937081,
+        "p10": 82.6446334092168,
+        "median": 176.4705957505157,
+        "under_35": 0,
+        "under_60": 29
+      },
+      "multi_contact_events": 0,
+      "max_chord_size": 1,
+      "midspins": 2,
+      "full_rotations": 3,
+      "markers": {
+        "MultiPlanet": 0,
+        "Pause": 6,
+        "SetSpeed": 397,
+        "Twirl": 449
+      },
+      "complex_windows": [
+        {
+          "chart_sha256": "71d90e02647c91a749154697ae6f337b5faca337bfb75d234873fe652480f2d2",
+          "start_s": 245.663277352,
+          "end_s": 246.863277352,
+          "first_event": 1062,
+          "last_event": 1064,
+          "score": 13.5,
+          "reasons": [
+            "density_change",
+            "marker:Pause",
+            "marker:SetSpeed",
+            "marker:Twirl"
+          ],
+          "events": 3,
+          "min_interval_ms": 107.1428681211728
+        },
+        {
+          "chart_sha256": "71d90e02647c91a749154697ae6f337b5faca337bfb75d234873fe652480f2d2",
+          "start_s": 400.294377419,
+          "end_s": 401.494377419,
+          "first_event": 1928,
+          "last_event": 1930,
+          "score": 13.5,
+          "reasons": [
+            "density_change",
+            "marker:Pause",
+            "marker:SetSpeed",
+            "marker:Twirl"
+          ],
+          "events": 3,
+          "min_interval_ms": 136.363638259013
+        }
+      ]
+    },
+    {
+      "name": "08430 - Azure Comet - Team OHHSB.adofai",
+      "path": "F:\\dev\\DoMachinesDreamOfDeparture\\data\\DMDOD-v140-tuf-p11-p20\\Train\\08430 - Azure Comet - Team OHHSB.adofai",
+      "sha256": "90694f5e47e81feee3e6e18f0a0b195e5ef91a1f4000a2515367d3aac6e953ec",
+      "family": "azure comet",
+      "level_id": 8430,
+      "difficulty": "P13",
+      "difficulty_source": "saved_dataset_manifest",
+      "g10_or_harder_verified": false,
+      "excluded_reason": null,
+      "duration_s": 162.162226,
+      "events": 932,
+      "targets": 932,
+      "mean_events_per_s": 5.747331,
+      "bpm": {
+        "manifest": 185.0,
+        "compiled_min": 46.25,
+        "compiled_max": 740.0,
+        "distinct_rounded": 26
+      },
+      "interval_ms": {
+        "minimum": 81.08103563738212,
+        "p10": 81.08108973419093,
+        "median": 81.08161043310247,
+        "under_35": 0,
+        "under_60": 0
+      },
+      "multi_contact_events": 0,
+      "max_chord_size": 1,
+      "midspins": 2,
+      "full_rotations": 3,
+      "markers": {
+        "MultiPlanet": 0,
+        "Pause": 8,
+        "SetSpeed": 342,
+        "Twirl": 355
+      },
+      "complex_windows": [
+        {
+          "chart_sha256": "90694f5e47e81feee3e6e18f0a0b195e5ef91a1f4000a2515367d3aac6e953ec",
+          "start_s": 112.649168309,
+          "end_s": 113.849168309,
+          "first_event": 519,
+          "last_event": 527,
+          "score": 12.0,
+          "reasons": [
+            "density_change",
+            "marker:SetSpeed",
+            "marker:Twirl"
+          ],
+          "events": 9,
+          "min_interval_ms": 81.08103563738212
+        },
+        {
+          "chart_sha256": "90694f5e47e81feee3e6e18f0a0b195e5ef91a1f4000a2515367d3aac6e953ec",
+          "start_s": 144.757361342,
+          "end_s": 145.957361342,
+          "first_event": 909,
+          "last_event": 915,
+          "score": 12.0,
+          "reasons": [
+            "density_change",
+            "marker:SetSpeed",
+            "marker:Twirl"
+          ],
+          "events": 7,
+          "min_interval_ms": 81.08161370614653
+        }
+      ]
+    },
+    {
+      "name": "07827 - 24eeev0-$ - hotduck _ COMMON.adofai",
+      "path": "F:\\dev\\DoMachinesDreamOfDeparture\\data\\DMDOD-v140-tuf-p11-p20\\Train\\07827 - 24eeev0-$ - hotduck _ COMMON.adofai",
+      "sha256": "3e93ec4afae58c516b367a45e1e504cf31628afd205e9f87b0f7f8de465782b3",
+      "family": "24eeev0-$",
+      "level_id": 7827,
+      "difficulty": "P13",
+      "difficulty_source": "saved_dataset_manifest",
+      "g10_or_harder_verified": false,
+      "excluded_reason": null,
+      "duration_s": 137.830912,
+      "events": 645,
+      "targets": 645,
+      "mean_events_per_s": 4.679647,
+      "bpm": {
+        "manifest": 200.0,
+        "compiled_min": 25.0,
+        "compiled_max": 405.9999942779541,
+        "distinct_rounded": 29
+      },
+      "interval_ms": {
+        "minimum": 74.07406222546342,
+        "p10": 100.00000711477952,
+        "median": 188.6792413221059,
+        "under_35": 0,
+        "under_60": 0
+      },
+      "multi_contact_events": 0,
+      "max_chord_size": 1,
+      "midspins": 0,
+      "full_rotations": 0,
+      "markers": {
+        "MultiPlanet": 0,
+        "Pause": 1,
+        "SetSpeed": 24,
+        "Twirl": 8
+      },
+      "complex_windows": [
+        {
+          "chart_sha256": "3e93ec4afae58c516b367a45e1e504cf31628afd205e9f87b0f7f8de465782b3",
+          "start_s": 10.560000042,
+          "end_s": 11.760000042,
+          "first_event": 1,
+          "last_event": 6,
+          "score": 3.5,
+          "reasons": [
+            "density_change",
+            "marker:Pause"
+          ],
+          "events": 6,
+          "min_interval_ms": 99.99998577043989
+        },
+        {
+          "chart_sha256": "3e93ec4afae58c516b367a45e1e504cf31628afd205e9f87b0f7f8de465782b3",
+          "start_s": 132.490912104,
+          "end_s": 133.690912104,
+          "first_event": 640,
+          "last_event": 643,
+          "score": 10.5,
+          "reasons": [
+            "density_change",
+            "marker:SetSpeed"
+          ],
+          "events": 4,
+          "min_interval_ms": 156.65796656710995
+        }
+      ]
+    },
+    {
+      "name": "11663 - Nameless Garden - oSKYo _ oSKYo.adofai",
+      "path": "F:\\dev\\DoMachinesDreamOfDeparture\\data\\DMDOD-v140-tuf-p11-p20\\Train\\11663 - Nameless Garden - oSKYo _ oSKYo.adofai",
+      "sha256": "2117f03d532c3019749653afce90500426b121d9f09ed9286268c168e54de0f8",
+      "family": "nameless garden",
+      "level_id": 11663,
+      "difficulty": "P13",
+      "difficulty_source": "saved_dataset_manifest",
+      "g10_or_harder_verified": false,
+      "excluded_reason": null,
+      "duration_s": 138.761624,
+      "events": 693,
+      "targets": 693,
+      "mean_events_per_s": 4.994176,
+      "bpm": {
+        "manifest": 150.0,
+        "compiled_min": 60.00000089406967,
+        "compiled_max": 600.0,
+        "distinct_rounded": 11
+      },
+      "interval_ms": {
+        "minimum": 49.99999110653164,
+        "p10": 99.99999999999432,
+        "median": 199.9999999999993,
+        "under_35": 0,
+        "under_60": 4
+      },
+      "multi_contact_events": 0,
+      "max_chord_size": 1,
+      "midspins": 4,
+      "full_rotations": 15,
+      "markers": {
+        "MultiPlanet": 0,
+        "Pause": 4,
+        "SetSpeed": 21,
+        "Twirl": 78
+      },
+      "complex_windows": [
+        {
+          "chart_sha256": "2117f03d532c3019749653afce90500426b121d9f09ed9286268c168e54de0f8",
+          "start_s": 10.66000004,
+          "end_s": 11.86000004,
+          "first_event": 44,
+          "last_event": 47,
+          "score": 13.5,
+          "reasons": [
+            "density_change",
+            "marker:Pause",
+            "marker:SetSpeed",
+            "marker:Twirl"
+          ],
+          "events": 4,
+          "min_interval_ms": 150.00000177869487
+        },
+        {
+          "chart_sha256": "2117f03d532c3019749653afce90500426b121d9f09ed9286268c168e54de0f8",
+          "start_s": 13.16000004,
+          "end_s": 14.36000004,
+          "first_event": 48,
+          "last_event": 49,
+          "score": 9.75,
+          "reasons": [
+            "density_change",
+            "marker:Pause",
+            "marker:SetSpeed",
+            "marker:Twirl"
+          ],
+          "events": 2,
+          "min_interval_ms": 400.00000000000034
+        }
+      ]
+    },
+    {
+      "name": "05668 - Hypersurface - 《FAINT Moonlight》.adofai",
+      "path": "F:\\dev\\DoMachinesDreamOfDeparture\\data\\DMDOD-v140-tuf-p11-p20\\Train\\05668 - Hypersurface - 《FAINT Moonlight》.adofai",
+      "sha256": "94c224d36cd37984143c0b29378dc35496b0e8e7959981d683fa0a78889aa057",
+      "family": "hypersurface",
+      "level_id": 5668,
+      "difficulty": "P13",
+      "difficulty_source": "saved_dataset_manifest",
+      "g10_or_harder_verified": false,
+      "excluded_reason": null,
+      "duration_s": 153.882353,
+      "events": 878,
+      "targets": 878,
+      "mean_events_per_s": 5.705657,
+      "bpm": {
+        "manifest": 170.0,
+        "compiled_min": 88.39999675750732,
+        "compiled_max": 680.0,
+        "distinct_rounded": 5
+      },
+      "interval_ms": {
+        "minimum": 88.23527842328005,
+        "p10": 88.23529725651724,
+        "median": 176.47058823528994,
+        "under_35": 0,
+        "under_60": 0
+      },
+      "multi_contact_events": 0,
+      "max_chord_size": 1,
+      "midspins": 4,
+      "full_rotations": 2,
+      "markers": {
+        "MultiPlanet": 0,
+        "Pause": 0,
+        "SetSpeed": 15,
+        "Twirl": 46
+      },
+      "complex_windows": [
+        {
+          "chart_sha256": "94c224d36cd37984143c0b29378dc35496b0e8e7959981d683fa0a78889aa057",
+          "start_s": 1.754117674,
+          "end_s": 2.954117674,
+          "first_event": 2,
+          "last_event": 5,
+          "score": 5.750001,
+          "reasons": [
+            "density_change",
+            "marker:SetSpeed",
+            "marker:Twirl"
+          ],
+          "events": 4,
+          "min_interval_ms": 117.64704208287036
+        },
+        {
+          "chart_sha256": "94c224d36cd37984143c0b29378dc35496b0e8e7959981d683fa0a78889aa057",
+          "start_s": 8.048235262,
+          "end_s": 9.248235262,
+          "first_event": 20,
+          "last_event": 23,
+          "score": 7.0,
+          "reasons": [
+            "density_change",
+            "marker:SetSpeed",
+            "marker:Twirl"
+          ],
+          "events": 4,
+          "min_interval_ms": 117.6470671938592
+        }
+      ]
+    },
+    {
+      "name": "09315 - Lunar Gateway - hotduck _ oSKYo.adofai",
+      "path": "F:\\dev\\DoMachinesDreamOfDeparture\\data\\DMDOD-v140-tuf-p11-p20\\Train\\09315 - Lunar Gateway - hotduck _ oSKYo.adofai",
+      "sha256": "30d68709804bb2eb5487bc149b3f1ae483c711638afff4949c030989ae226b26",
+      "family": "lunar gateway",
+      "level_id": 9315,
+      "difficulty": "P13",
+      "difficulty_source": "saved_dataset_manifest",
+      "g10_or_harder_verified": false,
+      "excluded_reason": null,
+      "duration_s": 161.666511,
+      "events": 746,
+      "targets": 746,
+      "mean_events_per_s": 4.614437,
+      "bpm": {
+        "manifest": 140.0,
+        "compiled_min": 40.00000178813934,
+        "compiled_max": 320.00001430511475,
+        "distinct_rounded": 11
+      },
+      "interval_ms": {
+        "minimum": 61.22441155111957,
+        "p10": 93.74999914410154,
+        "median": 149.99999462850155,
+        "under_35": 0,
+        "under_60": 0
+      },
+      "multi_contact_events": 0,
+      "max_chord_size": 1,
+      "midspins": 0,
+      "full_rotations": 1,
+      "markers": {
+        "MultiPlanet": 0,
+        "Pause": 7,
+        "SetSpeed": 31,
+        "Twirl": 62
+      },
+      "complex_windows": [
+        {
+          "chart_sha256": "30d68709804bb2eb5487bc149b3f1ae483c711638afff4949c030989ae226b26",
+          "start_s": 103.001514384,
+          "end_s": 104.201514384,
+          "first_event": 425,
+          "last_event": 432,
+          "score": 11.0,
+          "reasons": [
+            "density_change",
+            "marker:Pause",
+            "marker:SetSpeed"
+          ],
+          "events": 8,
+          "min_interval_ms": 83.33333331366077
+        },
+        {
+          "chart_sha256": "30d68709804bb2eb5487bc149b3f1ae483c711638afff4949c030989ae226b26",
+          "start_s": 104.50151435,
+          "end_s": 105.70151435,
+          "first_event": 435,
+          "last_event": 443,
+          "score": 10.499999,
+          "reasons": [
+            "density_change",
+            "marker:SetSpeed"
+          ],
+          "events": 9,
+          "min_interval_ms": 75.0000006492968
+        }
+      ]
+    },
+    {
+      "name": "06794 - PIONEER-0 - Sapphirazurite.adofai",
+      "path": "F:\\dev\\DoMachinesDreamOfDeparture\\data\\DMDOD-v140-tuf-p11-p20\\Train\\06794 - PIONEER-0 - Sapphirazurite.adofai",
+      "sha256": "c13ad85f8168f18efa3e7feb5defe593f35e2922eaec1380f1fd9ecc9108825d",
+      "family": "pioneer-0",
+      "level_id": 6794,
+      "difficulty": "P13",
+      "difficulty_source": "saved_dataset_manifest",
+      "g10_or_harder_verified": false,
+      "excluded_reason": null,
+      "duration_s": 140.333334,
+      "events": 836,
+      "targets": 836,
+      "mean_events_per_s": 5.957245,
+      "bpm": {
+        "manifest": 180.0,
+        "compiled_min": 180.0,
+        "compiled_max": 360.0,
+        "distinct_rounded": 2
+      },
+      "interval_ms": {
+        "minimum": 0.08333135349403165,
+        "p10": 83.33333629782658,
+        "median": 166.6666666666714,
+        "under_35": 30,
+        "under_60": 30
+      },
+      "multi_contact_events": 0,
+      "max_chord_size": 1,
+      "midspins": 30,
+      "full_rotations": 0,
+      "markers": {
+        "MultiPlanet": 0,
+        "Pause": 0,
+        "SetSpeed": 6,
+        "Twirl": 98
+      },
+      "complex_windows": [
+        {
+          "chart_sha256": "c13ad85f8168f18efa3e7feb5defe593f35e2922eaec1380f1fd9ecc9108825d",
+          "start_s": 15.5424075,
+          "end_s": 16.7424075,
+          "first_event": 55,
+          "last_event": 60,
+          "score": 13.0,
+          "reasons": [
+            "short_interval",
+            "burst",
+            "sub_control_interval",
+            "density_change",
+            "marker:Twirl"
+          ],
+          "events": 6,
+          "min_interval_ms": 0.740733463054255
+        },
+        {
+          "chart_sha256": "c13ad85f8168f18efa3e7feb5defe593f35e2922eaec1380f1fd9ecc9108825d",
+          "start_s": 56.043342717,
+          "end_s": 57.243342717,
+          "first_event": 322,
+          "last_event": 328,
+          "score": 14.5,
+          "reasons": [
+            "short_interval",
+            "burst",
+            "sub_control_interval",
+            "density_change",
+            "marker:SetSpeed",
+            "marker:Twirl"
+          ],
+          "events": 7,
+          "min_interval_ms": 0.2870293196934881
+        }
+      ]
+    },
+    {
+      "name": "03360 - Hyacinth - 한가지.adofai",
+      "path": "F:\\dev\\DoMachinesDreamOfDeparture\\data\\DMDOD-v140-tuf-p11-p20\\Train\\03360 - Hyacinth - 한가지.adofai",
+      "sha256": "07cd7eeb478f3e5b08a621f30d5ec47ca19590c9521ea903176686ce80b8eec7",
+      "family": "hyacinth",
+      "level_id": 3360,
+      "difficulty": "P14",
+      "difficulty_source": "saved_dataset_manifest",
+      "g10_or_harder_verified": false,
+      "excluded_reason": null,
+      "duration_s": 124.30502,
+      "events": 802,
+      "targets": 802,
+      "mean_events_per_s": 6.451871,
+      "bpm": {
+        "manifest": 150.0,
+        "compiled_min": 22.50000089406967,
+        "compiled_max": 900.0,
+        "distinct_rounded": 14
+      },
+      "interval_ms": {
+        "minimum": 11.11110597265963,
+        "p10": 22.222230918064856,
+        "median": 133.33333807651826,
+        "under_35": 104,
+        "under_60": 105
+      },
+      "multi_contact_events": 0,
+      "max_chord_size": 1,
+      "midspins": 1,
+      "full_rotations": 3,
+      "markers": {
+        "MultiPlanet": 0,
+        "Pause": 1,
+        "SetSpeed": 36,
+        "Twirl": 226
+      },
+      "complex_windows": [
+        {
+          "chart_sha256": "07cd7eeb478f3e5b08a621f30d5ec47ca19590c9521ea903176686ce80b8eec7",
+          "start_s": 7.204444636,
+          "end_s": 8.404444636,
+          "first_event": 43,
+          "last_event": 55,
+          "score": 17.0,
+          "reasons": [
+            "short_interval",
+            "burst",
+            "density_change",
+            "marker:SetSpeed",
+            "marker:Twirl"
+          ],
+          "events": 13,
+          "min_interval_ms": 11.111115459032206
+        },
+        {
+          "chart_sha256": "07cd7eeb478f3e5b08a621f30d5ec47ca19590c9521ea903176686ce80b8eec7",
+          "start_s": 32.526667466,
+          "end_s": 33.726667466,
+          "first_event": 244,
+          "last_event": 253,
+          "score": 18.0,
+          "reasons": [
+            "short_interval",
+            "burst",
+            "density_change",
+            "marker:Twirl"
+          ],
+          "events": 10,
+          "min_interval_ms": 22.222230918067964
+        }
+      ]
+    },
+    {
+      "name": "05667 - Five Forgotten Stars - 《Wavering Starlight》.adofai",
+      "path": "F:\\dev\\DoMachinesDreamOfDeparture\\data\\DMDOD-v140-tuf-p11-p20\\Train\\05667 - Five Forgotten Stars - 《Wavering Starlight》.adofai",
+      "sha256": "a4bed8face33e3c72bdacc8c1d867b73f515abbdaefd7e21d094bd62c06b971c",
+      "family": "five forgotten stars",
+      "level_id": 5667,
+      "difficulty": "P14",
+      "difficulty_source": "saved_dataset_manifest",
+      "g10_or_harder_verified": false,
+      "excluded_reason": null,
+      "duration_s": 171.000001,
+      "events": 863,
+      "targets": 863,
+      "mean_events_per_s": 5.046784,
+      "bpm": {
+        "manifest": 160.0,
+        "compiled_min": 40.0,
+        "compiled_max": 320.0,
+        "distinct_rounded": 3
+      },
+      "interval_ms": {
+        "minimum": 74.99998399174501,
+        "p10": 75.00000400206375,
+        "median": 125.00000889347263,
+        "under_35": 0,
+        "under_60": 0
+      },
+      "multi_contact_events": 0,
+      "max_chord_size": 1,
+      "midspins": 2,
+      "full_rotations": 21,
+      "markers": {
+        "MultiPlanet": 0,
+        "Pause": 0,
+        "SetSpeed": 7,
+        "Twirl": 67
+      },
+      "complex_windows": [
+        {
+          "chart_sha256": "a4bed8face33e3c72bdacc8c1d867b73f515abbdaefd7e21d094bd62c06b971c",
+          "start_s": 74.835000341,
+          "end_s": 76.035000341,
+          "first_event": 336,
+          "last_event": 341,
+          "score": 8.999999,
+          "reasons": [
+            "density_change"
+          ],
+          "events": 6,
+          "min_interval_ms": 75.00001067216999
+        },
+        {
+          "chart_sha256": "a4bed8face33e3c72bdacc8c1d867b73f515abbdaefd7e21d094bd62c06b971c",
+          "start_s": 80.835000368,
+          "end_s": 82.035000368,
+          "first_event": 356,
+          "last_event": 361,
+          "score": 8.999999,
+          "reasons": [
+            "density_change"
+          ],
+          "events": 6,
+          "min_interval_ms": 75.00001067216999
+        }
+      ]
+    },
+    {
+      "name": "08810 - Shploink Overdose - CCNekona.adofai",
+      "path": "F:\\dev\\DoMachinesDreamOfDeparture\\data\\DMDOD-v140-tuf-p11-p20\\Train\\08810 - Shploink Overdose - CCNekona.adofai",
+      "sha256": "10c8c3536bb77e6eacd51d4fd82355bde87313788bdae040f99462a599241143",
+      "family": "shploink overdose",
+      "level_id": 8810,
+      "difficulty": "P14",
+      "difficulty_source": "saved_dataset_manifest",
+      "g10_or_harder_verified": false,
+      "excluded_reason": null,
+      "duration_s": 86.000001,
+      "events": 601,
+      "targets": 601,
+      "mean_events_per_s": 6.988372,
+      "bpm": {
+        "manifest": 120.0,
+        "compiled_min": 30.0,
+        "compiled_max": 480.0,
+        "distinct_rounded": 5
+      },
+      "interval_ms": {
+        "minimum": 20.83332369873503,
+        "p10": 20.833337038951072,
+        "median": 104.16667185452866,
+        "under_35": 168,
+        "under_60": 168
+      },
+      "multi_contact_events": 0,
+      "max_chord_size": 1,
+      "midspins": 0,
+      "full_rotations": 0,
+      "markers": {
+        "MultiPlanet": 0,
+        "Pause": 0,
+        "SetSpeed": 14,
+        "Twirl": 159
+      },
+      "complex_windows": [
+        {
+          "chart_sha256": "10c8c3536bb77e6eacd51d4fd82355bde87313788bdae040f99462a599241143",
+          "start_s": 57.96000065,
+          "end_s": 59.16000065,
+          "first_event": 418,
+          "last_event": 423,
+          "score": 18.0,
+          "reasons": [
+            "short_interval",
+            "burst",
+            "density_change",
+            "marker:SetSpeed"
+          ],
+          "events": 6,
+          "min_interval_ms": 20.83334148568383
+        },
+        {
+          "chart_sha256": "10c8c3536bb77e6eacd51d4fd82355bde87313788bdae040f99462a599241143",
+          "start_s": 65.210000713,
+          "end_s": 66.410000713,
+          "first_event": 454,
+          "last_event": 462,
+          "score": 19.5,
+          "reasons": [
+            "short_interval",
+            "burst",
+            "density_change",
+            "marker:SetSpeed",
+            "marker:Twirl"
+          ],
+          "events": 9,
+          "min_interval_ms": 20.83332369873858
+        }
+      ]
+    },
+    {
+      "name": "06305 - 爽昧夢想ラバーズ - Threew.adofai",
+      "path": "F:\\dev\\DoMachinesDreamOfDeparture\\data\\DMDOD-v140-tuf-p11-p20\\Train\\06305 - 爽昧夢想ラバーズ - Threew.adofai",
+      "sha256": "7f35a30958238543cd8ee9264cb2534a48ac2c72bc90c120bacfba7d20213a7f",
+      "family": "爽昧夢想ラバーズ",
+      "level_id": 6305,
+      "difficulty": "P14",
+      "difficulty_source": "saved_dataset_manifest",
+      "g10_or_harder_verified": false,
+      "excluded_reason": null,
+      "duration_s": 144.187501,
+      "events": 844,
+      "targets": 844,
+      "mean_events_per_s": 5.853489,
+      "bpm": {
+        "manifest": 160.0,
+        "compiled_min": 80.0,
+        "compiled_max": 640.0,
+        "distinct_rounded": 4
+      },
+      "interval_ms": {
+        "minimum": 31.249992218207012,
+        "p10": 31.250005558423055,
+        "median": 187.5,
+        "under_35": 86,
+        "under_60": 102
+      },
+      "multi_contact_events": 0,
+      "max_chord_size": 1,
+      "midspins": 0,
+      "full_rotations": 20,
+      "markers": {
+        "MultiPlanet": 0,
+        "Pause": 0,
+        "SetSpeed": 11,
+        "Twirl": 144
+      },
+      "complex_windows": [
+        {
+          "chart_sha256": "7f35a30958238543cd8ee9264cb2534a48ac2c72bc90c120bacfba7d20213a7f",
+          "start_s": 118.335000801,
+          "end_s": 119.535000801,
+          "first_event": 688,
+          "last_event": 695,
+          "score": 18.0,
+          "reasons": [
+            "short_interval",
+            "burst",
+            "density_change",
+            "marker:Twirl"
+          ],
+          "events": 8,
+          "min_interval_ms": 31.250005558419502
+        },
+        {
+          "chart_sha256": "7f35a30958238543cd8ee9264cb2534a48ac2c72bc90c120bacfba7d20213a7f",
+          "start_s": 119.647500808,
+          "end_s": 120.847500808,
+          "first_event": 697,
+          "last_event": 704,
+          "score": 18.0,
+          "reasons": [
+            "short_interval",
+            "burst",
+            "density_change",
+            "marker:Twirl"
+          ],
+          "events": 8,
+          "min_interval_ms": 31.250005558419502
+        }
+      ]
+    },
+    {
+      "name": "03552 - 비밀 인형극 II - 神经.adofai",
+      "path": "F:\\dev\\DoMachinesDreamOfDeparture\\data\\DMDOD-v140-tuf-p11-p20\\Train\\03552 - 비밀 인형극 II - 神经.adofai",
+      "sha256": "14e07be43b90bda1fa5a0f01e1f123a5a2ae331f7372ede531ddbe45d4143b75",
+      "family": "비밀 인형극 ii",
+      "level_id": 3552,
+      "difficulty": "P14",
+      "difficulty_source": "saved_dataset_manifest",
+      "g10_or_harder_verified": false,
+      "excluded_reason": null,
+      "duration_s": 221.953129,
+      "events": 1555,
+      "targets": 1555,
+      "mean_events_per_s": 7.005984,
+      "bpm": {
+        "manifest": 256.0,
+        "compiled_min": 256.0,
+        "compiled_max": 512.0,
+        "distinct_rounded": 2
+      },
+      "interval_ms": {
+        "minimum": 19.531224292308025,
+        "p10": 19.53125764282504,
+        "median": 117.18750416881107,
+        "under_35": 311,
+        "under_60": 379
+      },
+      "multi_contact_events": 0,
+      "max_chord_size": 1,
+      "midspins": 0,
+      "full_rotations": 24,
+      "markers": {
+        "MultiPlanet": 0,
+        "Pause": 10,
+        "SetSpeed": 4,
+        "Twirl": 513
+      },
+      "complex_windows": [
+        {
+          "chart_sha256": "14e07be43b90bda1fa5a0f01e1f123a5a2ae331f7372ede531ddbe45d4143b75",
+          "start_s": 8.151406304,
+          "end_s": 9.351406304,
+          "first_event": 41,
+          "last_event": 47,
+          "score": 15.5,
+          "reasons": [
+            "short_interval",
+            "burst",
+            "density_change",
+            "marker:Twirl"
+          ],
+          "events": 7,
+          "min_interval_ms": 19.53125764283037
+        },
+        {
+          "chart_sha256": "14e07be43b90bda1fa5a0f01e1f123a5a2ae331f7372ede531ddbe45d4143b75",
+          "start_s": 147.838908734,
+          "end_s": 149.038908734,
+          "first_event": 1034,
+          "last_event": 1043,
+          "score": 17.0,
+          "reasons": [
+            "short_interval",
+            "burst",
+            "density_change",
+            "marker:SetSpeed",
+            "marker:Twirl"
+          ],
+          "events": 10,
+          "min_interval_ms": 19.531253474013965
+        }
+      ]
+    },
+    {
+      "name": "05666 - ReviXy - 《Unrelenting Sunlight》.adofai",
+      "path": "F:\\dev\\DoMachinesDreamOfDeparture\\data\\DMDOD-v140-tuf-p11-p20\\Train\\05666 - ReviXy - 《Unrelenting Sunlight》.adofai",
+      "sha256": "aa500b7183543e219590015f2179cf467081afe389c3a43bb21b11f9a3440195",
+      "family": "revixy",
+      "level_id": 5666,
+      "difficulty": "P14",
+      "difficulty_source": "saved_dataset_manifest",
+      "g10_or_harder_verified": false,
+      "excluded_reason": null,
+      "duration_s": 157.091204,
+      "events": 1164,
+      "targets": 1164,
+      "mean_events_per_s": 7.409708,
+      "bpm": {
+        "manifest": 180.0,
+        "compiled_min": 180.0,
+        "compiled_max": 740.0000095367432,
+        "distinct_rounded": 14
+      },
+      "interval_ms": {
+        "minimum": 81.08107138303922,
+        "p10": 81.08108292051952,
+        "median": 130.43478125661068,
+        "under_35": 0,
+        "under_60": 0
+      },
+      "multi_contact_events": 0,
+      "max_chord_size": 1,
+      "midspins": 2,
+      "full_rotations": 0,
+      "markers": {
+        "MultiPlanet": 0,
+        "Pause": 0,
+        "SetSpeed": 66,
+        "Twirl": 48
+      },
+      "complex_windows": [
+        {
+          "chart_sha256": "aa500b7183543e219590015f2179cf467081afe389c3a43bb21b11f9a3440195",
+          "start_s": 22.126666786,
+          "end_s": 23.326666786,
+          "first_event": 178,
+          "last_event": 185,
+          "score": 4.5,
+          "reasons": [
+            "density_change",
+            "marker:SetSpeed"
+          ],
+          "events": 8,
+          "min_interval_ms": 83.33333333333215
+        },
+        {
+          "chart_sha256": "aa500b7183543e219590015f2179cf467081afe389c3a43bb21b11f9a3440195",
+          "start_s": 109.443096454,
+          "end_s": 110.643096454,
+          "first_event": 760,
+          "last_event": 767,
+          "score": 4.5,
+          "reasons": [
+            "density_change",
+            "marker:SetSpeed"
+          ],
+          "events": 8,
+          "min_interval_ms": 81.08108003614234
+        }
+      ]
+    },
+    {
+      "name": "04173 - Beyond Your Words (feat. vally.exe) - 연석이2 _ Sprout & 2 more.adofai",
+      "path": "F:\\dev\\DoMachinesDreamOfDeparture\\data\\DMDOD-v140-tuf-p11-p20\\Train\\04173 - Beyond Your Words (feat. vally.exe) - 연석이2 _ Sprout & 2 more.adofai",
+      "sha256": "3c73cca4921893eabc3a642508af8892ea741082299666535668ebddd2595fd3",
+      "family": "beyond your words (feat. vally.exe)",
+      "level_id": 4173,
+      "difficulty": "P14",
+      "difficulty_source": "saved_dataset_manifest",
+      "g10_or_harder_verified": false,
+      "excluded_reason": null,
+      "duration_s": 283.595506,
+      "events": 1235,
+      "targets": 1235,
+      "mean_events_per_s": 4.354794,
+      "bpm": {
+        "manifest": 178.0,
+        "compiled_min": 11.999999791383743,
+        "compiled_max": 712.0,
+        "distinct_rounded": 8
+      },
+      "interval_ms": {
+        "minimum": 28.089880645580934,
+        "p10": 84.26966553005855,
+        "median": 168.5393318382964,
+        "under_35": 2,
+        "under_60": 16
+      },
+      "multi_contact_events": 0,
+      "max_chord_size": 1,
+      "midspins": 0,
+      "full_rotations": 11,
+      "markers": {
+        "MultiPlanet": 0,
+        "Pause": 5,
+        "SetSpeed": 47,
+        "Twirl": 272
+      },
+      "complex_windows": [
+        {
+          "chart_sha256": "3c73cca4921893eabc3a642508af8892ea741082299666535668ebddd2595fd3",
+          "start_s": 24.68471966,
+          "end_s": 25.88471966,
+          "first_event": 115,
+          "last_event": 122,
+          "score": 13.000001,
+          "reasons": [
+            "short_interval",
+            "density_change",
+            "marker:SetSpeed",
+            "marker:Twirl"
+          ],
+          "events": 8,
+          "min_interval_ms": 42.13482396617252
+        },
+        {
+          "chart_sha256": "3c73cca4921893eabc3a642508af8892ea741082299666535668ebddd2595fd3",
+          "start_s": 86.033034067,
+          "end_s": 87.233034067,
+          "first_event": 431,
+          "last_event": 438,
+          "score": 13.5,
+          "reasons": [
+            "density_change",
+            "marker:Pause",
+            "marker:SetSpeed",
+            "marker:Twirl"
+          ],
+          "events": 8,
+          "min_interval_ms": 84.26964793234504
+        }
+      ]
+    },
+    {
+      "name": "11292 - Reflections - Team Storyteller.adofai",
+      "path": "F:\\dev\\DoMachinesDreamOfDeparture\\data\\DMDOD-v140-tuf-p11-p20\\Train\\11292 - Reflections - Team Storyteller.adofai",
+      "sha256": "5360f5ea91ef6f328ad832f9a5abba971438a28fe89d90b15075cbe30d71a2b5",
+      "family": "reflections",
+      "level_id": 11292,
+      "difficulty": "P14",
+      "difficulty_source": "saved_dataset_manifest",
+      "g10_or_harder_verified": false,
+      "excluded_reason": null,
+      "duration_s": 148.411766,
+      "events": 947,
+      "targets": 947,
+      "mean_events_per_s": 6.380896,
+      "bpm": {
+        "manifest": 170.0,
+        "compiled_min": 170.0,
+        "compiled_max": 680.0,
+        "distinct_rounded": 3
+      },
+      "interval_ms": {
+        "minimum": 14.705884968662986,
+        "p10": 29.411769937340182,
+        "median": 147.0588245757085,
+        "under_35": 182,
+        "under_60": 222
+      },
+      "multi_contact_events": 0,
+      "max_chord_size": 1,
+      "midspins": 2,
+      "full_rotations": 3,
+      "markers": {
+        "MultiPlanet": 0,
+        "Pause": 9,
+        "SetSpeed": 9,
+        "Twirl": 225
+      },
+      "complex_windows": [
+        {
+          "chart_sha256": "5360f5ea91ef6f328ad832f9a5abba971438a28fe89d90b15075cbe30d71a2b5",
+          "start_s": 44.8129417,
+          "end_s": 46.0129417,
+          "first_event": 232,
+          "last_event": 244,
+          "score": 18.0,
+          "reasons": [
+            "short_interval",
+            "burst",
+            "density_change",
+            "marker:Twirl"
+          ],
+          "events": 13,
+          "min_interval_ms": 14.705884968670091
+        },
+        {
+          "chart_sha256": "5360f5ea91ef6f328ad832f9a5abba971438a28fe89d90b15075cbe30d71a2b5",
+          "start_s": 112.577648299,
+          "end_s": 113.777648299,
+          "first_event": 666,
+          "last_event": 678,
+          "score": 18.0,
+          "reasons": [
+            "short_interval",
+            "burst",
+            "density_change",
+            "marker:Twirl"
+          ],
+          "events": 13,
+          "min_interval_ms": 14.705884968662986
+        }
+      ]
+    },
+    {
+      "name": "03079 - My Piano Is Escaping - 한가지.adofai",
+      "path": "F:\\dev\\DoMachinesDreamOfDeparture\\data\\DMDOD-v140-tuf-p11-p20\\Train\\03079 - My Piano Is Escaping - 한가지.adofai",
+      "sha256": "1a5928ad5c91d21b8eaae2bc8246c5ed8bf35ff904d8497f2ee9895b781708b2",
+      "family": "my piano is escaping",
+      "level_id": 3079,
+      "difficulty": "P15",
+      "difficulty_source": "saved_dataset_manifest",
+      "g10_or_harder_verified": false,
+      "excluded_reason": null,
+      "duration_s": 161.992437,
+      "events": 1244,
+      "targets": 1244,
+      "mean_events_per_s": 7.679371,
+      "bpm": {
+        "manifest": 170.0,
+        "compiled_min": 5.3125,
+        "compiled_max": 1360.0,
+        "distinct_rounded": 13
+      },
+      "interval_ms": {
+        "minimum": 12.605039307260313,
+        "p10": 88.23528470102815,
+        "median": 88.23529725651724,
+        "under_35": 10,
+        "under_60": 85
+      },
+      "multi_contact_events": 0,
+      "max_chord_size": 1,
+      "midspins": 26,
+      "full_rotations": 18,
+      "markers": {
+        "MultiPlanet": 0,
+        "Pause": 0,
+        "SetSpeed": 292,
+        "Twirl": 189
+      },
+      "complex_windows": [
+        {
+          "chart_sha256": "1a5928ad5c91d21b8eaae2bc8246c5ed8bf35ff904d8497f2ee9895b781708b2",
+          "start_s": 11.812941241,
+          "end_s": 13.012941241,
+          "first_event": 63,
+          "last_event": 76,
+          "score": 11.499999,
+          "reasons": [
+            "short_interval",
+            "density_change",
+            "marker:Twirl"
+          ],
+          "events": 14,
+          "min_interval_ms": 44.11765176713445
+        },
+        {
+          "chart_sha256": "1a5928ad5c91d21b8eaae2bc8246c5ed8bf35ff904d8497f2ee9895b781708b2",
+          "start_s": 137.805378346,
+          "end_s": 139.005378346,
+          "first_event": 1220,
+          "last_event": 1239,
+          "score": 14.000002,
+          "reasons": [
+            "short_interval",
+            "burst",
+            "density_change",
+            "marker:SetSpeed",
+            "marker:Twirl"
+          ],
+          "events": 20,
+          "min_interval_ms": 12.605039307260313
+        }
+      ]
+    },
+    {
+      "name": "03093 - 『戦場』~Schlachtfeld~ - PLORALD.adofai",
+      "path": "F:\\dev\\DoMachinesDreamOfDeparture\\data\\DMDOD-v140-tuf-p11-p20\\Train\\03093 - 『戦場』~Schlachtfeld~ - PLORALD.adofai",
+      "sha256": "3accc1f1adaa97b1af4e12aaeb465015b51835da0a6f23946f0166da2a53f86e",
+      "family": "『戦場』~schlachtfeld~",
+      "level_id": 3093,
+      "difficulty": "P15",
+      "difficulty_source": "saved_dataset_manifest",
+      "g10_or_harder_verified": false,
+      "excluded_reason": null,
+      "duration_s": 137.615284,
+      "events": 1173,
+      "targets": 1173,
+      "mean_events_per_s": 8.523763,
+      "bpm": {
+        "manifest": 300.0,
+        "compiled_min": 18.75,
+        "compiled_max": 1200.0,
+        "distinct_rounded": 9
+      },
+      "interval_ms": {
+        "minimum": 16.66666963114949,
+        "p10": 50.00000000001137,
+        "median": 99.99999999999432,
+        "under_35": 84,
+        "under_60": 284
+      },
+      "multi_contact_events": 0,
+      "max_chord_size": 1,
+      "midspins": 0,
+      "full_rotations": 1,
+      "markers": {
+        "MultiPlanet": 0,
+        "Pause": 0,
+        "SetSpeed": 25,
+        "Twirl": 205
+      },
+      "complex_windows": [
+        {
+          "chart_sha256": "3accc1f1adaa97b1af4e12aaeb465015b51835da0a6f23946f0166da2a53f86e",
+          "start_s": 128.475283573,
+          "end_s": 129.675283573,
+          "first_event": 1071,
+          "last_event": 1083,
+          "score": 18.0,
+          "reasons": [
+            "short_interval",
+            "burst",
+            "density_change",
+            "marker:Twirl"
+          ],
+          "events": 13,
+          "min_interval_ms": 16.66666963114949
+        },
+        {
+          "chart_sha256": "3accc1f1adaa97b1af4e12aaeb465015b51835da0a6f23946f0166da2a53f86e",
+          "start_s": 129.675283573,
+          "end_s": 130.875283573,
+          "first_event": 1084,
+          "last_event": 1095,
+          "score": 16.5,
+          "reasons": [
+            "short_interval",
+            "burst",
+            "density_change"
+          ],
+          "events": 12,
+          "min_interval_ms": 16.66666963114949
+        }
+      ]
+    },
+    {
+      "name": "05142 - Infinity Heaven - RinWinter.adofai",
+      "path": "F:\\dev\\DoMachinesDreamOfDeparture\\data\\DMDOD-v140-tuf-p11-p20\\Train\\05142 - Infinity Heaven - RinWinter.adofai",
+      "sha256": "5620b4f22d518d479034515c629192d4bb46e5f5b0345dde1be4640170a3d0cf",
+      "family": "infinity heaven",
+      "level_id": 5142,
+      "difficulty": "P15",
+      "difficulty_source": "saved_dataset_manifest",
+      "g10_or_harder_verified": false,
+      "excluded_reason": null,
+      "duration_s": 148.688025,
+      "events": 1335,
+      "targets": 1335,
+      "mean_events_per_s": 8.978531,
+      "bpm": {
+        "manifest": 160.0,
+        "compiled_min": 26.80000066757202,
+        "compiled_max": 731.4285278320312,
+        "distinct_rounded": 8
+      },
+      "interval_ms": {
+        "minimum": 52.08332036366414,
+        "p10": 52.083342597370574,
+        "median": 312.5,
+        "under_35": 0,
+        "under_60": 239
+      },
+      "multi_contact_events": 0,
+      "max_chord_size": 1,
+      "midspins": 9,
+      "full_rotations": 1,
+      "markers": {
+        "MultiPlanet": 0,
+        "Pause": 0,
+        "SetSpeed": 18,
+        "Twirl": 284
+      },
+      "complex_windows": [
+        {
+          "chart_sha256": "5620b4f22d518d479034515c629192d4bb46e5f5b0345dde1be4640170a3d0cf",
+          "start_s": 67.064166177,
+          "end_s": 68.264166177,
+          "first_event": 86,
+          "last_event": 87,
+          "score": 10.5,
+          "reasons": [
+            "density_change",
+            "marker:Twirl"
+          ],
+          "events": 2,
+          "min_interval_ms": 104.16668519474115
+        },
+        {
+          "chart_sha256": "5620b4f22d518d479034515c629192d4bb46e5f5b0345dde1be4640170a3d0cf",
+          "start_s": 147.488024505,
+          "end_s": 148.688024505,
+          "first_event": 371,
+          "last_event": 374,
+          "score": 11.5,
+          "reasons": [
+            "short_interval",
+            "density_change",
+            "marker:SetSpeed"
+          ],
+          "events": 4,
+          "min_interval_ms": 312.5
+        }
+      ]
+    },
+    {
+      "name": "03096 - Crossing Notes - 피렝.adofai",
+      "path": "F:\\dev\\DoMachinesDreamOfDeparture\\data\\DMDOD-v140-tuf-p11-p20\\Train\\03096 - Crossing Notes - 피렝.adofai",
+      "sha256": "3847e47e00162a3794991eb6c37009d15673b290c2261ffa43a1f476b877aa64",
+      "family": "crossing notes",
+      "level_id": 3096,
+      "difficulty": "P15",
+      "difficulty_source": "saved_dataset_manifest",
+      "g10_or_harder_verified": false,
+      "excluded_reason": null,
+      "duration_s": 169.500002,
+      "events": 1236,
+      "targets": 1236,
+      "mean_events_per_s": 7.292035,
+      "bpm": {
+        "manifest": 160.0,
+        "compiled_min": 20.0,
+        "compiled_max": 640.0,
+        "distinct_rounded": 7
+      },
+      "interval_ms": {
+        "minimum": 15.625002779216857,
+        "p10": 78.12500055584337,
+        "median": 93.75000333506023,
+        "under_35": 59,
+        "under_60": 87
+      },
+      "multi_contact_events": 0,
+      "max_chord_size": 1,
+      "midspins": 12,
+      "full_rotations": 5,
+      "markers": {
+        "MultiPlanet": 0,
+        "Pause": 0,
+        "SetSpeed": 39,
+        "Twirl": 243
+      },
+      "complex_windows": [
+        {
+          "chart_sha256": "3847e47e00162a3794991eb6c37009d15673b290c2261ffa43a1f476b877aa64",
+          "start_s": 68.475625964,
+          "end_s": 69.675625964,
+          "first_event": 407,
+          "last_event": 419,
+          "score": 17.0,
+          "reasons": [
+            "short_interval",
+            "burst",
+            "density_change",
+            "marker:SetSpeed",
+            "marker:Twirl"
+          ],
+          "events": 13,
+          "min_interval_ms": 15.625006114262874
+        },
+        {
+          "chart_sha256": "3847e47e00162a3794991eb6c37009d15673b290c2261ffa43a1f476b877aa64",
+          "start_s": 74.475626114,
+          "end_s": 75.675626114,
+          "first_event": 475,
+          "last_event": 488,
+          "score": 17.0,
+          "reasons": [
+            "short_interval",
+            "burst",
+            "density_change",
+            "marker:SetSpeed",
+            "marker:Twirl"
+          ],
+          "events": 14,
+          "min_interval_ms": 15.625002779216857
+        }
+      ]
+    },
+    {
+      "name": "08684 - Eden - ★MOON★ _ ★MOON★.adofai",
+      "path": "F:\\dev\\DoMachinesDreamOfDeparture\\data\\DMDOD-v140-tuf-p11-p20\\Train\\08684 - Eden - ★MOON★ _ ★MOON★.adofai",
+      "sha256": "aa03519d038cbf00276fde6b7424240c2d51b279ebcf806da515ab269e86dd60",
+      "family": "eden",
+      "level_id": 8684,
+      "difficulty": "P15",
+      "difficulty_source": "saved_dataset_manifest",
+      "g10_or_harder_verified": false,
+      "excluded_reason": null,
+      "duration_s": 176.338029,
+      "events": 1132,
+      "targets": 1132,
+      "mean_events_per_s": 6.419489,
+      "bpm": {
+        "manifest": 71.0,
+        "compiled_min": 26.215389400720596,
+        "compiled_max": 1136.0,
+        "distinct_rounded": 14
+      },
+      "interval_ms": {
+        "minimum": 26.4084535225777,
+        "p10": 52.81690328735067,
+        "median": 105.63380281690371,
+        "under_35": 6,
+        "under_60": 182
+      },
+      "multi_contact_events": 0,
+      "max_chord_size": 1,
+      "midspins": 32,
+      "full_rotations": 33,
+      "markers": {
+        "MultiPlanet": 0,
+        "Pause": 3,
+        "SetSpeed": 182,
+        "Twirl": 188
+      },
+      "complex_windows": [
+        {
+          "chart_sha256": "aa03519d038cbf00276fde6b7424240c2d51b279ebcf806da515ab269e86dd60",
+          "start_s": 115.868449843,
+          "end_s": 117.068449843,
+          "first_event": 711,
+          "last_event": 713,
+          "score": 11.0,
+          "reasons": [
+            "density_change",
+            "marker:Pause",
+            "marker:SetSpeed"
+          ],
+          "events": 3,
+          "min_interval_ms": 211.26760563380742
+        },
+        {
+          "chart_sha256": "aa03519d038cbf00276fde6b7424240c2d51b279ebcf806da515ab269e86dd60",
+          "start_s": 117.769858294,
+          "end_s": 118.969858294,
+          "first_event": 714,
+          "last_event": 720,
+          "score": 12.0,
+          "reasons": [
+            "density_change",
+            "marker:Pause",
+            "marker:SetSpeed"
+          ],
+          "events": 7,
+          "min_interval_ms": 105.6338028168966
+        }
+      ]
+    },
+    {
+      "name": "03365 - Multi Sense - Codice;Morte.adofai",
+      "path": "F:\\dev\\DoMachinesDreamOfDeparture\\data\\DMDOD-v140-tuf-p11-p20\\Train\\03365 - Multi Sense - Codice;Morte.adofai",
+      "sha256": "ccbbad249c0fabe0882d2e4de661cadb18aa03da0cf6f4292e4092caac50bb1b",
+      "family": "multi sense",
+      "level_id": 3365,
+      "difficulty": "P15",
+      "difficulty_source": "saved_dataset_manifest",
+      "g10_or_harder_verified": false,
+      "excluded_reason": null,
+      "duration_s": 187.142857,
+      "events": 1011,
+      "targets": 1011,
+      "mean_events_per_s": 5.40229,
+      "bpm": {
+        "manifest": 105.0,
+        "compiled_min": 30.000001341104507,
+        "compiled_max": 420.0,
+        "distinct_rounded": 7
+      },
+      "interval_ms": {
+        "minimum": 23.809517880536646,
+        "p10": 23.809528044512973,
+        "median": 59.523812488301076,
+        "under_35": 266,
+        "under_60": 510
+      },
+      "multi_contact_events": 0,
+      "max_chord_size": 1,
+      "midspins": 100,
+      "full_rotations": 15,
+      "markers": {
+        "MultiPlanet": 0,
+        "Pause": 0,
+        "SetSpeed": 44,
+        "Twirl": 180
+      },
+      "complex_windows": [
+        {
+          "chart_sha256": "ccbbad249c0fabe0882d2e4de661cadb18aa03da0cf6f4292e4092caac50bb1b",
+          "start_s": 88.888571616,
+          "end_s": 90.088571616,
+          "first_event": 436,
+          "last_event": 443,
+          "score": 18.0,
+          "reasons": [
+            "short_interval",
+            "burst",
+            "density_change",
+            "marker:SetSpeed"
+          ],
+          "events": 8,
+          "min_interval_ms": 23.80952804450942
+        },
+        {
+          "chart_sha256": "ccbbad249c0fabe0882d2e4de661cadb18aa03da0cf6f4292e4092caac50bb1b",
+          "start_s": 90.257619244,
+          "end_s": 91.457619244,
+          "first_event": 444,
+          "last_event": 460,
+          "score": 17.500002,
+          "reasons": [
+            "short_interval",
+            "burst",
+            "density_change",
+            "marker:Twirl"
+          ],
+          "events": 17,
+          "min_interval_ms": 23.809517880536646
+        }
+      ]
+    },
+    {
+      "name": "02521 - Triple Cross - Milkyway.adofai",
+      "path": "F:\\dev\\DoMachinesDreamOfDeparture\\data\\DMDOD-v140-tuf-p11-p20\\Train\\02521 - Triple Cross - Milkyway.adofai",
+      "sha256": "5571481d5a0eee9dee9fe70c81702b3bdf6dfd0491a6904c80d19e22610d86d3",
+      "family": "triple cross",
+      "level_id": 2521,
+      "difficulty": "P15",
+      "difficulty_source": "saved_dataset_manifest",
+      "g10_or_harder_verified": false,
+      "excluded_reason": null,
+      "duration_s": 165.900001,
+      "events": 1661,
+      "targets": 1661,
+      "mean_events_per_s": 10.012055,
+      "bpm": {
+        "manifest": 200.0,
+        "compiled_min": 25.0,
+        "compiled_max": 1600.0,
+        "distinct_rounded": 5
+      },
+      "interval_ms": {
+        "minimum": 6.250001111681058,
+        "p10": 12.500002223362117,
+        "median": 75.00000000000284,
+        "under_35": 463,
+        "under_60": 472
+      },
+      "multi_contact_events": 0,
+      "max_chord_size": 1,
+      "midspins": 1,
+      "full_rotations": 0,
+      "markers": {
+        "MultiPlanet": 0,
+        "Pause": 0,
+        "SetSpeed": 38,
+        "Twirl": 189
+      },
+      "complex_windows": [
+        {
+          "chart_sha256": "5571481d5a0eee9dee9fe70c81702b3bdf6dfd0491a6904c80d19e22610d86d3",
+          "start_s": 27.060000297,
+          "end_s": 28.260000297,
+          "first_event": 122,
+          "last_event": 135,
+          "score": 19.499997,
+          "reasons": [
+            "short_interval",
+            "burst",
+            "density_change",
+            "marker:SetSpeed",
+            "marker:Twirl"
+          ],
+          "events": 14,
+          "min_interval_ms": 12.500002223369222
+        },
+        {
+          "chart_sha256": "5571481d5a0eee9dee9fe70c81702b3bdf6dfd0491a6904c80d19e22610d86d3",
+          "start_s": 35.010000297,
+          "end_s": 36.210000297,
+          "first_event": 225,
+          "last_event": 244,
+          "score": 18.0,
+          "reasons": [
+            "short_interval",
+            "burst",
+            "density_change",
+            "marker:Twirl"
+          ],
+          "events": 20,
+          "min_interval_ms": 12.499996887285647
+        }
+      ]
+    },
+    {
+      "name": "08984 - The Witch Hunt - Dũng [NS] _ Dũng [NS].adofai",
+      "path": "F:\\dev\\DoMachinesDreamOfDeparture\\data\\DMDOD-v140-tuf-p11-p20\\Train\\08984 - The Witch Hunt - Dũng [NS] _ Dũng [NS].adofai",
+      "sha256": "91d667b7f7e6383010cf63df9ba0ceec4c535b0ebbb886f1da14114d7b6b53ca",
+      "family": "the witch hunt",
+      "level_id": 8984,
+      "difficulty": "P15",
+      "difficulty_source": "saved_dataset_manifest",
+      "g10_or_harder_verified": false,
+      "excluded_reason": null,
+      "duration_s": 131.829771,
+      "events": 860,
+      "targets": 860,
+      "mean_events_per_s": 6.523564,
+      "bpm": {
+        "manifest": 152.0,
+        "compiled_min": 152.0,
+        "compiled_max": 1216.0,
+        "distinct_rounded": 5
+      },
+      "interval_ms": {
+        "minimum": 49.342096486700626,
+        "p10": 98.6841999945689,
+        "median": 196.59745039176357,
+        "under_35": 0,
+        "under_60": 70
+      },
+      "multi_contact_events": 0,
+      "max_chord_size": 1,
+      "midspins": 14,
+      "full_rotations": 8,
+      "markers": {
+        "MultiPlanet": 0,
+        "Pause": 0,
+        "SetSpeed": 15,
+        "Twirl": 159
+      },
+      "complex_windows": [
+        {
+          "chart_sha256": "91d667b7f7e6383010cf63df9ba0ceec4c535b0ebbb886f1da14114d7b6b53ca",
+          "start_s": 122.704244457,
+          "end_s": 123.904244457,
+          "first_event": 795,
+          "last_event": 810,
+          "score": 8.0,
+          "reasons": [
+            "short_interval",
+            "marker:SetSpeed",
+            "marker:Twirl"
+          ],
+          "events": 16,
+          "min_interval_ms": 49.342105263164626
+        },
+        {
+          "chart_sha256": "91d667b7f7e6383010cf63df9ba0ceec4c535b0ebbb886f1da14114d7b6b53ca",
+          "start_s": 124.579244482,
+          "end_s": 125.779244482,
+          "first_event": 819,
+          "last_event": 829,
+          "score": 10.5,
+          "reasons": [
+            "short_interval",
+            "density_change",
+            "marker:Twirl"
+          ],
+          "events": 11,
+          "min_interval_ms": 49.34210701844677
+        }
+      ]
+    },
+    {
+      "name": "02945 - 锦织 - AWC Chart Team _PLORALD & _OrangeFJ_.adofai",
+      "path": "F:\\dev\\DoMachinesDreamOfDeparture\\data\\DMDOD-v140-tuf-p11-p20\\Train\\02945 - 锦织 - AWC Chart Team _PLORALD & _OrangeFJ_.adofai",
+      "sha256": "c166c169ca4d40a9a1a8bd33a4bac085e6f9ed642a2833f41755646728e297b8",
+      "family": "锦织",
+      "level_id": 2945,
+      "difficulty": "P16",
+      "difficulty_source": "saved_dataset_manifest",
+      "g10_or_harder_verified": false,
+      "excluded_reason": null,
+      "duration_s": 204.152383,
+      "events": 1638,
+      "targets": 1638,
+      "mean_events_per_s": 8.023418,
+      "bpm": {
+        "manifest": 175.0,
+        "compiled_min": 87.5,
+        "compiled_max": 700.0,
+        "distinct_rounded": 5
+      },
+      "interval_ms": {
+        "minimum": 14.28570767913584,
+        "p10": 57.14286120843326,
+        "median": 85.71428876348364,
+        "under_35": 137,
+        "under_60": 211
+      },
+      "multi_contact_events": 0,
+      "max_chord_size": 1,
+      "midspins": 0,
+      "full_rotations": 3,
+      "markers": {
+        "MultiPlanet": 0,
+        "Pause": 0,
+        "SetSpeed": 39,
+        "Twirl": 389
+      },
+      "complex_windows": [
+        {
+          "chart_sha256": "c166c169ca4d40a9a1a8bd33a4bac085e6f9ed642a2833f41755646728e297b8",
+          "start_s": 25.755238358,
+          "end_s": 26.955238358,
+          "first_event": 169,
+          "last_event": 179,
+          "score": 19.5,
+          "reasons": [
+            "short_interval",
+            "burst",
+            "density_change",
+            "marker:SetSpeed",
+            "marker:Twirl"
+          ],
+          "events": 11,
+          "min_interval_ms": 14.285719875900327
+        },
+        {
+          "chart_sha256": "c166c169ca4d40a9a1a8bd33a4bac085e6f9ed642a2833f41755646728e297b8",
+          "start_s": 31.240952741,
+          "end_s": 32.440952741,
+          "first_event": 221,
+          "last_event": 231,
+          "score": 19.5,
+          "reasons": [
+            "short_interval",
+            "burst",
+            "density_change",
+            "marker:SetSpeed",
+            "marker:Twirl"
+          ],
+          "events": 11,
+          "min_interval_ms": 14.285719875900327
+        }
+      ]
+    },
+    {
+      "name": "07099 - Oracle - Lupel_2 _ 얼불망.adofai",
+      "path": "F:\\dev\\DoMachinesDreamOfDeparture\\data\\DMDOD-v140-tuf-p11-p20\\Train\\07099 - Oracle - Lupel_2 _ 얼불망.adofai",
+      "sha256": "1c1876ad02ec741179f9d170d86cb9ffac3ee2cc041a8f066f3e1cd525acf054",
+      "family": "oracle",
+      "level_id": 7099,
+      "difficulty": "P16",
+      "difficulty_source": "saved_dataset_manifest",
+      "g10_or_harder_verified": false,
+      "excluded_reason": null,
+      "duration_s": 138.640437,
+      "events": 1245,
+      "targets": 1245,
+      "mean_events_per_s": 8.980064,
+      "bpm": {
+        "manifest": 152.0,
+        "compiled_min": 18.424241840839386,
+        "compiled_max": 1216.0,
+        "distinct_rounded": 41
+      },
+      "interval_ms": {
+        "minimum": 16.44736432537286,
+        "p10": 16.44737134654406,
+        "median": 98.68421052631504,
+        "under_35": 218,
+        "under_60": 234
+      },
+      "multi_contact_events": 0,
+      "max_chord_size": 1,
+      "midspins": 37,
+      "full_rotations": 1,
+      "markers": {
+        "MultiPlanet": 0,
+        "Pause": 0,
+        "SetSpeed": 128,
+        "Twirl": 355
+      },
+      "complex_windows": [
+        {
+          "chart_sha256": "1c1876ad02ec741179f9d170d86cb9ffac3ee2cc041a8f066f3e1cd525acf054",
+          "start_s": 105.046846777,
+          "end_s": 106.246846777,
+          "first_event": 917,
+          "last_event": 932,
+          "score": 18.0,
+          "reasons": [
+            "short_interval",
+            "burst",
+            "density_change",
+            "marker:Twirl"
+          ],
+          "events": 16,
+          "min_interval_ms": 16.44737134654406
+        },
+        {
+          "chart_sha256": "1c1876ad02ec741179f9d170d86cb9ffac3ee2cc041a8f066f3e1cd525acf054",
+          "start_s": 111.362636349,
+          "end_s": 112.562636349,
+          "first_event": 1009,
+          "last_event": 1024,
+          "score": 18.0,
+          "reasons": [
+            "short_interval",
+            "burst",
+            "density_change",
+            "marker:Twirl"
+          ],
+          "events": 16,
+          "min_interval_ms": 16.44737134654406
+        }
+      ]
+    },
+    {
+      "name": "07502 - Twinkle_Winter - 叁月mA7cH_ _ Sprout.adofai",
+      "path": "F:\\dev\\DoMachinesDreamOfDeparture\\data\\DMDOD-v140-tuf-p11-p20\\Train\\07502 - Twinkle_Winter - 叁月mA7cH_ _ Sprout.adofai",
+      "sha256": "6f02617f8a18316a197c6a894566e97710503fe1833398da166e46e13f1ed643",
+      "family": "twinkle*winter",
+      "level_id": 7502,
+      "difficulty": "P16",
+      "difficulty_source": "saved_dataset_manifest",
+      "g10_or_harder_verified": false,
+      "excluded_reason": null,
+      "duration_s": 105.737008,
+      "events": 1151,
+      "targets": 1151,
+      "mean_events_per_s": 10.885498,
+      "bpm": {
+        "manifest": 186.0,
+        "compiled_min": 186.0,
+        "compiled_max": 930.0,
+        "distinct_rounded": 8
+      },
+      "interval_ms": {
+        "minimum": 6.720432737317594,
+        "p10": 13.440865474635189,
+        "median": 80.64516129032029,
+        "under_35": 284,
+        "under_60": 317
+      },
+      "multi_contact_events": 0,
+      "max_chord_size": 1,
+      "midspins": 47,
+      "full_rotations": 13,
+      "markers": {
+        "MultiPlanet": 0,
+        "Pause": 2,
+        "SetSpeed": 45,
+        "Twirl": 211
+      },
+      "complex_windows": [
+        {
+          "chart_sha256": "6f02617f8a18316a197c6a894566e97710503fe1833398da166e46e13f1ed643",
+          "start_s": 15.911613001,
+          "end_s": 17.111613001,
+          "first_event": 87,
+          "last_event": 96,
+          "score": 18.0,
+          "reasons": [
+            "short_interval",
+            "burst",
+            "density_change",
+            "marker:Twirl"
+          ],
+          "events": 10,
+          "min_interval_ms": 13.440853999185265
+        },
+        {
+          "chart_sha256": "6f02617f8a18316a197c6a894566e97710503fe1833398da166e46e13f1ed643",
+          "start_s": 104.53700807,
+          "end_s": 105.73700807,
+          "first_event": 1134,
+          "last_event": 1150,
+          "score": 19.5,
+          "reasons": [
+            "short_interval",
+            "burst",
+            "density_change",
+            "marker:SetSpeed",
+            "marker:Twirl"
+          ],
+          "events": 17,
+          "min_interval_ms": 11.200719316292407
+        }
+      ]
+    },
+    {
+      "name": "08358 - 星相运轨-The End of Time- - Nick1121 _ Repenomamus & 1 more.adofai",
+      "path": "F:\\dev\\DoMachinesDreamOfDeparture\\data\\DMDOD-v140-tuf-p11-p20\\Train\\08358 - 星相运轨-The End of Time- - Nick1121 _ Repenomamus & 1 more.adofai",
+      "sha256": "9bb6c1ba4a39e0996d549b7158a198284a5b3b7dac10b0565f66ff4750894a01",
+      "family": "星相运轨-the end of time-",
+      "level_id": 8358,
+      "difficulty": "P16",
+      "difficulty_source": "saved_dataset_manifest",
+      "g10_or_harder_verified": false,
+      "excluded_reason": null,
+      "duration_s": 160.500001,
+      "events": 1062,
+      "targets": 1062,
+      "mean_events_per_s": 6.616822,
+      "bpm": {
+        "manifest": 160.0,
+        "compiled_min": 80.0,
+        "compiled_max": 1280.0,
+        "distinct_rounded": 7
+      },
+      "interval_ms": {
+        "minimum": 12.500002223362117,
+        "p10": 31.250005558419502,
+        "median": 93.75,
+        "under_35": 162,
+        "under_60": 264
+      },
+      "multi_contact_events": 0,
+      "max_chord_size": 1,
+      "midspins": 27,
+      "full_rotations": 0,
+      "markers": {
+        "MultiPlanet": 0,
+        "Pause": 3,
+        "SetSpeed": 24,
+        "Twirl": 284
+      },
+      "complex_windows": [
+        {
+          "chart_sha256": "9bb6c1ba4a39e0996d549b7158a198284a5b3b7dac10b0565f66ff4750894a01",
+          "start_s": 36.960000318,
+          "end_s": 38.160000318,
+          "first_event": 197,
+          "last_event": 201,
+          "score": 18.5,
+          "reasons": [
+            "short_interval",
+            "burst",
+            "density_change",
+            "marker:Pause",
+            "marker:SetSpeed",
+            "marker:Twirl"
+          ],
+          "events": 5,
+          "min_interval_ms": 31.250005558419502
+        },
+        {
+          "chart_sha256": "9bb6c1ba4a39e0996d549b7158a198284a5b3b7dac10b0565f66ff4750894a01",
+          "start_s": 38.835000351,
+          "end_s": 40.035000351,
+          "first_event": 207,
+          "last_event": 220,
+          "score": 18.0,
+          "reasons": [
+            "short_interval",
+            "burst",
+            "density_change",
+            "marker:Twirl"
+          ],
+          "events": 14,
+          "min_interval_ms": 31.250005558419502
+        }
+      ]
+    },
+    {
+      "name": "10704 - Melted Snow (Hard) - seeker.adofai",
+      "path": "F:\\dev\\DoMachinesDreamOfDeparture\\data\\DMDOD-v140-tuf-p11-p20\\Train\\10704 - Melted Snow (Hard) - seeker.adofai",
+      "sha256": "2a546a85100849c56f30d7a9f4e2ff6a5fc6d49cb1e43942ba91785c1672f147",
+      "family": "melted snow (hard)",
+      "level_id": 10704,
+      "difficulty": "P16",
+      "difficulty_source": "saved_dataset_manifest",
+      "g10_or_harder_verified": false,
+      "excluded_reason": null,
+      "duration_s": 127.826088,
+      "events": 897,
+      "targets": 897,
+      "mean_events_per_s": 7.017347,
+      "bpm": {
+        "manifest": 184.0,
+        "compiled_min": 92.0,
+        "compiled_max": 736.0,
+        "distinct_rounded": 4
+      },
+      "interval_ms": {
+        "minimum": 13.58695893844697,
+        "p10": 27.17391787689394,
+        "median": 108.69565410727944,
+        "under_35": 95,
+        "under_60": 142
+      },
+      "multi_contact_events": 0,
+      "max_chord_size": 1,
+      "midspins": 27,
+      "full_rotations": 4,
+      "markers": {
+        "MultiPlanet": 0,
+        "Pause": 0,
+        "SetSpeed": 21,
+        "Twirl": 160
+      },
+      "complex_windows": [
+        {
+          "chart_sha256": "2a546a85100849c56f30d7a9f4e2ff6a5fc6d49cb1e43942ba91785c1672f147",
+          "start_s": 14.949130587,
+          "end_s": 16.149130587,
+          "first_event": 70,
+          "last_event": 79,
+          "score": 18.0,
+          "reasons": [
+            "short_interval",
+            "burst",
+            "density_change",
+            "marker:Twirl"
+          ],
+          "events": 10,
+          "min_interval_ms": 27.17391787688861
+        },
+        {
+          "chart_sha256": "2a546a85100849c56f30d7a9f4e2ff6a5fc6d49cb1e43942ba91785c1672f147",
+          "start_s": 76.416522084,
+          "end_s": 77.616522084,
+          "first_event": 571,
+          "last_event": 581,
+          "score": 19.5,
+          "reasons": [
+            "short_interval",
+            "burst",
+            "density_change",
+            "marker:SetSpeed",
+            "marker:Twirl"
+          ],
+          "events": 11,
+          "min_interval_ms": 13.58695893844697
+        }
+      ]
+    },
+    {
+      "name": "03640 - 東 - prisMKa _ Sprout.adofai",
+      "path": "F:\\dev\\DoMachinesDreamOfDeparture\\data\\DMDOD-v140-tuf-p11-p20\\Train\\03640 - 東 - prisMKa _ Sprout.adofai",
+      "sha256": "e23c48c66e956a6e820fff2a5ed352718efb7f5e861094207cc49f6dcabdd622",
+      "family": "東",
+      "level_id": 3640,
+      "difficulty": "P16",
+      "difficulty_source": "saved_dataset_manifest",
+      "g10_or_harder_verified": false,
+      "excluded_reason": null,
+      "duration_s": 129.634147,
+      "events": 1222,
+      "targets": 1222,
+      "mean_events_per_s": 9.426529,
+      "bpm": {
+        "manifest": 328.0,
+        "compiled_min": 328.0,
+        "compiled_max": 765.3333072662354,
+        "distinct_rounded": 4
+      },
+      "interval_ms": {
+        "minimum": 7.62194769465907,
+        "p10": 15.243908404158901,
+        "median": 91.4634178878515,
+        "under_35": 210,
+        "under_60": 214
+      },
+      "multi_contact_events": 0,
+      "max_chord_size": 1,
+      "midspins": 27,
+      "full_rotations": 23,
+      "markers": {
+        "MultiPlanet": 0,
+        "Pause": 0,
+        "SetSpeed": 40,
+        "Twirl": 186
+      },
+      "complex_windows": [
+        {
+          "chart_sha256": "e23c48c66e956a6e820fff2a5ed352718efb7f5e861094207cc49f6dcabdd622",
+          "start_s": 58.36243945,
+          "end_s": 59.56243945,
+          "first_event": 532,
+          "last_event": 546,
+          "score": 19.5,
+          "reasons": [
+            "short_interval",
+            "burst",
+            "density_change",
+            "marker:SetSpeed",
+            "marker:Twirl"
+          ],
+          "events": 15,
+          "min_interval_ms": 15.24389864302833
+        },
+        {
+          "chart_sha256": "e23c48c66e956a6e820fff2a5ed352718efb7f5e861094207cc49f6dcabdd622",
+          "start_s": 69.886829755,
+          "end_s": 71.086829755,
+          "first_event": 639,
+          "last_event": 651,
+          "score": 22.0,
+          "reasons": [
+            "short_interval",
+            "burst",
+            "density_change",
+            "marker:SetSpeed",
+            "marker:Twirl"
+          ],
+          "events": 13,
+          "min_interval_ms": 15.243908404158901
+        }
+      ]
+    },
+    {
+      "name": "05147 - (_pnfrlenm_) - RinWinter.adofai",
+      "path": "F:\\dev\\DoMachinesDreamOfDeparture\\data\\DMDOD-v140-tuf-p11-p20\\Train\\05147 - (_pnfrlenm_) - RinWinter.adofai",
+      "sha256": "b0758c0ea4c322af806fff07bd92981a44de62f0a940965742f8fb09c1bdf41a",
+      "family": "(\"pnfrlenm\")",
+      "level_id": 5147,
+      "difficulty": "P16",
+      "difficulty_source": "saved_dataset_manifest",
+      "g10_or_harder_verified": false,
+      "excluded_reason": null,
+      "duration_s": 203.075003,
+      "events": 1746,
+      "targets": 1746,
+      "mean_events_per_s": 8.597809,
+      "bpm": {
+        "manifest": 200.0,
+        "compiled_min": 200.0,
+        "compiled_max": 800.0,
+        "distinct_rounded": 3
+      },
+      "interval_ms": {
+        "minimum": 12.499994219240307,
+        "p10": 25.000004446738444,
+        "median": 125.00000088934371,
+        "under_35": 279,
+        "under_60": 481
+      },
+      "multi_contact_events": 0,
+      "max_chord_size": 1,
+      "midspins": 3,
+      "full_rotations": 2,
+      "markers": {
+        "MultiPlanet": 0,
+        "Pause": 1,
+        "SetSpeed": 25,
+        "Twirl": 539
+      },
+      "complex_windows": [
+        {
+          "chart_sha256": "b0758c0ea4c322af806fff07bd92981a44de62f0a940965742f8fb09c1bdf41a",
+          "start_s": 101.160001176,
+          "end_s": 102.360001176,
+          "first_event": 800,
+          "last_event": 810,
+          "score": 18.0,
+          "reasons": [
+            "short_interval",
+            "burst",
+            "density_change",
+            "marker:Twirl"
+          ],
+          "events": 11,
+          "min_interval_ms": 24.999993774571294
+        },
+        {
+          "chart_sha256": "b0758c0ea4c322af806fff07bd92981a44de62f0a940965742f8fb09c1bdf41a",
+          "start_s": 125.160001685,
+          "end_s": 126.360001685,
+          "first_event": 1072,
+          "last_event": 1079,
+          "score": 19.5,
+          "reasons": [
+            "short_interval",
+            "burst",
+            "density_change",
+            "marker:SetSpeed",
+            "marker:Twirl"
+          ],
+          "events": 8,
+          "min_interval_ms": 25.000004446738444
+        }
+      ]
+    },
+    {
+      "name": "13131 - 『계획 이상 有!』 (feat. 重音テト) - Team Name.adofai",
+      "path": "F:\\dev\\DoMachinesDreamOfDeparture\\data\\DMDOD-v140-tuf-p11-p20\\Train\\13131 - 『계획 이상 有!』 (feat. 重音テト) - Team Name.adofai",
+      "sha256": "167e781dca406fcec3a0ee754a173d40a50b23f1714ee93758ca3eaf53564d64",
+      "family": "『계획 이상 有!』 (feat. 重音テト)",
+      "level_id": 13131,
+      "difficulty": "P16",
+      "difficulty_source": "saved_dataset_manifest",
+      "g10_or_harder_verified": false,
+      "excluded_reason": null,
+      "duration_s": 183.055557,
+      "events": 1742,
+      "targets": 1742,
+      "mean_events_per_s": 9.516237,
+      "bpm": {
+        "manifest": 162.0,
+        "compiled_min": 162.0,
+        "compiled_max": 1296.0,
+        "distinct_rounded": 4
+      },
+      "interval_ms": {
+        "minimum": 7.716045814333938,
+        "p10": 15.432101510327811,
+        "median": 92.59259259259522,
+        "under_35": 321,
+        "under_60": 403
+      },
+      "multi_contact_events": 0,
+      "max_chord_size": 1,
+      "midspins": 0,
+      "full_rotations": 23,
+      "markers": {
+        "MultiPlanet": 0,
+        "Pause": 12,
+        "SetSpeed": 31,
+        "Twirl": 257
+      },
+      "complex_windows": [
+        {
+          "chart_sha256": "167e781dca406fcec3a0ee754a173d40a50b23f1714ee93758ca3eaf53564d64",
+          "start_s": 108.719259579,
+          "end_s": 109.919259579,
+          "first_event": 1029,
+          "last_event": 1035,
+          "score": 19.5,
+          "reasons": [
+            "short_interval",
+            "burst",
+            "density_change",
+            "marker:Pause",
+            "marker:Twirl"
+          ],
+          "events": 7,
+          "min_interval_ms": 15.432101510327811
+        },
+        {
+          "chart_sha256": "167e781dca406fcec3a0ee754a173d40a50b23f1714ee93758ca3eaf53564d64",
+          "start_s": 169.12049467,
+          "end_s": 170.32049467,
+          "first_event": 1602,
+          "last_event": 1616,
+          "score": 18.0,
+          "reasons": [
+            "short_interval",
+            "burst",
+            "density_change",
+            "marker:SetSpeed"
+          ],
+          "events": 15,
+          "min_interval_ms": 15.432091628696298
+        }
+      ]
+    },
+    {
+      "name": "03058 - Dark Sheep - Lupel_2.adofai",
+      "path": "F:\\dev\\DoMachinesDreamOfDeparture\\data\\DMDOD-v140-tuf-p11-p20\\Train\\03058 - Dark Sheep - Lupel_2.adofai",
+      "sha256": "cafc1346d5448efb589fbc07187806abbc2201026db2142d62466d45bb931cc5",
+      "family": "dark sheep",
+      "level_id": 3058,
+      "difficulty": "P17",
+      "difficulty_source": "saved_dataset_manifest",
+      "g10_or_harder_verified": false,
+      "excluded_reason": null,
+      "duration_s": 233.983054,
+      "events": 1882,
+      "targets": 1882,
+      "mean_events_per_s": 8.043318,
+      "bpm": {
+        "manifest": 354.0,
+        "compiled_min": 44.25,
+        "compiled_max": 1062.0,
+        "distinct_rounded": 8
+      },
+      "interval_ms": {
+        "minimum": 14.12429629758094,
+        "p10": 56.49716710195207,
+        "median": 84.74576572660908,
+        "under_35": 174,
+        "under_60": 392
+      },
+      "multi_contact_events": 0,
+      "max_chord_size": 1,
+      "midspins": 37,
+      "full_rotations": 3,
+      "markers": {
+        "MultiPlanet": 0,
+        "Pause": 0,
+        "SetSpeed": 162,
+        "Twirl": 651
+      },
+      "complex_windows": [
+        {
+          "chart_sha256": "cafc1346d5448efb589fbc07187806abbc2201026db2142d62466d45bb931cc5",
+          "start_s": 119.121018473,
+          "end_s": 120.321018473,
+          "first_event": 779,
+          "last_event": 788,
+          "score": 18.0,
+          "reasons": [
+            "short_interval",
+            "burst",
+            "density_change",
+            "marker:Twirl"
+          ],
+          "events": 10,
+          "min_interval_ms": 28.248592595190303
+        },
+        {
+          "chart_sha256": "cafc1346d5448efb589fbc07187806abbc2201026db2142d62466d45bb931cc5",
+          "start_s": 129.968476342,
+          "end_s": 131.168476342,
+          "first_event": 892,
+          "last_event": 901,
+          "score": 18.0,
+          "reasons": [
+            "short_interval",
+            "burst",
+            "density_change",
+            "marker:Twirl"
+          ],
+          "events": 10,
+          "min_interval_ms": 28.248592595190303
+        }
+      ]
+    },
+    {
+      "name": "04913 - Ciforance MEGAMIX - Ciforance _ 白zhi12 & 4 more.adofai",
+      "path": "F:\\dev\\DoMachinesDreamOfDeparture\\data\\DMDOD-v140-tuf-p11-p20\\Train\\04913 - Ciforance MEGAMIX - Ciforance _ 白zhi12 & 4 more.adofai",
+      "sha256": "5bb8736e96430fa327871248908f47c38d885c065920dadc9ee59955393813c1",
+      "family": "ciforance megamix",
+      "level_id": 4913,
+      "difficulty": "P17",
+      "difficulty_source": "saved_dataset_manifest",
+      "g10_or_harder_verified": false,
+      "excluded_reason": null,
+      "duration_s": 430.334253,
+      "events": 3854,
+      "targets": 3854,
+      "mean_events_per_s": 8.955829,
+      "bpm": {
+        "manifest": 160.0,
+        "compiled_min": 159.9988079071045,
+        "compiled_max": 1279.999771118164,
+        "distinct_rounded": 33
+      },
+      "interval_ms": {
+        "minimum": 6.944447161885137,
+        "p10": 27.77778271860143,
+        "median": 83.33369537791668,
+        "under_35": 433,
+        "under_60": 433
+      },
+      "multi_contact_events": 0,
+      "max_chord_size": 1,
+      "midspins": 179,
+      "full_rotations": 10,
+      "markers": {
+        "MultiPlanet": 0,
+        "Pause": 7,
+        "SetSpeed": 1260,
+        "Twirl": 868
+      },
+      "complex_windows": [
+        {
+          "chart_sha256": "5bb8736e96430fa327871248908f47c38d885c065920dadc9ee59955393813c1",
+          "start_s": 78.678751703,
+          "end_s": 79.878751703,
+          "first_event": 506,
+          "last_event": 526,
+          "score": 19.5,
+          "reasons": [
+            "short_interval",
+            "burst",
+            "sub_control_interval",
+            "density_change",
+            "marker:SetSpeed",
+            "marker:Twirl"
+          ],
+          "events": 21,
+          "min_interval_ms": 7.81250278659229
+        },
+        {
+          "chart_sha256": "5bb8736e96430fa327871248908f47c38d885c065920dadc9ee59955393813c1",
+          "start_s": 84.303752809,
+          "end_s": 85.503752809,
+          "first_event": 599,
+          "last_event": 623,
+          "score": 19.5,
+          "reasons": [
+            "short_interval",
+            "burst",
+            "sub_control_interval",
+            "density_change",
+            "marker:SetSpeed",
+            "marker:Twirl"
+          ],
+          "events": 25,
+          "min_interval_ms": 7.81250278659229
+        }
+      ]
+    },
+    {
+      "name": "02334 - Time Leaper - Jipper.adofai",
+      "path": "F:\\dev\\DoMachinesDreamOfDeparture\\data\\DMDOD-v140-tuf-p11-p20\\Train\\02334 - Time Leaper - Jipper.adofai",
+      "sha256": "f4f71701065c986da6fd999cbc0a659d8fe47434793b5898e099ec2df83a5f70",
+      "family": "time leaper",
+      "level_id": 2334,
+      "difficulty": "P17",
+      "difficulty_source": "saved_dataset_manifest",
+      "g10_or_harder_verified": false,
+      "excluded_reason": null,
+      "duration_s": 233.400002,
+      "events": 2221,
+      "targets": 2221,
+      "mean_events_per_s": 9.515853,
+      "bpm": {
+        "manifest": 175.0,
+        "compiled_min": 43.75,
+        "compiled_max": 1400.0,
+        "distinct_rounded": 7
+      },
+      "interval_ms": {
+        "minimum": 7.142856533022268,
+        "p10": 14.285716826719863,
+        "median": 85.71428571428896,
+        "under_35": 431,
+        "under_60": 716
+      },
+      "multi_contact_events": 0,
+      "max_chord_size": 1,
+      "midspins": 24,
+      "full_rotations": 2,
+      "markers": {
+        "MultiPlanet": 0,
+        "Pause": 1,
+        "SetSpeed": 37,
+        "Twirl": 418
+      },
+      "complex_windows": [
+        {
+          "chart_sha256": "f4f71701065c986da6fd999cbc0a659d8fe47434793b5898e099ec2df83a5f70",
+          "start_s": 91.688572391,
+          "end_s": 92.888572391,
+          "first_event": 617,
+          "last_event": 630,
+          "score": 19.5,
+          "reasons": [
+            "short_interval",
+            "burst",
+            "density_change",
+            "marker:SetSpeed",
+            "marker:Twirl"
+          ],
+          "events": 14,
+          "min_interval_ms": 14.28570767913584
+        },
+        {
+          "chart_sha256": "f4f71701065c986da6fd999cbc0a659d8fe47434793b5898e099ec2df83a5f70",
+          "start_s": 93.745715199,
+          "end_s": 94.945715199,
+          "first_event": 637,
+          "last_event": 653,
+          "score": 19.5,
+          "reasons": [
+            "short_interval",
+            "burst",
+            "sub_control_interval",
+            "density_change",
+            "marker:SetSpeed",
+            "marker:Twirl"
+          ],
+          "events": 17,
+          "min_interval_ms": 7.1428584133599315
+        }
+      ]
+    },
+    {
+      "name": "10357 - Kaleidoscope (2024 Remake) - Team Mosaic.adofai",
+      "path": "F:\\dev\\DoMachinesDreamOfDeparture\\data\\DMDOD-v140-tuf-p11-p20\\Train\\10357 - Kaleidoscope (2024 Remake) - Team Mosaic.adofai",
+      "sha256": "68955a67a923fff29ceecdfaf598eac89cfa0f93561d01a80daf4ae121a34cf3",
+      "family": "kaleidoscope (2024 remake)",
+      "level_id": 10357,
+      "difficulty": "P17",
+      "difficulty_source": "saved_dataset_manifest",
+      "g10_or_harder_verified": false,
+      "excluded_reason": null,
+      "duration_s": 302.760419,
+      "events": 2488,
+      "targets": 2488,
+      "mean_events_per_s": 8.217719,
+      "bpm": {
+        "manifest": 180.0,
+        "compiled_min": 120.00000357627869,
+        "compiled_max": 780.000114440918,
+        "distinct_rounded": 16
+      },
+      "interval_ms": {
+        "minimum": 10.416669260592926,
+        "p10": 13.88889432379159,
+        "median": 83.33333591303926,
+        "under_35": 451,
+        "under_60": 503
+      },
+      "multi_contact_events": 0,
+      "max_chord_size": 1,
+      "midspins": 8,
+      "full_rotations": 27,
+      "markers": {
+        "MultiPlanet": 0,
+        "Pause": 10,
+        "SetSpeed": 310,
+        "Twirl": 690
+      },
+      "complex_windows": [
+        {
+          "chart_sha256": "68955a67a923fff29ceecdfaf598eac89cfa0f93561d01a80daf4ae121a34cf3",
+          "start_s": 40.126666856,
+          "end_s": 41.326666856,
+          "first_event": 206,
+          "last_event": 212,
+          "score": 18.0,
+          "reasons": [
+            "short_interval",
+            "burst",
+            "density_change",
+            "marker:Twirl"
+          ],
+          "events": 7,
+          "min_interval_ms": 20.833338521192957
+        },
+        {
+          "chart_sha256": "68955a67a923fff29ceecdfaf598eac89cfa0f93561d01a80daf4ae121a34cf3",
+          "start_s": 216.553751977,
+          "end_s": 217.753751977,
+          "first_event": 1657,
+          "last_event": 1671,
+          "score": 19.5,
+          "reasons": [
+            "short_interval",
+            "burst",
+            "density_change",
+            "marker:SetSpeed",
+            "marker:Twirl"
+          ],
+          "events": 15,
+          "min_interval_ms": 10.416669260592926
+        }
+      ]
+    },
+    {
+      "name": "06316 - Crystallized - Synow.adofai",
+      "path": "F:\\dev\\DoMachinesDreamOfDeparture\\data\\DMDOD-v140-tuf-p11-p20\\Train\\06316 - Crystallized - Synow.adofai",
+      "sha256": "b365e0d63db50b40fa3c2352338de23e382ba3823468f125e6478ffca4ac0ab4",
+      "family": "crystallized",
+      "level_id": 6316,
+      "difficulty": "P17",
+      "difficulty_source": "saved_dataset_manifest",
+      "g10_or_harder_verified": false,
+      "excluded_reason": null,
+      "duration_s": 404.482762,
+      "events": 1773,
+      "targets": 1773,
+      "mean_events_per_s": 4.383376,
+      "bpm": {
+        "manifest": 174.0,
+        "compiled_min": 174.0,
+        "compiled_max": 174.0,
+        "distinct_rounded": 1
+      },
+      "interval_ms": {
+        "minimum": 57.471250056465806,
+        "p10": 57.47127459019907,
+        "median": 172.41379923689237,
+        "under_35": 0,
+        "under_60": 301
+      },
+      "multi_contact_events": 0,
+      "max_chord_size": 1,
+      "midspins": 4,
+      "full_rotations": 6,
+      "markers": {
+        "MultiPlanet": 0,
+        "Pause": 0,
+        "SetSpeed": 68,
+        "Twirl": 465
+      },
+      "complex_windows": [
+        {
+          "chart_sha256": "b365e0d63db50b40fa3c2352338de23e382ba3823468f125e6478ffca4ac0ab4",
+          "start_s": 21.873793166,
+          "end_s": 23.073793166,
+          "first_event": 79,
+          "last_event": 82,
+          "score": 13.5,
+          "reasons": [
+            "short_interval",
+            "density_change",
+            "marker:Twirl"
+          ],
+          "events": 4,
+          "min_interval_ms": 57.471274590202626
+        },
+        {
+          "chart_sha256": "b365e0d63db50b40fa3c2352338de23e382ba3823468f125e6478ffca4ac0ab4",
+          "start_s": 206.528967704,
+          "end_s": 207.728967704,
+          "first_event": 890,
+          "last_event": 892,
+          "score": 14.0,
+          "reasons": [
+            "short_interval",
+            "density_change",
+            "marker:SetSpeed",
+            "marker:Twirl"
+          ],
+          "events": 3,
+          "min_interval_ms": 57.47127459019907
+        }
+      ]
+    },
+    {
+      "name": "02971 - ALL MY FELLAS - RetroBean.adofai",
+      "path": "F:\\dev\\DoMachinesDreamOfDeparture\\data\\DMDOD-v140-tuf-p11-p20\\Train\\02971 - ALL MY FELLAS - RetroBean.adofai",
+      "sha256": "e142af91b1784dc20c76fbde5a7320de234dbaebf9822f75e733d0b2db1924d5",
+      "family": "all my fellas",
+      "level_id": 2971,
+      "difficulty": "P17",
+      "difficulty_source": "saved_dataset_manifest",
+      "g10_or_harder_verified": false,
+      "excluded_reason": null,
+      "duration_s": 139.799997,
+      "events": 1540,
+      "targets": 1540,
+      "mean_events_per_s": 11.015737,
+      "bpm": {
+        "manifest": 160.0,
+        "compiled_min": 160.0,
+        "compiled_max": 640.0,
+        "distinct_rounded": 4
+      },
+      "interval_ms": {
+        "minimum": 10.416662961048928,
+        "p10": 10.416669631155173,
+        "median": 93.7499827856243,
+        "under_35": 338,
+        "under_60": 531
+      },
+      "multi_contact_events": 0,
+      "max_chord_size": 1,
+      "midspins": 54,
+      "full_rotations": 8,
+      "markers": {
+        "MultiPlanet": 0,
+        "Pause": 0,
+        "SetSpeed": 49,
+        "Twirl": 307
+      },
+      "complex_windows": [
+        {
+          "chart_sha256": "e142af91b1784dc20c76fbde5a7320de234dbaebf9822f75e733d0b2db1924d5",
+          "start_s": 9.022499594,
+          "end_s": 10.222499594,
+          "first_event": 58,
+          "last_event": 72,
+          "score": 17.0,
+          "reasons": [
+            "short_interval",
+            "burst",
+            "density_change",
+            "marker:SetSpeed",
+            "marker:Twirl"
+          ],
+          "events": 15,
+          "min_interval_ms": 10.416669631158726
+        },
+        {
+          "chart_sha256": "e142af91b1784dc20c76fbde5a7320de234dbaebf9822f75e733d0b2db1924d5",
+          "start_s": 10.345416057,
+          "end_s": 11.545416057,
+          "first_event": 75,
+          "last_event": 86,
+          "score": 17.0,
+          "reasons": [
+            "short_interval",
+            "burst",
+            "density_change",
+            "marker:SetSpeed",
+            "marker:Twirl"
+          ],
+          "events": 12,
+          "min_interval_ms": 10.416669631158726
+        }
+      ]
+    },
+    {
+      "name": "06475 - Little, Love, Lit - 한가지.adofai",
+      "path": "F:\\dev\\DoMachinesDreamOfDeparture\\data\\DMDOD-v140-tuf-p11-p20\\Train\\06475 - Little, Love, Lit - 한가지.adofai",
+      "sha256": "fdcdf27a193e40a80e7cfecdb2bf33feb845f68810ce0bb6765ed8068a9436a9",
+      "family": "little, love, lit",
+      "level_id": 6475,
+      "difficulty": "P17",
+      "difficulty_source": "saved_dataset_manifest",
+      "g10_or_harder_verified": false,
+      "excluded_reason": null,
+      "duration_s": 140.113636,
+      "events": 986,
+      "targets": 986,
+      "mean_events_per_s": 7.037145,
+      "bpm": {
+        "manifest": 176.0,
+        "compiled_min": 88.0,
+        "compiled_max": 704.0,
+        "distinct_rounded": 5
+      },
+      "interval_ms": {
+        "minimum": 14.204538885500995,
+        "p10": 28.409083834731064,
+        "median": 113.63636262574062,
+        "under_35": 151,
+        "under_60": 233
+      },
+      "multi_contact_events": 0,
+      "max_chord_size": 1,
+      "midspins": 45,
+      "full_rotations": 16,
+      "markers": {
+        "MultiPlanet": 0,
+        "Pause": 0,
+        "SetSpeed": 31,
+        "Twirl": 197
+      },
+      "complex_windows": [
+        {
+          "chart_sha256": "fdcdf27a193e40a80e7cfecdb2bf33feb845f68810ce0bb6765ed8068a9436a9",
+          "start_s": 72.442954217,
+          "end_s": 73.642954217,
+          "first_event": 480,
+          "last_event": 488,
+          "score": 15.5,
+          "reasons": [
+            "short_interval",
+            "burst",
+            "density_change",
+            "marker:Twirl"
+          ],
+          "events": 9,
+          "min_interval_ms": 28.409095962203423
+        },
+        {
+          "chart_sha256": "fdcdf27a193e40a80e7cfecdb2bf33feb845f68810ce0bb6765ed8068a9436a9",
+          "start_s": 89.800908847,
+          "end_s": 91.000908847,
+          "first_event": 628,
+          "last_event": 638,
+          "score": 18.0,
+          "reasons": [
+            "short_interval",
+            "burst",
+            "density_change",
+            "marker:Twirl"
+          ],
+          "events": 11,
+          "min_interval_ms": 28.409083834731064
+        }
+      ]
+    },
+    {
+      "name": "15535 - ▷ixel-mem□ry-dia[ll] - EPC Chart Team ⟪bey◇nd-○ld-S△veFile⟫.adofai",
+      "path": "F:\\dev\\DoMachinesDreamOfDeparture\\data\\DMDOD-v140-tuf-p11-p20\\Train\\15535 - ▷ixel-mem□ry-dia[ll] - EPC Chart Team ⟪bey◇nd-○ld-S△veFile⟫.adofai",
+      "sha256": "748968a2a39251ee39302728a5ff40803914eec16675859626230513c7f5fb0d",
+      "family": "▷ixel-mem□ry-dia[ll]",
+      "level_id": 15535,
+      "difficulty": "P17",
+      "difficulty_source": "saved_dataset_manifest",
+      "g10_or_harder_verified": false,
+      "excluded_reason": null,
+      "duration_s": 157.571851,
+      "events": 1373,
+      "targets": 1373,
+      "mean_events_per_s": 8.713485,
+      "bpm": {
+        "manifest": 130.5,
+        "compiled_min": 86.9999948143959,
+        "compiled_max": 1043.9997510910034,
+        "distinct_rounded": 14
+      },
+      "interval_ms": {
+        "minimum": 6.385693087736399,
+        "p10": 14.36781821936961,
+        "median": 95.78546413155209,
+        "under_35": 251,
+        "under_60": 394
+      },
+      "multi_contact_events": 0,
+      "max_chord_size": 1,
+      "midspins": 14,
+      "full_rotations": 23,
+      "markers": {
+        "MultiPlanet": 0,
+        "Pause": 7,
+        "SetSpeed": 59,
+        "Twirl": 338
+      },
+      "complex_windows": [
+        {
+          "chart_sha256": "748968a2a39251ee39302728a5ff40803914eec16675859626230513c7f5fb0d",
+          "start_s": 130.523231297,
+          "end_s": 131.723231297,
+          "first_event": 1051,
+          "last_event": 1072,
+          "score": 19.5,
+          "reasons": [
+            "short_interval",
+            "burst",
+            "sub_control_interval",
+            "density_change",
+            "marker:SetSpeed",
+            "marker:Twirl"
+          ],
+          "events": 22,
+          "min_interval_ms": 6.385693087736399
+        },
+        {
+          "chart_sha256": "748968a2a39251ee39302728a5ff40803914eec16675859626230513c7f5fb0d",
+          "start_s": 156.371851403,
+          "end_s": 157.571851403,
+          "first_event": 1358,
+          "last_event": 1372,
+          "score": 23.5,
+          "reasons": [
+            "short_interval",
+            "burst",
+            "density_change",
+            "marker:Pause",
+            "marker:SetSpeed",
+            "marker:Twirl"
+          ],
+          "events": 15,
+          "min_interval_ms": 14.367809019205424
+        }
+      ]
+    },
+    {
+      "name": "04042 - bool - vo[ICE].adofai",
+      "path": "F:\\dev\\DoMachinesDreamOfDeparture\\data\\DMDOD-v140-tuf-p11-p20\\Train\\04042 - bool - vo[ICE].adofai",
+      "sha256": "04981e92f74288b8aac7286e83420b933036d2caead9c157bc33b706779ad1b1",
+      "family": "bool",
+      "level_id": 4042,
+      "difficulty": "P18",
+      "difficulty_source": "saved_dataset_manifest",
+      "g10_or_harder_verified": false,
+      "excluded_reason": null,
+      "duration_s": 64.135146,
+      "events": 1122,
+      "targets": 1122,
+      "mean_events_per_s": 17.494308,
+      "bpm": {
+        "manifest": 60.01,
+        "compiled_min": 60.0099983215332,
+        "compiled_max": 1920.3199462890625,
+        "distinct_rounded": 3
+      },
+      "interval_ms": {
+        "minimum": 20.829865977319173,
+        "p10": 20.829865977322726,
+        "median": 31.244793408490068,
+        "under_35": 577,
+        "under_60": 673
+      },
+      "multi_contact_events": 0,
+      "max_chord_size": 1,
+      "midspins": 64,
+      "full_rotations": 0,
+      "markers": {
+        "MultiPlanet": 0,
+        "Pause": 0,
+        "SetSpeed": 7,
+        "Twirl": 96
+      },
+      "complex_windows": [
+        {
+          "chart_sha256": "04981e92f74288b8aac7286e83420b933036d2caead9c157bc33b706779ad1b1",
+          "start_s": 3.709291972,
+          "end_s": 4.909291972,
+          "first_event": 0,
+          "last_event": 7,
+          "score": 18.0,
+          "reasons": [
+            "short_interval",
+            "burst",
+            "density_change",
+            "marker:SetSpeed"
+          ],
+          "events": 8,
+          "min_interval_ms": 20.829865977322726
+        },
+        {
+          "chart_sha256": "04981e92f74288b8aac7286e83420b933036d2caead9c157bc33b706779ad1b1",
+          "start_s": 4.959083708,
+          "end_s": 6.159083708,
+          "first_event": 8,
+          "last_event": 17,
+          "score": 16.5,
+          "reasons": [
+            "short_interval",
+            "burst",
+            "density_change"
+          ],
+          "events": 10,
+          "min_interval_ms": 20.829865977322726
+        }
+      ]
+    },
+    {
+      "name": "12465 - Megamix2.7 (Ciforance remake) - Team Azuristy Frontier.adofai",
+      "path": "F:\\dev\\DoMachinesDreamOfDeparture\\data\\DMDOD-v140-tuf-p11-p20\\Train\\12465 - Megamix2.7 (Ciforance remake) - Team Azuristy Frontier.adofai",
+      "sha256": "e6997b348c82a8362c092d1913678d9c2636b869c42b76f137bc9c515aa9ad82",
+      "family": "megamix2.7 (ciforance remake)",
+      "level_id": 12465,
+      "difficulty": "P18",
+      "difficulty_source": "saved_dataset_manifest",
+      "g10_or_harder_verified": false,
+      "excluded_reason": null,
+      "duration_s": 608.843125,
+      "events": 5054,
+      "targets": 5054,
+      "mean_events_per_s": 8.300989,
+      "bpm": {
+        "manifest": 150.0,
+        "compiled_min": 119.99999284744263,
+        "compiled_max": 720.0000286102295,
+        "distinct_rounded": 34
+      },
+      "interval_ms": {
+        "minimum": 13.88889080737954,
+        "p10": 29.411770143610738,
+        "median": 83.33333802056586,
+        "under_35": 712,
+        "under_60": 916
+      },
+      "multi_contact_events": 0,
+      "max_chord_size": 1,
+      "midspins": 109,
+      "full_rotations": 9,
+      "markers": {
+        "MultiPlanet": 0,
+        "Pause": 10,
+        "SetSpeed": 837,
+        "Twirl": 958
+      },
+      "complex_windows": [
+        {
+          "chart_sha256": "e6997b348c82a8362c092d1913678d9c2636b869c42b76f137bc9c515aa9ad82",
+          "start_s": 558.969793969,
+          "end_s": 560.169793969,
+          "first_event": 4655,
+          "last_event": 4664,
+          "score": 19.5,
+          "reasons": [
+            "short_interval",
+            "burst",
+            "density_change",
+            "marker:SetSpeed",
+            "marker:Twirl"
+          ],
+          "events": 10,
+          "min_interval_ms": 27.77778161475908
+        },
+        {
+          "chart_sha256": "e6997b348c82a8362c092d1913678d9c2636b869c42b76f137bc9c515aa9ad82",
+          "start_s": 580.303126535,
+          "end_s": 581.503126535,
+          "first_event": 4907,
+          "last_event": 4916,
+          "score": 19.5,
+          "reasons": [
+            "short_interval",
+            "burst",
+            "density_change",
+            "marker:SetSpeed",
+            "marker:Twirl"
+          ],
+          "events": 10,
+          "min_interval_ms": 27.77778161475908
+        }
+      ]
+    },
+    {
+      "name": "10185 - A Wonderful Journey - ACC Chart Team.adofai",
+      "path": "F:\\dev\\DoMachinesDreamOfDeparture\\data\\DMDOD-v140-tuf-p11-p20\\Train\\10185 - A Wonderful Journey - ACC Chart Team.adofai",
+      "sha256": "ef20da54093cd066483c603af67d493b3c244c663f62fb83efcd2fd4bd558188",
+      "family": "a wonderful journey",
+      "level_id": 10185,
+      "difficulty": "P18",
+      "difficulty_source": "saved_dataset_manifest",
+      "g10_or_harder_verified": false,
+      "excluded_reason": null,
+      "duration_s": 245.57886,
+      "events": 2329,
+      "targets": 2329,
+      "mean_events_per_s": 9.483715,
+      "bpm": {
+        "manifest": 175.0,
+        "compiled_min": 5.3046876564621925,
+        "compiled_max": 1312.5,
+        "distinct_rounded": 12
+      },
+      "interval_ms": {
+        "minimum": 7.619045721767748,
+        "p10": 14.285716826705652,
+        "median": 85.71428571428896,
+        "under_35": 583,
+        "under_60": 653
+      },
+      "multi_contact_events": 0,
+      "max_chord_size": 1,
+      "midspins": 31,
+      "full_rotations": 10,
+      "markers": {
+        "MultiPlanet": 0,
+        "Pause": 5,
+        "SetSpeed": 68,
+        "Twirl": 498
+      },
+      "complex_windows": [
+        {
+          "chart_sha256": "ef20da54093cd066483c603af67d493b3c244c663f62fb83efcd2fd4bd558188",
+          "start_s": 67.003070961,
+          "end_s": 68.203070961,
+          "first_event": 597,
+          "last_event": 612,
+          "score": 19.5,
+          "reasons": [
+            "short_interval",
+            "burst",
+            "density_change",
+            "marker:SetSpeed",
+            "marker:Twirl"
+          ],
+          "events": 16,
+          "min_interval_ms": 11.428568582658727
+        },
+        {
+          "chart_sha256": "ef20da54093cd066483c603af67d493b3c244c663f62fb83efcd2fd4bd558188",
+          "start_s": 170.710287388,
+          "end_s": 171.910287388,
+          "first_event": 1455,
+          "last_event": 1472,
+          "score": 19.5,
+          "reasons": [
+            "short_interval",
+            "burst",
+            "density_change",
+            "marker:SetSpeed",
+            "marker:Twirl"
+          ],
+          "events": 18,
+          "min_interval_ms": 14.285716826719863
+        }
+      ]
+    },
+    {
+      "name": "15922 - Spear of Justice - Matsum _ hallunacy & 1 more.adofai",
+      "path": "F:\\dev\\DoMachinesDreamOfDeparture\\data\\DMDOD-v140-tuf-p11-p20\\Train\\15922 - Spear of Justice - Matsum _ hallunacy & 1 more.adofai",
+      "sha256": "b8088fa06566932c87285649cb5b220dc01bb0b14d690d645ea302c47cadf8e8",
+      "family": "spear of justice",
+      "level_id": 15922,
+      "difficulty": "P18",
+      "difficulty_source": "saved_dataset_manifest",
+      "g10_or_harder_verified": false,
+      "excluded_reason": null,
+      "duration_s": 114.7782,
+      "events": 804,
+      "targets": 804,
+      "mean_events_per_s": 7.004814,
+      "bpm": {
+        "manifest": 263.0,
+        "compiled_min": 263.0,
+        "compiled_max": 526.0,
+        "distinct_rounded": 2
+      },
+      "interval_ms": {
+        "minimum": 0.012675424311936467,
+        "p10": 19.011410225658665,
+        "median": 114.06844512249847,
+        "under_35": 92,
+        "under_60": 192
+      },
+      "multi_contact_events": 0,
+      "max_chord_size": 1,
+      "midspins": 74,
+      "full_rotations": 12,
+      "markers": {
+        "MultiPlanet": 0,
+        "Pause": 0,
+        "SetSpeed": 4,
+        "Twirl": 73
+      },
+      "complex_windows": [
+        {
+          "chart_sha256": "b8088fa06566932c87285649cb5b220dc01bb0b14d690d645ea302c47cadf8e8",
+          "start_s": 12.691939139,
+          "end_s": 13.891939139,
+          "first_event": 65,
+          "last_event": 72,
+          "score": 15.5,
+          "reasons": [
+            "short_interval",
+            "burst",
+            "sub_control_interval",
+            "density_change",
+            "marker:Twirl"
+          ],
+          "events": 8,
+          "min_interval_ms": 0.012676794906241184
+        },
+        {
+          "chart_sha256": "b8088fa06566932c87285649cb5b220dc01bb0b14d690d645ea302c47cadf8e8",
+          "start_s": 35.961926324,
+          "end_s": 37.161926324,
+          "first_event": 224,
+          "last_event": 234,
+          "score": 19.0,
+          "reasons": [
+            "short_interval",
+            "burst",
+            "sub_control_interval",
+            "density_change"
+          ],
+          "events": 11,
+          "min_interval_ms": 0.012675424315489181
+        }
+      ]
+    },
+    {
+      "name": "06312 - Cleyera - baizhouToxes.adofai",
+      "path": "F:\\dev\\DoMachinesDreamOfDeparture\\data\\DMDOD-v140-tuf-p11-p20\\Train\\06312 - Cleyera - baizhouToxes.adofai",
+      "sha256": "b45a8fc56316c4ca1a602d8f9705e1dce5d0c9440b86a7aa367886306640f1a2",
+      "family": "cleyera",
+      "level_id": 6312,
+      "difficulty": "P18",
+      "difficulty_source": "saved_dataset_manifest",
+      "g10_or_harder_verified": false,
+      "excluded_reason": null,
+      "duration_s": 135.082658,
+      "events": 1247,
+      "targets": 1247,
+      "mean_events_per_s": 9.231385,
+      "bpm": {
+        "manifest": 95.5,
+        "compiled_min": 95.5,
+        "compiled_max": 891.3333940505981,
+        "distinct_rounded": 9
+      },
+      "interval_ms": {
+        "minimum": 0.8726059055206292,
+        "p10": 13.089007563735322,
+        "median": 78.5340314136107,
+        "under_35": 312,
+        "under_60": 351
+      },
+      "multi_contact_events": 0,
+      "max_chord_size": 1,
+      "midspins": 103,
+      "full_rotations": 19,
+      "markers": {
+        "MultiPlanet": 0,
+        "Pause": 9,
+        "SetSpeed": 60,
+        "Twirl": 323
+      },
+      "complex_windows": [
+        {
+          "chart_sha256": "b45a8fc56316c4ca1a602d8f9705e1dce5d0c9440b86a7aa367886306640f1a2",
+          "start_s": 73.75319476,
+          "end_s": 74.95319476,
+          "first_event": 521,
+          "last_event": 543,
+          "score": 19.5,
+          "reasons": [
+            "short_interval",
+            "burst",
+            "sub_control_interval",
+            "density_change",
+            "marker:SetSpeed",
+            "marker:Twirl"
+          ],
+          "events": 23,
+          "min_interval_ms": 5.609571269260982
+        },
+        {
+          "chart_sha256": "b45a8fc56316c4ca1a602d8f9705e1dce5d0c9440b86a7aa367886306640f1a2",
+          "start_s": 76.266283792,
+          "end_s": 77.466283792,
+          "first_event": 562,
+          "last_event": 584,
+          "score": 19.5,
+          "reasons": [
+            "short_interval",
+            "burst",
+            "sub_control_interval",
+            "density_change",
+            "marker:SetSpeed",
+            "marker:Twirl"
+          ],
+          "events": 23,
+          "min_interval_ms": 5.609571269260982
+        }
+      ]
+    },
+    {
+      "name": "13945 - Tempest - 冰神 _ NeRvOus.adofai",
+      "path": "F:\\dev\\DoMachinesDreamOfDeparture\\data\\DMDOD-v140-tuf-p11-p20\\Train\\13945 - Tempest - 冰神 _ NeRvOus.adofai",
+      "sha256": "482bf91ff6bbd791093906141377b89031e24da4b4e2e369c0905ec9fee08be0",
+      "family": "tempest",
+      "level_id": 13945,
+      "difficulty": "P18",
+      "difficulty_source": "saved_dataset_manifest",
+      "g10_or_harder_verified": false,
+      "excluded_reason": null,
+      "duration_s": 138.571429,
+      "events": 1579,
+      "targets": 1579,
+      "mean_events_per_s": 11.394845,
+      "bpm": {
+        "manifest": 210.0,
+        "compiled_min": 105.0,
+        "compiled_max": 840.0,
+        "distinct_rounded": 8
+      },
+      "interval_ms": {
+        "minimum": 5.952378199637565,
+        "p10": 23.809528044511197,
+        "median": 71.4285714285694,
+        "under_35": 184,
+        "under_60": 466
+      },
+      "multi_contact_events": 0,
+      "max_chord_size": 1,
+      "midspins": 94,
+      "full_rotations": 1,
+      "markers": {
+        "MultiPlanet": 0,
+        "Pause": 0,
+        "SetSpeed": 309,
+        "Twirl": 402
+      },
+      "complex_windows": [
+        {
+          "chart_sha256": "482bf91ff6bbd791093906141377b89031e24da4b4e2e369c0905ec9fee08be0",
+          "start_s": 52.031428882,
+          "end_s": 53.231428882,
+          "first_event": 698,
+          "last_event": 708,
+          "score": 17.0,
+          "reasons": [
+            "short_interval",
+            "burst",
+            "density_change",
+            "marker:SetSpeed",
+            "marker:Twirl"
+          ],
+          "events": 11,
+          "min_interval_ms": 23.80952804450942
+        },
+        {
+          "chart_sha256": "482bf91ff6bbd791093906141377b89031e24da4b4e2e369c0905ec9fee08be0",
+          "start_s": 79.8885721,
+          "end_s": 81.0885721,
+          "first_event": 846,
+          "last_event": 857,
+          "score": 18.0,
+          "reasons": [
+            "short_interval",
+            "burst",
+            "density_change",
+            "marker:Twirl"
+          ],
+          "events": 12,
+          "min_interval_ms": 23.80952804450942
+        }
+      ]
+    },
+    {
+      "name": "03641 - Bodysnatch - xiaoxiaoci _ prisMKa.adofai",
+      "path": "F:\\dev\\DoMachinesDreamOfDeparture\\data\\DMDOD-v140-tuf-p11-p20\\Train\\03641 - Bodysnatch - xiaoxiaoci _ prisMKa.adofai",
+      "sha256": "a673b341ff18da326050f28b852f86266a7bad6957a862bd2906a940a7880980",
+      "family": "bodysnatch",
+      "level_id": 3641,
+      "difficulty": "P18",
+      "difficulty_source": "saved_dataset_manifest",
+      "g10_or_harder_verified": false,
+      "excluded_reason": null,
+      "duration_s": 165.367646,
+      "events": 1805,
+      "targets": 1805,
+      "mean_events_per_s": 10.915073,
+      "bpm": {
+        "manifest": 170.0,
+        "compiled_min": 48.00000220537186,
+        "compiled_max": 906.6666126251221,
+        "distinct_rounded": 9
+      },
+      "interval_ms": {
+        "minimum": 0.09050905936192066,
+        "p10": 11.029414383912695,
+        "median": 88.23526962703454,
+        "under_35": 441,
+        "under_60": 559
+      },
+      "multi_contact_events": 0,
+      "max_chord_size": 1,
+      "midspins": 20,
+      "full_rotations": 0,
+      "markers": {
+        "MultiPlanet": 0,
+        "Pause": 0,
+        "SetSpeed": 32,
+        "Twirl": 290
+      },
+      "complex_windows": [
+        {
+          "chart_sha256": "a673b341ff18da326050f28b852f86266a7bad6957a862bd2906a940a7880980",
+          "start_s": 41.489410096,
+          "end_s": 42.689410096,
+          "first_event": 323,
+          "last_event": 343,
+          "score": 18.0,
+          "reasons": [
+            "short_interval",
+            "burst",
+            "sub_control_interval",
+            "density_change",
+            "marker:Twirl"
+          ],
+          "events": 21,
+          "min_interval_ms": 7.352937776026636
+        },
+        {
+          "chart_sha256": "a673b341ff18da326050f28b852f86266a7bad6957a862bd2906a940a7880980",
+          "start_s": 64.077646775,
+          "end_s": 65.277646775,
+          "first_event": 588,
+          "last_event": 608,
+          "score": 19.5,
+          "reasons": [
+            "short_interval",
+            "burst",
+            "sub_control_interval",
+            "density_change",
+            "marker:SetSpeed",
+            "marker:Twirl"
+          ],
+          "events": 21,
+          "min_interval_ms": 6.302516376436529
+        }
+      ]
+    },
+    {
+      "name": "07322 - Runaway - smy258.adofai",
+      "path": "F:\\dev\\DoMachinesDreamOfDeparture\\data\\DMDOD-v140-tuf-p11-p20\\Train\\07322 - Runaway - smy258.adofai",
+      "sha256": "2e67ce666b72d72e61f353be22467eef60a10a6cbc935adc73baf833d3cdb27e",
+      "family": "runaway",
+      "level_id": 7322,
+      "difficulty": "P18",
+      "difficulty_source": "saved_dataset_manifest",
+      "g10_or_harder_verified": false,
+      "excluded_reason": null,
+      "duration_s": 87.347223,
+      "events": 1191,
+      "targets": 1191,
+      "mean_events_per_s": 13.635236,
+      "bpm": {
+        "manifest": 180.0,
+        "compiled_min": 180.0,
+        "compiled_max": 1440.0,
+        "distinct_rounded": 4
+      },
+      "interval_ms": {
+        "minimum": 6.944442715159482,
+        "p10": 13.888891359300715,
+        "median": 83.3333333333286,
+        "under_35": 338,
+        "under_60": 422
+      },
+      "multi_contact_events": 0,
+      "max_chord_size": 1,
+      "midspins": 10,
+      "full_rotations": 0,
+      "markers": {
+        "MultiPlanet": 0,
+        "Pause": 0,
+        "SetSpeed": 23,
+        "Twirl": 214
+      },
+      "complex_windows": [
+        {
+          "chart_sha256": "2e67ce666b72d72e61f353be22467eef60a10a6cbc935adc73baf833d3cdb27e",
+          "start_s": 20.126666955,
+          "end_s": 21.326666955,
+          "first_event": 217,
+          "last_event": 240,
+          "score": 18.0,
+          "reasons": [
+            "short_interval",
+            "burst",
+            "sub_control_interval",
+            "density_change",
+            "marker:SetSpeed"
+          ],
+          "events": 24,
+          "min_interval_ms": 6.944445679650357
+        },
+        {
+          "chart_sha256": "2e67ce666b72d72e61f353be22467eef60a10a6cbc935adc73baf833d3cdb27e",
+          "start_s": 53.0433339,
+          "end_s": 54.2433339,
+          "first_event": 664,
+          "last_event": 690,
+          "score": 19.0,
+          "reasons": [
+            "short_interval",
+            "burst",
+            "density_change",
+            "marker:SetSpeed"
+          ],
+          "events": 27,
+          "min_interval_ms": 20.83333407445309
+        }
+      ]
+    },
+    {
+      "name": "07560 - FallenEra - MaySnow.adofai",
+      "path": "F:\\dev\\DoMachinesDreamOfDeparture\\data\\DMDOD-v140-tuf-p11-p20\\Train\\07560 - FallenEra - MaySnow.adofai",
+      "sha256": "c3ae8450dd2518fd47263eaf22b75887c4ed05037baf5ec6e6abd40507017a9c",
+      "family": "fallenera",
+      "level_id": 7560,
+      "difficulty": "P19",
+      "difficulty_source": "saved_dataset_manifest",
+      "g10_or_harder_verified": false,
+      "excluded_reason": null,
+      "duration_s": 162.666667,
+      "events": 1706,
+      "targets": 1706,
+      "mean_events_per_s": 10.487705,
+      "bpm": {
+        "manifest": 180.0,
+        "compiled_min": 90.0,
+        "compiled_max": 1080.0,
+        "distinct_rounded": 6
+      },
+      "interval_ms": {
+        "minimum": 9.25925695354124,
+        "p10": 27.777778765937455,
+        "median": 55.555555555557135,
+        "under_35": 287,
+        "under_60": 1093
+      },
+      "multi_contact_events": 0,
+      "max_chord_size": 1,
+      "midspins": 35,
+      "full_rotations": 2,
+      "markers": {
+        "MultiPlanet": 0,
+        "Pause": 0,
+        "SetSpeed": 157,
+        "Twirl": 270
+      },
+      "complex_windows": [
+        {
+          "chart_sha256": "c3ae8450dd2518fd47263eaf22b75887c4ed05037baf5ec6e6abd40507017a9c",
+          "start_s": 114.79333429,
+          "end_s": 115.99333429,
+          "first_event": 752,
+          "last_event": 776,
+          "score": 16.000001,
+          "reasons": [
+            "short_interval",
+            "burst",
+            "sub_control_interval",
+            "density_change",
+            "marker:Twirl"
+          ],
+          "events": 25,
+          "min_interval_ms": 9.25925695354124
+        },
+        {
+          "chart_sha256": "c3ae8450dd2518fd47263eaf22b75887c4ed05037baf5ec6e6abd40507017a9c",
+          "start_s": 117.460000946,
+          "end_s": 118.660000946,
+          "first_event": 808,
+          "last_event": 832,
+          "score": 16.000001,
+          "reasons": [
+            "short_interval",
+            "burst",
+            "sub_control_interval",
+            "density_change",
+            "marker:Twirl"
+          ],
+          "events": 25,
+          "min_interval_ms": 9.25925695354124
+        }
+      ]
+    },
+    {
+      "name": "02993 - 碧空の約束 - 한가지 _ oSKYo.adofai",
+      "path": "F:\\dev\\DoMachinesDreamOfDeparture\\data\\DMDOD-v140-tuf-p11-p20\\Train\\02993 - 碧空の約束 - 한가지 _ oSKYo.adofai",
+      "sha256": "58c7ec74df7261d615033c42b08515046b527d14876f1d73dd083dd840fb76c7",
+      "family": "碧空の約束",
+      "level_id": 2993,
+      "difficulty": "P19",
+      "difficulty_source": "saved_dataset_manifest",
+      "g10_or_harder_verified": false,
+      "excluded_reason": null,
+      "duration_s": 117.765958,
+      "events": 1450,
+      "targets": 1450,
+      "mean_events_per_s": 12.312556,
+      "bpm": {
+        "manifest": 188.0,
+        "compiled_min": 47.0,
+        "compiled_max": 1504.0,
+        "distinct_rounded": 15
+      },
+      "interval_ms": {
+        "minimum": 11.398170347689529,
+        "p10": 26.5957494114204,
+        "median": 66.48935649849719,
+        "under_35": 221,
+        "under_60": 721
+      },
+      "multi_contact_events": 0,
+      "max_chord_size": 1,
+      "midspins": 3,
+      "full_rotations": 8,
+      "markers": {
+        "MultiPlanet": 0,
+        "Pause": 0,
+        "SetSpeed": 221,
+        "Twirl": 344
+      },
+      "complex_windows": [
+        {
+          "chart_sha256": "58c7ec74df7261d615033c42b08515046b527d14876f1d73dd083dd840fb76c7",
+          "start_s": 54.034468261,
+          "end_s": 55.234468261,
+          "first_event": 511,
+          "last_event": 529,
+          "score": 20.5,
+          "reasons": [
+            "short_interval",
+            "burst",
+            "density_change",
+            "marker:Twirl"
+          ],
+          "events": 19,
+          "min_interval_ms": 13.29787754405487
+        },
+        {
+          "chart_sha256": "58c7ec74df7261d615033c42b08515046b527d14876f1d73dd083dd840fb76c7",
+          "start_s": 59.14085128,
+          "end_s": 60.34085128,
+          "first_event": 568,
+          "last_event": 586,
+          "score": 20.5,
+          "reasons": [
+            "short_interval",
+            "burst",
+            "density_change",
+            "marker:Twirl"
+          ],
+          "events": 19,
+          "min_interval_ms": 13.297866190683294
+        }
+      ]
+    },
+    {
+      "name": "13275 - MEGAMIX 2026 - Team TSS.adofai",
+      "path": "F:\\dev\\DoMachinesDreamOfDeparture\\data\\DMDOD-v140-tuf-p11-p20\\Train\\13275 - MEGAMIX 2026 - Team TSS.adofai",
+      "sha256": "b9737d65faa2b2c5a69047d734a115ee3d7f411a3e7b8b4d9ffae9eb83f74012",
+      "family": "megamix 2026",
+      "level_id": 13275,
+      "difficulty": "P19",
+      "difficulty_source": "saved_dataset_manifest",
+      "g10_or_harder_verified": false,
+      "excluded_reason": null,
+      "duration_s": 642.374554,
+      "events": 4718,
+      "targets": 4718,
+      "mean_events_per_s": 7.344625,
+      "bpm": {
+        "manifest": 160.0,
+        "compiled_min": 40.0,
+        "compiled_max": 720.0040435791016,
+        "distinct_rounded": 38
+      },
+      "interval_ms": {
+        "minimum": 13.888885430333175,
+        "p10": 22.72727838675337,
+        "median": 93.75,
+        "under_35": 805,
+        "under_60": 967
+      },
+      "multi_contact_events": 0,
+      "max_chord_size": 1,
+      "midspins": 3,
+      "full_rotations": 24,
+      "markers": {
+        "MultiPlanet": 0,
+        "Pause": 5,
+        "SetSpeed": 527,
+        "Twirl": 1023
+      },
+      "complex_windows": [
+        {
+          "chart_sha256": "b9737d65faa2b2c5a69047d734a115ee3d7f411a3e7b8b4d9ffae9eb83f74012",
+          "start_s": 247.329320007,
+          "end_s": 248.529320007,
+          "first_event": 1857,
+          "last_event": 1868,
+          "score": 19.5,
+          "reasons": [
+            "short_interval",
+            "burst",
+            "density_change",
+            "marker:SetSpeed",
+            "marker:Twirl"
+          ],
+          "events": 12,
+          "min_interval_ms": 15.151517846504703
+        },
+        {
+          "chart_sha256": "b9737d65faa2b2c5a69047d734a115ee3d7f411a3e7b8b4d9ffae9eb83f74012",
+          "start_s": 295.040550456,
+          "end_s": 296.240550456,
+          "first_event": 2091,
+          "last_event": 2098,
+          "score": 19.5,
+          "reasons": [
+            "short_interval",
+            "burst",
+            "density_change",
+            "marker:SetSpeed",
+            "marker:Twirl"
+          ],
+          "events": 8,
+          "min_interval_ms": 29.41176993732597
+        }
+      ]
+    },
+    {
+      "name": "01760 - C†hulhu - Kiyoshi.adofai",
+      "path": "F:\\dev\\DoMachinesDreamOfDeparture\\data\\DMDOD-v140-tuf-p11-p20\\Train\\01760 - C†hulhu - Kiyoshi.adofai",
+      "sha256": "3ef5aa91ba343cd10c2f9388d60b39a74c0373eadf1961bde2877c90efc0ae4d",
+      "family": "c†hulhu",
+      "level_id": 1760,
+      "difficulty": "P19",
+      "difficulty_source": "saved_dataset_manifest",
+      "g10_or_harder_verified": false,
+      "excluded_reason": null,
+      "duration_s": 143.148388,
+      "events": 1508,
+      "targets": 1508,
+      "mean_events_per_s": 10.534523,
+      "bpm": {
+        "manifest": 186.0,
+        "compiled_min": 12.500000551342964,
+        "compiled_max": 1488.0,
+        "distinct_rounded": 6
+      },
+      "interval_ms": {
+        "minimum": 6.7204284340220966,
+        "p10": 13.44086260577626,
+        "median": 67.20430155341717,
+        "under_35": 575,
+        "under_60": 607
+      },
+      "multi_contact_events": 0,
+      "max_chord_size": 1,
+      "midspins": 0,
+      "full_rotations": 0,
+      "markers": {
+        "MultiPlanet": 0,
+        "Pause": 0,
+        "SetSpeed": 27,
+        "Twirl": 432
+      },
+      "complex_windows": [
+        {
+          "chart_sha256": "3ef5aa91ba343cd10c2f9388d60b39a74c0373eadf1961bde2877c90efc0ae4d",
+          "start_s": 98.330968557,
+          "end_s": 99.530968557,
+          "first_event": 848,
+          "last_event": 871,
+          "score": 20.5,
+          "reasons": [
+            "short_interval",
+            "burst",
+            "density_change",
+            "marker:Twirl"
+          ],
+          "events": 24,
+          "min_interval_ms": 13.440856868044193
+        },
+        {
+          "chart_sha256": "3ef5aa91ba343cd10c2f9388d60b39a74c0373eadf1961bde2877c90efc0ae4d",
+          "start_s": 103.492258903,
+          "end_s": 104.692258903,
+          "first_event": 941,
+          "last_event": 963,
+          "score": 20.5,
+          "reasons": [
+            "short_interval",
+            "burst",
+            "density_change",
+            "marker:Twirl"
+          ],
+          "events": 23,
+          "min_interval_ms": 13.440856868044193
+        }
+      ]
+    },
+    {
+      "name": "05629 - K1LL SOMEBODY - Zizak.adofai",
+      "path": "F:\\dev\\DoMachinesDreamOfDeparture\\data\\DMDOD-v140-tuf-p11-p20\\Train\\05629 - K1LL SOMEBODY - Zizak.adofai",
+      "sha256": "ef81d40d0bd2320b0d2bb60c286d083e313f722f8fd90810af1a4872cee3ef10",
+      "family": "k1ll somebody",
+      "level_id": 5629,
+      "difficulty": "P19",
+      "difficulty_source": "saved_dataset_manifest",
+      "g10_or_harder_verified": false,
+      "excluded_reason": null,
+      "duration_s": 134.76447,
+      "events": 1922,
+      "targets": 1922,
+      "mean_events_per_s": 14.261919,
+      "bpm": {
+        "manifest": 174.0,
+        "compiled_min": 174.0,
+        "compiled_max": 1474.776014328003,
+        "distinct_rounded": 10
+      },
+      "interval_ms": {
+        "minimum": 0.4789302527399286,
+        "p10": 12.77139435337915,
+        "median": 71.19725267668287,
+        "under_35": 655,
+        "under_60": 901
+      },
+      "multi_contact_events": 0,
+      "max_chord_size": 1,
+      "midspins": 50,
+      "full_rotations": 5,
+      "markers": {
+        "MultiPlanet": 0,
+        "Pause": 4,
+        "SetSpeed": 38,
+        "Twirl": 580
+      },
+      "complex_windows": [
+        {
+          "chart_sha256": "ef81d40d0bd2320b0d2bb60c286d083e313f722f8fd90810af1a4872cee3ef10",
+          "start_s": 15.149655262,
+          "end_s": 16.349655262,
+          "first_event": 119,
+          "last_event": 126,
+          "score": 19.5,
+          "reasons": [
+            "short_interval",
+            "burst",
+            "density_change",
+            "marker:SetSpeed",
+            "marker:Twirl"
+          ],
+          "events": 8,
+          "min_interval_ms": 28.735637295099536
+        },
+        {
+          "chart_sha256": "ef81d40d0bd2320b0d2bb60c286d083e313f722f8fd90810af1a4872cee3ef10",
+          "start_s": 24.460000127,
+          "end_s": 25.660000127,
+          "first_event": 187,
+          "last_event": 196,
+          "score": 19.5,
+          "reasons": [
+            "short_interval",
+            "burst",
+            "density_change",
+            "marker:SetSpeed",
+            "marker:Twirl"
+          ],
+          "events": 10,
+          "min_interval_ms": 14.367818647549768
+        }
+      ]
+    },
+    {
+      "name": "07561 - ๏ เ เ ค เ ๏ ๏ ๏ ๏ ๏ เ ค เ - Team Uncharted.adofai",
+      "path": "F:\\dev\\DoMachinesDreamOfDeparture\\data\\DMDOD-v140-tuf-p11-p20\\Train\\07561 - ๏ เ เ ค เ ๏ ๏ ๏ ๏ ๏ เ ค เ - Team Uncharted.adofai",
+      "sha256": "ad365bbc4efeeba89d6af3ceb91e65b1c8d75c0706cb7d1840ccd52088019efe",
+      "family": "๏ เ เ ค เ ๏ ๏ ๏ ๏ ๏ เ ค เ",
+      "level_id": 7561,
+      "difficulty": "P19",
+      "difficulty_source": "saved_dataset_manifest",
+      "g10_or_harder_verified": false,
+      "excluded_reason": null,
+      "duration_s": 60.042771,
+      "events": 787,
+      "targets": 787,
+      "mean_events_per_s": 13.107323,
+      "bpm": {
+        "manifest": 291.0,
+        "compiled_min": 219.49999862909317,
+        "compiled_max": 2699.9998140335083,
+        "distinct_rounded": 6
+      },
+      "interval_ms": {
+        "minimum": 12.499996698288385,
+        "p10": 16.666670564964292,
+        "median": 83.33333859525993,
+        "under_35": 321,
+        "under_60": 334
+      },
+      "multi_contact_events": 0,
+      "max_chord_size": 1,
+      "midspins": 22,
+      "full_rotations": 4,
+      "markers": {
+        "MultiPlanet": 0,
+        "Pause": 5,
+        "SetSpeed": 14,
+        "Twirl": 159
+      },
+      "complex_windows": [
+        {
+          "chart_sha256": "ad365bbc4efeeba89d6af3ceb91e65b1c8d75c0706cb7d1840ccd52088019efe",
+          "start_s": 34.53610318,
+          "end_s": 35.73610318,
+          "first_event": 443,
+          "last_event": 455,
+          "score": 19.5,
+          "reasons": [
+            "short_interval",
+            "burst",
+            "density_change",
+            "marker:Pause",
+            "marker:Twirl"
+          ],
+          "events": 13,
+          "min_interval_ms": 16.666663450180863
+        },
+        {
+          "chart_sha256": "ad365bbc4efeeba89d6af3ceb91e65b1c8d75c0706cb7d1840ccd52088019efe",
+          "start_s": 43.102770346,
+          "end_s": 44.302770346,
+          "first_event": 554,
+          "last_event": 565,
+          "score": 19.5,
+          "reasons": [
+            "short_interval",
+            "burst",
+            "density_change",
+            "marker:Pause",
+            "marker:Twirl"
+          ],
+          "events": 12,
+          "min_interval_ms": 24.999996953972925
+        }
+      ]
+    },
+    {
+      "name": "09981 - Chronosynchronism - 토끼로봇 & 1 more _ RinkiRin & 2 more.adofai",
+      "path": "F:\\dev\\DoMachinesDreamOfDeparture\\data\\DMDOD-v140-tuf-p11-p20\\Train\\09981 - Chronosynchronism - 토끼로봇 & 1 more _ RinkiRin & 2 more.adofai",
+      "sha256": "4990095ea658a259d12d5ee78084a80d0bda8eb66e5957c39a32a53ab8400b34",
+      "family": "chronosynchronism",
+      "level_id": 9981,
+      "difficulty": "P19",
+      "difficulty_source": "saved_dataset_manifest",
+      "g10_or_harder_verified": false,
+      "excluded_reason": null,
+      "duration_s": 147.428572,
+      "events": 2046,
+      "targets": 2046,
+      "mean_events_per_s": 13.877907,
+      "bpm": {
+        "manifest": 210.0,
+        "compiled_min": 210.0,
+        "compiled_max": 1680.0,
+        "distinct_rounded": 5
+      },
+      "interval_ms": {
+        "minimum": 5.952382011116697,
+        "p10": 11.904764022261816,
+        "median": 59.52380994730788,
+        "under_35": 531,
+        "under_60": 1029
+      },
+      "multi_contact_events": 0,
+      "max_chord_size": 1,
+      "midspins": 29,
+      "full_rotations": 16,
+      "markers": {
+        "MultiPlanet": 0,
+        "Pause": 9,
+        "SetSpeed": 43,
+        "Twirl": 517
+      },
+      "complex_windows": [
+        {
+          "chart_sha256": "4990095ea658a259d12d5ee78084a80d0bda8eb66e5957c39a32a53ab8400b34",
+          "start_s": 107.17428592,
+          "end_s": 108.37428592,
+          "first_event": 1346,
+          "last_event": 1358,
+          "score": 19.5,
+          "reasons": [
+            "short_interval",
+            "burst",
+            "density_change",
+            "marker:SetSpeed",
+            "marker:Twirl"
+          ],
+          "events": 13,
+          "min_interval_ms": 11.904764022261816
+        },
+        {
+          "chart_sha256": "4990095ea658a259d12d5ee78084a80d0bda8eb66e5957c39a32a53ab8400b34",
+          "start_s": 109.88857166,
+          "end_s": 111.08857166,
+          "first_event": 1384,
+          "last_event": 1406,
+          "score": 19.0,
+          "reasons": [
+            "short_interval",
+            "burst",
+            "density_change",
+            "marker:Twirl"
+          ],
+          "events": 23,
+          "min_interval_ms": 11.904758940275428
+        }
+      ]
+    },
+    {
+      "name": "01200 - Who's Not In Paris - Irin.adofai",
+      "path": "F:\\dev\\DoMachinesDreamOfDeparture\\data\\DMDOD-v140-tuf-p11-p20\\Train\\01200 - Who's Not In Paris - Irin.adofai",
+      "sha256": "0138eab24e2d5354a6078f46501a075a4ad067b5069c3a28ab950dfafc2bba9c",
+      "family": "who's not in paris",
+      "level_id": 1200,
+      "difficulty": "P19",
+      "difficulty_source": "saved_dataset_manifest",
+      "g10_or_harder_verified": false,
+      "excluded_reason": null,
+      "duration_s": 169.535096,
+      "events": 1781,
+      "targets": 1781,
+      "mean_events_per_s": 10.505199,
+      "bpm": {
+        "manifest": 159.989,
+        "compiled_min": 106.65933545408643,
+        "compiled_max": 2559.823974609375,
+        "distinct_rounded": 6
+      },
+      "interval_ms": {
+        "minimum": 15.626070556436389,
+        "p10": 15.626077227011592,
+        "median": 78.13037279388624,
+        "under_35": 560,
+        "under_60": 768
+      },
+      "multi_contact_events": 0,
+      "max_chord_size": 1,
+      "midspins": 4,
+      "full_rotations": 16,
+      "markers": {
+        "MultiPlanet": 0,
+        "Pause": 0,
+        "SetSpeed": 51,
+        "Twirl": 374
+      },
+      "complex_windows": [
+        {
+          "chart_sha256": "0138eab24e2d5354a6078f46501a075a4ad067b5069c3a28ab950dfafc2bba9c",
+          "start_s": 105.592298569,
+          "end_s": 106.792298569,
+          "first_event": 1008,
+          "last_event": 1014,
+          "score": 18.0,
+          "reasons": [
+            "short_interval",
+            "burst",
+            "density_change",
+            "marker:Twirl"
+          ],
+          "events": 7,
+          "min_interval_ms": 31.252154454008974
+        },
+        {
+          "chart_sha256": "0138eab24e2d5354a6078f46501a075a4ad067b5069c3a28ab950dfafc2bba9c",
+          "start_s": 126.593742867,
+          "end_s": 127.793742867,
+          "first_event": 1163,
+          "last_event": 1172,
+          "score": 19.5,
+          "reasons": [
+            "short_interval",
+            "burst",
+            "density_change",
+            "marker:SetSpeed",
+            "marker:Twirl"
+          ],
+          "events": 10,
+          "min_interval_ms": 15.626077226997381
+        }
+      ]
+    },
+    {
+      "name": "09853 - Rocky Buinne [Featured ver.] - 2seehyun.adofai",
+      "path": "F:\\dev\\DoMachinesDreamOfDeparture\\data\\DMDOD-v140-tuf-p11-p20\\Train\\09853 - Rocky Buinne [Featured ver.] - 2seehyun.adofai",
+      "sha256": "3fc3ebfaa773b50e3ed607e2bf0ee7efd865fd8f809a5bb18ee6303b59ddc61e",
+      "family": "rocky buinne [featured ver.]",
+      "level_id": 9853,
+      "difficulty": "P20",
+      "difficulty_source": "saved_dataset_manifest",
+      "g10_or_harder_verified": false,
+      "excluded_reason": null,
+      "duration_s": 92.273637,
+      "events": 1497,
+      "targets": 1497,
+      "mean_events_per_s": 16.223485,
+      "bpm": {
+        "manifest": 138.5,
+        "compiled_min": 138.5,
+        "compiled_max": 1108.0,
+        "distinct_rounded": 5
+      },
+      "interval_ms": {
+        "minimum": 9.025268510669093,
+        "p10": 27.075813237559032,
+        "median": 54.15162454873723,
+        "under_35": 577,
+        "under_60": 1186
+      },
+      "multi_contact_events": 0,
+      "max_chord_size": 1,
+      "midspins": 44,
+      "full_rotations": 1,
+      "markers": {
+        "MultiPlanet": 0,
+        "Pause": 0,
+        "SetSpeed": 16,
+        "Twirl": 396
+      },
+      "complex_windows": [
+        {
+          "chart_sha256": "3fc3ebfaa773b50e3ed607e2bf0ee7efd865fd8f809a5bb18ee6303b59ddc61e",
+          "start_s": 56.643384032,
+          "end_s": 57.843384032,
+          "first_event": 607,
+          "last_event": 623,
+          "score": 18.0,
+          "reasons": [
+            "short_interval",
+            "burst",
+            "density_change",
+            "marker:SetSpeed",
+            "marker:Twirl"
+          ],
+          "events": 17,
+          "min_interval_ms": 27.075813237559032
+        },
+        {
+          "chart_sha256": "3fc3ebfaa773b50e3ed607e2bf0ee7efd865fd8f809a5bb18ee6303b59ddc61e",
+          "start_s": 65.307644077,
+          "end_s": 66.507644077,
+          "first_event": 816,
+          "last_event": 846,
+          "score": 17.500001,
+          "reasons": [
+            "short_interval",
+            "burst",
+            "sub_control_interval",
+            "density_change",
+            "marker:Twirl"
+          ],
+          "events": 31,
+          "min_interval_ms": 9.025268510669093
+        }
+      ]
+    },
+    {
+      "name": "01645 - First town of this Journey remix - Irin.adofai",
+      "path": "F:\\dev\\DoMachinesDreamOfDeparture\\data\\DMDOD-v140-tuf-p11-p20\\Train\\01645 - First town of this Journey remix - Irin.adofai",
+      "sha256": "4a71411d454d3b10a10cd98165a2e9cce99e4b14c310d1e6847836fdc68fc0e1",
+      "family": "first town of this journey remix",
+      "level_id": 1645,
+      "difficulty": "P20",
+      "difficulty_source": "saved_dataset_manifest",
+      "g10_or_harder_verified": false,
+      "excluded_reason": null,
+      "duration_s": 215.382355,
+      "events": 2179,
+      "targets": 2179,
+      "mean_events_per_s": 10.116892,
+      "bpm": {
+        "manifest": 340.0,
+        "compiled_min": 85.0,
+        "compiled_max": 1360.0,
+        "distinct_rounded": 5
+      },
+      "interval_ms": {
+        "minimum": 7.352942484331493,
+        "p10": 29.411766798460803,
+        "median": 73.52941228785426,
+        "under_35": 380,
+        "under_60": 1017
+      },
+      "multi_contact_events": 0,
+      "max_chord_size": 1,
+      "midspins": 60,
+      "full_rotations": 6,
+      "markers": {
+        "MultiPlanet": 0,
+        "Pause": 0,
+        "SetSpeed": 69,
+        "Twirl": 437
+      },
+      "complex_windows": [
+        {
+          "chart_sha256": "4a71411d454d3b10a10cd98165a2e9cce99e4b14c310d1e6847836fdc68fc0e1",
+          "start_s": 45.342353327,
+          "end_s": 46.542353327,
+          "first_event": 515,
+          "last_event": 528,
+          "score": 17.0,
+          "reasons": [
+            "short_interval",
+            "burst",
+            "density_change",
+            "marker:SetSpeed",
+            "marker:Twirl"
+          ],
+          "events": 14,
+          "min_interval_ms": 29.41176679846791
+        },
+        {
+          "chart_sha256": "4a71411d454d3b10a10cd98165a2e9cce99e4b14c310d1e6847836fdc68fc0e1",
+          "start_s": 90.518824324,
+          "end_s": 91.718824324,
+          "first_event": 883,
+          "last_event": 897,
+          "score": 17.0,
+          "reasons": [
+            "short_interval",
+            "burst",
+            "density_change",
+            "marker:SetSpeed",
+            "marker:Twirl"
+          ],
+          "events": 15,
+          "min_interval_ms": 29.411766798460803
+        }
+      ]
+    },
+    {
+      "name": "09852 - Your Mind [Featured ver.] - BWen.adofai",
+      "path": "F:\\dev\\DoMachinesDreamOfDeparture\\data\\DMDOD-v140-tuf-p11-p20\\Train\\09852 - Your Mind [Featured ver.] - BWen.adofai",
+      "sha256": "b99b7fb7cd562859e82f432b54e2e8d46a211c7e5f72c03ea94e4350ccbee9a6",
+      "family": "your mind [featured ver.]",
+      "level_id": 9852,
+      "difficulty": "P20",
+      "difficulty_source": "saved_dataset_manifest",
+      "g10_or_harder_verified": false,
+      "excluded_reason": null,
+      "duration_s": 121.722223,
+      "events": 1070,
+      "targets": 1070,
+      "mean_events_per_s": 8.790507,
+      "bpm": {
+        "manifest": 180.0,
+        "compiled_min": 60.00000178813934,
+        "compiled_max": 720.0,
+        "distinct_rounded": 5
+      },
+      "interval_ms": {
+        "minimum": 13.888885430318965,
+        "p10": 27.777776789612574,
+        "median": 111.1110953004868,
+        "under_35": 315,
+        "under_60": 343
+      },
+      "multi_contact_events": 0,
+      "max_chord_size": 1,
+      "midspins": 73,
+      "full_rotations": 1,
+      "markers": {
+        "MultiPlanet": 0,
+        "Pause": 5,
+        "SetSpeed": 22,
+        "Twirl": 323
+      },
+      "complex_windows": [
+        {
+          "chart_sha256": "b99b7fb7cd562859e82f432b54e2e8d46a211c7e5f72c03ea94e4350ccbee9a6",
+          "start_s": 3.793333376,
+          "end_s": 4.993333376,
+          "first_event": 8,
+          "last_event": 13,
+          "score": 18.0,
+          "reasons": [
+            "short_interval",
+            "burst",
+            "density_change",
+            "marker:SetSpeed"
+          ],
+          "events": 6,
+          "min_interval_ms": 27.77778271859699
+        },
+        {
+          "chart_sha256": "b99b7fb7cd562859e82f432b54e2e8d46a211c7e5f72c03ea94e4350ccbee9a6",
+          "start_s": 7.793333423,
+          "end_s": 8.993333423,
+          "first_event": 41,
+          "last_event": 47,
+          "score": 18.0,
+          "reasons": [
+            "short_interval",
+            "burst",
+            "density_change",
+            "marker:Twirl"
+          ],
+          "events": 7,
+          "min_interval_ms": 27.777782718597877
+        }
+      ]
+    },
+    {
+      "name": "00814 - Inferno (EX) - 아라티.adofai",
+      "path": "F:\\dev\\DoMachinesDreamOfDeparture\\data\\DMDOD-v140-tuf-p11-p20\\Train\\00814 - Inferno (EX) - 아라티.adofai",
+      "sha256": "b24fc8e114ccb0b033d3d176dc9fc092ce0e2ee392302d592f5d9cdc455aba52",
+      "family": "inferno (ex)",
+      "level_id": 814,
+      "difficulty": "P20",
+      "difficulty_source": "saved_dataset_manifest",
+      "g10_or_harder_verified": false,
+      "excluded_reason": null,
+      "duration_s": 114.455883,
+      "events": 2003,
+      "targets": 2003,
+      "mean_events_per_s": 17.500193,
+      "bpm": {
+        "manifest": 170.0,
+        "compiled_min": 170.0,
+        "compiled_max": 2380.0,
+        "distinct_rounded": 5
+      },
+      "interval_ms": {
+        "minimum": 14.70587869091844,
+        "p10": 22.05882364151357,
+        "median": 44.11764705882604,
+        "under_35": 753,
+        "under_60": 1354
+      },
+      "multi_contact_events": 0,
+      "max_chord_size": 1,
+      "midspins": 21,
+      "full_rotations": 3,
+      "markers": {
+        "MultiPlanet": 0,
+        "Pause": 0,
+        "SetSpeed": 49,
+        "Twirl": 487
+      },
+      "complex_windows": [
+        {
+          "chart_sha256": "b24fc8e114ccb0b033d3d176dc9fc092ce0e2ee392302d592f5d9cdc455aba52",
+          "start_s": 77.136471205,
+          "end_s": 78.336471205,
+          "first_event": 1415,
+          "last_event": 1432,
+          "score": 18.0,
+          "reasons": [
+            "short_interval",
+            "burst",
+            "density_change",
+            "marker:SetSpeed",
+            "marker:Twirl"
+          ],
+          "events": 18,
+          "min_interval_ms": 22.05882431412931
+        },
+        {
+          "chart_sha256": "b24fc8e114ccb0b033d3d176dc9fc092ce0e2ee392302d592f5d9cdc455aba52",
+          "start_s": 107.81294201,
+          "end_s": 109.01294201,
+          "first_event": 1917,
+          "last_event": 1928,
+          "score": 19.0,
+          "reasons": [
+            "short_interval",
+            "burst",
+            "density_change",
+            "marker:Twirl"
+          ],
+          "events": 12,
+          "min_interval_ms": 29.41175738183688
+        }
+      ]
+    },
+    {
+      "name": "03665 - Nyarlathotep's Dreamland - Silis.adofai",
+      "path": "F:\\dev\\DoMachinesDreamOfDeparture\\data\\DMDOD-v140-tuf-p11-p20\\Train\\03665 - Nyarlathotep's Dreamland - Silis.adofai",
+      "sha256": "3b527ee716a396ab919ac7b563ac5d89f8fa963680dc17a7b3882b5105201ace",
+      "family": "nyarlathotep's dreamland",
+      "level_id": 3665,
+      "difficulty": "P20",
+      "difficulty_source": "saved_dataset_manifest",
+      "g10_or_harder_verified": false,
+      "excluded_reason": null,
+      "duration_s": 145.800002,
+      "events": 2146,
+      "targets": 2146,
+      "mean_events_per_s": 14.718793,
+      "bpm": {
+        "manifest": 200.0,
+        "compiled_min": 200.0,
+        "compiled_max": 1600.0,
+        "distinct_rounded": 4
+      },
+      "interval_ms": {
+        "minimum": 12.499996887271436,
+        "p10": 12.500002223362117,
+        "median": 74.99999999999929,
+        "under_35": 472,
+        "under_60": 624
+      },
+      "multi_contact_events": 0,
+      "max_chord_size": 1,
+      "midspins": 0,
+      "full_rotations": 28,
+      "markers": {
+        "MultiPlanet": 0,
+        "Pause": 3,
+        "SetSpeed": 18,
+        "Twirl": 534
+      },
+      "complex_windows": [
+        {
+          "chart_sha256": "3b527ee716a396ab919ac7b563ac5d89f8fa963680dc17a7b3882b5105201ace",
+          "start_s": 60.685000825,
+          "end_s": 61.885000825,
+          "first_event": 946,
+          "last_event": 960,
+          "score": 17.0,
+          "reasons": [
+            "short_interval",
+            "burst",
+            "density_change",
+            "marker:SetSpeed",
+            "marker:Twirl"
+          ],
+          "events": 15,
+          "min_interval_ms": 12.500002223369222
+        },
+        {
+          "chart_sha256": "3b527ee716a396ab919ac7b563ac5d89f8fa963680dc17a7b3882b5105201ace",
+          "start_s": 115.260001264,
+          "end_s": 116.460001264,
+          "first_event": 1727,
+          "last_event": 1738,
+          "score": 18.0,
+          "reasons": [
+            "short_interval",
+            "burst",
+            "density_change",
+            "marker:SetSpeed"
+          ],
+          "events": 12,
+          "min_interval_ms": 12.500002223362117
+        }
+      ]
+    },
+    {
+      "name": "09173 - minefield surfing - GMDMachine.adofai",
+      "path": "F:\\dev\\DoMachinesDreamOfDeparture\\data\\DMDOD-v140-tuf-p11-p20\\Train\\09173 - minefield surfing - GMDMachine.adofai",
+      "sha256": "199276716bd3cd7b2ae5ebddeb4773c5737cf6118771f9a4d51f8e3802a513f9",
+      "family": "minefield surfing",
+      "level_id": 9173,
+      "difficulty": "P20",
+      "difficulty_source": "saved_dataset_manifest",
+      "g10_or_harder_verified": false,
+      "excluded_reason": null,
+      "duration_s": 109.882272,
+      "events": 1081,
+      "targets": 1081,
+      "mean_events_per_s": 9.837802,
+      "bpm": {
+        "manifest": 300.0,
+        "compiled_min": 300.0,
+        "compiled_max": 300.0,
+        "distinct_rounded": 1
+      },
+      "interval_ms": {
+        "minimum": 16.666630803024773,
+        "p10": 58.33333042813038,
+        "median": 88.2352317726749,
+        "under_35": 63,
+        "under_60": 144
+      },
+      "multi_contact_events": 0,
+      "max_chord_size": 1,
+      "midspins": 50,
+      "full_rotations": 4,
+      "markers": {
+        "MultiPlanet": 0,
+        "Pause": 1,
+        "SetSpeed": 0,
+        "Twirl": 495
+      },
+      "complex_windows": [
+        {
+          "chart_sha256": "199276716bd3cd7b2ae5ebddeb4773c5737cf6118771f9a4d51f8e3802a513f9",
+          "start_s": 9.660000087,
+          "end_s": 10.860000087,
+          "first_event": 57,
+          "last_event": 67,
+          "score": 18.0,
+          "reasons": [
+            "short_interval",
+            "burst",
+            "density_change",
+            "marker:Twirl"
+          ],
+          "events": 11,
+          "min_interval_ms": 16.666673188549197
+        },
+        {
+          "chart_sha256": "199276716bd3cd7b2ae5ebddeb4773c5737cf6118771f9a4d51f8e3802a513f9",
+          "start_s": 25.517143474,
+          "end_s": 26.717143474,
+          "first_event": 172,
+          "last_event": 187,
+          "score": 14.0,
+          "reasons": [
+            "short_interval",
+            "burst",
+            "density_change",
+            "marker:Twirl"
+          ],
+          "events": 16,
+          "min_interval_ms": 16.666673188549197
+        }
+      ]
+    },
+    {
+      "name": "10249 - Linen (2023 Remake) - 한가지 _ 응애 & 4 more.adofai",
+      "path": "F:\\dev\\DoMachinesDreamOfDeparture\\data\\DMDOD-v140-tuf-p11-p20\\Train\\10249 - Linen (2023 Remake) - 한가지 _ 응애 & 4 more.adofai",
+      "sha256": "e0c0a76020cfc767f3b790a5c5e747ac0fe2fcc5dd790df1853bcc6f83902063",
+      "family": "linen (2023 remake)",
+      "level_id": 10249,
+      "difficulty": "P20",
+      "difficulty_source": "saved_dataset_manifest",
+      "g10_or_harder_verified": false,
+      "excluded_reason": null,
+      "duration_s": 181.200037,
+      "events": 1200,
+      "targets": 1200,
+      "mean_events_per_s": 6.622515,
+      "bpm": {
+        "manifest": 200.0,
+        "compiled_min": 16.66666865348816,
+        "compiled_max": 1600.0,
+        "distinct_rounded": 11
+      },
+      "interval_ms": {
+        "minimum": 12.499994219240307,
+        "p10": 37.500006237237926,
+        "median": 137.5000004446747,
+        "under_35": 53,
+        "under_60": 253
+      },
+      "multi_contact_events": 0,
+      "max_chord_size": 1,
+      "midspins": 24,
+      "full_rotations": 3,
+      "markers": {
+        "MultiPlanet": 0,
+        "Pause": 0,
+        "SetSpeed": 74,
+        "Twirl": 271
+      },
+      "complex_windows": [
+        {
+          "chart_sha256": "e0c0a76020cfc767f3b790a5c5e747ac0fe2fcc5dd790df1853bcc6f83902063",
+          "start_s": 112.260020967,
+          "end_s": 113.460020967,
+          "first_event": 748,
+          "last_event": 762,
+          "score": 15.999997,
+          "reasons": [
+            "short_interval",
+            "burst",
+            "density_change",
+            "marker:SetSpeed"
+          ],
+          "events": 15,
+          "min_interval_ms": 18.749995153058308
+        },
+        {
+          "chart_sha256": "e0c0a76020cfc767f3b790a5c5e747ac0fe2fcc5dd790df1853bcc6f83902063",
+          "start_s": 140.772522742,
+          "end_s": 141.972522742,
+          "first_event": 1028,
+          "last_event": 1041,
+          "score": 17.0,
+          "reasons": [
+            "short_interval",
+            "burst",
+            "density_change",
+            "marker:SetSpeed",
+            "marker:Twirl"
+          ],
+          "events": 14,
+          "min_interval_ms": 12.499994219240307
+        }
+      ]
+    },
+    {
+      "name": "04432 - ADOFAI Regular Dan - 2nd Dan - yzuio & 5 more.adofai",
+      "path": "F:\\dev\\DoMachinesDreamOfDeparture\\data\\DMDOD-v140-tuf-p11-p20\\Train\\04432 - ADOFAI Regular Dan - 2nd Dan - yzuio & 5 more.adofai",
+      "sha256": "2ada1d0a06b5bd4ed259b9b6a480b15a7e964fa2e8ca25e5f0bc50db306b34c0",
+      "family": "adofai regular dan - 2nd dan",
+      "level_id": 4432,
+      "difficulty": "P20",
+      "difficulty_source": "saved_dataset_manifest",
+      "g10_or_harder_verified": false,
+      "excluded_reason": null,
+      "duration_s": 497.050517,
+      "events": 3637,
+      "targets": 3637,
+      "mean_events_per_s": 7.317164,
+      "bpm": {
+        "manifest": 170.0,
+        "compiled_min": 31.000000685453415,
+        "compiled_max": 700.0000190734863,
+        "distinct_rounded": 57
+      },
+      "interval_ms": {
+        "minimum": 14.285707289872107,
+        "p10": 28.57143287491226,
+        "median": 88.23529411764497,
+        "under_35": 418,
+        "under_60": 640
+      },
+      "multi_contact_events": 0,
+      "max_chord_size": 1,
+      "midspins": 71,
+      "full_rotations": 19,
+      "markers": {
+        "MultiPlanet": 0,
+        "Pause": 2,
+        "SetSpeed": 148,
+        "Twirl": 856
+      },
+      "complex_windows": [
+        {
+          "chart_sha256": "2ada1d0a06b5bd4ed259b9b6a480b15a7e964fa2e8ca25e5f0bc50db306b34c0",
+          "start_s": 152.834532705,
+          "end_s": 154.034532705,
+          "first_event": 1440,
+          "last_event": 1450,
+          "score": 19.5,
+          "reasons": [
+            "short_interval",
+            "burst",
+            "density_change",
+            "marker:SetSpeed",
+            "marker:Twirl"
+          ],
+          "events": 11,
+          "min_interval_ms": 14.285719486650805
+        },
+        {
+          "chart_sha256": "2ada1d0a06b5bd4ed259b9b6a480b15a7e964fa2e8ca25e5f0bc50db306b34c0",
+          "start_s": 158.320246938,
+          "end_s": 159.520246938,
+          "first_event": 1492,
+          "last_event": 1502,
+          "score": 19.5,
+          "reasons": [
+            "short_interval",
+            "burst",
+            "density_change",
+            "marker:SetSpeed",
+            "marker:Twirl"
+          ],
+          "events": 11,
+          "min_interval_ms": 14.285719486650805
+        }
+      ]
+    }
+  ],
+  "summary": {
+    "charts": 80,
+    "unique_sha256": 80,
+    "verified_g10_or_harder": 0,
+    "excluded_family_charts": 0,
+    "candidate_windows": 160,
+    "charts_with_candidate_windows": 80,
+    "difficulty_counts": {
+      "P11": 8,
+      "P12": 8,
+      "P13": 8,
+      "P14": 8,
+      "P15": 8,
+      "P16": 8,
+      "P17": 8,
+      "P18": 8,
+      "P19": 8,
+      "P20": 8
+    }
+  },
+  "holdout_roles_opened": [],
+  "generated_at_utc": "2026-10-17T21:46:49.191791+00:00"
+}

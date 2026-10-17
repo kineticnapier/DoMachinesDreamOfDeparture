@@ -1,0 +1,81 @@
+Failed to find real location of C:\Users\Kinetic Napier\AppData\Local\Python\pythoncore-3.14-64\python.exe
+window 1/4 15535 - \u25b7ixel-mem��ry-dia[ll] - EPC Chart Team \u27eabey��nd-��ld-S��veFile\u27eb.adofai: focus Hit 14/14
+window 2/4 02993 - �ɋ�̖� - \ud55c\uac00\uc9c0 _ oSKYo.adofai: focus Hit 18/18
+window 3/4 04913 - Ciforance MEGAMIX - Ciforance _ ��zhi12 & 4 more.adofai: focus Hit 17/17
+window 4/4 03640 - �� - prisMKa _ Sprout.adofai: focus Hit 13/13
+{
+  "aggregate": {
+    "teacher_focus_events": 62,
+    "teacher_focus_hits": 62,
+    "saved_examples": 62,
+    "center_first_agreement_events": 4,
+    "center_first_agreement_rate": 0.06451612903225806,
+    "center_first": {
+      "windows": 4,
+      "targets": 87,
+      "hits": 87,
+      "misses": 0,
+      "too_early": 0,
+      "overloaded_windows": 0,
+      "hit_rate": 1.0,
+      "timing_mae_ms": 14.881001751936193,
+      "x_accuracy_percent": 96.72413793103448,
+      "physical_keydowns": 87
+    },
+    "teacher_v0_2": {
+      "windows": 4,
+      "targets": 87,
+      "hits": 87,
+      "misses": 0,
+      "too_early": 0,
+      "overloaded_windows": 0,
+      "hit_rate": 1.0,
+      "timing_mae_ms": 7.985186169642869,
+      "x_accuracy_percent": 99.42528735632185,
+      "physical_keydowns": 87
+    },
+    "network_v0_1": {
+      "windows": 4,
+      "targets": 87,
+      "hits": 87,
+      "misses": 0,
+      "too_early": 0,
+      "overloaded_windows": 0,
+      "hit_rate": 1.0,
+      "timing_mae_ms": 8.529437721040523,
+      "x_accuracy_percent": 99.71264367816092,
+      "physical_keydowns": 87
+    },
+    "candidate_ranking": {
+      "teacher_v0_2": {
+        "scored_events": 62,
+        "exact_teacher_choice_rate": 1.0,
+        "equivalent_good_rate": 1.0,
+        "mean_teacher_cost_regret": 0.0,
+        "max_teacher_cost_regret": 0.0
+      },
+      "center_first": {
+        "scored_events": 62,
+        "exact_teacher_choice_rate": 0.11290322580645161,
+        "equivalent_good_rate": 0.14516129032258066,
+        "mean_teacher_cost_regret": 18.43532258064516,
+        "max_teacher_cost_regret": 175.0
+      },
+      "network_v0_1": {
+        "scored_events": 62,
+        "exact_teacher_choice_rate": 0.3870967741935484,
+        "equivalent_good_rate": 0.45161290322580644,
+        "mean_teacher_cost_regret": 4.134064516129032,
+        "max_teacher_cost_regret": 19.999999999999996
+      }
+    }
+  },
+  "quality_gate": {
+    "verified_g10_or_harder_chart_present": false,
+    "teacher_all_focus_events_hit": true,
+    "fit_quality_chart_disjoint": true,
+    "no_failed_teacher_result_labeled_success": true,
+    "nonempty_success_labels": true
+  },
+  "ready_for_training": false
+}

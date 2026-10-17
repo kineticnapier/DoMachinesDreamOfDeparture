@@ -1,0 +1,8 @@
+{
+  "pid": 25720,
+  "started_at_utc": "2026-10-17T21:52:09.965685+00:00",
+  "finished_at_utc": "2026-10-17T21:53:21.981635+00:00",
+  "exit_code": 0,
+  "report": "reports\\fingering-real-chart-v02-pilot-010fc19-r4.json",
+  "dataset": "artifacts\\fingering_real_chart_v02\\pilot-010fc19-r4.pt"
+}

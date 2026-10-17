@@ -1,0 +1,21 @@
+Failed to find real location of C:\Users\Kinetic Napier\AppData\Local\Python\pythoncore-3.14-64\python.exe
+{
+  "charts": 80,
+  "unique_sha256": 80,
+  "verified_g10_or_harder": 0,
+  "excluded_family_charts": 0,
+  "candidate_windows": 160,
+  "charts_with_candidate_windows": 80,
+  "difficulty_counts": {
+    "P11": 8,
+    "P12": 8,
+    "P13": 8,
+    "P14": 8,
+    "P15": 8,
+    "P16": 8,
+    "P17": 8,
+    "P18": 8,
+    "P19": 8,
+    "P20": 8
+  }
+}
