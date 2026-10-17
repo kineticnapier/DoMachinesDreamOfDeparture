@@ -1,0 +1,282 @@
+sequence capture 01/20 frames=793 events=122 multi10=0
+sequence capture 02/20 frames=744 events=32 multi10=0
+sequence capture 03/20 frames=795 events=134 multi10=0
+sequence capture 04/20 frames=751 events=25 multi10=0
+sequence capture 05/20 frames=707 events=4 multi10=0
+sequence capture 06/20 frames=747 events=14 multi10=0
+sequence capture 07/20 frames=774 events=38 multi10=0
+sequence capture 08/20 frames=782 events=36 multi10=0
+sequence capture 09/20 frames=303 events=48 multi10=0
+sequence capture 10/20 frames=264 events=40 multi10=0
+sequence capture 11/20 frames=789 events=18 multi10=0
+sequence capture 12/20 frames=784 events=17 multi10=0
+sequence capture 13/20 frames=152 events=38 multi10=0
+sequence capture 14/20 frames=754 events=66 multi10=0
+sequence capture 15/20 frames=780 events=20 multi10=0
+sequence capture 16/20 frames=675 events=53 multi10=0
+sequence capture 17/20 frames=736 events=9 multi10=0
+sequence capture 18/20 frames=767 events=41 multi10=0
+sequence capture 19/20 frames=796 events=80 multi10=2
+sequence capture 20/20 frames=788 events=15 multi10=0
+{
+  "format": "prestige1-autoplay-multievent-timing-student-v3-stable-time",
+  "role": "frozen Train20 fit15 / prior Train-heldout5 calibration only",
+  "teacher": "compiled Autoplay exact event timestamps; no grid rounding",
+  "student_input": "causal current/past 263D visible HUD v2 (unclipped BPM) only",
+  "horizon_ms": 80.0,
+  "max_events": 16,
+  "epochs": 16,
+  "updates": 240,
+  "learning_rate": 0.0003,
+  "timing_loss_weight": 4.0,
+  "loss_first": 0.9203566312789917,
+  "loss_last": 0.3755377531051636,
+  "loss_min": 0.1948845237493515,
+  "selected_confidence_threshold": 0.5,
+  "threshold_selection": "maximum slot F1, then fewer FP, then higher threshold; prior Train-heldout5 only",
+  "calibration_candidates": [
+    {
+      "threshold": 0.5,
+      "slot_tp": 1005,
+      "slot_fp": 389,
+      "slot_fn": 183,
+      "slot_tn": 49815,
+      "slot_precision": 0.7209469153515065,
+      "slot_recall": 0.8459595959595959,
+      "slot_f1": 0.7784663051897754,
+      "matched_slot_mae_ms": 16.859764099121094,
+      "matched_slot_p95_ms": 36.16196823120117,
+      "mean_absolute_count_error": 0.1780821917808219,
+      "label_overflow_frames": 0
+    },
+    {
+      "threshold": 0.65,
+      "slot_tp": 651,
+      "slot_fp": 166,
+      "slot_fn": 537,
+      "slot_tn": 50038,
+      "slot_precision": 0.7968176254589964,
+      "slot_recall": 0.547979797979798,
+      "slot_f1": 0.6493765586034912,
+      "matched_slot_mae_ms": 16.101926803588867,
+      "matched_slot_p95_ms": 35.527530670166016,
+      "mean_absolute_count_error": 0.21886674968866748,
+      "label_overflow_frames": 0
+    },
+    {
+      "threshold": 0.8,
+      "slot_tp": 30,
+      "slot_fp": 2,
+      "slot_fn": 1158,
+      "slot_tn": 50202,
+      "slot_precision": 0.9375,
+      "slot_recall": 0.025252525252525252,
+      "slot_f1": 0.04918032786885246,
+      "matched_slot_mae_ms": 14.734000205993652,
+      "matched_slot_p95_ms": 25.534526824951172,
+      "mean_absolute_count_error": 0.36114570361145704,
+      "label_overflow_frames": 0
+    },
+    {
+      "threshold": 0.9,
+      "slot_tp": 0,
+      "slot_fp": 0,
+      "slot_fn": 1188,
+      "slot_tn": 50204,
+      "slot_precision": 0.0,
+      "slot_recall": 0.0,
+      "slot_f1": 0.0,
+      "matched_slot_mae_ms": null,
+      "matched_slot_p95_ms": null,
+      "mean_absolute_count_error": 0.3698630136986301,
+      "label_overflow_frames": 0
+    },
+    {
+      "threshold": 0.95,
+      "slot_tp": 0,
+      "slot_fp": 0,
+      "slot_fn": 1188,
+      "slot_tn": 50204,
+      "slot_precision": 0.0,
+      "slot_recall": 0.0,
+      "slot_f1": 0.0,
+      "matched_slot_mae_ms": null,
+      "matched_slot_p95_ms": null,
+      "mean_absolute_count_error": 0.3698630136986301,
+      "label_overflow_frames": 0
+    }
+  ],
+  "train_partition": {
+    "seed": 2401,
+    "group_by": "Train chart SHA256",
+    "fit_anchor_ids": [
+      1,
+      3,
+      4,
+      5,
+      6,
+      8,
+      9,
+      10,
+      11,
+      12,
+      15,
+      16,
+      17,
+      18,
+      19
+    ],
+    "heldout_anchor_ids": [
+      2,
+      7,
+      13,
+      14,
+      20
+    ],
+    "fit_chart_hashes": [
+      "07cd7eeb478f3e5b08a621f30d5ec47ca19590c9521ea903176686ce80b8eec7",
+      "14e07be43b90bda1fa5a0f01e1f123a5a2ae331f7372ede531ddbe45d4143b75",
+      "3847e47e00162a3794991eb6c37009d15673b290c2261ffa43a1f476b877aa64",
+      "3ef5aa91ba343cd10c2f9388d60b39a74c0373eadf1961bde2877c90efc0ae4d",
+      "476336e473f8b43aca1ab7a186cf370f91859125f753a57aed7094cda9fed149",
+      "4a71411d454d3b10a10cd98165a2e9cce99e4b14c310d1e6847836fdc68fc0e1",
+      "58c7ec74df7261d615033c42b08515046b527d14876f1d73dd083dd840fb76c7",
+      "b24fc8e114ccb0b033d3d176dc9fc092ce0e2ee392302d592f5d9cdc455aba52",
+      "c166c169ca4d40a9a1a8bd33a4bac085e6f9ed642a2833f41755646728e297b8",
+      "cafc1346d5448efb589fbc07187806abbc2201026db2142d62466d45bb931cc5",
+      "ccbbad249c0fabe0882d2e4de661cadb18aa03da0cf6f4292e4092caac50bb1b",
+      "e142af91b1784dc20c76fbde5a7320de234dbaebf9822f75e733d0b2db1924d5",
+      "e23c48c66e956a6e820fff2a5ed352718efb7f5e861094207cc49f6dcabdd622",
+      "e87ba3a5d0de01262b19a9e1072c1db1f5879a953fbf7383f18c63ad22a7d1ca",
+      "f4f71701065c986da6fd999cbc0a659d8fe47434793b5898e099ec2df83a5f70"
+    ],
+    "heldout_chart_hashes": [
+      "0138eab24e2d5354a6078f46501a075a4ad067b5069c3a28ab950dfafc2bba9c",
+      "1a5928ad5c91d21b8eaae2bc8246c5ed8bf35ff904d8497f2ee9895b781708b2",
+      "3accc1f1adaa97b1af4e12aaeb465015b51835da0a6f23946f0166da2a53f86e",
+      "5571481d5a0eee9dee9fe70c81702b3bdf6dfd0491a6904c80d19e22610d86d3",
+      "a673b341ff18da326050f28b852f86266a7bad6957a862bd2906a940a7880980"
+    ],
+    "validation_used_for_selection": false
+  },
+  "train_manifest": [
+    {
+      "anchor": 1,
+      "name": "00814 - Inferno (EX) - 아라티",
+      "sha256": "b24fc8e114ccb0b033d3d176dc9fc092ce0e2ee392302d592f5d9cdc455aba52"
+    },
+    {
+      "anchor": 2,
+      "name": "01200 - Who's Not In Paris - Irin",
+      "sha256": "0138eab24e2d5354a6078f46501a075a4ad067b5069c3a28ab950dfafc2bba9c"
+    },
+    {
+      "anchor": 3,
+      "name": "01645 - First town of this Journey remix - Irin",
+      "sha256": "4a71411d454d3b10a10cd98165a2e9cce99e4b14c310d1e6847836fdc68fc0e1"
+    },
+    {
+      "anchor": 4,
+      "name": "01760 - C†hulhu - Kiyoshi",
+      "sha256": "3ef5aa91ba343cd10c2f9388d60b39a74c0373eadf1961bde2877c90efc0ae4d"
+    },
+    {
+      "anchor": 5,
+      "name": "02280 - Beautiful Lullaby - NfK",
+      "sha256": "476336e473f8b43aca1ab7a186cf370f91859125f753a57aed7094cda9fed149"
+    },
+    {
+      "anchor": 6,
+      "name": "02334 - Time Leaper - Jipper",
+      "sha256": "f4f71701065c986da6fd999cbc0a659d8fe47434793b5898e099ec2df83a5f70"
+    },
+    {
+      "anchor": 7,
+      "name": "02521 - Triple Cross - Milkyway",
+      "sha256": "5571481d5a0eee9dee9fe70c81702b3bdf6dfd0491a6904c80d19e22610d86d3"
+    },
+    {
+      "anchor": 8,
+      "name": "02945 - 锦织 - AWC Chart Team _PLORALD & _OrangeFJ_",
+      "sha256": "c166c169ca4d40a9a1a8bd33a4bac085e6f9ed642a2833f41755646728e297b8"
+    },
+    {
+      "anchor": 9,
+      "name": "02971 - ALL MY FELLAS - RetroBean",
+      "sha256": "e142af91b1784dc20c76fbde5a7320de234dbaebf9822f75e733d0b2db1924d5"
+    },
+    {
+      "anchor": 10,
+      "name": "02993 - 碧空の約束 - 한가지 _ oSKYo",
+      "sha256": "58c7ec74df7261d615033c42b08515046b527d14876f1d73dd083dd840fb76c7"
+    },
+    {
+      "anchor": 11,
+      "name": "03058 - Dark Sheep - Lupel_2",
+      "sha256": "cafc1346d5448efb589fbc07187806abbc2201026db2142d62466d45bb931cc5"
+    },
+    {
+      "anchor": 12,
+      "name": "03062 - Prominence - seeker & Sparitbrc",
+      "sha256": "e87ba3a5d0de01262b19a9e1072c1db1f5879a953fbf7383f18c63ad22a7d1ca"
+    },
+    {
+      "anchor": 13,
+      "name": "03079 - My Piano Is Escaping - 한가지",
+      "sha256": "1a5928ad5c91d21b8eaae2bc8246c5ed8bf35ff904d8497f2ee9895b781708b2"
+    },
+    {
+      "anchor": 14,
+      "name": "03093 - 『戦場』~Schlachtfeld~ - PLORALD",
+      "sha256": "3accc1f1adaa97b1af4e12aaeb465015b51835da0a6f23946f0166da2a53f86e"
+    },
+    {
+      "anchor": 15,
+      "name": "03096 - Crossing Notes - 피렝",
+      "sha256": "3847e47e00162a3794991eb6c37009d15673b290c2261ffa43a1f476b877aa64"
+    },
+    {
+      "anchor": 16,
+      "name": "03360 - Hyacinth - 한가지",
+      "sha256": "07cd7eeb478f3e5b08a621f30d5ec47ca19590c9521ea903176686ce80b8eec7"
+    },
+    {
+      "anchor": 17,
+      "name": "03365 - Multi Sense - Codice;Morte",
+      "sha256": "ccbbad249c0fabe0882d2e4de661cadb18aa03da0cf6f4292e4092caac50bb1b"
+    },
+    {
+      "anchor": 18,
+      "name": "03552 - 비밀 인형극 II - 神经",
+      "sha256": "14e07be43b90bda1fa5a0f01e1f123a5a2ae331f7372ede531ddbe45d4143b75"
+    },
+    {
+      "anchor": 19,
+      "name": "03640 - 東 - prisMKa _ Sprout",
+      "sha256": "e23c48c66e956a6e820fff2a5ed352718efb7f5e861094207cc49f6dcabdd622"
+    },
+    {
+      "anchor": 20,
+      "name": "03641 - Bodysnatch - xiaoxiaoci _ prisMKa",
+      "sha256": "a673b341ff18da326050f28b852f86266a7bad6957a862bd2906a940a7880980"
+    }
+  ],
+  "checkpoint": "checkpoints\\prestige1\\autoplay_sequence_student_v3-e07d934.pt",
+  "checkpoint_sha256": "bca41284d85e92c6a9be2c0a2b134201609310d8e2a534f1c7f518900c30ca1a",
+  "old_baseline_checkpoint_sha256": {
+    "mlp": "9c1acfaa826d8489e79f126f5610c7b5b0eed6b87448204382e2bfa54cd63468",
+    "gru": "9804e119b207743fd06e47195fc064d8af9847b56d2c862a6e251e115eb5948e"
+  },
+  "validation_evaluated": false,
+  "final_evaluated": false,
+  "development_evaluated": false,
+  "qualification_evaluated": false,
+  "reserve_evaluated": false,
+  "stage_a_gate_overridden": false,
+  "motor_student_training_permitted": false,
+  "limitations": [
+    "Expert-driven capture can expose a behavioral cue through visible motor-state channels.",
+    "Train-heldout5 selected confidence and is not an unknown-chart claim.",
+    "Event-level de-duplicated comparison is a separate locked evaluation."
+  ]
+}

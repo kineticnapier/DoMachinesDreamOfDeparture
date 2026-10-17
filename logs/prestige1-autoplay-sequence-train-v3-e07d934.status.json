@@ -1,0 +1,8 @@
+{
+  "pid": 11092,
+  "started_at_utc": "2026-10-17T09:54:29.837906+00:00",
+  "finished_at_utc": "2026-10-17T09:55:11.571931+00:00",
+  "exit_code": 0,
+  "report": "reports\\prestige1-autoplay-sequence-train-v3-e07d934.json",
+  "checkpoint": "checkpoints\\prestige1\\autoplay_sequence_student_v3-e07d934.pt"
+}
