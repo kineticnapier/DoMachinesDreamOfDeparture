@@ -29,24 +29,35 @@ success condition failed.  Physical outcomes are identical because this audit
 tests Timing observation/prediction while preserving the frozen Motor policy;
 JRP does not silently alter the old checkpoint's 263D tensor.
 
-## Counterexample and evaluator defect
+## Counterexample investigation
 
 The two false forecasts had confidence about 0.999 but missed by exactly
-15.625ms and 31.250ms.  Both occurred when a physical keydown expired an older
-Miss and then credited a later target in one scoring call.  The diagnostic JRP
-hook captured `_next_target_index()` **before** scoring, so it rendered CBPM for
-the missed floor rather than the floor whose Hit was actually credited.  This
-made a stale interval look like a high-confidence visible update.
+15.625ms and 31.250ms.  An initial hypothesis blamed the diagnostic JRP hook's
+pre-score target capture.  The hook was correctly hardened to diff the scorer's
+used flags and render the single target actually credited.  A synthetic
+Miss-then-Hit regression now protects that invariant; all 56 related tests pass.
 
-The correction diffs the scorer's evaluator-only `used` flags and sends the
-single newly credited floor to the renderer.  Those flags remain inside the
-renderer/evaluator boundary and never enter Student input.  A new synthetic
-Miss-then-Hit regression reproduces the old association error.  All 56 related
-CPU tests pass after the correction.
+However, rerun `reports/prestige1-jrp-final-v1-314784d-r5.json` produced the
+**identical FAIL**, disproving that hypothesis.  Post-hoc timeline tracing found
+the actual cause: the one-frame early/late association rule is ambiguous at
+high event rates.  A Hit updates JRP after a control-frame observation.  At the
+next observation, that prior-Hit text can coincide with the next floor's HUD
+transition and baseline elapsed event.  The tracker then applies the previous
+floor's interval to the next event origin:
 
-Any rerun after this point is a transparent evaluator-correction confirmation,
-not a second untouched Final selection opportunity.  Its result must be
-reported alongside this original FAIL.
+- Final chart 2: elapsed 47.324ms + stale 15.625ms interval = 62.949ms,
+  while no target exists there (nearest target is 15.625ms away).
+- Final chart 6: elapsed 1734.375ms + stale 31.250ms interval = 1765.625ms,
+  while the nearest target is 31.250ms away.
+
+The confidence score reflects only printed-CBPM quantization uncertainty.  It
+does not measure temporal association ambiguity, so it was badly
+overconfident on both counterexamples.  Removing or changing the adjacency
+rule after seeing Final would be holdout tuning and is therefore not adopted.
+
+The corrected rerun (PID 35380, 11:14:17–11:15:36 JST, exit 1) is a transparent
+evaluator-confirmation run, not a second untouched Final selection opportunity.
+It must be reported alongside the original FAIL.
 
 ## Reproduction
 

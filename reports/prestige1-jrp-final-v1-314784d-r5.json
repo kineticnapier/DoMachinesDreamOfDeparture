@@ -1,0 +1,1058 @@
+{
+  "version": "prestige1-jrp-final-v1",
+  "status": "FAIL",
+  "generated_at_utc": "2026-10-17T02:15:36.382668+00:00",
+  "locked_protocol": {
+    "role": "Final",
+    "charts": 10,
+    "window": "middle 8 seconds",
+    "selection_or_tuning_on_final": false,
+    "student_input": "unchanged causal 263D HUD",
+    "jrp_input": "rounded visible TBPM/CBPM/KPS strings only",
+    "truth_access": "post-hoc matching only",
+    "comparison": "same checkpoint, Motor, initial state and chart window; JRP visibility only"
+  },
+  "checkpoint": "checkpoints\\prestige1\\prestige_v2.pt",
+  "checkpoint_sha256": "241dc764ddde547edfe434e60bc9b78a125b0ebd4751575729c48033a1043a3e",
+  "core_sha256": "a9d00a26c24ad19e815a0d768851f8040e00748e3a6474a31ce786576f53c710",
+  "device": "cuda",
+  "physical_outcome_parity": true,
+  "baseline": {
+    "charts": 10,
+    "targets": 862,
+    "baseline_matches": 718,
+    "baseline_tracking_rate": 0.8329466357308585,
+    "baseline_false": 0,
+    "combined_matches": 718,
+    "combined_tracking_rate": 0.8329466357308585,
+    "combined_false": 0,
+    "jrp_added": 0,
+    "jrp_matched": 0,
+    "jrp_false": 0,
+    "motor_hits": 147,
+    "motor_misses": 715,
+    "motor_too_early": 29,
+    "motor_overloads": 0,
+    "physical_keydowns": 176
+  },
+  "jrp_visible": {
+    "charts": 10,
+    "targets": 862,
+    "baseline_matches": 718,
+    "baseline_tracking_rate": 0.8329466357308585,
+    "baseline_false": 0,
+    "combined_matches": 719,
+    "combined_tracking_rate": 0.834106728538283,
+    "combined_false": 2,
+    "jrp_added": 3,
+    "jrp_matched": 1,
+    "jrp_false": 2,
+    "motor_hits": 147,
+    "motor_misses": 715,
+    "motor_too_early": 29,
+    "motor_overloads": 0,
+    "physical_keydowns": 176
+  },
+  "improved": false,
+  "rows": [
+    {
+      "index": 1,
+      "chart": "01640 - Vivid - oceanic shipping and trade",
+      "chart_sha256": "c2d127f88e616adec20156d3278e809468329d21eefab02da786d1c6eea6df5d",
+      "window_s": [
+        74.90514273196949,
+        82.90514273196949
+      ],
+      "same_physical_outcome": true,
+      "student_hidden": {
+        "frames": 805,
+        "mean_confidence": 0.9322929406758421
+      },
+      "student_visible": {
+        "frames": 805,
+        "mean_confidence": 0.9322929406758421
+      },
+      "hidden": {
+        "policy_label": "prestige_v2_jrp_hidden",
+        "jrp_mode": "normal",
+        "jrp_visible": false,
+        "visible_delay_frames": 0,
+        "frames": 805,
+        "actual_hits": 29,
+        "actual_misses": 109,
+        "actual_too_early": 1,
+        "actual_overload": false,
+        "physical_keydowns": 30,
+        "actual_display_hit_hooks": 29,
+        "observed_text_changes": 0,
+        "anchored_frames": 0,
+        "jrp_added_frames": 0,
+        "unique_jrp_candidates": 0,
+        "matched_jrp_candidates": 0,
+        "false_jrp_candidates": 0,
+        "unique_jrp_forecasts": 0,
+        "matched_jrp_forecasts": 0,
+        "false_jrp_forecasts": 0,
+        "unique_baseline_elapsed": 138,
+        "matched_baseline_elapsed": 138,
+        "target_count": 138,
+        "matched_combined": 138,
+        "false_combined": 0,
+        "baseline_mae_ms": 3.5597597002761168e-06,
+        "combined_mae_ms": 3.5597597002761168e-06,
+        "mean_jrp_confidence": null,
+        "cbpm_statuses": [
+          [
+            "no_confirmed_display_anchor",
+            805
+          ]
+        ],
+        "first_jrp_due_s": []
+      },
+      "visible": {
+        "policy_label": "prestige_v2_jrp_visible",
+        "jrp_mode": "normal",
+        "jrp_visible": true,
+        "visible_delay_frames": 0,
+        "frames": 805,
+        "actual_hits": 29,
+        "actual_misses": 109,
+        "actual_too_early": 1,
+        "actual_overload": false,
+        "physical_keydowns": 30,
+        "actual_display_hit_hooks": 29,
+        "observed_text_changes": 24,
+        "anchored_frames": 40,
+        "jrp_added_frames": 0,
+        "unique_jrp_candidates": 16,
+        "matched_jrp_candidates": 16,
+        "false_jrp_candidates": 0,
+        "unique_jrp_forecasts": 0,
+        "matched_jrp_forecasts": 0,
+        "false_jrp_forecasts": 0,
+        "unique_baseline_elapsed": 138,
+        "matched_baseline_elapsed": 138,
+        "target_count": 138,
+        "matched_combined": 138,
+        "false_combined": 0,
+        "baseline_mae_ms": 3.5597597002761168e-06,
+        "combined_mae_ms": 3.5597597002761168e-06,
+        "mean_jrp_confidence": null,
+        "cbpm_statuses": [
+          [
+            "eligible",
+            40
+          ],
+          [
+            "no_confirmed_display_anchor",
+            714
+          ],
+          [
+            "outside_horizon",
+            51
+          ]
+        ],
+        "first_jrp_due_s": []
+      }
+    },
+    {
+      "index": 2,
+      "chart": "01684 - We Could Get More Machinegun Psystyle! (And More Genre Switches) - Appeal",
+      "chart_sha256": "3cdad5543af7a8f9a57f545cbc7341041306794fde74552dd420a836f4801330",
+      "window_s": [
+        152.2203371600495,
+        160.2203371600495
+      ],
+      "same_physical_outcome": true,
+      "student_hidden": {
+        "frames": 804,
+        "mean_confidence": 0.9114574397084725
+      },
+      "student_visible": {
+        "frames": 804,
+        "mean_confidence": 0.9114574397084725
+      },
+      "hidden": {
+        "policy_label": "prestige_v2_jrp_hidden",
+        "jrp_mode": "normal",
+        "jrp_visible": false,
+        "visible_delay_frames": 0,
+        "frames": 804,
+        "actual_hits": 27,
+        "actual_misses": 67,
+        "actual_too_early": 0,
+        "actual_overload": false,
+        "physical_keydowns": 27,
+        "actual_display_hit_hooks": 27,
+        "observed_text_changes": 0,
+        "anchored_frames": 0,
+        "jrp_added_frames": 0,
+        "unique_jrp_candidates": 0,
+        "matched_jrp_candidates": 0,
+        "false_jrp_candidates": 0,
+        "unique_jrp_forecasts": 0,
+        "matched_jrp_forecasts": 0,
+        "false_jrp_forecasts": 0,
+        "unique_baseline_elapsed": 94,
+        "matched_baseline_elapsed": 94,
+        "target_count": 94,
+        "matched_combined": 94,
+        "false_combined": 0,
+        "baseline_mae_ms": 2.8590475955243037e-06,
+        "combined_mae_ms": 2.8590475955243037e-06,
+        "mean_jrp_confidence": null,
+        "cbpm_statuses": [
+          [
+            "no_confirmed_display_anchor",
+            804
+          ]
+        ],
+        "first_jrp_due_s": []
+      },
+      "visible": {
+        "policy_label": "prestige_v2_jrp_visible",
+        "jrp_mode": "normal",
+        "jrp_visible": true,
+        "visible_delay_frames": 0,
+        "frames": 804,
+        "actual_hits": 27,
+        "actual_misses": 67,
+        "actual_too_early": 0,
+        "actual_overload": false,
+        "physical_keydowns": 27,
+        "actual_display_hit_hooks": 27,
+        "observed_text_changes": 24,
+        "anchored_frames": 5,
+        "jrp_added_frames": 2,
+        "unique_jrp_candidates": 3,
+        "matched_jrp_candidates": 2,
+        "false_jrp_candidates": 1,
+        "unique_jrp_forecasts": 1,
+        "matched_jrp_forecasts": 0,
+        "false_jrp_forecasts": 1,
+        "unique_baseline_elapsed": 94,
+        "matched_baseline_elapsed": 94,
+        "target_count": 94,
+        "matched_combined": 94,
+        "false_combined": 1,
+        "baseline_mae_ms": 2.8590475955243037e-06,
+        "combined_mae_ms": 2.8590475955243037e-06,
+        "mean_jrp_confidence": 0.999972873228569,
+        "cbpm_statuses": [
+          [
+            "anchor_expired",
+            1
+          ],
+          [
+            "eligible",
+            5
+          ],
+          [
+            "no_confirmed_display_anchor",
+            797
+          ],
+          [
+            "outside_horizon",
+            1
+          ]
+        ],
+        "first_jrp_due_s": [
+          0.06294908924246287
+        ]
+      }
+    },
+    {
+      "index": 3,
+      "chart": "02925 - Heaven's Gateway - V0W4N _ GamingGooseTV",
+      "chart_sha256": "45a8d360bdb0d68fa599247194b4b4727e179724cd22298e4f07ef5d4f2208e5",
+      "window_s": [
+        65.62006460844525,
+        73.62006460844525
+      ],
+      "same_physical_outcome": true,
+      "student_hidden": {
+        "frames": 802,
+        "mean_confidence": 0.862354476181349
+      },
+      "student_visible": {
+        "frames": 802,
+        "mean_confidence": 0.862354476181349
+      },
+      "hidden": {
+        "policy_label": "prestige_v2_jrp_hidden",
+        "jrp_mode": "normal",
+        "jrp_visible": false,
+        "visible_delay_frames": 0,
+        "frames": 802,
+        "actual_hits": 11,
+        "actual_misses": 96,
+        "actual_too_early": 3,
+        "actual_overload": false,
+        "physical_keydowns": 14,
+        "actual_display_hit_hooks": 11,
+        "observed_text_changes": 0,
+        "anchored_frames": 0,
+        "jrp_added_frames": 0,
+        "unique_jrp_candidates": 0,
+        "matched_jrp_candidates": 0,
+        "false_jrp_candidates": 0,
+        "unique_jrp_forecasts": 0,
+        "matched_jrp_forecasts": 0,
+        "false_jrp_forecasts": 0,
+        "unique_baseline_elapsed": 105,
+        "matched_baseline_elapsed": 105,
+        "target_count": 107,
+        "matched_combined": 105,
+        "false_combined": 0,
+        "baseline_mae_ms": 2.2786419086417194e-06,
+        "combined_mae_ms": 2.2786419086417194e-06,
+        "mean_jrp_confidence": null,
+        "cbpm_statuses": [
+          [
+            "no_confirmed_display_anchor",
+            802
+          ]
+        ],
+        "first_jrp_due_s": []
+      },
+      "visible": {
+        "policy_label": "prestige_v2_jrp_visible",
+        "jrp_mode": "normal",
+        "jrp_visible": true,
+        "visible_delay_frames": 0,
+        "frames": 802,
+        "actual_hits": 11,
+        "actual_misses": 96,
+        "actual_too_early": 3,
+        "actual_overload": false,
+        "physical_keydowns": 14,
+        "actual_display_hit_hooks": 11,
+        "observed_text_changes": 8,
+        "anchored_frames": 1,
+        "jrp_added_frames": 0,
+        "unique_jrp_candidates": 1,
+        "matched_jrp_candidates": 1,
+        "false_jrp_candidates": 0,
+        "unique_jrp_forecasts": 0,
+        "matched_jrp_forecasts": 0,
+        "false_jrp_forecasts": 0,
+        "unique_baseline_elapsed": 105,
+        "matched_baseline_elapsed": 105,
+        "target_count": 107,
+        "matched_combined": 105,
+        "false_combined": 0,
+        "baseline_mae_ms": 2.2786419086417194e-06,
+        "combined_mae_ms": 2.2786419086417194e-06,
+        "mean_jrp_confidence": null,
+        "cbpm_statuses": [
+          [
+            "eligible",
+            1
+          ],
+          [
+            "no_confirmed_display_anchor",
+            801
+          ]
+        ],
+        "first_jrp_due_s": []
+      }
+    },
+    {
+      "index": 4,
+      "chart": "03042 - R - KanoKaz _ NumbEr07",
+      "chart_sha256": "6fb4c78e3c733a014631e944422414d62eb3296b1f562303e23d803be6377274",
+      "window_s": [
+        66.166666803507,
+        74.166666803507
+      ],
+      "same_physical_outcome": true,
+      "student_hidden": {
+        "frames": 790,
+        "mean_confidence": 0.7027730950071842
+      },
+      "student_visible": {
+        "frames": 790,
+        "mean_confidence": 0.7027730950071842
+      },
+      "hidden": {
+        "policy_label": "prestige_v2_jrp_hidden",
+        "jrp_mode": "normal",
+        "jrp_visible": false,
+        "visible_delay_frames": 0,
+        "frames": 790,
+        "actual_hits": 13,
+        "actual_misses": 45,
+        "actual_too_early": 1,
+        "actual_overload": false,
+        "physical_keydowns": 14,
+        "actual_display_hit_hooks": 13,
+        "observed_text_changes": 0,
+        "anchored_frames": 0,
+        "jrp_added_frames": 0,
+        "unique_jrp_candidates": 0,
+        "matched_jrp_candidates": 0,
+        "false_jrp_candidates": 0,
+        "unique_jrp_forecasts": 0,
+        "matched_jrp_forecasts": 0,
+        "false_jrp_forecasts": 0,
+        "unique_baseline_elapsed": 58,
+        "matched_baseline_elapsed": 58,
+        "target_count": 58,
+        "matched_combined": 58,
+        "false_combined": 0,
+        "baseline_mae_ms": 5.366496308636852e-06,
+        "combined_mae_ms": 5.366496308636852e-06,
+        "mean_jrp_confidence": null,
+        "cbpm_statuses": [
+          [
+            "no_confirmed_display_anchor",
+            790
+          ]
+        ],
+        "first_jrp_due_s": []
+      },
+      "visible": {
+        "policy_label": "prestige_v2_jrp_visible",
+        "jrp_mode": "normal",
+        "jrp_visible": true,
+        "visible_delay_frames": 0,
+        "frames": 790,
+        "actual_hits": 13,
+        "actual_misses": 45,
+        "actual_too_early": 1,
+        "actual_overload": false,
+        "physical_keydowns": 14,
+        "actual_display_hit_hooks": 13,
+        "observed_text_changes": 9,
+        "anchored_frames": 9,
+        "jrp_added_frames": 0,
+        "unique_jrp_candidates": 3,
+        "matched_jrp_candidates": 3,
+        "false_jrp_candidates": 0,
+        "unique_jrp_forecasts": 0,
+        "matched_jrp_forecasts": 0,
+        "false_jrp_forecasts": 0,
+        "unique_baseline_elapsed": 58,
+        "matched_baseline_elapsed": 58,
+        "target_count": 58,
+        "matched_combined": 58,
+        "false_combined": 0,
+        "baseline_mae_ms": 5.366496308636852e-06,
+        "combined_mae_ms": 5.366496308636852e-06,
+        "mean_jrp_confidence": null,
+        "cbpm_statuses": [
+          [
+            "at_boundary",
+            1
+          ],
+          [
+            "eligible",
+            9
+          ],
+          [
+            "no_confirmed_display_anchor",
+            757
+          ],
+          [
+            "outside_horizon",
+            23
+          ]
+        ],
+        "first_jrp_due_s": []
+      }
+    },
+    {
+      "index": 5,
+      "chart": "03048 - Turkish March - Misoguy",
+      "chart_sha256": "408db2ecba6f1fbeb9432f52fa424b7ee7364668e459b613457a9779bf9f222a",
+      "window_s": [
+        80.37500583007778,
+        88.37500583007778
+      ],
+      "same_physical_outcome": true,
+      "student_hidden": {
+        "frames": 801,
+        "mean_confidence": 0.8549462464195066
+      },
+      "student_visible": {
+        "frames": 801,
+        "mean_confidence": 0.8549462464195066
+      },
+      "hidden": {
+        "policy_label": "prestige_v2_jrp_hidden",
+        "jrp_mode": "normal",
+        "jrp_visible": false,
+        "visible_delay_frames": 0,
+        "frames": 801,
+        "actual_hits": 14,
+        "actual_misses": 57,
+        "actual_too_early": 3,
+        "actual_overload": false,
+        "physical_keydowns": 17,
+        "actual_display_hit_hooks": 14,
+        "observed_text_changes": 0,
+        "anchored_frames": 0,
+        "jrp_added_frames": 0,
+        "unique_jrp_candidates": 0,
+        "matched_jrp_candidates": 0,
+        "false_jrp_candidates": 0,
+        "unique_jrp_forecasts": 0,
+        "matched_jrp_forecasts": 0,
+        "false_jrp_forecasts": 0,
+        "unique_baseline_elapsed": 69,
+        "matched_baseline_elapsed": 69,
+        "target_count": 71,
+        "matched_combined": 69,
+        "false_combined": 0,
+        "baseline_mae_ms": 3.5335109679217665e-06,
+        "combined_mae_ms": 3.5335109679217665e-06,
+        "mean_jrp_confidence": null,
+        "cbpm_statuses": [
+          [
+            "no_confirmed_display_anchor",
+            801
+          ]
+        ],
+        "first_jrp_due_s": []
+      },
+      "visible": {
+        "policy_label": "prestige_v2_jrp_visible",
+        "jrp_mode": "normal",
+        "jrp_visible": true,
+        "visible_delay_frames": 0,
+        "frames": 801,
+        "actual_hits": 14,
+        "actual_misses": 57,
+        "actual_too_early": 3,
+        "actual_overload": false,
+        "physical_keydowns": 17,
+        "actual_display_hit_hooks": 14,
+        "observed_text_changes": 4,
+        "anchored_frames": 0,
+        "jrp_added_frames": 0,
+        "unique_jrp_candidates": 0,
+        "matched_jrp_candidates": 0,
+        "false_jrp_candidates": 0,
+        "unique_jrp_forecasts": 0,
+        "matched_jrp_forecasts": 0,
+        "false_jrp_forecasts": 0,
+        "unique_baseline_elapsed": 69,
+        "matched_baseline_elapsed": 69,
+        "target_count": 71,
+        "matched_combined": 69,
+        "false_combined": 0,
+        "baseline_mae_ms": 3.5335109679217665e-06,
+        "combined_mae_ms": 3.5335109679217665e-06,
+        "mean_jrp_confidence": null,
+        "cbpm_statuses": [
+          [
+            "no_confirmed_display_anchor",
+            801
+          ]
+        ],
+        "first_jrp_due_s": []
+      }
+    },
+    {
+      "index": 6,
+      "chart": "05902 - 白線を渡って - pixxy",
+      "chart_sha256": "66ad7c2e7afdeb6a071c58927f43220a98c62c5e11b135f1e057d83bc23e3d96",
+      "window_s": [
+        79.29687561916937,
+        87.29687561916937
+      ],
+      "same_physical_outcome": true,
+      "student_hidden": {
+        "frames": 805,
+        "mean_confidence": 0.8844804719738338
+      },
+      "student_visible": {
+        "frames": 805,
+        "mean_confidence": 0.8844804719738338
+      },
+      "hidden": {
+        "policy_label": "prestige_v2_jrp_hidden",
+        "jrp_mode": "normal",
+        "jrp_visible": false,
+        "visible_delay_frames": 0,
+        "frames": 805,
+        "actual_hits": 13,
+        "actual_misses": 74,
+        "actual_too_early": 2,
+        "actual_overload": false,
+        "physical_keydowns": 15,
+        "actual_display_hit_hooks": 13,
+        "observed_text_changes": 0,
+        "anchored_frames": 0,
+        "jrp_added_frames": 0,
+        "unique_jrp_candidates": 0,
+        "matched_jrp_candidates": 0,
+        "false_jrp_candidates": 0,
+        "unique_jrp_forecasts": 0,
+        "matched_jrp_forecasts": 0,
+        "false_jrp_forecasts": 0,
+        "unique_baseline_elapsed": 75,
+        "matched_baseline_elapsed": 75,
+        "target_count": 87,
+        "matched_combined": 75,
+        "false_combined": 0,
+        "baseline_mae_ms": 3.179241739453831e-06,
+        "combined_mae_ms": 3.179241739453831e-06,
+        "mean_jrp_confidence": null,
+        "cbpm_statuses": [
+          [
+            "no_confirmed_display_anchor",
+            805
+          ]
+        ],
+        "first_jrp_due_s": []
+      },
+      "visible": {
+        "policy_label": "prestige_v2_jrp_visible",
+        "jrp_mode": "normal",
+        "jrp_visible": true,
+        "visible_delay_frames": 0,
+        "frames": 805,
+        "actual_hits": 13,
+        "actual_misses": 74,
+        "actual_too_early": 2,
+        "actual_overload": false,
+        "physical_keydowns": 15,
+        "actual_display_hit_hooks": 13,
+        "observed_text_changes": 6,
+        "anchored_frames": 6,
+        "jrp_added_frames": 3,
+        "unique_jrp_candidates": 2,
+        "matched_jrp_candidates": 1,
+        "false_jrp_candidates": 1,
+        "unique_jrp_forecasts": 1,
+        "matched_jrp_forecasts": 0,
+        "false_jrp_forecasts": 1,
+        "unique_baseline_elapsed": 75,
+        "matched_baseline_elapsed": 75,
+        "target_count": 87,
+        "matched_combined": 75,
+        "false_combined": 1,
+        "baseline_mae_ms": 3.179241739453831e-06,
+        "combined_mae_ms": 3.179241739453831e-06,
+        "mean_jrp_confidence": 0.9998914927729817,
+        "cbpm_statuses": [
+          [
+            "anchor_expired",
+            1
+          ],
+          [
+            "eligible",
+            6
+          ],
+          [
+            "no_confirmed_display_anchor",
+            763
+          ],
+          [
+            "outside_horizon",
+            35
+          ]
+        ],
+        "first_jrp_due_s": [
+          1.765625120020255
+        ]
+      }
+    },
+    {
+      "index": 7,
+      "chart": "06523 - Amulet [Featured ver.] - FluffyYoshi _ Nickname",
+      "chart_sha256": "73616b0ae2265212df74e79bb02c4104fef8f13b71471ff453b9d95886233ee7",
+      "window_s": [
+        55.55882379408809,
+        63.55882379408809
+      ],
+      "same_physical_outcome": true,
+      "student_hidden": {
+        "frames": 804,
+        "mean_confidence": 0.8538406351164206
+      },
+      "student_visible": {
+        "frames": 804,
+        "mean_confidence": 0.8538406351164206
+      },
+      "hidden": {
+        "policy_label": "prestige_v2_jrp_hidden",
+        "jrp_mode": "normal",
+        "jrp_visible": false,
+        "visible_delay_frames": 0,
+        "frames": 804,
+        "actual_hits": 11,
+        "actual_misses": 38,
+        "actual_too_early": 8,
+        "actual_overload": false,
+        "physical_keydowns": 19,
+        "actual_display_hit_hooks": 11,
+        "observed_text_changes": 0,
+        "anchored_frames": 0,
+        "jrp_added_frames": 0,
+        "unique_jrp_candidates": 0,
+        "matched_jrp_candidates": 0,
+        "false_jrp_candidates": 0,
+        "unique_jrp_forecasts": 0,
+        "matched_jrp_forecasts": 0,
+        "false_jrp_forecasts": 0,
+        "unique_baseline_elapsed": 46,
+        "matched_baseline_elapsed": 46,
+        "target_count": 49,
+        "matched_combined": 46,
+        "false_combined": 0,
+        "baseline_mae_ms": 4.5051207203178585e-06,
+        "combined_mae_ms": 4.5051207203178585e-06,
+        "mean_jrp_confidence": null,
+        "cbpm_statuses": [
+          [
+            "no_confirmed_display_anchor",
+            804
+          ]
+        ],
+        "first_jrp_due_s": []
+      },
+      "visible": {
+        "policy_label": "prestige_v2_jrp_visible",
+        "jrp_mode": "normal",
+        "jrp_visible": true,
+        "visible_delay_frames": 0,
+        "frames": 804,
+        "actual_hits": 11,
+        "actual_misses": 38,
+        "actual_too_early": 8,
+        "actual_overload": false,
+        "physical_keydowns": 19,
+        "actual_display_hit_hooks": 11,
+        "observed_text_changes": 7,
+        "anchored_frames": 3,
+        "jrp_added_frames": 0,
+        "unique_jrp_candidates": 1,
+        "matched_jrp_candidates": 1,
+        "false_jrp_candidates": 0,
+        "unique_jrp_forecasts": 0,
+        "matched_jrp_forecasts": 0,
+        "false_jrp_forecasts": 0,
+        "unique_baseline_elapsed": 46,
+        "matched_baseline_elapsed": 46,
+        "target_count": 49,
+        "matched_combined": 46,
+        "false_combined": 0,
+        "baseline_mae_ms": 4.5051207203178585e-06,
+        "combined_mae_ms": 4.5051207203178585e-06,
+        "mean_jrp_confidence": null,
+        "cbpm_statuses": [
+          [
+            "eligible",
+            3
+          ],
+          [
+            "no_confirmed_display_anchor",
+            796
+          ],
+          [
+            "outside_horizon",
+            5
+          ]
+        ],
+        "first_jrp_due_s": []
+      }
+    },
+    {
+      "index": 8,
+      "chart": "12069 - Play It Loud - NGTC114 _ NGTC114",
+      "chart_sha256": "5a7aee914c20c29feb579081a63610a221e21ac167d19fb5108cbe98837dd3fa",
+      "window_s": [
+        69.97368424656233,
+        77.97368424656233
+      ],
+      "same_physical_outcome": true,
+      "student_hidden": {
+        "frames": 778,
+        "mean_confidence": 0.8426638591871777
+      },
+      "student_visible": {
+        "frames": 778,
+        "mean_confidence": 0.8426638591871777
+      },
+      "hidden": {
+        "policy_label": "prestige_v2_jrp_hidden",
+        "jrp_mode": "normal",
+        "jrp_visible": false,
+        "visible_delay_frames": 0,
+        "frames": 778,
+        "actual_hits": 5,
+        "actual_misses": 124,
+        "actual_too_early": 3,
+        "actual_overload": false,
+        "physical_keydowns": 8,
+        "actual_display_hit_hooks": 5,
+        "observed_text_changes": 0,
+        "anchored_frames": 0,
+        "jrp_added_frames": 0,
+        "unique_jrp_candidates": 0,
+        "matched_jrp_candidates": 0,
+        "false_jrp_candidates": 0,
+        "unique_jrp_forecasts": 0,
+        "matched_jrp_forecasts": 0,
+        "false_jrp_forecasts": 0,
+        "unique_baseline_elapsed": 19,
+        "matched_baseline_elapsed": 19,
+        "target_count": 129,
+        "matched_combined": 19,
+        "false_combined": 0,
+        "baseline_mae_ms": 1.3588285508488246e-05,
+        "combined_mae_ms": 1.3588285508488246e-05,
+        "mean_jrp_confidence": null,
+        "cbpm_statuses": [
+          [
+            "no_confirmed_display_anchor",
+            778
+          ]
+        ],
+        "first_jrp_due_s": []
+      },
+      "visible": {
+        "policy_label": "prestige_v2_jrp_visible",
+        "jrp_mode": "normal",
+        "jrp_visible": true,
+        "visible_delay_frames": 0,
+        "frames": 778,
+        "actual_hits": 5,
+        "actual_misses": 124,
+        "actual_too_early": 3,
+        "actual_overload": false,
+        "physical_keydowns": 8,
+        "actual_display_hit_hooks": 5,
+        "observed_text_changes": 3,
+        "anchored_frames": 0,
+        "jrp_added_frames": 0,
+        "unique_jrp_candidates": 0,
+        "matched_jrp_candidates": 0,
+        "false_jrp_candidates": 0,
+        "unique_jrp_forecasts": 0,
+        "matched_jrp_forecasts": 0,
+        "false_jrp_forecasts": 0,
+        "unique_baseline_elapsed": 19,
+        "matched_baseline_elapsed": 19,
+        "target_count": 129,
+        "matched_combined": 19,
+        "false_combined": 0,
+        "baseline_mae_ms": 1.3588285508488246e-05,
+        "combined_mae_ms": 1.3588285508488246e-05,
+        "mean_jrp_confidence": null,
+        "cbpm_statuses": [
+          [
+            "no_confirmed_display_anchor",
+            778
+          ]
+        ],
+        "first_jrp_due_s": []
+      }
+    },
+    {
+      "index": 9,
+      "chart": "12149 - After School [Featured ver.] - pixxy",
+      "chart_sha256": "79cfd05ce5f5d4f86a0cc3356ce46056f655cbfe26f4591d99ebc8b09ffb2006",
+      "window_s": [
+        96.30063290142401,
+        104.30063290142401
+      ],
+      "same_physical_outcome": true,
+      "student_hidden": {
+        "frames": 796,
+        "mean_confidence": 0.9092593842265594
+      },
+      "student_visible": {
+        "frames": 796,
+        "mean_confidence": 0.9092593842265594
+      },
+      "hidden": {
+        "policy_label": "prestige_v2_jrp_hidden",
+        "jrp_mode": "normal",
+        "jrp_visible": false,
+        "visible_delay_frames": 0,
+        "frames": 796,
+        "actual_hits": 17,
+        "actual_misses": 53,
+        "actual_too_early": 3,
+        "actual_overload": false,
+        "physical_keydowns": 20,
+        "actual_display_hit_hooks": 17,
+        "observed_text_changes": 0,
+        "anchored_frames": 0,
+        "jrp_added_frames": 0,
+        "unique_jrp_candidates": 0,
+        "matched_jrp_candidates": 0,
+        "false_jrp_candidates": 0,
+        "unique_jrp_forecasts": 0,
+        "matched_jrp_forecasts": 0,
+        "false_jrp_forecasts": 0,
+        "unique_baseline_elapsed": 70,
+        "matched_baseline_elapsed": 70,
+        "target_count": 70,
+        "matched_combined": 70,
+        "false_combined": 0,
+        "baseline_mae_ms": 5.035869896780065e-06,
+        "combined_mae_ms": 5.035869896780065e-06,
+        "mean_jrp_confidence": null,
+        "cbpm_statuses": [
+          [
+            "no_confirmed_display_anchor",
+            796
+          ]
+        ],
+        "first_jrp_due_s": []
+      },
+      "visible": {
+        "policy_label": "prestige_v2_jrp_visible",
+        "jrp_mode": "normal",
+        "jrp_visible": true,
+        "visible_delay_frames": 0,
+        "frames": 796,
+        "actual_hits": 17,
+        "actual_misses": 53,
+        "actual_too_early": 3,
+        "actual_overload": false,
+        "physical_keydowns": 20,
+        "actual_display_hit_hooks": 17,
+        "observed_text_changes": 8,
+        "anchored_frames": 3,
+        "jrp_added_frames": 0,
+        "unique_jrp_candidates": 1,
+        "matched_jrp_candidates": 1,
+        "false_jrp_candidates": 0,
+        "unique_jrp_forecasts": 0,
+        "matched_jrp_forecasts": 0,
+        "false_jrp_forecasts": 0,
+        "unique_baseline_elapsed": 70,
+        "matched_baseline_elapsed": 70,
+        "target_count": 70,
+        "matched_combined": 70,
+        "false_combined": 0,
+        "baseline_mae_ms": 5.035869896780065e-06,
+        "combined_mae_ms": 5.035869896780065e-06,
+        "mean_jrp_confidence": null,
+        "cbpm_statuses": [
+          [
+            "eligible",
+            3
+          ],
+          [
+            "no_confirmed_display_anchor",
+            792
+          ],
+          [
+            "outside_horizon",
+            1
+          ]
+        ],
+        "first_jrp_due_s": []
+      }
+    },
+    {
+      "index": 10,
+      "chart": "15785 - ヤラララ (feat. 重音テト) - YOON _ YOON & 1 more",
+      "chart_sha256": "39fc53a5c5b4178075318eee4ef0b9a7470bff4d09ba27c79ba5775b2545020d",
+      "window_s": [
+        68.84000007669465,
+        76.84000007669465
+      ],
+      "same_physical_outcome": true,
+      "student_hidden": {
+        "frames": 803,
+        "mean_confidence": 0.7958365253463926
+      },
+      "student_visible": {
+        "frames": 803,
+        "mean_confidence": 0.7958365253463926
+      },
+      "hidden": {
+        "policy_label": "prestige_v2_jrp_hidden",
+        "jrp_mode": "normal",
+        "jrp_visible": false,
+        "visible_delay_frames": 0,
+        "frames": 803,
+        "actual_hits": 7,
+        "actual_misses": 52,
+        "actual_too_early": 5,
+        "actual_overload": false,
+        "physical_keydowns": 12,
+        "actual_display_hit_hooks": 7,
+        "observed_text_changes": 0,
+        "anchored_frames": 0,
+        "jrp_added_frames": 0,
+        "unique_jrp_candidates": 0,
+        "matched_jrp_candidates": 0,
+        "false_jrp_candidates": 0,
+        "unique_jrp_forecasts": 0,
+        "matched_jrp_forecasts": 0,
+        "false_jrp_forecasts": 0,
+        "unique_baseline_elapsed": 44,
+        "matched_baseline_elapsed": 44,
+        "target_count": 59,
+        "matched_combined": 44,
+        "false_combined": 0,
+        "baseline_mae_ms": 9.112245441155288e-06,
+        "combined_mae_ms": 9.112245441155288e-06,
+        "mean_jrp_confidence": null,
+        "cbpm_statuses": [
+          [
+            "no_confirmed_display_anchor",
+            803
+          ]
+        ],
+        "first_jrp_due_s": []
+      },
+      "visible": {
+        "policy_label": "prestige_v2_jrp_visible",
+        "jrp_mode": "normal",
+        "jrp_visible": true,
+        "visible_delay_frames": 0,
+        "frames": 803,
+        "actual_hits": 7,
+        "actual_misses": 52,
+        "actual_too_early": 5,
+        "actual_overload": false,
+        "physical_keydowns": 12,
+        "actual_display_hit_hooks": 7,
+        "observed_text_changes": 6,
+        "anchored_frames": 6,
+        "jrp_added_frames": 3,
+        "unique_jrp_candidates": 2,
+        "matched_jrp_candidates": 2,
+        "false_jrp_candidates": 0,
+        "unique_jrp_forecasts": 1,
+        "matched_jrp_forecasts": 1,
+        "false_jrp_forecasts": 0,
+        "unique_baseline_elapsed": 44,
+        "matched_baseline_elapsed": 44,
+        "target_count": 59,
+        "matched_combined": 45,
+        "false_combined": 0,
+        "baseline_mae_ms": 9.112245441155288e-06,
+        "combined_mae_ms": 8.9186683304031e-06,
+        "mean_jrp_confidence": 0.9983999839998269,
+        "cbpm_statuses": [
+          [
+            "eligible",
+            6
+          ],
+          [
+            "no_confirmed_display_anchor",
+            767
+          ],
+          [
+            "outside_horizon",
+            30
+          ]
+        ],
+        "first_jrp_due_s": [
+          4.479999860952976
+        ]
+      }
+    }
+  ],
+  "interpretation": "No held-out improvement was demonstrated; inspect per-chart counterexamples."
+}
