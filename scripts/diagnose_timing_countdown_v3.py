@@ -156,12 +156,15 @@ def run(checkpoint: Path, *, device: str) -> dict:
             ),
         }
     v3 = methods["student_v3"]
+    time_failure = (
+        v3["raw_countdown_step_mae_ms"] > 2.0 or v3["raw_due_mae_ms"] > 10.0
+    )
+    reassociation_observed = v3["events_with_multiple_tracker_ids_within_20ms"] > 0
     methods["student_v3"]["failure_attribution"] = {
         "event_existence": v3["presence_coverage"] < 0.80,
-        "time_regression": (
-            v3["raw_countdown_step_mae_ms"] > 2.0 or v3["raw_due_mae_ms"] > 10.0
-        ),
-        "forecast_reassociation": v3["events_with_multiple_tracker_ids_within_20ms"] > 0,
+        "time_regression": time_failure,
+        "forecast_reassociation_observed": reassociation_observed,
+        "forecast_reassociation_independent": reassociation_observed and not time_failure,
     }
     return {
         "version": VERSION,

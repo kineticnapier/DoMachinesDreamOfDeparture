@@ -59,5 +59,16 @@ def test_local_id_split_is_reassociation_failure_only():
     result = evaluate_countdown(rows, (.100,))["aggregate"]
     assert result["tracker_id_switches_within_20ms"] == 1
     assert result["events_with_multiple_tracker_ids_within_20ms"] == 1
-    assert result["failure_attribution"]["forecast_reassociation"] is True
+    assert result["failure_attribution"]["forecast_reassociation_observed"] is True
+    assert result["failure_attribution"]["forecast_reassociation_independent"] is True
     assert result["failure_attribution"]["time_regression"] is False
+
+
+def test_initial_acquisition_is_not_reappearance():
+    rows = (
+        frame(.070, .030, present=False),
+        frame(.080, .020, present=False),
+        frame(.090, .010, present=True),
+    )
+    result = evaluate_countdown(rows, (.100,))["aggregate"]
+    assert result["reappearances"] == 0

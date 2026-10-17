@@ -155,7 +155,18 @@ def _event_row(event_index: int, event_s: float, frames: list[CausalFrameForecas
 
     states = [row["present"] for row in samples]
     disappearances = sum(a and not b for a, b in zip(states, states[1:]))
-    reappearances = sum(not a and b for a, b in zip(states, states[1:]))
+    # An initial acquisition is not a reappearance. Count only a new present
+    # run after this event was previously present and subsequently absent.
+    reappearances = 0
+    seen_present = False
+    disappeared = False
+    for state in states:
+        if state:
+            reappearances += int(disappeared)
+            seen_present = True
+            disappeared = False
+        elif seen_present:
+            disappeared = True
     ids = [row["tracker_local_id_within_20ms"] for row in samples
            if row["tracker_local_id_within_20ms"] is not None]
     switches = sum(a != b for a, b in zip(ids, ids[1:]))
@@ -234,21 +245,24 @@ def evaluate_countdown(
             median(values("mean_confidence")) if values("mean_confidence") else None
         ),
     }
+    existence_failure = aggregate["presence_coverage"] < 0.80
+    time_failure = (
+        aggregate["raw_countdown_step_mae_ms"] is None
+        or aggregate["raw_countdown_step_mae_ms"] > 2.0
+        or aggregate["raw_due_mae_ms"] is None
+        or aggregate["raw_due_mae_ms"] > 10.0
+    )
+    reassociation_observed = aggregate["events_with_multiple_tracker_ids_within_20ms"] > 0
     aggregate["failure_attribution"] = {
-        "event_existence": aggregate["presence_coverage"] < 0.80,
-        "time_regression": (
-            aggregate["raw_countdown_step_mae_ms"] is None
-            or aggregate["raw_countdown_step_mae_ms"] > 2.0
-            or aggregate["raw_due_mae_ms"] is None
-            or aggregate["raw_due_mae_ms"] > 10.0
-        ),
-        "forecast_reassociation": (
-            aggregate["events_with_multiple_tracker_ids_within_20ms"] > 0
-        ),
+        "event_existence": existence_failure,
+        "time_regression": time_failure,
+        "forecast_reassociation_observed": reassociation_observed,
+        "forecast_reassociation_independent": reassociation_observed and not time_failure,
         "criteria": {
             "existence": "presence coverage < 0.80",
             "time_regression": "raw step MAE > 2ms or raw due MAE > 10ms",
             "reassociation": "at least one truth event maps to >1 causal local ID within 20ms",
+            "independent_reassociation": "reassociation observed without raw time-regression failure",
         },
     }
     return {"aggregate": aggregate, "per_event": events}
