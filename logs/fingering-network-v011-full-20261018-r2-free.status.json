@@ -1,0 +1,10 @@
+{
+  "pid": 57240,
+  "started_at_utc": "2026-10-17T23:56:33.338212+00:00",
+  "finished_at_utc": "2026-10-17T23:57:34.888010+00:00",
+  "exit_code": 0,
+  "output_dir": "artifacts\\fingering_network_v011\\full-20261018-r2-free",
+  "mode": "single",
+  "free_termination": "chart_complete",
+  "human_proxy_termination": null
+}
