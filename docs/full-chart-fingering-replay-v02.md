@@ -25,3 +25,21 @@ python scripts/run_full_chart_fingering_replay_v02.py --chart "data/DMDOD-v140-t
 Each output is create-once and contains `summary.json`, the self-contained
 `full-chart-replay.html`, and its complete JSON payload.  The HTML is directly
 openable via `file://` and uses no CDN or fetch request.
+
+## Recorded full run (2026-10-18 JST)
+
+`full-20261018-r1` completed the chart in 60.704 seconds of wall time.  The
+physical result was 1,222 Hit, 0 Miss, 0 TooEarly, no Overload, 99.165303% X
+accuracy, and 10.549035ms Timing MAE.  All 1,222 decisions and 12,953 seekable
+Motor frames were saved.  The policy used thumbs 345 times and hand sides 0
+times.  There are 210 disjoint-axis changes within 35ms; the tightest occurs
+from event 64 (`left_1`) to 65 (`right_5/tip`) at 7.621ms.  The complete list
+is in `summary.json`.
+
+Static validation found exact event/floor timing correspondence (maximum delta
+0ms), all 40 SetSpeed markers, 186 Twirls and 27 Midspins, and no Teacher score
+or Teacher selection fields.  The chosen chart contains no Pause.  GUI browser
+automation is **not** marked PASS: Codex browser policy rejected opening a new
+`file://` tab.  Open `full-chart-replay.html` directly and check play/pause,
+several arbitrary seeks, previous/next event, abnormal navigation and the
+speed selector.  Static self-contained/controls checks passed.

@@ -1,0 +1,41 @@
+{
+  "format": "dmdod-full-chart-fingering-replay-v0.2-validation",
+  "artifact_consistency": {
+    "events": 1222,
+    "decisions": 1222,
+    "trace_frames": 12953,
+    "trace_monotonic": true,
+    "event_indices_contiguous": true,
+    "event_floor_indices_present": true,
+    "max_floor_event_time_delta_ms": 0.0,
+    "final_cumulative_hits": 1222,
+    "final_cumulative_misses": 0,
+    "teacher_score_tokens": 0,
+    "teacher_chosen_tokens": 0
+  },
+  "compiled_special_structure": {
+    "set_speed_floors": 40,
+    "twirl_floors": 186,
+    "midspin_floors": 27,
+    "pause_floors": 0,
+    "pause_empirically_exercised": false
+  },
+  "viewer_static_checks": {
+    "self_contained": true,
+    "external_script": false,
+    "seek_control": true,
+    "event_navigation": true,
+    "abnormal_navigation": true,
+    "animation_loop": true
+  },
+  "viewer_gui_checks": {
+    "status": "NOT_RUN",
+    "reason": "Codex browser security policy rejected creation of a file:// tab; no workaround was attempted.",
+    "user_visual_check_required": true
+  },
+  "protected_sha256_after_run": {
+    "stage_a_v2.json": "c4f71aadc5dc6cca49679a9902bcb7583a0f89b40f92b7fb283a50c3faad0558",
+    "male-cns-v1.0-core4096-w5.pt": "a9d00a26c24ad19e815a0d768851f8040e00748e3a6474a31ce786576f53c710",
+    "fingering_network_v01-4fa2ae1.pt": "cca1bfcc2d8e2988eeabf602a57211c8d8b66a54bfbbcbe0e3a9409ec167d2d8"
+  }
+}

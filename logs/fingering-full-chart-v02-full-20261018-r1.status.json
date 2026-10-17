@@ -1,0 +1,8 @@
+{
+  "pid": 13768,
+  "started_at_utc": "2026-10-17T22:53:50.575357+00:00",
+  "finished_at_utc": "2026-10-17T22:54:51.816006+00:00",
+  "exit_code": 0,
+  "output_dir": "artifacts\\fingering_full_chart_replay_v02\\full-20261018-r1",
+  "termination_reason": "chart_complete"
+}
