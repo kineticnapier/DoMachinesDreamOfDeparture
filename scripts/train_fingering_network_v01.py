@@ -242,8 +242,23 @@ def run_policy(segment, policy: str, model: network.FingeringRanker | None = Non
         used = [env._used[index] for index in row["ordinals"]]
         missed = [env._missed[index] for index in row["ordinals"]]
         row["outcome"] = "Hit" if all(used) else "Miss" if any(missed) else "Unresolved"
-        row["keydowns"] = [value for value in all_downs
-                           if abs(value["time_ms"] - row["due_ms"]) <= 35.0]
+        nearby = [value for value in all_downs
+                  if value["physical_axis"] in row["axes"]
+                  and abs(value["time_ms"] - row["due_ms"]) <= 35.0]
+        row["keydowns"] = [
+            min((value for value in nearby if value["physical_axis"] == axis),
+                key=lambda value: abs(value["time_ms"] - row["due_ms"]))
+            for axis in row["axes"]
+            if any(value["physical_axis"] == axis for value in nearby)
+        ]
+        early = [trace for trace in env.judgement_trace
+                 if trace["target_index"] in row["ordinals"]
+                 and trace["margin"] is None
+                 and trace["time_s"] * 1000.0 < row["due_ms"]]
+        row["too_early_keydowns"] = len(early)
+        row["judgement"] = (
+            "TooEarly + " + row["outcome"] if early else row["outcome"]
+        )
     different_success = sum(
         row.get("different_from_teacher", False) and row["outcome"] == "Hit"
         for row in decisions
@@ -331,7 +346,7 @@ def render_viewer(report: dict) -> str:
             detail.append(
                 f'<tr id="c{case["bpm"]}e{row["event_index"]}" class="{"different" if row.get("different_from_teacher") else ""}">'
                 f'<td>#{row["event_index"]}</td><td>{row["due_ms"]}</td><td>{escape(allocation_label(row["chosen"]))}</td>'
-                f'<td>{escape(allocation_label(row.get("teacher_chosen")))}</td><td>{escape(keydowns)}</td><td>{row["outcome"]}</td>'
+                f'<td>{escape(allocation_label(row.get("teacher_chosen")))}</td><td>{escape(keydowns)}</td><td>{row.get("judgement", row["outcome"])}</td>'
                 f'<td><details><summary>{len(row.get("candidates", []))}候補</summary><table><tr><th>物理部位</th><th>Network</th><th>Teacher</th><th>評価</th></tr>{candidates}</table></details></td></tr>'
             )
         sections.append(

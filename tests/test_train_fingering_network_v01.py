@@ -5,6 +5,7 @@ import sys
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "scripts"))
 import train_fingering_network_v01 as experiment
+import finalize_fingering_network_v01 as finalizer
 
 from dmdod.training import fingering_network_v01 as network
 
@@ -49,6 +50,20 @@ def test_three_physical_policies_share_fixture_and_network_viewer_has_candidates
     html = experiment.render_viewer(report)
     assert "12物理軸" in html and "Network" in html and "Teacher" in html
     assert "実KeyDown" in html and "左手・親指" in html
+
+
+def test_finalizer_keeps_nearest_keydown_per_selected_physical_axis():
+    raw = {"physical_evaluation": {"cases": [{"network_v0_1": {"decisions": [{
+        "due_ms": 100.0, "outcome": "Hit", "axes": ["left_1"],
+        "keydowns": [
+            {"time_ms": 95.0, "physical_axis": "right_1"},
+            {"time_ms": 97.0, "physical_axis": "left_1"},
+            {"time_ms": 104.0, "physical_axis": "left_1"},
+        ],
+    }]}}]}}
+    row = finalizer.correct_viewer_associations(raw)["physical_evaluation"]["cases"][0]["network_v0_1"]["decisions"][0]
+    assert row["keydowns"] == [{"time_ms": 97.0, "physical_axis": "left_1"}]
+    assert row["judgement"] == "Hit" and row["too_early_keydowns"] == 0
 
 
 def test_checkpoint_format_is_distinct_from_motor_and_timing_students():
