@@ -8,7 +8,9 @@ existing checkpoint.
 
 - Teacher/evaluator: exact `AutoplayTimingTeacher` onset times, retained as
   Python doubles before float32 loss conversion. No 10ms/1ms label rounding.
-- Student: forward-only history of the unchanged 263D visible HUD. No chart
+- Student: forward-only history of the unchanged 263D visible HUD v2 with its
+  unclipped BPM encoding. The saved legacy MLP/GRU receive their original BPM
+  encoding generated from the same observation instants. No chart
   clock, target ID, floor ID, compiled schedule, future HUD, or teacher action
   is concatenated to model input.
 - Output: up to 16 strictly ordered events in the next 80ms, plus one

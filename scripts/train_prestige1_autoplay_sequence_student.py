@@ -91,7 +91,7 @@ def run(config_path: Path, checkpoint: Path, report_path: Path, *, device: str) 
         "format": sequence.FORMAT,
         "role": "frozen Train20 fit15 / prior Train-heldout5 calibration only",
         "teacher": "compiled Autoplay exact event timestamps; no grid rounding",
-        "student_input": "causal current/past 263D visible HUD only",
+        "student_input": "causal current/past 263D visible HUD v2 (unclipped BPM) only",
         "horizon_ms": sequence.HORIZON_S * 1000,
         "max_events": sequence.MAX_EVENTS,
         "epochs": sequence.TRAIN_EPOCHS,

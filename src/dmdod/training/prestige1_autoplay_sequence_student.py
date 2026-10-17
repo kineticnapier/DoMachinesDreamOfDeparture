@@ -20,7 +20,7 @@ from .prestige1 import INPUT_DIM
 from .prestige1_autoplay_timing import AutoplayTimingTeacher
 
 
-FORMAT = "prestige1-autoplay-multievent-timing-student-v1"
+FORMAT = "prestige1-autoplay-multievent-timing-student-v2-hud-unclipped"
 CONTROL_DT_S = 0.010
 HORIZON_S = 0.080
 MAX_EVENTS = 16
@@ -85,11 +85,13 @@ class MultiEventTimingSequence:
     """One chart trajectory; only ``visible`` can enter model.forward."""
 
     chart_sha256: str
-    visible: torch.Tensor  # [T,263], current/past public HUD only
+    visible: torch.Tensor  # [T,263], current unclipped-BPM HUD v2
+    legacy_visible: torch.Tensor  # [T,263], saved MLP/GRU comparator only
     offsets_s: torch.Tensor  # [T,K], evaluator/training labels only
     present: torch.Tensor  # [T,K], evaluator/training labels only
     chord_sizes: torch.Tensor  # [T,K], evaluator labels only
     overflow: torch.Tensor  # [T], evaluator diagnostic only
+    frame_times_s: tuple[float, ...]  # evaluator clock only, never model input
     exact_event_times_s: tuple[float, ...]  # posthoc evaluator only
     special_event_tags: tuple[tuple[str, ...], ...]  # posthoc cohort labels only
 
@@ -100,15 +102,20 @@ class MultiEventTimingSequence:
             len(self.chart_sha256) == 64
             and t > 0
             and self.visible.shape == (t, INPUT_DIM)
+            and self.legacy_visible.shape == (t, INPUT_DIM)
             and self.offsets_s.shape == (t, MAX_EVENTS)
             and self.present.shape == (t, MAX_EVENTS)
             and self.chord_sizes.shape == (t, MAX_EVENTS)
             and self.overflow.shape == (t,)
+            and len(self.frame_times_s) == t
             and k == MAX_EVENTS
             and self.present.dtype == torch.bool
             and self.overflow.dtype == torch.bool
             and len(self.special_event_tags) == len(self.exact_event_times_s)
+            and all(isfinite(x) and x >= 0.0 for x in self.frame_times_s)
+            and all(b > a for a, b in zip(self.frame_times_s, self.frame_times_s[1:]))
             and bool(torch.isfinite(self.visible).all())
+            and bool(torch.isfinite(self.legacy_visible).all())
             and bool(torch.isfinite(self.offsets_s).all())
             and not bool((self.offsets_s < 0).any())
             and not bool((self.offsets_s > HORIZON_S + 1e-6).any())
@@ -284,20 +291,25 @@ def capture_sequence(named, config, *, device: torch.device | str = "cpu") -> Mu
     actuator = CenterFirstNKeyTeacher(frozen.KEY_COUNT)
     observation = env.reset()
     visible_rows: list[tuple[float, ...]] = []
+    legacy_rows: list[tuple[float, ...]] = []
     labels: list[FutureEventLabels] = []
     previous_time = -1.0
+    frame_times: list[float] = []
     max_steps = ceil((named.segment.duration_s + 2.0) / CONTROL_DT_S) + 200
     for _ in range(max_steps):
-        visible = tuple(encode_n_key_hud_real_chart_observation(
-            observation, legacy_bpm_encoding=True
-        ))
-        if len(visible) != INPUT_DIM or any(not isfinite(value) for value in visible):
+        visible = tuple(encode_n_key_hud_real_chart_observation(observation))
+        legacy = tuple(encode_n_key_hud_real_chart_observation(
+            observation, legacy_bpm_encoding=True))
+        if (len(visible) != INPUT_DIM or len(legacy) != INPUT_DIM
+                or any(not isfinite(value) for value in visible + legacy)):
             raise RuntimeError("causal 263D HUD capture failed")
         now_s = float(env.privileged_episode_time_s())
         if not isfinite(now_s) or now_s <= previous_time:
             raise RuntimeError("capture clock is not strictly monotonic")
         previous_time = now_s
+        frame_times.append(now_s)
         visible_rows.append(visible)
+        legacy_rows.append(legacy)
         labels.append(future_labels(teacher, now_s))
         action = _teacher_action(env, actuator, observation, lead_s=config.lead_s)
         step = env.step(action)
@@ -310,10 +322,12 @@ def capture_sequence(named, config, *, device: torch.device | str = "cpu") -> Mu
     return MultiEventTimingSequence(
         chart_sha256=named.chart_sha256,
         visible=torch.tensor(visible_rows, dtype=torch.float32, device=device),
+        legacy_visible=torch.tensor(legacy_rows, dtype=torch.float32, device=device),
         offsets_s=offsets,
         present=present,
         chord_sizes=chords,
         overflow=overflow,
+        frame_times_s=tuple(frame_times),
         exact_event_times_s=tuple(event.episode_time_s for event in teacher.events),
         special_event_tags=_event_tags(named.segment, teacher),
     )
@@ -323,11 +337,24 @@ def sequence_to(sequence: MultiEventTimingSequence, device: torch.device | str) 
     return MultiEventTimingSequence(
         sequence.chart_sha256,
         sequence.visible.to(device),
+        sequence.legacy_visible.to(device),
         sequence.offsets_s.to(device),
         sequence.present.to(device),
         sequence.chord_sizes.to(device),
         sequence.overflow.to(device),
+        sequence.frame_times_s,
         sequence.exact_event_times_s,
+        sequence.special_event_tags,
+    )
+
+
+def legacy_comparator_sequence(sequence: MultiEventTimingSequence) -> MultiEventTimingSequence:
+    """Use the same observation instants with the encoding expected by old checkpoints."""
+
+    return MultiEventTimingSequence(
+        sequence.chart_sha256, sequence.legacy_visible, sequence.legacy_visible,
+        sequence.offsets_s, sequence.present, sequence.chord_sizes,
+        sequence.overflow, sequence.frame_times_s, sequence.exact_event_times_s,
         sequence.special_event_tags,
     )
 

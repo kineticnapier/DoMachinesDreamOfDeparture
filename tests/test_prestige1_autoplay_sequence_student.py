@@ -28,10 +28,12 @@ def _sequence(rows: list[student.FutureEventLabels]) -> student.MultiEventTiming
     return student.MultiEventTimingSequence(
         chart_sha256="a" * 64,
         visible=torch.randn(len(rows), 263),
+        legacy_visible=torch.randn(len(rows), 263),
         offsets_s=offsets,
         present=present,
         chord_sizes=chords,
         overflow=overflow,
+        frame_times_s=tuple(index * 0.01 for index in range(len(rows))),
         exact_event_times_s=(0.01234567, 0.01456789),
         special_event_tags=((), ("Twirl",)),
     )
@@ -126,10 +128,12 @@ def test_sequence_rejects_oracle_channel_or_invalid_slot_order():
         student.MultiEventTimingSequence(
             sequence.chart_sha256,
             torch.zeros(1, 264),
+            sequence.legacy_visible,
             sequence.offsets_s,
             sequence.present,
             sequence.chord_sizes,
             sequence.overflow,
+            sequence.frame_times_s,
             sequence.exact_event_times_s,
             sequence.special_event_tags,
         )
@@ -137,7 +141,8 @@ def test_sequence_rejects_oracle_channel_or_invalid_slot_order():
     bad[0, 1] = bad[0, 0]
     with pytest.raises(ValueError, match="ordered"):
         student.MultiEventTimingSequence(
-            sequence.chart_sha256, sequence.visible, bad, sequence.present,
-            sequence.chord_sizes, sequence.overflow,
+            sequence.chart_sha256, sequence.visible, sequence.legacy_visible,
+            bad, sequence.present, sequence.chord_sizes, sequence.overflow,
+            sequence.frame_times_s,
             sequence.exact_event_times_s, sequence.special_event_tags,
         )
