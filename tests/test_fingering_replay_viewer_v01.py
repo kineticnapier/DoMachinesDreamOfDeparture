@@ -64,6 +64,7 @@ def test_html_is_self_contained_and_has_required_controls():
     assert "requestAnimationFrame" in html
     assert 'id="seek"' in html and 'id="policy"' in html
     assert 'id="prev"' in html and 'id="next"' in html and 'id="jump"' in html
+    assert 'id="prevBad"' in html and 'id="nextBad"' in html
     assert ".25" in html and ".5" in html and "Teacher" in html and "Network" in html
     assert "https://" not in html and "<script src=" not in html
     assert "</script>.adofai" not in html
