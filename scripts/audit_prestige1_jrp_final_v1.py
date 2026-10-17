@@ -11,6 +11,7 @@ from dataclasses import asdict
 from datetime import datetime, timezone
 import hashlib
 import json
+import os
 from pathlib import Path
 
 import torch
@@ -152,17 +153,38 @@ def main() -> None:
                         default=Path('checkpoints/prestige1/prestige_v2.pt'))
     parser.add_argument('--device', default='cuda')
     parser.add_argument('--output', type=Path, required=True)
+    parser.add_argument('--status-file', type=Path, required=True)
     args = parser.parse_args()
     if args.output.exists():
         parser.error('refusing to overwrite Final audit')
-    report = audit(args.config, args.checkpoint, device=args.device)
-    args.output.parent.mkdir(parents=True, exist_ok=True)
-    with args.output.open('x', encoding='utf-8') as stream:
-        json.dump(report, stream, indent=2, ensure_ascii=False)
-    print(json.dumps({k: report[k] for k in
-                     ('status', 'baseline', 'jrp_visible', 'improved')}, indent=2))
-    if report['status'] != 'PASS':
-        raise SystemExit(1)
+    if args.status_file.exists():
+        parser.error('refusing to overwrite run status')
+    started = datetime.now(timezone.utc)
+    args.status_file.parent.mkdir(parents=True, exist_ok=True)
+    try:
+        report = audit(args.config, args.checkpoint, device=args.device)
+        args.output.parent.mkdir(parents=True, exist_ok=True)
+        with args.output.open('x', encoding='utf-8') as stream:
+            json.dump(report, stream, indent=2, ensure_ascii=False)
+        exit_code = 0 if report['status'] == 'PASS' else 1
+        status = {'pid':os.getpid(), 'started_at_utc':started.isoformat(),
+                  'finished_at_utc':datetime.now(timezone.utc).isoformat(),
+                  'exit_code':exit_code, 'report':str(args.output)}
+        with args.status_file.open('x', encoding='utf-8') as stream:
+            json.dump(status, stream, indent=2)
+        print(json.dumps({k: report[k] for k in
+                         ('status', 'baseline', 'jrp_visible', 'improved')}, indent=2))
+        if exit_code:
+            raise SystemExit(exit_code)
+    except BaseException as exc:
+        if not args.status_file.exists():
+            status = {'pid':os.getpid(), 'started_at_utc':started.isoformat(),
+                      'finished_at_utc':datetime.now(timezone.utc).isoformat(),
+                      'exit_code':1, 'report':str(args.output),
+                      'error_type':type(exc).__name__, 'error':str(exc)}
+            with args.status_file.open('x', encoding='utf-8') as stream:
+                json.dump(status, stream, indent=2)
+        raise
 
 
 if __name__ == '__main__':
