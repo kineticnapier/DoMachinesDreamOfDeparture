@@ -18,8 +18,8 @@ normal miss/overload termination.  Control and physics steps are fixed at
 Run a bounded smoke test first, then the full run with new output paths:
 
 ```powershell
-python scripts/run_full_chart_fingering_replay_v02.py --chart "data/DMDOD-v140-tuf-p11-p20/Train/03640 - 東 - prisMKa _ Sprout.adofai" --difficulty P16 --checkpoint checkpoints/fingering/fingering_network_v01-4fa2ae1.pt --output-dir artifacts/fingering_full_chart_replay_v02/smoke-NEW --status-file artifacts/fingering_full_chart_replay_v02/smoke-NEW.status.json --stop-after-s 2
-python scripts/run_full_chart_fingering_replay_v02.py --chart "data/DMDOD-v140-tuf-p11-p20/Train/03640 - 東 - prisMKa _ Sprout.adofai" --difficulty P16 --checkpoint checkpoints/fingering/fingering_network_v01-4fa2ae1.pt --output-dir artifacts/fingering_full_chart_replay_v02/full-NEW --status-file artifacts/fingering_full_chart_replay_v02/full-NEW.status.json
+python scripts/run_full_chart_fingering_replay_v02.py --chart "data/DMDOD-v140-tuf-p11-p20/Train/03640 - 東 - prisMKa _ Sprout.adofai" --difficulty P16 --checkpoint checkpoints/fingering/fingering_network_v01-4fa2ae1.pt --output-dir artifacts/fingering_full_chart_replay_v02/smoke-NEW --status-file artifacts/fingering_full_chart_replay_v02/smoke-NEW.status.json --stop-after-s 2 --wall-timeout-s 60
+python scripts/run_full_chart_fingering_replay_v02.py --chart "data/DMDOD-v140-tuf-p11-p20/Train/03640 - 東 - prisMKa _ Sprout.adofai" --difficulty P16 --checkpoint checkpoints/fingering/fingering_network_v01-4fa2ae1.pt --output-dir artifacts/fingering_full_chart_replay_v02/full-NEW --status-file artifacts/fingering_full_chart_replay_v02/full-NEW.status.json --wall-timeout-s 300
 ```
 
 Each output is create-once and contains `summary.json`, the self-contained

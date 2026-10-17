@@ -1,0 +1,8 @@
+{
+  "pid": 13436,
+  "started_at_utc": "2026-10-17T22:52:48.035527+00:00",
+  "finished_at_utc": "2026-10-17T22:52:49.328913+00:00",
+  "exit_code": 0,
+  "output_dir": "artifacts\\fingering_full_chart_replay_v02\\smoke-20261018-r4",
+  "termination_reason": "diagnostic_prefix_complete"
+}

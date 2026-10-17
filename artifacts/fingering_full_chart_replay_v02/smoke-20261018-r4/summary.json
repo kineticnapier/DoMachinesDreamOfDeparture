@@ -1,0 +1,62 @@
+{
+  "format": "dmdod-full-chart-fingering-replay-v0.2",
+  "generated_at_utc": "2026-10-17T22:52:49.295345+00:00",
+  "chart": "03640 - 東 - prisMKa _ Sprout.adofai",
+  "chart_sha256": "e23c48c66e956a6e820fff2a5ed352718efb7f5e861094207cc49f6dcabdd622",
+  "difficulty": "P16",
+  "full_chart_duration_s": 129.63414733881555,
+  "total_events": 1222,
+  "replay_end_s": 2.01,
+  "termination_reason": "diagnostic_prefix_complete",
+  "runtime_s": 1.081,
+  "control_ms": 10.0,
+  "physics_ms": 1.0,
+  "stats": {
+    "targets": 1222,
+    "hits": 14,
+    "misses": 0,
+    "too_early": 0,
+    "overloaded": false,
+    "overload_counter": 0.0,
+    "x_accuracy_percent": 100.0,
+    "timing_mae_ms": 7.372813025801443,
+    "physical_keydowns": 14
+  },
+  "choice_statistics": {
+    "axis_use": {
+      "left_1": 3,
+      "left_2": 2,
+      "left_4": 1,
+      "left_5": 2,
+      "right_1": 3,
+      "right_2": 2,
+      "right_3": 1,
+      "right_5": 1
+    },
+    "thumb_uses": 3,
+    "side_uses": 0,
+    "extreme_switches_le_35ms": [
+      {
+        "from_event": 0,
+        "to_event": 1,
+        "gap_ms": 15.244,
+        "from": "right_1",
+        "to": "right_2"
+      },
+      {
+        "from_event": 2,
+        "to_event": 3,
+        "gap_ms": 15.244,
+        "from": "left_1",
+        "to": "left_5/tip"
+      }
+    ]
+  },
+  "decisions_recorded": 15,
+  "teacher_shadow_rollout_used": false,
+  "teacher_candidate_scores_used": false,
+  "timing_source": "AutoPlay Oracle exact event times",
+  "training_performed": false,
+  "failure_continuation": false,
+  "checkpoint_sha256": "cca1bfcc2d8e2988eeabf602a57211c8d8b66a54bfbbcbe0e3a9409ec167d2d8"
+}

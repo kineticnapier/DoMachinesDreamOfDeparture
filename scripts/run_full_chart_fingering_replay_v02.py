@@ -73,7 +73,8 @@ def _summarize(env: CoupledContactRealChartEnv) -> dict:
     }
 
 
-def run_network(segment, model: network.FingeringRanker, *, stop_after_s: float | None = None) -> dict:
+def run_network(segment, model: network.FingeringRanker, *, stop_after_s: float | None = None,
+                wall_timeout_s: float | None = None) -> dict:
     """Execute the causal Network policy; no Teacher rollout exists here."""
 
     env = CoupledContactRealChartEnv(segment, control_dt_s=teacher.CTRL, physics_dt_s=teacher.PHYS)
@@ -85,8 +86,11 @@ def run_network(segment, model: network.FingeringRanker, *, stop_after_s: float 
     keydowns: list[dict] = []
     frames = [_trace_frame(env)]
     maximum = int((segment.duration_s + 2.0) / teacher.CTRL) + 200
+    wall_started = time.monotonic()
     step_done = False
     for _ in range(maximum):
+        if wall_timeout_s is not None and time.monotonic() - wall_started > wall_timeout_s:
+            raise TimeoutError(f"physical execution exceeded {wall_timeout_s:.1f}s wall timeout")
         now = env.privileged_episode_time_s()
         committed = {
             index: item for index, item in committed.items()
@@ -246,14 +250,15 @@ def summarize_choices(decisions: list[dict]) -> dict:
 
 
 def run(chart_path: Path, difficulty: str, checkpoint: Path, output_dir: Path,
-        *, stop_after_s: float | None = None) -> dict:
+        *, stop_after_s: float | None = None, wall_timeout_s: float | None = None) -> dict:
     if viewer.file_sha256(chart_path) != SELECTED_SHA256:
         raise RuntimeError("selected chart SHA256 mismatch")
     compiled = compile_adofai(load_adofai(chart_path))
     segment = build_playable_segment(compiled)
     model = load_model(checkpoint)
     started = time.perf_counter()
-    result = run_network(segment, model, stop_after_s=stop_after_s)
+    result = run_network(segment, model, stop_after_s=stop_after_s,
+                         wall_timeout_s=wall_timeout_s)
     elapsed = time.perf_counter() - started
     payload = build_payload(chart_path, difficulty, checkpoint, compiled, segment, result)
     summary = {
@@ -284,13 +289,14 @@ def main() -> None:
     parser.add_argument("--output-dir", type=Path, required=True)
     parser.add_argument("--status-file", type=Path, required=True)
     parser.add_argument("--stop-after-s", type=float)
+    parser.add_argument("--wall-timeout-s", type=float, default=300.0)
     args = parser.parse_args()
     if args.output_dir.exists() or args.status_file.exists():
         parser.error("refusing to overwrite output")
     started = datetime.now(timezone.utc)
     try:
         summary = run(args.chart, args.difficulty, args.checkpoint, args.output_dir,
-                      stop_after_s=args.stop_after_s)
+                      stop_after_s=args.stop_after_s, wall_timeout_s=args.wall_timeout_s)
         status = {"pid": os.getpid(), "started_at_utc": started.isoformat(),
                   "finished_at_utc": datetime.now(timezone.utc).isoformat(), "exit_code": 0,
                   "output_dir": str(args.output_dir), "termination_reason": summary["termination_reason"]}

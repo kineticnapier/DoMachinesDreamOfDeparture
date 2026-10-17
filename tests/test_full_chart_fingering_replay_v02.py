@@ -58,3 +58,14 @@ def test_trace_contains_seek_reconstructable_cumulative_state():
     assert all(len(frame) == 7 for frame in result["trace"])
     assert all(set(frame[6]) == {"hits", "misses", "too_early", "overloaded"}
                for frame in result["trace"])
+
+
+def test_wall_timeout_is_enforced():
+    model = network.FingeringRanker()
+    model.eval()
+    try:
+        full.run_network(_segment(), model, wall_timeout_s=-1)
+    except TimeoutError as error:
+        assert "wall timeout" in str(error)
+    else:
+        raise AssertionError("wall timeout was ignored")
