@@ -9,8 +9,11 @@ True target labels and real Motor hit counters are read only AFTER its action.
 """
 
 from dataclasses import dataclass
+from pathlib import Path
 from math import isfinite
 from typing import Protocol
+
+import torch
 
 from dmdod.envs.jrp_overlay_diagnostic import JrpOverlayDiagnosticNKeyEnv
 from dmdod.envs.n_key import encode_n_key_hud_real_chart_observation
@@ -29,6 +32,98 @@ class CausalJrpPolicyInput:
 class CausalJrpPolicy(Protocol):
     def reset(self) -> None: ...
     def act(self, observation: CausalJrpPolicyInput) -> NKeyAction: ...
+
+
+@dataclass(frozen=True, slots=True)
+class StudentTimingEstimate:
+    """A checkpoint Student's causal next-event estimate at one HUD frame."""
+
+    frame: int
+    predicted_due_s: float
+    confidence: float
+    chord_size: int
+
+
+class FrozenPrestigeMotorPolicy:
+    """Strict adapter from a frozen Prestige v2 checkpoint to the Motor loop.
+
+    The neural network still receives exactly the historical 263D HUD.  JRP
+    text and evaluator truth are deliberately not appended to that tensor.
+    The separate ``observation.timing`` stream can be evaluated alongside the
+    checkpoint output without silently changing its trained input contract.
+    """
+
+    CHECKPOINT_FORMAT = 'prestige1-bc-pretrained-transfer-v2'
+
+    def __init__(self, model, *, device: torch.device | str = 'cpu'):
+        self.model = model
+        self.device = torch.device(device)
+        if getattr(model, 'input_dim', None) != 263 or getattr(model, 'key_count', None) != 8:
+            raise ValueError('Prestige policy requires the frozen 263D / 8-key contract')
+        self.model.to(self.device)
+        self.model.eval()
+        self.state = None
+        self.estimates: list[StudentTimingEstimate] = []
+
+    @classmethod
+    def load(cls, checkpoint: str | Path, core_path: str | Path, *,
+             device: torch.device | str = 'cpu', expected_arm: str | None = None):
+        """Load only a provenance-bearing Stage C v2 Motor checkpoint."""
+        from dmdod.training.prestige1 import PrestigeMotorStudent
+
+        checkpoint = Path(checkpoint)
+        core_path = Path(core_path)
+        if not checkpoint.is_file():
+            raise FileNotFoundError(checkpoint)
+        if not core_path.is_file():
+            raise FileNotFoundError(core_path)
+        payload = torch.load(checkpoint, map_location='cpu', weights_only=True)
+        required = {'format', 'stage', 'arm', 'model', 'seed', 'config_sha256',
+                    'pretrained_sha256', 'core_sha256', 'updates'}
+        if not isinstance(payload, dict) or required.difference(payload):
+            raise RuntimeError('incomplete Prestige v2 checkpoint')
+        if payload['format'] != cls.CHECKPOINT_FORMAT or payload['stage'] != 'C':
+            raise RuntimeError('unsupported Prestige checkpoint provenance')
+        if payload['arm'] not in ('control', 'prestige'):
+            raise RuntimeError('invalid Prestige checkpoint arm')
+        if expected_arm is not None and payload['arm'] != expected_arm:
+            raise RuntimeError('Prestige checkpoint arm mismatch')
+        if not isinstance(payload['model'], dict) or not payload['model']:
+            raise RuntimeError('empty Prestige checkpoint model state')
+        model = PrestigeMotorStudent(core_path)
+        model.load_state_dict(payload['model'], strict=True)
+        policy = cls(model, device=device)
+        policy.checkpoint_arm = payload['arm']
+        policy.checkpoint_path = checkpoint
+        return policy
+
+    def reset(self) -> None:
+        self.state = self.model.initial_state(self.device)
+        self.estimates.clear()
+
+    @torch.no_grad()
+    def act(self, observation: CausalJrpPolicyInput) -> NKeyAction:
+        if self.state is None:
+            raise RuntimeError('policy must be reset before act')
+        if len(observation.hud) != 263:
+            raise ValueError('Prestige Student visible HUD must remain 263D')
+        x = torch.tensor(observation.hud, dtype=torch.float32, device=self.device)
+        mean, _, _, self.state, raw = self.model.forward_step_with_timing(x, self.state)
+        predicted_s = float(torch.sigmoid(raw[0]).item() * .200)
+        confidence = float(torch.sigmoid(raw[1]).item())
+        chord_size = int(raw[2:].argmax().item()) + 1
+        estimate = StudentTimingEstimate(
+            frame=observation.frame,
+            predicted_due_s=observation.frame * .010 + predicted_s,
+            confidence=confidence,
+            chord_size=chord_size,
+        )
+        if not (isfinite(estimate.predicted_due_s) and
+                isfinite(estimate.confidence) and 0. <= estimate.confidence <= 1.):
+            raise RuntimeError('non-finite Prestige timing estimate')
+        self.estimates.append(estimate)
+        values = tuple(float(v) for v in torch.tanh(mean).detach().cpu())
+        return NKeyAction(values)
 
 
 @dataclass(frozen=True, slots=True)

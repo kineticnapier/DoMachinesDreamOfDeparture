@@ -3,12 +3,14 @@ from __future__ import annotations
 import json
 from dataclasses import fields
 import pytest
+import torch
 from dmdod.adofai.chart import parse_adofai_text
 from dmdod.adofai.timing import compile_adofai
 from dmdod.adofai.playable import build_playable_segment
 from dmdod.evaluation.jrp_closed_loop_v1 import (
     run_jrp_closed_loop, ScheduledMotorFixture, IdlePolicy,
     CausalJrpPolicyInput,
+    FrozenPrestigeMotorPolicy,
 )
 from dmdod.motor.n_key import NKeyAction
 
@@ -81,3 +83,39 @@ def test_bad_policy_action_is_rejected_before_motion():
         def act(self,x):return NKeyAction((float('nan'),)*8)
     with pytest.raises(ValueError,match='finite 8-key'):
         run_jrp_closed_loop(fixture(),BadPolicy(),policy_label='invalid')
+
+
+class _TinyPrestige(torch.nn.Module):
+    input_dim = 263
+    key_count = 8
+
+    def initial_state(self, device):
+        return torch.zeros(1, device=device)
+
+    def forward_step_with_timing(self, x, state):
+        assert x.shape == (263,)
+        mean = torch.linspace(-2., 2., 8, device=x.device)
+        raw = torch.tensor((0., 0., 0., 1., 0., 0., 0., 0., 0., 0.), device=x.device)
+        return mean, torch.ones(8, device=x.device), torch.tensor(0.), state + 1., raw
+
+
+def test_frozen_prestige_adapter_preserves_263d_and_records_causal_timing():
+    policy = FrozenPrestigeMotorPolicy(_TinyPrestige())
+    policy.reset()
+    update = type('Timing', (), {})()
+    observation = CausalJrpPolicyInput(7, (0.,) * 263, ('120', '240', '4'), update)
+    action = policy.act(observation)
+    assert action.values == pytest.approx(tuple(torch.tanh(torch.linspace(-2., 2., 8))))
+    assert len(policy.estimates) == 1
+    estimate = policy.estimates[0]
+    assert estimate.frame == 7
+    assert estimate.predicted_due_s == pytest.approx(.170)
+    assert estimate.confidence == pytest.approx(.5)
+    assert estimate.chord_size == 2
+
+
+def test_frozen_prestige_adapter_rejects_changed_legacy_contract():
+    model = _TinyPrestige()
+    model.input_dim = 264
+    with pytest.raises(ValueError, match='263D / 8-key'):
+        FrozenPrestigeMotorPolicy(model)
