@@ -17,6 +17,7 @@ from dmdod.evaluation.jrp_closed_loop_v1 import FrozenPrestigeMotorPolicy, run_j
 from dmdod.evaluation.jrp_unseen_split_v2 import select_unseen_charts
 from dmdod.planning.jrp_cbpm_anchor_v2 import CausalJrpTimingBridgeV2, VERSION as V2_VERSION
 from dmdod.planning.jrp_cbpm_anchor_v3 import CausalJrpTimingBridgeV3, VERSION as V3_VERSION
+from dmdod.planning.jrp_cbpm_phase_v4 import CausalJrpTimingBridgeV4, VERSION as V4_VERSION
 from dmdod.training.prestige1 import PrestigeConfig
 from dmdod.training.real_chart import compile_role, build_validation_segments
 
@@ -71,6 +72,8 @@ def audit(config_path:Path,checkpoint:Path,*,device:str,partition:str,bridge_ver
         bridge_factory=CausalJrpTimingBridgeV2; bridge_label=V2_VERSION
     elif bridge_version=='v3':
         bridge_factory=CausalJrpTimingBridgeV3; bridge_label=V3_VERSION
+    elif bridge_version=='v4':
+        bridge_factory=CausalJrpTimingBridgeV4; bridge_label=V4_VERSION
     else:
         raise ValueError('unsupported bridge version')
     rows=[]
@@ -120,7 +123,7 @@ def main():
     p.add_argument('--checkpoint',type=Path,default=Path('checkpoints/prestige1/prestige_v2.pt'))
     p.add_argument('--device',default='cuda')
     p.add_argument('--partition',choices=('development','qualification'),required=True)
-    p.add_argument('--bridge-version',choices=('v2','v3'),required=True)
+    p.add_argument('--bridge-version',choices=('v2','v3','v4'),required=True)
     p.add_argument('--output',type=Path,required=True)
     p.add_argument('--status-file',type=Path,required=True)
     args=p.parse_args()
