@@ -59,6 +59,23 @@ def test_reset_restores_initial_display_and_hook_count():
     assert env.overlay_hit_hook_count==0
 
 
+def test_hit_after_miss_renders_the_credited_later_floor():
+    env=JrpOverlayDiagnosticNKeyEnv(fixture(),key_count=8,tail_s=.5)
+    env.reset()
+    # Deliberately omit the first pulse.  The later keydown first expires a
+    # Miss and then credits a subsequent target in the same scoring call.
+    for i in range(330):
+        cmd=(1.,)+(-1.,)*7 if 2.24<=i*.01<2.64 else (-1.,)*8
+        result=env.step(NKeyAction(cmd))
+        if env.stats.hits:
+            break
+        if result.done:
+            break
+    credited=[i for i,used in enumerate(env._used) if used]
+    assert env.stats.misses >= 1 and credited
+    assert env.overlay_diagnostic.source_floor == env.segment.targets[credited[-1]].floor_index
+
+
 def test_physical_actions_and_scores_identical_to_original_n_key_env():
     from dmdod.envs.n_key import DiagnosticHudNKeyRealChartMotorEnv
     segment=fixture()
