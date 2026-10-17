@@ -1,0 +1,46 @@
+{
+  "format": "dmdod-full-chart-fingering-replay-v0.3-validation",
+  "saved_data": {
+    "events_reused": 1222,
+    "motor_frames_reused": 12953,
+    "keydowns_reused": 1222,
+    "known_contact_keydowns": 1222,
+    "unknown_contact_keydowns": 0,
+    "saved_metrics_unchanged": true,
+    "inference_run": false,
+    "physics_run": false,
+    "training_run": false
+  },
+  "key_overlay": {
+    "per_contact_sum_equals_total": true,
+    "seek_recomputation_tested": true,
+    "one_second_kps_tested": true,
+    "pressed_contact_reconstruction_tested": true,
+    "mapping_is_display_alias_only": true
+  },
+  "motion": {
+    "floors": 1250,
+    "cw_floors": 622,
+    "ccw_floors": 628,
+    "full_turn_floors": 40,
+    "midspins": 27,
+    "max_arrival_position_delta": 0.000001411039,
+    "max_role_swap_position_delta": 0.000001235911,
+    "set_speed_floors_with_mid_arc_change_in_selected_chart": 0,
+    "mid_arc_set_speed_fixture_tested": true,
+    "pause_fixture_tested": true,
+    "twirl_fixture_tested": true,
+    "multiplanet_fixture_tested": true
+  },
+  "html": {
+    "javascript_syntax": "PASS",
+    "self_contained": true,
+    "external_dependencies": [],
+    "file_protocol_compatible": true
+  },
+  "gui_visual_check": {
+    "status": "NOT_RUN",
+    "reason": "The available Browser Use security policy blocks opening a new file:// URL, and automating the Codex desktop app itself is prohibited.",
+    "user_check_required": true
+  }
+}

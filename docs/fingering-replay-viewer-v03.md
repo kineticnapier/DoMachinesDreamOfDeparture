@@ -35,3 +35,18 @@ Generate a new create-once output directory:
   --chart "data/DMDOD-v140-tuf-p11-p20/Train/03640 - 東 - prisMKa _ Sprout.adofai" `
   --output-dir artifacts/fingering_replay_v03/full-20261018-r1
 ```
+
+The recorded `full-20261018-r1` transformation reused all 1,222 events, 1,222
+logical KeyDowns and 12,953 Motor frames.  All contacts were known and the
+saved Hit/Miss/X-accuracy/Timing-MAE object remained byte-equivalent.  Across
+the selected chart, the maximum calculated arrival-position delta was
+`1.411039e-6` geometry units and the maximum two-planet role-swap continuity
+delta was `1.235911e-6`.  Its 1,250 floors include 622 CW, 628 CCW, 40 full
+turns and 27 Midspins.  This particular chart has no mid-arc SetSpeed action;
+the piecewise-speed path is covered by a dedicated 90°/90° fixture.
+
+Automated visual interaction is not marked PASS.  Browser Use blocks opening
+new `file://` URLs, and the computer-use rules prohibit automating the Codex
+desktop UI itself.  JavaScript syntax and self-containment are mechanically
+verified; final human visual checks should cover play/pause, arbitrary seeking,
+speed changes, event jumps, counters, KPS and planet continuity.

@@ -1,0 +1,14 @@
+{
+  "format": "dmdod-full-chart-fingering-replay-v0.3",
+  "generated_at_utc": "2026-10-17T23:29:24.028350+00:00",
+  "source_replay": "artifacts\\fingering_full_chart_replay_v02\\full-20261018-r1\\full-chart-replay.json",
+  "source_replay_sha256": "745bf5e966fb41380ae9201bd13cc2d04fe3863b551030a71cec1a78c45c6d9d",
+  "chart": "data\\DMDOD-v140-tuf-p11-p20\\Train\\03640 - 東 - prisMKa _ Sprout.adofai",
+  "chart_sha256": "e23c48c66e956a6e820fff2a5ed352718efb7f5e861094207cc49f6dcabdd622",
+  "events_reused": 1222,
+  "motor_frames_reused": 12953,
+  "inference_run": false,
+  "physics_run": false,
+  "training_run": false,
+  "saved_metrics_unchanged": true
+}
