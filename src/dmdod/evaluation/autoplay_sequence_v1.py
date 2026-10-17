@@ -373,6 +373,49 @@ def ceil_index(length: int, quantile: float) -> int:
     return min(length - 1, ceil(quantile * length) - 1)
 
 
+def score_disjoint_frame_sequences(
+    predicted_rows: list[tuple[float, ...]],
+    truth_rows: list[tuple[float, ...]],
+    eligible_rows: list[bool],
+) -> dict:
+    """Score nonoverlapping 10ms windows, including multi-event cardinality."""
+
+    if not (len(predicted_rows) == len(truth_rows) == len(eligible_rows)) or not truth_rows:
+        raise ValueError("invalid frame-sequence audit rows")
+    result = {
+        "frames": len(truth_rows),
+        "abstained_frames": sum(not value for value in eligible_rows),
+        "multi_target_frames": sum(len(row) >= 2 for row in truth_rows),
+        "predicted_multi_frames": sum(len(row) >= 2 for row in predicted_rows),
+        "exact_count_frames": sum(len(a) == len(b) for a, b in zip(predicted_rows, truth_rows)),
+        "targets": sum(map(len, truth_rows)),
+        "predictions": sum(map(len, predicted_rows)),
+        "tolerances_ms": {},
+    }
+    for tolerance in MATCH_TOLERANCES_MS:
+        matches = 0
+        errors = []
+        exact_sequences = 0
+        exact_multi = 0
+        for predicted, truth in zip(predicted_rows, truth_rows):
+            pairs = _ordered_matches(list(predicted), list(truth), tolerance / 1000.0)
+            matches += len(pairs)
+            errors.extend(error * 1000 for _, _, error in pairs)
+            exact = len(predicted) == len(truth) == len(pairs)
+            exact_sequences += int(exact)
+            exact_multi += int(exact and len(truth) >= 2)
+        result["tolerances_ms"][str(int(tolerance))] = {
+            "matches": matches,
+            "tracking_rate": matches / result["targets"] if result["targets"] else 0.0,
+            "false_predictions": result["predictions"] - matches,
+            "precision": matches / result["predictions"] if result["predictions"] else 0.0,
+            "mae_ms": sum(errors) / len(errors) if errors else None,
+            "exact_event_sequence_frames": exact_sequences,
+            "exact_multi_event_frames": exact_multi,
+        }
+    return result
+
+
 def load_models(new_checkpoint, old_mlp, old_gru, *, device: torch.device):
     new_payload = torch.load(new_checkpoint, map_location=device, weights_only=True)
     if new_payload.get("format") != student.FORMAT:

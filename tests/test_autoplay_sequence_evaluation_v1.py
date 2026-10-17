@@ -77,3 +77,17 @@ def test_aggregate_preserves_chart_boundaries_and_sums_primary_counts():
     assert primary["false_predictions"] == 2
     assert primary["median_matched_lead_ms"] == 30
     assert result["unforecastable_zero_time_targets"] == 2
+
+
+def test_disjoint_frame_sequence_score_preserves_dense_cardinality():
+    result = evaluation.score_disjoint_frame_sequences(
+        [(0.0021, 0.0051, 0.0081), (), (0.004,)],
+        [(0.002, 0.005, 0.008), (), (0.020,)],
+        [True, True, True],
+    )
+    assert result["multi_target_frames"] == 1
+    assert result["predicted_multi_frames"] == 1
+    assert result["exact_count_frames"] == 3
+    assert result["tolerances_ms"]["1"]["matches"] == 3
+    assert result["tolerances_ms"]["1"]["exact_multi_event_frames"] == 1
+    assert result["tolerances_ms"]["20"]["matches"] == 4
