@@ -74,7 +74,8 @@ def _summarize(env: CoupledContactRealChartEnv) -> dict:
 
 
 def run_network(segment, model: network.FingeringRanker, *, stop_after_s: float | None = None,
-                wall_timeout_s: float | None = None) -> dict:
+                wall_timeout_s: float | None = None, style_alpha: float = 0.0,
+                policy_name: str = "network_v0_1_free") -> dict:
     """Execute the causal Network policy; no Teacher rollout exists here."""
 
     env = CoupledContactRealChartEnv(segment, control_dt_s=teacher.CTRL, physics_dt_s=teacher.PHYS)
@@ -110,7 +111,10 @@ def run_network(segment, model: network.FingeringRanker, *, stop_after_s: float 
             eligible = tuple(teacher.eligible(env.motor, occupied, value)[0]
                              for value in allocations)
             context = network.encode_context(env.motor, look, now, occupied)
-            selected_index, scores = network.choose_candidate(model, context, allocations, eligible)
+            selected_index, scores, blended = network.choose_candidate_styled(
+                model, context, allocations, eligible, alpha=style_alpha)
+            free_indices = [index for index, value in enumerate(scores) if value is not None]
+            free_index = min(free_indices, key=lambda index: (scores[index], index)) if free_indices else None
             allocation = allocations[selected_index] if selected_index is not None else ()
             item = teacher.PlanItem(event.event_index, event.episode_time_s, allocation)
             selected.add(event.event_index)
@@ -124,8 +128,18 @@ def run_network(segment, model: network.FingeringRanker, *, stop_after_s: float 
                 "chosen": item.label if allocation else None,
                 "axes": [finger.axis for finger in allocation],
                 "network_scores": [value for value in scores],
+                "blended_rank_scores": [value for value in blended],
                 "eligible": list(eligible),
                 "inference_inputs": "oracle_relative_times_and_current_motor_only",
+                "policy": policy_name,
+                "style_alpha": style_alpha,
+                "free_chosen": (teacher.PlanItem(event.event_index, event.episode_time_s,
+                                                  allocations[free_index]).label
+                                if free_index is not None else None),
+                "different_from_free": selected_index != free_index,
+                "style_class": ("index_proxy" if allocation and all(f.axis.endswith("_1") for f in allocation)
+                                else "ordinary_proxy" if allocation and all(int(f.axis.split("_")[1]) <= 4 for f in allocation)
+                                else "thumb_or_side" if allocation else "unassigned"),
             })
         action = teacher.action_for(env.motor, tuple(committed.values()), now)
         step = env.step(action)
@@ -180,6 +194,7 @@ def run_network(segment, model: network.FingeringRanker, *, stop_after_s: float 
         "failure_continuation": False,
         "teacher_shadow_rollout_used": False,
         "teacher_candidate_scores_used": False,
+        "policy": policy_name, "style_alpha": style_alpha,
     }
 
 

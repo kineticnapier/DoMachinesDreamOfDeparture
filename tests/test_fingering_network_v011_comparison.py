@@ -1,0 +1,31 @@
+from __future__ import annotations
+
+import sys
+from pathlib import Path
+
+SCRIPTS = Path(__file__).resolve().parents[1] / "scripts"
+if str(SCRIPTS) not in sys.path:
+    sys.path.insert(0, str(SCRIPTS))
+
+import run_fingering_network_v011_comparison as compare
+
+
+def _row(index, chosen, style, error=1.0, outcome="Hit"):
+    return {"event_index": index, "chosen": chosen, "style_class": style,
+            "actual_error_ms": error, "outcome": outcome}
+
+
+def test_comparison_reports_differences_worsening_and_dense_specials():
+    free = {"decisions": [_row(0, "left_5/tip", "thumb_or_side", 1),
+                           _row(1, "right_2", "ordinary_proxy", 2)]}
+    human = {"decisions": [_row(0, "left_1", "index_proxy", 3),
+                            _row(1, "right_2", "ordinary_proxy", 1)]}
+    result = compare.compare_results(free, human, {0: .1, 1: .12})
+    assert result["different_events"] == [0]
+    assert result["human_proxy_worsened_events"][0]["event_index"] == 0
+    assert result["free_style"]["dense_le_35ms_special_events"] == [0]
+    assert result["human_proxy_style"]["thumb_or_side_uses"] == 0
+
+
+def test_fixed_alpha_is_declared_without_search():
+    assert compare.FIXED_HUMAN_ALPHA == 0.5

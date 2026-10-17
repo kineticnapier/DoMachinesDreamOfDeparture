@@ -238,6 +238,63 @@ def choose_candidate(
     return selected, masked
 
 
+def human_proxy_style_cost(allocation: Sequence[object]) -> float:
+    """Finite untrained style prior over the available 12-axis abstraction.
+
+    Axis 1 is explicitly treated as an index-finger *proxy*.  Axes 2--4 are
+    other ordinary-finger proxies, axis 5 is the thumb and axis 6 the hand
+    side.  These names are a policy convention, not anatomical calibration or
+    OS-keyboard binding evidence.
+    """
+
+    if not allocation:
+        return 1.0
+    costs = []
+    for finger in allocation:
+        depth = int(str(finger.axis).split("_")[1])
+        costs.append({1: 0.0, 2: 0.25, 3: 0.50, 4: 0.75,
+                      5: 1.0, 6: 1.25}[depth])
+    return sum(costs) / len(costs)
+
+
+def choose_candidate_styled(
+    model: FingeringRanker,
+    context: torch.Tensor,
+    allocations: Sequence[Sequence[object]],
+    eligible: Sequence[bool],
+    *,
+    alpha: float,
+) -> tuple[int | None, tuple[float | None, ...], tuple[float | None, ...]]:
+    """Blend scale-free Network and Human-Proxy ranks without retraining.
+
+    ``alpha=0`` delegates to the frozen Free selector exactly.  For positive
+    alpha, Network and style values are converted to deterministic percentile
+    ranks within the eligible candidate set before interpolation.  Auxiliary
+    fingers remain finite candidates and are selected when ordinary proxies
+    are unavailable or the blended rank favors them.
+    """
+
+    if not 0.0 <= alpha <= 1.0:
+        raise ValueError("style alpha must be in [0, 1]")
+    free_index, network_scores = choose_candidate(model, context, allocations, eligible)
+    if alpha == 0.0 or free_index is None:
+        return free_index, network_scores, tuple(None for _ in allocations)
+    valid = [index for index, allowed in enumerate(eligible) if allowed]
+    network_order = sorted(valid, key=lambda index: (network_scores[index], index))
+    style_values = tuple(human_proxy_style_cost(value) for value in allocations)
+    style_order = sorted(valid, key=lambda index: (style_values[index], index))
+    denominator = max(1, len(valid) - 1)
+    network_rank = {index: rank / denominator for rank, index in enumerate(network_order)}
+    style_rank = {index: rank / denominator for rank, index in enumerate(style_order)}
+    combined = tuple(
+        ((1.0 - alpha) * network_rank[index] + alpha * style_rank[index])
+        if index in network_rank else None
+        for index in range(len(allocations))
+    )
+    selected = min(valid, key=lambda index: (combined[index], network_rank[index], index))
+    return selected, network_scores, combined
+
+
 def train_fixed(
     model: FingeringRanker,
     examples: Sequence[RankingExample],
