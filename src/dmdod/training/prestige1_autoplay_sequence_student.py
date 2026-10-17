@@ -20,13 +20,14 @@ from .prestige1 import INPUT_DIM
 from .prestige1_autoplay_timing import AutoplayTimingTeacher
 
 
-FORMAT = "prestige1-autoplay-multievent-timing-student-v2-hud-unclipped"
+FORMAT = "prestige1-autoplay-multievent-timing-student-v3-stable-time"
 CONTROL_DT_S = 0.010
 HORIZON_S = 0.080
 MAX_EVENTS = 16
 TIME_EPS_S = 1e-9
-TRAIN_EPOCHS = 8
+TRAIN_EPOCHS = 16
 LEARNING_RATE = 3e-4
+TIMING_LOSS_WEIGHT = 4.0
 THRESHOLD_CANDIDATES = (0.50, 0.65, 0.80, 0.90, 0.95)
 
 
@@ -165,8 +166,10 @@ class MultiEventTimingStudent(nn.Module):
         self.hidden = hidden
         self.max_events = max_events
         self.encoder = nn.GRU(INPUT_DIM, hidden, batch_first=True)
-        # K+1 positive gaps partition the horizon; K logits express count.
-        self.time_head = nn.Linear(hidden, max_events + 1)
+        # Positive cumulative coordinates map monotonically into (0,horizon).
+        # Unlike a K+1 softmax partition, the first event is not biased toward
+        # horizon/(K+1) when only one event exists.
+        self.time_head = nn.Linear(hidden, max_events)
         self.presence_head = nn.Linear(hidden, max_events)
 
     def forward(self, visible: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor]:
@@ -174,8 +177,8 @@ class MultiEventTimingStudent(nn.Module):
             raise ValueError("Timing Student input must be causal [T,263]")
         encoded, _ = self.encoder(visible.unsqueeze(0))
         encoded = encoded.squeeze(0)
-        gaps = torch.softmax(self.time_head(encoded), dim=-1)
-        ordered = torch.cumsum(gaps[:, : self.max_events], dim=-1) * HORIZON_S
+        cumulative = torch.cumsum(F.softplus(self.time_head(encoded)), dim=-1)
+        ordered = HORIZON_S * cumulative / (1.0 + cumulative)
         return ordered, self.presence_head(encoded)
 
 
@@ -210,7 +213,7 @@ def sequence_loss(
     monotone = F.relu(
         torch.sigmoid(presence_logits[:, 1:]) - torch.sigmoid(presence_logits[:, :-1])
     ).mean()
-    return timing + existence + 0.1 * monotone
+    return TIMING_LOSS_WEIGHT * timing + existence + 0.1 * monotone
 
 
 @dataclass(frozen=True, slots=True)

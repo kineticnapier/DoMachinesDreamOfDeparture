@@ -97,6 +97,7 @@ def run(config_path: Path, checkpoint: Path, report_path: Path, *, device: str) 
         "epochs": sequence.TRAIN_EPOCHS,
         "updates": len(history),
         "learning_rate": sequence.LEARNING_RATE,
+        "timing_loss_weight": sequence.TIMING_LOSS_WEIGHT,
         "loss_first": history[0],
         "loss_last": history[-1],
         "loss_min": min(history),

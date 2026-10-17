@@ -43,6 +43,13 @@ v1.4, saved MLP, saved GRU, and the new Student. Report unique matching at
 High-BPM simulator fixtures are a separate stress test, not unknown-chart
 generalization evidence.
 
+After the first Development run, one bounded diagnostic revision is allowed:
+if event count is emitted but absolute due times slide forward rather than
+counting down, replace the K+1 softmax time partition with positive cumulative
+coordinates mapped into 0–80ms and raise only the timing-loss weight to 4.0.
+Train charts, threshold candidates, primary endpoint, and all evaluation
+splits remain frozen. No further model/hyperparameter revision is permitted.
+
 The experiment fails rather than relaxing these criteria after seeing
 Development results. Qualification/Reserve are not used for threshold or
 model selection.
