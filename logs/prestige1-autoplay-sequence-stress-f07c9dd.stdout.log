@@ -1,0 +1,10 @@
+stress HighBPM 8000 cw
+stress HighBPM 8000 ccw
+stress HighBPM 12000 cw
+stress HighBPM 12000 ccw
+stress HighBPM 20000 cw
+stress HighBPM 20000 ccw
+stress Pause
+stress SetSpeed
+stress Twirl
+stress FullTurn
