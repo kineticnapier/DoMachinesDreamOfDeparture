@@ -1,0 +1,530 @@
+development 01/20 05665 - ENERGY SYNERGY MATRIX - rKizCora _ kernby & 1 more: timing_v1_4=12/48 fp=0 mlp=0/48 fp=0 gru=0/48 fp=4 new_student=0/48 fp=1
+development 02/20 04042 - bool - vo[ICE]: timing_v1_4=208/208 fp=0 mlp=0/208 fp=0 gru=0/208 fp=0 new_student=0/208 fp=0
+development 03/20 05652 - VANGUARD-1 - 〈Geodetics〉: timing_v1_4=36/37 fp=0 mlp=0/37 fp=0 gru=0/37 fp=15 new_student=0/37 fp=1
+development 04/20 08810 - Shploink Overdose - CCNekona: timing_v1_4=60/91 fp=0 mlp=0/91 fp=1 gru=0/91 fp=16 new_student=1/91 fp=0
+development 05/20 13131 - 『계획 이상 有!』 (feat. 重音テト) - Team Name: timing_v1_4=43/43 fp=0 mlp=0/43 fp=0 gru=0/43 fp=9 new_student=0/43 fp=1
+development 06/20 09173 - minefield surfing - GMDMachine: timing_v1_4=73/73 fp=0 mlp=0/73 fp=0 gru=1/73 fp=12 new_student=0/73 fp=0
+development 07/20 07099 - Oracle - Lupel_2 _ 얼불망: timing_v1_4=48/51 fp=0 mlp=0/51 fp=1 gru=0/51 fp=4 new_student=0/51 fp=1
+development 08/20 11663 - Nameless Garden - oSKYo _ oSKYo: timing_v1_4=15/44 fp=0 mlp=0/44 fp=0 gru=0/44 fp=4 new_student=0/44 fp=1
+development 09/20 05664 - gur yvsr (仮) - yeetyote: timing_v1_4=39/41 fp=0 mlp=0/41 fp=0 gru=1/41 fp=8 new_student=1/41 fp=0
+development 10/20 10704 - Melted Snow (Hard) - seeker: timing_v1_4=71/73 fp=0 mlp=0/73 fp=0 gru=2/73 fp=14 new_student=0/73 fp=1
+development 11/20 04432 - ADOFAI Regular Dan - 2nd Dan - yzuio & 5 more: timing_v1_4=52/52 fp=0 mlp=0/52 fp=0 gru=1/52 fp=11 new_student=0/52 fp=1
+development 12/20 07322 - Runaway - smy258: timing_v1_4=119/125 fp=0 mlp=7/125 fp=4 gru=0/125 fp=17 new_student=0/125 fp=0
+development 13/20 09315 - Lunar Gateway - hotduck _ oSKYo: timing_v1_4=9/10 fp=0 mlp=0/10 fp=0 gru=0/10 fp=2 new_student=0/10 fp=1
+development 14/20 03665 - Nyarlathotep's Dreamland - Silis: timing_v1_4=63/142 fp=0 mlp=0/142 fp=3 gru=1/142 fp=0 new_student=0/142 fp=1
+development 15/20 04173 - Beyond Your Words (feat. vally.exe) - 연석이2 _ Sprout & 2 more: timing_v1_4=19/20 fp=0 mlp=0/20 fp=0 gru=0/20 fp=0 new_student=0/20 fp=1
+development 16/20 07827 - 24eeev0-$ - hotduck _ COMMON: timing_v1_4=5/41 fp=0 mlp=0/41 fp=0 gru=0/41 fp=2 new_student=0/41 fp=1
+development 17/20 09853 - Rocky Buinne [Featured ver.] - 2seehyun: timing_v1_4=98/100 fp=0 mlp=0/100 fp=1 gru=0/100 fp=4 new_student=0/100 fp=1
+development 18/20 05661 - Head BONK ache - kernby & yeetyote: timing_v1_4=50/50 fp=0 mlp=0/50 fp=0 gru=0/50 fp=19 new_student=0/50 fp=0
+development 19/20 13945 - Tempest - 冰神 _ NeRvOus: timing_v1_4=33/36 fp=0 mlp=0/36 fp=0 gru=2/36 fp=0 new_student=0/36 fp=1
+development 20/20 09981 - Chronosynchronism - 토끼로봇 & 1 more _ RinkiRin & 2 more: timing_v1_4=22/55 fp=0 mlp=0/55 fp=0 gru=0/55 fp=5 new_student=0/55 fp=4
+{
+  "status": "FAIL",
+  "partition": "development",
+  "failure_reasons": [
+    "practical_f1_not_0.02_better_than_timing_v1_4",
+    "false_predictions_per_target_regressed"
+  ],
+  "aggregate": {
+    "timing_v1_4": {
+      "charts": 20,
+      "frames": 13705,
+      "abstained_frames": 116,
+      "abstention_rate": 0.008464064210142284,
+      "raw_80ms_count_mae": 0.0726012404232032,
+      "unforecastable_zero_time_targets": 0,
+      "all_leads": {
+        "1": {
+          "matches": 1195,
+          "targets": 1340,
+          "predictions": 1196,
+          "false_predictions": 1,
+          "false_predictions_per_target": 0.0007462686567164179,
+          "tracking_rate": 0.8917910447761194,
+          "precision": 0.9991638795986622,
+          "f1": 0.942429022082019,
+          "mae_ms": 4.748340891976719e-06,
+          "p95_ms": 1.3119196312638692e-05
+        },
+        "5": {
+          "matches": 1195,
+          "targets": 1340,
+          "predictions": 1196,
+          "false_predictions": 1,
+          "false_predictions_per_target": 0.0007462686567164179,
+          "tracking_rate": 0.8917910447761194,
+          "precision": 0.9991638795986622,
+          "f1": 0.942429022082019,
+          "mae_ms": 4.748340891976719e-06,
+          "p95_ms": 1.3119196312638692e-05
+        },
+        "10": {
+          "matches": 1195,
+          "targets": 1340,
+          "predictions": 1196,
+          "false_predictions": 1,
+          "false_predictions_per_target": 0.0007462686567164179,
+          "tracking_rate": 0.8917910447761194,
+          "precision": 0.9991638795986622,
+          "f1": 0.942429022082019,
+          "mae_ms": 4.748340891976719e-06,
+          "p95_ms": 1.3119196312638692e-05
+        },
+        "20": {
+          "matches": 1195,
+          "targets": 1340,
+          "predictions": 1196,
+          "false_predictions": 1,
+          "false_predictions_per_target": 0.0007462686567164179,
+          "tracking_rate": 0.8917910447761194,
+          "precision": 0.9991638795986622,
+          "f1": 0.942429022082019,
+          "mae_ms": 4.748340891976719e-06,
+          "p95_ms": 1.3119196312638692e-05
+        }
+      },
+      "practical_10ms_tolerance_10_80ms_lead": {
+        "matches": 1075,
+        "targets": 1340,
+        "predictions": 1075,
+        "false_predictions": 0,
+        "false_predictions_per_target": 0.0,
+        "tracking_rate": 0.8022388059701493,
+        "precision": 1.0,
+        "f1": 0.8902691511387164,
+        "mae_ms": 4.937727715618463e-06,
+        "p95_ms": 1.3562390321908424e-05,
+        "median_matched_lead_ms": 74.44420499228866,
+        "lead_bins": {
+          "10_20": 47,
+          "20_40": 11,
+          "40_80": 1017
+        },
+        "cohorts": {
+          "All": {
+            "targets": 1340,
+            "matches": 1075,
+            "tracking_rate": 0.8022388059701493
+          },
+          "FullTurn": {
+            "targets": 8,
+            "matches": 6,
+            "tracking_rate": 0.75
+          },
+          "HighBPM": {
+            "targets": 458,
+            "matches": 371,
+            "tracking_rate": 0.8100436681222707
+          },
+          "HighDensity10ms": {
+            "targets": 28,
+            "matches": 24,
+            "tracking_rate": 0.8571428571428571
+          },
+          "Ordinary": {
+            "targets": 651,
+            "matches": 519,
+            "tracking_rate": 0.7972350230414746
+          },
+          "SetSpeed": {
+            "targets": 29,
+            "matches": 23,
+            "tracking_rate": 0.7931034482758621
+          },
+          "Twirl": {
+            "targets": 262,
+            "matches": 192,
+            "tracking_rate": 0.732824427480916
+          }
+        },
+        "confidence_calibration": {
+          "ece": 0.0,
+          "bins": [
+            {
+              "lower": 0.8,
+              "upper": 1.0,
+              "count": 1075,
+              "mean_confidence": 1.0,
+              "accuracy": 1.0
+            }
+          ]
+        }
+      }
+    },
+    "mlp": {
+      "charts": 20,
+      "frames": 13705,
+      "abstained_frames": 13650,
+      "abstention_rate": 0.9959868661072602,
+      "raw_80ms_count_mae": 0.6909157241882524,
+      "unforecastable_zero_time_targets": 0,
+      "all_leads": {
+        "1": {
+          "matches": 2,
+          "targets": 1340,
+          "predictions": 17,
+          "false_predictions": 15,
+          "false_predictions_per_target": 0.011194029850746268,
+          "tracking_rate": 0.0014925373134328358,
+          "precision": 0.11764705882352941,
+          "f1": 0.0029476787030213707,
+          "mae_ms": 0.24013566370140182,
+          "p95_ms": 0.254793999372005
+        },
+        "5": {
+          "matches": 7,
+          "targets": 1340,
+          "predictions": 17,
+          "false_predictions": 10,
+          "false_predictions_per_target": 0.007462686567164179,
+          "tracking_rate": 0.0052238805970149255,
+          "precision": 0.4117647058823529,
+          "f1": 0.010316875460574797,
+          "mae_ms": 2.4669004845969362,
+          "p95_ms": 3.860488340906798
+        },
+        "10": {
+          "matches": 7,
+          "targets": 1340,
+          "predictions": 17,
+          "false_predictions": 10,
+          "false_predictions_per_target": 0.007462686567164179,
+          "tracking_rate": 0.0052238805970149255,
+          "precision": 0.4117647058823529,
+          "f1": 0.010316875460574797,
+          "mae_ms": 2.4669004845969362,
+          "p95_ms": 3.860488340906798
+        },
+        "20": {
+          "matches": 13,
+          "targets": 1340,
+          "predictions": 17,
+          "false_predictions": 4,
+          "false_predictions_per_target": 0.0029850746268656717,
+          "tracking_rate": 0.009701492537313432,
+          "precision": 0.7647058823529411,
+          "f1": 0.019159911569638907,
+          "mae_ms": 7.679677940448078,
+          "p95_ms": 18.5497201817606
+        }
+      },
+      "practical_10ms_tolerance_10_80ms_lead": {
+        "matches": 7,
+        "targets": 1340,
+        "predictions": 17,
+        "false_predictions": 10,
+        "false_predictions_per_target": 0.007462686567164179,
+        "tracking_rate": 0.0052238805970149255,
+        "precision": 0.4117647058823529,
+        "f1": 0.010316875460574797,
+        "mae_ms": 2.4669004845969362,
+        "p95_ms": 3.860488340906798,
+        "median_matched_lead_ms": 79.19517159461975,
+        "lead_bins": {
+          "10_20": 0,
+          "20_40": 0,
+          "40_80": 7
+        },
+        "cohorts": {
+          "All": {
+            "targets": 1340,
+            "matches": 7,
+            "tracking_rate": 0.0052238805970149255
+          },
+          "FullTurn": {
+            "targets": 8,
+            "matches": 0,
+            "tracking_rate": 0.0
+          },
+          "HighBPM": {
+            "targets": 458,
+            "matches": 7,
+            "tracking_rate": 0.015283842794759825
+          },
+          "HighDensity10ms": {
+            "targets": 28,
+            "matches": 3,
+            "tracking_rate": 0.10714285714285714
+          },
+          "Ordinary": {
+            "targets": 651,
+            "matches": 0,
+            "tracking_rate": 0.0
+          },
+          "SetSpeed": {
+            "targets": 29,
+            "matches": 0,
+            "tracking_rate": 0.0
+          },
+          "Twirl": {
+            "targets": 262,
+            "matches": 0,
+            "tracking_rate": 0.0
+          }
+        },
+        "confidence_calibration": {
+          "ece": 0.4666718384798836,
+          "bins": [
+            {
+              "lower": 0.8,
+              "upper": 1.0,
+              "count": 17,
+              "mean_confidence": 0.8784365443622365,
+              "accuracy": 0.4117647058823529
+            }
+          ]
+        }
+      }
+    },
+    "gru": {
+      "charts": 20,
+      "frames": 13705,
+      "abstained_frames": 8781,
+      "abstention_rate": 0.6407150674936155,
+      "raw_80ms_count_mae": 0.4084640642101423,
+      "unforecastable_zero_time_targets": 0,
+      "all_leads": {
+        "1": {
+          "matches": 2,
+          "targets": 1340,
+          "predictions": 155,
+          "false_predictions": 153,
+          "false_predictions_per_target": 0.11417910447761194,
+          "tracking_rate": 0.0014925373134328358,
+          "precision": 0.012903225806451613,
+          "f1": 0.0026755852842809363,
+          "mae_ms": 0.7035844549686532,
+          "p95_ms": 0.8368626306305416
+        },
+        "5": {
+          "matches": 5,
+          "targets": 1340,
+          "predictions": 155,
+          "false_predictions": 150,
+          "false_predictions_per_target": 0.11194029850746269,
+          "tracking_rate": 0.0037313432835820895,
+          "precision": 0.03225806451612903,
+          "f1": 0.006688963210702342,
+          "mae_ms": 1.681544609792396,
+          "p95_ms": 4.612360970828178
+        },
+        "10": {
+          "matches": 9,
+          "targets": 1340,
+          "predictions": 155,
+          "false_predictions": 146,
+          "false_predictions_per_target": 0.10895522388059702,
+          "tracking_rate": 0.006716417910447761,
+          "precision": 0.05806451612903226,
+          "f1": 0.012040133779264215,
+          "mae_ms": 4.027211691373729,
+          "p95_ms": 9.660472589263058
+        },
+        "20": {
+          "matches": 18,
+          "targets": 1340,
+          "predictions": 155,
+          "false_predictions": 137,
+          "false_predictions_per_target": 0.10223880597014925,
+          "tracking_rate": 0.013432835820895522,
+          "precision": 0.11612903225806452,
+          "f1": 0.02408026755852843,
+          "mae_ms": 9.007634104391816,
+          "p95_ms": 17.68076487055925
+        }
+      },
+      "practical_10ms_tolerance_10_80ms_lead": {
+        "matches": 8,
+        "targets": 1340,
+        "predictions": 154,
+        "false_predictions": 146,
+        "false_predictions_per_target": 0.10895522388059702,
+        "tracking_rate": 0.005970149253731343,
+        "precision": 0.05194805194805195,
+        "f1": 0.0107095046854083,
+        "mae_ms": 3.850555726931479,
+        "p95_ms": 9.660472589263058,
+        "median_matched_lead_ms": 76.40811800956726,
+        "lead_bins": {
+          "10_20": 0,
+          "20_40": 0,
+          "40_80": 8
+        },
+        "cohorts": {
+          "All": {
+            "targets": 1340,
+            "matches": 8,
+            "tracking_rate": 0.005970149253731343
+          },
+          "FullTurn": {
+            "targets": 8,
+            "matches": 0,
+            "tracking_rate": 0.0
+          },
+          "HighBPM": {
+            "targets": 458,
+            "matches": 2,
+            "tracking_rate": 0.004366812227074236
+          },
+          "HighDensity10ms": {
+            "targets": 28,
+            "matches": 0,
+            "tracking_rate": 0.0
+          },
+          "Ordinary": {
+            "targets": 651,
+            "matches": 2,
+            "tracking_rate": 0.0030721966205837174
+          },
+          "SetSpeed": {
+            "targets": 29,
+            "matches": 1,
+            "tracking_rate": 0.034482758620689655
+          },
+          "Twirl": {
+            "targets": 262,
+            "matches": 3,
+            "tracking_rate": 0.011450381679389313
+          }
+        },
+        "confidence_calibration": {
+          "ece": 0.8394734271160968,
+          "bins": [
+            {
+              "lower": 0.8,
+              "upper": 1.0,
+              "count": 154,
+              "mean_confidence": 0.8914214790641487,
+              "accuracy": 0.05194805194805195
+            }
+          ]
+        }
+      }
+    },
+    "new_student": {
+      "charts": 20,
+      "frames": 13705,
+      "abstained_frames": 100,
+      "abstention_rate": 0.0072966070777088655,
+      "raw_80ms_count_mae": 0.5956220357533747,
+      "unforecastable_zero_time_targets": 0,
+      "all_leads": {
+        "1": {
+          "matches": 0,
+          "targets": 1340,
+          "predictions": 24,
+          "false_predictions": 24,
+          "false_predictions_per_target": 0.01791044776119403,
+          "tracking_rate": 0.0,
+          "precision": 0.0,
+          "f1": 0.0,
+          "mae_ms": null,
+          "p95_ms": null
+        },
+        "5": {
+          "matches": 3,
+          "targets": 1340,
+          "predictions": 24,
+          "false_predictions": 21,
+          "false_predictions_per_target": 0.015671641791044775,
+          "tracking_rate": 0.002238805970149254,
+          "precision": 0.125,
+          "f1": 0.004398826979472141,
+          "mae_ms": 3.5767834338050384,
+          "p95_ms": 3.9168722969931125
+        },
+        "10": {
+          "matches": 4,
+          "targets": 1340,
+          "predictions": 24,
+          "false_predictions": 20,
+          "false_predictions_per_target": 0.014925373134328358,
+          "tracking_rate": 0.0029850746268656717,
+          "precision": 0.16666666666666666,
+          "f1": 0.005865102639296188,
+          "mae_ms": 5.12746048773316,
+          "p95_ms": 9.779491649517524
+        },
+        "20": {
+          "matches": 6,
+          "targets": 1340,
+          "predictions": 24,
+          "false_predictions": 18,
+          "false_predictions_per_target": 0.013432835820895522,
+          "tracking_rate": 0.004477611940298508,
+          "precision": 0.25,
+          "f1": 0.008797653958944282,
+          "mae_ms": 9.294571890090975,
+          "p95_ms": 19.004844050241054
+        }
+      },
+      "practical_10ms_tolerance_10_80ms_lead": {
+        "matches": 2,
+        "targets": 1340,
+        "predictions": 19,
+        "false_predictions": 17,
+        "false_predictions_per_target": 0.012686567164179104,
+        "tracking_rate": 0.0014925373134328358,
+        "precision": 0.10526315789473684,
+        "f1": 0.0029433406916850625,
+        "mae_ms": 3.8874123590488807,
+        "p95_ms": 3.9168722969931125,
+        "median_matched_lead_ms": 38.32988813519478,
+        "lead_bins": {
+          "10_20": 0,
+          "20_40": 2,
+          "40_80": 0
+        },
+        "cohorts": {
+          "All": {
+            "targets": 1340,
+            "matches": 2,
+            "tracking_rate": 0.0014925373134328358
+          },
+          "FullTurn": {
+            "targets": 8,
+            "matches": 0,
+            "tracking_rate": 0.0
+          },
+          "HighBPM": {
+            "targets": 458,
+            "matches": 0,
+            "tracking_rate": 0.0
+          },
+          "HighDensity10ms": {
+            "targets": 28,
+            "matches": 0,
+            "tracking_rate": 0.0
+          },
+          "Ordinary": {
+            "targets": 651,
+            "matches": 1,
+            "tracking_rate": 0.0015360983102918587
+          },
+          "SetSpeed": {
+            "targets": 29,
+            "matches": 0,
+            "tracking_rate": 0.0
+          },
+          "Twirl": {
+            "targets": 262,
+            "matches": 1,
+            "tracking_rate": 0.003816793893129771
+          }
+        },
+        "confidence_calibration": {
+          "ece": 0.44007789147527593,
+          "bins": [
+            {
+              "lower": 0.4,
+              "upper": 0.6000000000000001,
+              "count": 19,
+              "mean_confidence": 0.5453410493700128,
+              "accuracy": 0.10526315789473684
+            }
+          ]
+        }
+      }
+    }
+  }
+}
