@@ -182,6 +182,11 @@ def run_policy(segment, policy: str, model: network.FingeringRanker | None = Non
             network_scores = None
             if policy == "center_first":
                 allocation = _center_first(env.motor, occupied, event.chord_size)
+                # Evaluator-only shadow, computed from the same pre-decision
+                # state.  It never participates in the CenterFirst choice.
+                teacher_rows = teacher.rank_first_choices(
+                    env.motor, tuple(committed.values()), look, max_depth=3
+                )
             elif policy == "teacher_v0_2":
                 teacher_rows = teacher.rank_first_choices(
                     env.motor, tuple(committed.values()), look, max_depth=3

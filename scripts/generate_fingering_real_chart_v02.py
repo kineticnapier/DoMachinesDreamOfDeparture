@@ -217,6 +217,45 @@ def _aggregate(rows: list[dict]) -> dict:
     }
 
 
+def _ranking_regret(result: dict) -> dict:
+    regrets = []
+    equivalent_good = exact = 0
+    for decision in result["decisions"]:
+        candidates = [row for row in decision.get("candidates", [])
+                      if row.get("teacher_eligible") and row.get("teacher_score") is not None]
+        chosen = next((row for row in candidates if row["finger"] == decision["chosen"]), None)
+        if not candidates or chosen is None:
+            continue
+        best = min(float(row["teacher_score"]) for row in candidates)
+        regret = float(chosen["teacher_score"]) - best
+        regrets.append(regret)
+        equivalent_good += int(regret <= network.GOOD_COST_TOLERANCE + 1e-9)
+        exact += int(decision["chosen"] == decision.get("teacher_chosen"))
+    return {
+        "scored_events": len(regrets),
+        "exact_teacher_choice_rate": exact / len(regrets) if regrets else None,
+        "equivalent_good_rate": equivalent_good / len(regrets) if regrets else None,
+        "mean_teacher_cost_regret": sum(regrets) / len(regrets) if regrets else None,
+        "max_teacher_cost_regret": max(regrets) if regrets else None,
+    }
+
+
+def _merge_ranking(rows: list[dict]) -> dict:
+    total = sum(row["scored_events"] for row in rows)
+    def weighted(key: str):
+        return (sum(row[key] * row["scored_events"] for row in rows
+                    if row[key] is not None) / total if total else None)
+    maxima = [row["max_teacher_cost_regret"] for row in rows
+              if row["max_teacher_cost_regret"] is not None]
+    return {
+        "scored_events": total,
+        "exact_teacher_choice_rate": weighted("exact_teacher_choice_rate"),
+        "equivalent_good_rate": weighted("equivalent_good_rate"),
+        "mean_teacher_cost_regret": weighted("mean_teacher_cost_regret"),
+        "max_teacher_cost_regret": max(maxima) if maxima else None,
+    }
+
+
 def _index_html(cases: list[dict]) -> str:
     rows = "".join(
         f'<tr><td>{escape(case["split"])}</td><td>{escape(case["chart"])}</td>'
@@ -253,9 +292,12 @@ def run(args) -> dict:
             for value in collected
         )
         center = v01.run_policy(segment, "center_first")
+        center["ranking"] = _ranking_regret(center)
         physical["center_first"].append(center)
         physical["teacher_v0_2"].append(teacher_result["stats"])
         network_result = v01.run_policy(segment, "network_v0_1", model) if model else None
+        if network_result:
+            network_result["ranking"] = _ranking_regret(network_result)
         if network_result:
             physical["network_v0_1"].append(network_result)
         candidate_reasons = Counter(candidate["reason"] for decision in teacher_result["decisions"]
@@ -293,20 +335,20 @@ def run(args) -> dict:
     overlap = bool(fit_hashes & quality_hashes)
     teacher_focus_events = sum(case["teacher"]["focus_events"] for case in cases)
     teacher_focus_hits = sum(case["teacher"]["focus_hits"] for case in cases)
-    center_chosen = sum(
-        teacher_decision["chosen"] == center_decision["chosen"]
-        for case in cases
-        for teacher_decision, center_decision in zip(
-            case["teacher"]["decisions"],
-            case["center_first"]["decisions"][-len(case["teacher"]["decisions"]):],
+    center_chosen = 0
+    for case in cases:
+        center_by_event = {row["event_index"]: row for row in case["center_first"]["decisions"]}
+        center_chosen += sum(
+            decision["event_index"] in center_by_event
+            and decision["chosen"] == center_by_event[decision["event_index"]]["chosen"]
+            for decision in case["teacher"]["decisions"]
         )
-    )
     total_examples = sum(len(value) for value in examples.values())
     quality_gate = {
         "verified_g10_or_harder_chart_present": any(case["verified_g10_or_harder"] for case in cases),
         "teacher_all_focus_events_hit": teacher_focus_hits == teacher_focus_events,
         "fit_quality_chart_disjoint": not overlap and bool(fit_hashes) and bool(quality_hashes),
-        "failed_teacher_result_labeled_success": failed_labeled == 0,
+        "no_failed_teacher_result_labeled_success": failed_labeled == 0,
         "nonempty_success_labels": total_examples > 0,
     }
     report = {
@@ -335,6 +377,18 @@ def run(args) -> dict:
             "center_first": _aggregate(physical["center_first"]),
             "teacher_v0_2": _aggregate(physical["teacher_v0_2"]),
             "network_v0_1": _aggregate(physical["network_v0_1"]) if model else None,
+            "candidate_ranking": {
+                "teacher_v0_2": {
+                    "scored_events": teacher_focus_events,
+                    "exact_teacher_choice_rate": 1.0,
+                    "equivalent_good_rate": 1.0,
+                    "mean_teacher_cost_regret": 0.0,
+                    "max_teacher_cost_regret": 0.0,
+                },
+                "center_first": _merge_ranking([case["center_first"]["ranking"] for case in cases]),
+                "network_v0_1": (_merge_ranking([case["network_v0_1"]["ranking"] for case in cases])
+                                       if model else None),
+            },
         },
         "quality_gate": quality_gate,
         "ready_for_training": all(quality_gate.values()),
