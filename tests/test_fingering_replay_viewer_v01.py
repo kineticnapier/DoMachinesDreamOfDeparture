@@ -9,6 +9,10 @@ if str(SCRIPTS) not in sys.path:
 
 import build_fingering_replay_viewer_v01 as replay
 
+from dmdod.adofai.chart import parse_adofai_text
+from dmdod.adofai.playable import build_playable_segment
+from dmdod.adofai.timing import compile_adofai
+
 
 def _payload() -> dict:
     trace = [[0.0, [0.0] * 12, [0.0] * 12, [0] * 12,
@@ -22,7 +26,8 @@ def _payload() -> dict:
         "timebase": {"episode_duration_s": 1.0, "segment_start_chart_s": 2.0,
                      "segment_end_chart_s": 3.0, "pitch_percent": 100.0,
                      "pitch_ratio": 1.0, "offset_ms": 0.0, "countdown_ticks": 0,
-                     "separate_countdown_time": False, "formula": {}},
+                     "initial_bpm": 120.0, "separate_countdown_time": False,
+                     "separate_countdown_chart_s": 0.0, "formula": {}},
         "floors": [{"index": 1, "x": 0.0, "y": 0.0, "episode_s": 0.0,
                     "exit_episode_s": 1.0, "chart_s": 2.0, "bpm": 120.0,
                     "midspin": False, "is_ccw": False, "num_planets": 2,
@@ -63,3 +68,29 @@ def test_html_is_self_contained_and_has_required_controls():
     assert "https://" not in html and "<script src=" not in html
     assert "</script>.adofai" not in html
     assert "診断用補間" in html and "Midspin" in html
+
+
+def test_compiled_floor_export_preserves_midspin_pause_speed_and_timebase():
+    compiled = compile_adofai(parse_adofai_text('''{
+      "angleData":[0,999,90,180,270],
+      "settings":{"bpm":120,"pitch":80,"countdownTicks":2,"separateCountdownTime":true},
+      "actions":[
+        {"floor":1,"eventType":"Pause","duration":1},
+        {"floor":2,"eventType":"SetSpeed","speedType":"Multiplier","bpmMultiplier":2},
+        {"floor":3,"eventType":"Twirl"}
+      ]
+    }'''))
+    segment = build_playable_segment(compiled)
+    floors = replay._floor_rows(compiled, segment)
+    assert any(floor["midspin"] for floor in floors)
+    assert any("Pause" in floor["markers"] for floor in floors)
+    assert any("SetSpeed" in floor["markers"] for floor in floors)
+    assert any("Twirl" in floor["markers"] for floor in floors)
+    assert any(floor["pause_chart_s"] > 0 for floor in floors)
+    assert len({floor["bpm"] for floor in floors}) > 1
+    assert [floor["episode_s"] for floor in floors] == sorted(
+        floor["episode_s"] for floor in floors
+    )
+    for value in (0.0, segment.duration_s * .5, segment.duration_s):
+        chart_time = segment.chart_time_from_episode(value)
+        assert segment.episode_time_from_chart(chart_time) == value

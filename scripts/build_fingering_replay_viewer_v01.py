@@ -248,8 +248,10 @@ def build_case_payload(case: dict, *, checkpoint: Path) -> dict:
             "segment_end_chart_s": segment.end_chart_s,
             "pitch_percent": compiled.pitch_percent, "pitch_ratio": pitch_ratio,
             "offset_ms": compiled.offset_ms,
+            "initial_bpm": compiled.initial_bpm,
             "countdown_ticks": compiled.countdown_ticks,
             "separate_countdown_time": compiled.separate_countdown_time,
+            "separate_countdown_chart_s": compiled._separate_countdown_chart_seconds(),
             "formula": {
                 "chart": "segment_start_chart_s + episode_s * pitch_ratio",
                 "audio": "(chart_s + offset_ms/1000 - separate_countdown_chart_s) / pitch_ratio",
@@ -312,7 +314,7 @@ function binaryLast(rows,time,get=x=>x[0]){{let lo=0,hi=rows.length-1;if(!rows.l
 function traceAt(policy,time){{const rows=D.policies[policy].trace,i=binaryLast(rows,time);return rows[Math.max(0,i)]}}
 function eventAt(time){{let next=D.events.findIndex(e=>e.episode_s>=time-1e-9);if(next<0)next=D.events.length-1;return D.events[next]}}
 function floorAt(time){{const i=binaryLast(D.floors,time,f=>f.episode_s);return D.floors[Math.max(0,i)]}}
-function timeValues(time){{const chart=D.timebase.segment_start_chart_s+time*D.timebase.pitch_ratio;const separate=D.timebase.separate_countdown_time?D.timebase.countdown_ticks*(60/Math.max(1,D.floors[0].bpm)):0;const audio=(chart+D.timebase.offset_ms/1000-separate)/D.timebase.pitch_ratio;return{{chart,audio}}}}
+function timeValues(time){{const chart=D.timebase.segment_start_chart_s+time*D.timebase.pitch_ratio;const audio=(chart+D.timebase.offset_ms/1000-D.timebase.separate_countdown_chart_s)/D.timebase.pitch_ratio;return{{chart,audio}}}}
 function planetPoint(current,next,time){{if(!next)return{{x:current.x,y:current.y,p:1}};const pause=current.pause_chart_s/D.timebase.pitch_ratio,start=current.episode_s+pause,span=Math.max(1e-9,next.episode_s-start),p=Math.max(0,Math.min(1,(time-start)/span));const dx=next.x-current.x,dy=next.y-current.y,len=Math.hypot(dx,dy)||1,bow=Math.sin(Math.PI*p)*.38*(current.is_ccw?-1:1);return{{x:current.x+dx*p-dy/len*bow,y:current.y+dy*p+dx/len*bow,p}}}}
 function drawChart(){{const current=floorAt(t),next=D.floors.find(f=>f.episode_s>t+1e-9)||current,planet=planetPoint(current,next,t),ev=eventAt(t);const W=canvas.width,H=canvas.height,scale=54,cx=W/2,cy=H/2,wx=x=>cx+(x-current.x)*scale,wy=y=>cy-(y-current.y)*scale;ctx.clearRect(0,0,W,H);ctx.fillStyle='#08111f';ctx.fillRect(0,0,W,H);const around=D.floors.filter(f=>Math.abs(f.index-current.index)<=20);ctx.beginPath();around.forEach((f,i)=>i?ctx.lineTo(wx(f.x),wy(f.y)):ctx.moveTo(wx(f.x),wy(f.y)));ctx.strokeStyle='#34455d';ctx.lineWidth=4;ctx.stroke();for(const f of around){{const target=D.events.some(e=>e.floor_indices.includes(f.index));ctx.beginPath();ctx.arc(wx(f.x),wy(f.y),f.midspin?5:8,0,Math.PI*2);ctx.fillStyle=f.index===current.index?'#ffd36d':target?'#55c5e2':'#657287';ctx.fill();if(f.midspin){{ctx.strokeStyle='#e893d1';ctx.stroke()}}if(f.markers.length){{ctx.fillStyle='#d9e6f7';ctx.font='10px sans-serif';ctx.fillText(f.markers.map(x=>x==='SetSpeed'?'S':x==='Twirl'?'T':x==='Pause'?'P':x==='MultiPlanet'?'M':'').join(''),wx(f.x)-5,wy(f.y)-12)}}}}
 ctx.beginPath();ctx.arc(wx(current.x),wy(current.y),12,0,Math.PI*2);ctx.fillStyle='#ef6f88';ctx.fill();ctx.beginPath();ctx.arc(wx(planet.x),wy(planet.y),11,0,Math.PI*2);ctx.fillStyle='#68d6ec';ctx.fill();if(ev){{const target=D.floors.find(f=>f.index===ev.floor_indices[0]);if(target){{ctx.strokeStyle='#8af0a0';ctx.lineWidth=3;ctx.strokeRect(wx(target.x)-13,wy(target.y)-13,26,26)}}}}ctx.fillStyle='#dce8f6';ctx.font='14px ui-monospace,monospace';ctx.fillText(`floor ${{current.index}} | BPM ${{current.bpm.toFixed(2)}} | ${{current.num_planets}} planets`,15,24)}}
