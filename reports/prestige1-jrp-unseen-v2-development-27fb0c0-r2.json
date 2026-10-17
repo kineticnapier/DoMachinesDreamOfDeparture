@@ -1,0 +1,1837 @@
+{
+  "version": "prestige1-jrp-checkpoint-unseen-v2",
+  "bridge_version": "stage-t-jrp-hit-epoch-v2",
+  "status": "FAIL",
+  "generated_at_utc": "2026-10-17T02:25:29.019421+00:00",
+  "partition": "development",
+  "qualification_claim_permitted": false,
+  "selection": {
+    "source_role": "Train",
+    "checkpoint_train_excluded": true,
+    "ordering": "content_sha256",
+    "partition_sizes": [
+      20,
+      20,
+      20
+    ],
+    "window": "middle 8 seconds",
+    "no_metric_based_selection": true
+  },
+  "checkpoint": "checkpoints\\prestige1\\prestige_v2.pt",
+  "checkpoint_sha256": "241dc764ddde547edfe434e60bc9b78a125b0ebd4751575729c48033a1043a3e",
+  "core_sha256": "a9d00a26c24ad19e815a0d768851f8040e00748e3a6474a31ce786576f53c710",
+  "physical_outcome_parity": true,
+  "baseline": {
+    "charts": 20,
+    "targets": 1340,
+    "baseline_matches": 1310,
+    "baseline_tracking_rate": 0.9776119402985075,
+    "baseline_false": 3,
+    "combined_matches": 1310,
+    "combined_tracking_rate": 0.9776119402985075,
+    "combined_false": 3,
+    "jrp_added": 0,
+    "jrp_matched": 0,
+    "jrp_false": 0,
+    "motor_hits": 224,
+    "motor_misses": 1096,
+    "motor_too_early": 62,
+    "motor_overloads": 1,
+    "physical_keydowns": 286
+  },
+  "jrp_visible": {
+    "charts": 20,
+    "targets": 1340,
+    "baseline_matches": 1310,
+    "baseline_tracking_rate": 0.9776119402985075,
+    "baseline_false": 3,
+    "combined_matches": 1310,
+    "combined_tracking_rate": 0.9776119402985075,
+    "combined_false": 4,
+    "jrp_added": 1,
+    "jrp_matched": 0,
+    "jrp_false": 1,
+    "motor_hits": 224,
+    "motor_misses": 1096,
+    "motor_too_early": 62,
+    "motor_overloads": 1,
+    "physical_keydowns": 286
+  },
+  "improved": false,
+  "rows": [
+    {
+      "index": 1,
+      "chart": "05665 - ENERGY SYNERGY MATRIX - rKizCora _ kernby & 1 more",
+      "chart_sha256": "03ab197d0c74854a1d84561025156e11fe6b568c8a30e7e6538c772967271f7e",
+      "window_s": [
+        57.500000323945024,
+        65.50000032394502
+      ],
+      "same_physical_outcome": true,
+      "hidden": {
+        "policy_label": "prestige_v2_jrp_hidden",
+        "jrp_mode": "normal",
+        "jrp_visible": false,
+        "visible_delay_frames": 0,
+        "frames": 807,
+        "actual_hits": 8,
+        "actual_misses": 40,
+        "actual_too_early": 3,
+        "actual_overload": false,
+        "physical_keydowns": 11,
+        "actual_display_hit_hooks": 8,
+        "observed_text_changes": 0,
+        "anchored_frames": 0,
+        "jrp_added_frames": 0,
+        "unique_jrp_candidates": 0,
+        "matched_jrp_candidates": 0,
+        "false_jrp_candidates": 0,
+        "unique_jrp_forecasts": 0,
+        "matched_jrp_forecasts": 0,
+        "false_jrp_forecasts": 0,
+        "unique_baseline_elapsed": 46,
+        "matched_baseline_elapsed": 46,
+        "target_count": 48,
+        "matched_combined": 46,
+        "false_combined": 0,
+        "baseline_mae_ms": 8.045630255474624e-06,
+        "combined_mae_ms": 8.045630255474624e-06,
+        "mean_jrp_confidence": null,
+        "cbpm_statuses": [
+          [
+            "no_confirmed_display_anchor",
+            807
+          ]
+        ],
+        "first_jrp_due_s": []
+      },
+      "visible": {
+        "policy_label": "prestige_v2_jrp_hit_epoch_v2",
+        "jrp_mode": "normal",
+        "jrp_visible": true,
+        "visible_delay_frames": 0,
+        "frames": 807,
+        "actual_hits": 8,
+        "actual_misses": 40,
+        "actual_too_early": 3,
+        "actual_overload": false,
+        "physical_keydowns": 11,
+        "actual_display_hit_hooks": 8,
+        "observed_text_changes": 4,
+        "anchored_frames": 0,
+        "jrp_added_frames": 0,
+        "unique_jrp_candidates": 0,
+        "matched_jrp_candidates": 0,
+        "false_jrp_candidates": 0,
+        "unique_jrp_forecasts": 0,
+        "matched_jrp_forecasts": 0,
+        "false_jrp_forecasts": 0,
+        "unique_baseline_elapsed": 46,
+        "matched_baseline_elapsed": 46,
+        "target_count": 48,
+        "matched_combined": 46,
+        "false_combined": 0,
+        "baseline_mae_ms": 8.045630255474624e-06,
+        "combined_mae_ms": 8.045630255474624e-06,
+        "mean_jrp_confidence": null,
+        "cbpm_statuses": [
+          [
+            "no_confirmed_display_anchor",
+            807
+          ]
+        ],
+        "first_jrp_due_s": []
+      }
+    },
+    {
+      "index": 2,
+      "chart": "04042 - bool - vo[ICE]",
+      "chart_sha256": "04981e92f74288b8aac7286e83420b933036d2caead9c157bc33b706779ad1b1",
+      "window_s": [
+        28.067572838110458,
+        36.06757283811046
+      ],
+      "same_physical_outcome": true,
+      "hidden": {
+        "policy_label": "prestige_v2_jrp_hidden",
+        "jrp_mode": "normal",
+        "jrp_visible": false,
+        "visible_delay_frames": 0,
+        "frames": 806,
+        "actual_hits": 24,
+        "actual_misses": 184,
+        "actual_too_early": 1,
+        "actual_overload": false,
+        "physical_keydowns": 25,
+        "actual_display_hit_hooks": 24,
+        "observed_text_changes": 0,
+        "anchored_frames": 0,
+        "jrp_added_frames": 0,
+        "unique_jrp_candidates": 0,
+        "matched_jrp_candidates": 0,
+        "false_jrp_candidates": 0,
+        "unique_jrp_forecasts": 0,
+        "matched_jrp_forecasts": 0,
+        "false_jrp_forecasts": 0,
+        "unique_baseline_elapsed": 208,
+        "matched_baseline_elapsed": 208,
+        "target_count": 208,
+        "matched_combined": 208,
+        "false_combined": 0,
+        "baseline_mae_ms": 2.1318261208475127e-06,
+        "combined_mae_ms": 2.1318261208475127e-06,
+        "mean_jrp_confidence": null,
+        "cbpm_statuses": [
+          [
+            "no_confirmed_display_anchor",
+            806
+          ]
+        ],
+        "first_jrp_due_s": []
+      },
+      "visible": {
+        "policy_label": "prestige_v2_jrp_hit_epoch_v2",
+        "jrp_mode": "normal",
+        "jrp_visible": true,
+        "visible_delay_frames": 0,
+        "frames": 806,
+        "actual_hits": 24,
+        "actual_misses": 184,
+        "actual_too_early": 1,
+        "actual_overload": false,
+        "physical_keydowns": 25,
+        "actual_display_hit_hooks": 24,
+        "observed_text_changes": 11,
+        "anchored_frames": 1,
+        "jrp_added_frames": 1,
+        "unique_jrp_candidates": 1,
+        "matched_jrp_candidates": 0,
+        "false_jrp_candidates": 1,
+        "unique_jrp_forecasts": 1,
+        "matched_jrp_forecasts": 0,
+        "false_jrp_forecasts": 1,
+        "unique_baseline_elapsed": 208,
+        "matched_baseline_elapsed": 208,
+        "target_count": 208,
+        "matched_combined": 208,
+        "false_combined": 1,
+        "baseline_mae_ms": 2.1318261208475127e-06,
+        "combined_mae_ms": 2.1318261208475127e-06,
+        "mean_jrp_confidence": 0.3214186208938629,
+        "cbpm_statuses": [
+          [
+            "ambiguous_coincident_event",
+            4
+          ],
+          [
+            "eligible",
+            1
+          ],
+          [
+            "no_confirmed_display_anchor",
+            801
+          ]
+        ],
+        "first_jrp_due_s": [
+          7.957673862320514
+        ]
+      }
+    },
+    {
+      "index": 3,
+      "chart": "05652 - VANGUARD-1 - 〈Geodetics〉",
+      "chart_sha256": "07af3b1617656716ca5b31e4a6f77341a70414723728198784f03782ca417fe9",
+      "window_s": [
+        53.26470585825292,
+        61.26470585825292
+      ],
+      "same_physical_outcome": true,
+      "hidden": {
+        "policy_label": "prestige_v2_jrp_hidden",
+        "jrp_mode": "normal",
+        "jrp_visible": false,
+        "visible_delay_frames": 0,
+        "frames": 795,
+        "actual_hits": 6,
+        "actual_misses": 31,
+        "actual_too_early": 5,
+        "actual_overload": false,
+        "physical_keydowns": 11,
+        "actual_display_hit_hooks": 6,
+        "observed_text_changes": 0,
+        "anchored_frames": 0,
+        "jrp_added_frames": 0,
+        "unique_jrp_candidates": 0,
+        "matched_jrp_candidates": 0,
+        "false_jrp_candidates": 0,
+        "unique_jrp_forecasts": 0,
+        "matched_jrp_forecasts": 0,
+        "false_jrp_forecasts": 0,
+        "unique_baseline_elapsed": 37,
+        "matched_baseline_elapsed": 37,
+        "target_count": 37,
+        "matched_combined": 37,
+        "false_combined": 0,
+        "baseline_mae_ms": 4.460056334014455e-06,
+        "combined_mae_ms": 4.460056334014455e-06,
+        "mean_jrp_confidence": null,
+        "cbpm_statuses": [
+          [
+            "no_confirmed_display_anchor",
+            795
+          ]
+        ],
+        "first_jrp_due_s": []
+      },
+      "visible": {
+        "policy_label": "prestige_v2_jrp_hit_epoch_v2",
+        "jrp_mode": "normal",
+        "jrp_visible": true,
+        "visible_delay_frames": 0,
+        "frames": 795,
+        "actual_hits": 6,
+        "actual_misses": 31,
+        "actual_too_early": 5,
+        "actual_overload": false,
+        "physical_keydowns": 11,
+        "actual_display_hit_hooks": 6,
+        "observed_text_changes": 5,
+        "anchored_frames": 0,
+        "jrp_added_frames": 0,
+        "unique_jrp_candidates": 0,
+        "matched_jrp_candidates": 0,
+        "false_jrp_candidates": 0,
+        "unique_jrp_forecasts": 0,
+        "matched_jrp_forecasts": 0,
+        "false_jrp_forecasts": 0,
+        "unique_baseline_elapsed": 37,
+        "matched_baseline_elapsed": 37,
+        "target_count": 37,
+        "matched_combined": 37,
+        "false_combined": 0,
+        "baseline_mae_ms": 4.460056334014455e-06,
+        "combined_mae_ms": 4.460056334014455e-06,
+        "mean_jrp_confidence": null,
+        "cbpm_statuses": [
+          [
+            "no_confirmed_display_anchor",
+            795
+          ]
+        ],
+        "first_jrp_due_s": []
+      }
+    },
+    {
+      "index": 4,
+      "chart": "08810 - Shploink Overdose - CCNekona",
+      "chart_sha256": "10c8c3536bb77e6eacd51d4fd82355bde87313788bdae040f99462a599241143",
+      "window_s": [
+        39.0000004474902,
+        47.0000004474902
+      ],
+      "same_physical_outcome": true,
+      "hidden": {
+        "policy_label": "prestige_v2_jrp_hidden",
+        "jrp_mode": "normal",
+        "jrp_visible": false,
+        "visible_delay_frames": 0,
+        "frames": 797,
+        "actual_hits": 29,
+        "actual_misses": 62,
+        "actual_too_early": 3,
+        "actual_overload": false,
+        "physical_keydowns": 32,
+        "actual_display_hit_hooks": 29,
+        "observed_text_changes": 0,
+        "anchored_frames": 0,
+        "jrp_added_frames": 0,
+        "unique_jrp_candidates": 0,
+        "matched_jrp_candidates": 0,
+        "false_jrp_candidates": 0,
+        "unique_jrp_forecasts": 0,
+        "matched_jrp_forecasts": 0,
+        "false_jrp_forecasts": 0,
+        "unique_baseline_elapsed": 90,
+        "matched_baseline_elapsed": 90,
+        "target_count": 91,
+        "matched_combined": 90,
+        "false_combined": 0,
+        "baseline_mae_ms": 3.9668188955843675e-06,
+        "combined_mae_ms": 3.9668188955843675e-06,
+        "mean_jrp_confidence": null,
+        "cbpm_statuses": [
+          [
+            "no_confirmed_display_anchor",
+            797
+          ]
+        ],
+        "first_jrp_due_s": []
+      },
+      "visible": {
+        "policy_label": "prestige_v2_jrp_hit_epoch_v2",
+        "jrp_mode": "normal",
+        "jrp_visible": true,
+        "visible_delay_frames": 0,
+        "frames": 797,
+        "actual_hits": 29,
+        "actual_misses": 62,
+        "actual_too_early": 3,
+        "actual_overload": false,
+        "physical_keydowns": 32,
+        "actual_display_hit_hooks": 29,
+        "observed_text_changes": 20,
+        "anchored_frames": 1,
+        "jrp_added_frames": 0,
+        "unique_jrp_candidates": 1,
+        "matched_jrp_candidates": 1,
+        "false_jrp_candidates": 0,
+        "unique_jrp_forecasts": 0,
+        "matched_jrp_forecasts": 0,
+        "false_jrp_forecasts": 0,
+        "unique_baseline_elapsed": 90,
+        "matched_baseline_elapsed": 90,
+        "target_count": 91,
+        "matched_combined": 90,
+        "false_combined": 0,
+        "baseline_mae_ms": 3.9668188955843675e-06,
+        "combined_mae_ms": 3.9668188955843675e-06,
+        "mean_jrp_confidence": null,
+        "cbpm_statuses": [
+          [
+            "ambiguous_coincident_event",
+            1
+          ],
+          [
+            "eligible",
+            1
+          ],
+          [
+            "no_confirmed_display_anchor",
+            795
+          ]
+        ],
+        "first_jrp_due_s": []
+      }
+    },
+    {
+      "index": 5,
+      "chart": "13131 - 『계획 이상 有!』 (feat. 重音テト) - Team Name",
+      "chart_sha256": "167e781dca406fcec3a0ee754a173d40a50b23f1714ee93758ca3eaf53564d64",
+      "window_s": [
+        87.52777829855263,
+        95.52777829855263
+      ],
+      "same_physical_outcome": true,
+      "hidden": {
+        "policy_label": "prestige_v2_jrp_hidden",
+        "jrp_mode": "normal",
+        "jrp_visible": false,
+        "visible_delay_frames": 0,
+        "frames": 791,
+        "actual_hits": 9,
+        "actual_misses": 34,
+        "actual_too_early": 4,
+        "actual_overload": false,
+        "physical_keydowns": 13,
+        "actual_display_hit_hooks": 9,
+        "observed_text_changes": 0,
+        "anchored_frames": 0,
+        "jrp_added_frames": 0,
+        "unique_jrp_candidates": 0,
+        "matched_jrp_candidates": 0,
+        "false_jrp_candidates": 0,
+        "unique_jrp_forecasts": 0,
+        "matched_jrp_forecasts": 0,
+        "false_jrp_forecasts": 0,
+        "unique_baseline_elapsed": 43,
+        "matched_baseline_elapsed": 43,
+        "target_count": 43,
+        "matched_combined": 43,
+        "false_combined": 0,
+        "baseline_mae_ms": 6.466357202601668e-06,
+        "combined_mae_ms": 6.466357202601668e-06,
+        "mean_jrp_confidence": null,
+        "cbpm_statuses": [
+          [
+            "no_confirmed_display_anchor",
+            791
+          ]
+        ],
+        "first_jrp_due_s": []
+      },
+      "visible": {
+        "policy_label": "prestige_v2_jrp_hit_epoch_v2",
+        "jrp_mode": "normal",
+        "jrp_visible": true,
+        "visible_delay_frames": 0,
+        "frames": 791,
+        "actual_hits": 9,
+        "actual_misses": 34,
+        "actual_too_early": 4,
+        "actual_overload": false,
+        "physical_keydowns": 13,
+        "actual_display_hit_hooks": 9,
+        "observed_text_changes": 4,
+        "anchored_frames": 0,
+        "jrp_added_frames": 0,
+        "unique_jrp_candidates": 0,
+        "matched_jrp_candidates": 0,
+        "false_jrp_candidates": 0,
+        "unique_jrp_forecasts": 0,
+        "matched_jrp_forecasts": 0,
+        "false_jrp_forecasts": 0,
+        "unique_baseline_elapsed": 43,
+        "matched_baseline_elapsed": 43,
+        "target_count": 43,
+        "matched_combined": 43,
+        "false_combined": 0,
+        "baseline_mae_ms": 6.466357202601668e-06,
+        "combined_mae_ms": 6.466357202601668e-06,
+        "mean_jrp_confidence": null,
+        "cbpm_statuses": [
+          [
+            "no_confirmed_display_anchor",
+            791
+          ]
+        ],
+        "first_jrp_due_s": []
+      }
+    },
+    {
+      "index": 6,
+      "chart": "09173 - minefield surfing - GMDMachine",
+      "chart_sha256": "199276716bd3cd7b2ae5ebddeb4773c5737cf6118771f9a4d51f8e3802a513f9",
+      "window_s": [
+        50.94113599019425,
+        58.94113599019425
+      ],
+      "same_physical_outcome": true,
+      "hidden": {
+        "policy_label": "prestige_v2_jrp_hidden",
+        "jrp_mode": "normal",
+        "jrp_visible": false,
+        "visible_delay_frames": 0,
+        "frames": 805,
+        "actual_hits": 9,
+        "actual_misses": 64,
+        "actual_too_early": 2,
+        "actual_overload": false,
+        "physical_keydowns": 11,
+        "actual_display_hit_hooks": 9,
+        "observed_text_changes": 0,
+        "anchored_frames": 0,
+        "jrp_added_frames": 0,
+        "unique_jrp_candidates": 0,
+        "matched_jrp_candidates": 0,
+        "false_jrp_candidates": 0,
+        "unique_jrp_forecasts": 0,
+        "matched_jrp_forecasts": 0,
+        "false_jrp_forecasts": 0,
+        "unique_baseline_elapsed": 74,
+        "matched_baseline_elapsed": 73,
+        "target_count": 73,
+        "matched_combined": 73,
+        "false_combined": 1,
+        "baseline_mae_ms": 5.812953961028149e-06,
+        "combined_mae_ms": 5.812953961028149e-06,
+        "mean_jrp_confidence": null,
+        "cbpm_statuses": [
+          [
+            "no_confirmed_display_anchor",
+            805
+          ]
+        ],
+        "first_jrp_due_s": []
+      },
+      "visible": {
+        "policy_label": "prestige_v2_jrp_hit_epoch_v2",
+        "jrp_mode": "normal",
+        "jrp_visible": true,
+        "visible_delay_frames": 0,
+        "frames": 805,
+        "actual_hits": 9,
+        "actual_misses": 64,
+        "actual_too_early": 2,
+        "actual_overload": false,
+        "physical_keydowns": 11,
+        "actual_display_hit_hooks": 9,
+        "observed_text_changes": 8,
+        "anchored_frames": 6,
+        "jrp_added_frames": 0,
+        "unique_jrp_candidates": 2,
+        "matched_jrp_candidates": 2,
+        "false_jrp_candidates": 0,
+        "unique_jrp_forecasts": 0,
+        "matched_jrp_forecasts": 0,
+        "false_jrp_forecasts": 0,
+        "unique_baseline_elapsed": 74,
+        "matched_baseline_elapsed": 73,
+        "target_count": 73,
+        "matched_combined": 73,
+        "false_combined": 1,
+        "baseline_mae_ms": 5.812953961028149e-06,
+        "combined_mae_ms": 5.812953961028149e-06,
+        "mean_jrp_confidence": null,
+        "cbpm_statuses": [
+          [
+            "ambiguous_coincident_event",
+            4
+          ],
+          [
+            "eligible",
+            6
+          ],
+          [
+            "no_confirmed_display_anchor",
+            790
+          ],
+          [
+            "outside_horizon",
+            5
+          ]
+        ],
+        "first_jrp_due_s": []
+      }
+    },
+    {
+      "index": 7,
+      "chart": "07099 - Oracle - Lupel_2 _ 얼불망",
+      "chart_sha256": "1c1876ad02ec741179f9d170d86cb9ffac3ee2cc041a8f066f3e1cd525acf054",
+      "window_s": [
+        65.32021844893355,
+        73.32021844893355
+      ],
+      "same_physical_outcome": true,
+      "hidden": {
+        "policy_label": "prestige_v2_jrp_hidden",
+        "jrp_mode": "normal",
+        "jrp_visible": false,
+        "visible_delay_frames": 0,
+        "frames": 779,
+        "actual_hits": 14,
+        "actual_misses": 37,
+        "actual_too_early": 1,
+        "actual_overload": false,
+        "physical_keydowns": 15,
+        "actual_display_hit_hooks": 14,
+        "observed_text_changes": 0,
+        "anchored_frames": 0,
+        "jrp_added_frames": 0,
+        "unique_jrp_candidates": 0,
+        "matched_jrp_candidates": 0,
+        "false_jrp_candidates": 0,
+        "unique_jrp_forecasts": 0,
+        "matched_jrp_forecasts": 0,
+        "false_jrp_forecasts": 0,
+        "unique_baseline_elapsed": 50,
+        "matched_baseline_elapsed": 50,
+        "target_count": 51,
+        "matched_combined": 50,
+        "false_combined": 0,
+        "baseline_mae_ms": 5.583511787227158e-06,
+        "combined_mae_ms": 5.583511787227158e-06,
+        "mean_jrp_confidence": null,
+        "cbpm_statuses": [
+          [
+            "no_confirmed_display_anchor",
+            779
+          ]
+        ],
+        "first_jrp_due_s": []
+      },
+      "visible": {
+        "policy_label": "prestige_v2_jrp_hit_epoch_v2",
+        "jrp_mode": "normal",
+        "jrp_visible": true,
+        "visible_delay_frames": 0,
+        "frames": 779,
+        "actual_hits": 14,
+        "actual_misses": 37,
+        "actual_too_early": 1,
+        "actual_overload": false,
+        "physical_keydowns": 15,
+        "actual_display_hit_hooks": 14,
+        "observed_text_changes": 9,
+        "anchored_frames": 0,
+        "jrp_added_frames": 0,
+        "unique_jrp_candidates": 0,
+        "matched_jrp_candidates": 0,
+        "false_jrp_candidates": 0,
+        "unique_jrp_forecasts": 0,
+        "matched_jrp_forecasts": 0,
+        "false_jrp_forecasts": 0,
+        "unique_baseline_elapsed": 50,
+        "matched_baseline_elapsed": 50,
+        "target_count": 51,
+        "matched_combined": 50,
+        "false_combined": 0,
+        "baseline_mae_ms": 5.583511787227158e-06,
+        "combined_mae_ms": 5.583511787227158e-06,
+        "mean_jrp_confidence": null,
+        "cbpm_statuses": [
+          [
+            "ambiguous_coincident_event",
+            1
+          ],
+          [
+            "no_confirmed_display_anchor",
+            778
+          ]
+        ],
+        "first_jrp_due_s": []
+      }
+    },
+    {
+      "index": 8,
+      "chart": "11663 - Nameless Garden - oSKYo _ oSKYo",
+      "chart_sha256": "2117f03d532c3019749653afce90500426b121d9f09ed9286268c168e54de0f8",
+      "window_s": [
+        65.38081210460062,
+        73.38081210460062
+      ],
+      "same_physical_outcome": true,
+      "hidden": {
+        "policy_label": "prestige_v2_jrp_hidden",
+        "jrp_mode": "normal",
+        "jrp_visible": false,
+        "visible_delay_frames": 0,
+        "frames": 799,
+        "actual_hits": 6,
+        "actual_misses": 38,
+        "actual_too_early": 10,
+        "actual_overload": false,
+        "physical_keydowns": 16,
+        "actual_display_hit_hooks": 6,
+        "observed_text_changes": 0,
+        "anchored_frames": 0,
+        "jrp_added_frames": 0,
+        "unique_jrp_candidates": 0,
+        "matched_jrp_candidates": 0,
+        "false_jrp_candidates": 0,
+        "unique_jrp_forecasts": 0,
+        "matched_jrp_forecasts": 0,
+        "false_jrp_forecasts": 0,
+        "unique_baseline_elapsed": 44,
+        "matched_baseline_elapsed": 44,
+        "target_count": 44,
+        "matched_combined": 44,
+        "false_combined": 0,
+        "baseline_mae_ms": 6.35297280841135e-06,
+        "combined_mae_ms": 6.35297280841135e-06,
+        "mean_jrp_confidence": null,
+        "cbpm_statuses": [
+          [
+            "no_confirmed_display_anchor",
+            799
+          ]
+        ],
+        "first_jrp_due_s": []
+      },
+      "visible": {
+        "policy_label": "prestige_v2_jrp_hit_epoch_v2",
+        "jrp_mode": "normal",
+        "jrp_visible": true,
+        "visible_delay_frames": 0,
+        "frames": 799,
+        "actual_hits": 6,
+        "actual_misses": 38,
+        "actual_too_early": 10,
+        "actual_overload": false,
+        "physical_keydowns": 16,
+        "actual_display_hit_hooks": 6,
+        "observed_text_changes": 5,
+        "anchored_frames": 0,
+        "jrp_added_frames": 0,
+        "unique_jrp_candidates": 0,
+        "matched_jrp_candidates": 0,
+        "false_jrp_candidates": 0,
+        "unique_jrp_forecasts": 0,
+        "matched_jrp_forecasts": 0,
+        "false_jrp_forecasts": 0,
+        "unique_baseline_elapsed": 44,
+        "matched_baseline_elapsed": 44,
+        "target_count": 44,
+        "matched_combined": 44,
+        "false_combined": 0,
+        "baseline_mae_ms": 6.35297280841135e-06,
+        "combined_mae_ms": 6.35297280841135e-06,
+        "mean_jrp_confidence": null,
+        "cbpm_statuses": [
+          [
+            "ambiguous_coincident_event",
+            1
+          ],
+          [
+            "no_confirmed_display_anchor",
+            798
+          ]
+        ],
+        "first_jrp_due_s": []
+      }
+    },
+    {
+      "index": 9,
+      "chart": "05664 - gur yvsr (仮) - yeetyote",
+      "chart_sha256": "25da98ff8051190b1a7da17c9b1326d53b0d54a1e1ab1a54977df895c50aa75f",
+      "window_s": [
+        62.08203112412957,
+        70.08203112412957
+      ],
+      "same_physical_outcome": true,
+      "hidden": {
+        "policy_label": "prestige_v2_jrp_hidden",
+        "jrp_mode": "normal",
+        "jrp_visible": false,
+        "visible_delay_frames": 0,
+        "frames": 783,
+        "actual_hits": 8,
+        "actual_misses": 33,
+        "actual_too_early": 6,
+        "actual_overload": false,
+        "physical_keydowns": 14,
+        "actual_display_hit_hooks": 8,
+        "observed_text_changes": 0,
+        "anchored_frames": 0,
+        "jrp_added_frames": 0,
+        "unique_jrp_candidates": 0,
+        "matched_jrp_candidates": 0,
+        "false_jrp_candidates": 0,
+        "unique_jrp_forecasts": 0,
+        "matched_jrp_forecasts": 0,
+        "false_jrp_forecasts": 0,
+        "unique_baseline_elapsed": 39,
+        "matched_baseline_elapsed": 39,
+        "target_count": 41,
+        "matched_combined": 39,
+        "false_combined": 0,
+        "baseline_mae_ms": 9.031506570033585e-06,
+        "combined_mae_ms": 9.031506570033585e-06,
+        "mean_jrp_confidence": null,
+        "cbpm_statuses": [
+          [
+            "no_confirmed_display_anchor",
+            783
+          ]
+        ],
+        "first_jrp_due_s": []
+      },
+      "visible": {
+        "policy_label": "prestige_v2_jrp_hit_epoch_v2",
+        "jrp_mode": "normal",
+        "jrp_visible": true,
+        "visible_delay_frames": 0,
+        "frames": 783,
+        "actual_hits": 8,
+        "actual_misses": 33,
+        "actual_too_early": 6,
+        "actual_overload": false,
+        "physical_keydowns": 14,
+        "actual_display_hit_hooks": 8,
+        "observed_text_changes": 7,
+        "anchored_frames": 0,
+        "jrp_added_frames": 0,
+        "unique_jrp_candidates": 0,
+        "matched_jrp_candidates": 0,
+        "false_jrp_candidates": 0,
+        "unique_jrp_forecasts": 0,
+        "matched_jrp_forecasts": 0,
+        "false_jrp_forecasts": 0,
+        "unique_baseline_elapsed": 39,
+        "matched_baseline_elapsed": 39,
+        "target_count": 41,
+        "matched_combined": 39,
+        "false_combined": 0,
+        "baseline_mae_ms": 9.031506570033585e-06,
+        "combined_mae_ms": 9.031506570033585e-06,
+        "mean_jrp_confidence": null,
+        "cbpm_statuses": [
+          [
+            "ambiguous_coincident_event",
+            1
+          ],
+          [
+            "no_confirmed_display_anchor",
+            782
+          ]
+        ],
+        "first_jrp_due_s": []
+      }
+    },
+    {
+      "index": 10,
+      "chart": "10704 - Melted Snow (Hard) - seeker",
+      "chart_sha256": "2a546a85100849c56f30d7a9f4e2ff6a5fc6d49cb1e43942ba91785c1672f147",
+      "window_s": [
+        59.91304377241806,
+        67.91304377241806
+      ],
+      "same_physical_outcome": true,
+      "hidden": {
+        "policy_label": "prestige_v2_jrp_hidden",
+        "jrp_mode": "normal",
+        "jrp_visible": false,
+        "visible_delay_frames": 0,
+        "frames": 798,
+        "actual_hits": 11,
+        "actual_misses": 62,
+        "actual_too_early": 2,
+        "actual_overload": false,
+        "physical_keydowns": 13,
+        "actual_display_hit_hooks": 11,
+        "observed_text_changes": 0,
+        "anchored_frames": 0,
+        "jrp_added_frames": 0,
+        "unique_jrp_candidates": 0,
+        "matched_jrp_candidates": 0,
+        "false_jrp_candidates": 0,
+        "unique_jrp_forecasts": 0,
+        "matched_jrp_forecasts": 0,
+        "false_jrp_forecasts": 0,
+        "unique_baseline_elapsed": 72,
+        "matched_baseline_elapsed": 72,
+        "target_count": 73,
+        "matched_combined": 72,
+        "false_combined": 0,
+        "baseline_mae_ms": 3.2926370728485007e-06,
+        "combined_mae_ms": 3.2926370728485007e-06,
+        "mean_jrp_confidence": null,
+        "cbpm_statuses": [
+          [
+            "no_confirmed_display_anchor",
+            798
+          ]
+        ],
+        "first_jrp_due_s": []
+      },
+      "visible": {
+        "policy_label": "prestige_v2_jrp_hit_epoch_v2",
+        "jrp_mode": "normal",
+        "jrp_visible": true,
+        "visible_delay_frames": 0,
+        "frames": 798,
+        "actual_hits": 11,
+        "actual_misses": 62,
+        "actual_too_early": 2,
+        "actual_overload": false,
+        "physical_keydowns": 13,
+        "actual_display_hit_hooks": 11,
+        "observed_text_changes": 5,
+        "anchored_frames": 6,
+        "jrp_added_frames": 0,
+        "unique_jrp_candidates": 2,
+        "matched_jrp_candidates": 2,
+        "false_jrp_candidates": 0,
+        "unique_jrp_forecasts": 0,
+        "matched_jrp_forecasts": 0,
+        "false_jrp_forecasts": 0,
+        "unique_baseline_elapsed": 72,
+        "matched_baseline_elapsed": 72,
+        "target_count": 73,
+        "matched_combined": 72,
+        "false_combined": 0,
+        "baseline_mae_ms": 3.2926370728485007e-06,
+        "combined_mae_ms": 3.2926370728485007e-06,
+        "mean_jrp_confidence": null,
+        "cbpm_statuses": [
+          [
+            "anchor_expired",
+            2
+          ],
+          [
+            "eligible",
+            6
+          ],
+          [
+            "no_confirmed_display_anchor",
+            774
+          ],
+          [
+            "outside_horizon",
+            16
+          ]
+        ],
+        "first_jrp_due_s": []
+      }
+    },
+    {
+      "index": 11,
+      "chart": "04432 - ADOFAI Regular Dan - 2nd Dan - yzuio & 5 more",
+      "chart_sha256": "2ada1d0a06b5bd4ed259b9b6a480b15a7e964fa2e8ca25e5f0bc50db306b34c0",
+      "window_s": [
+        244.52525838673935,
+        252.52525838673935
+      ],
+      "same_physical_outcome": true,
+      "hidden": {
+        "policy_label": "prestige_v2_jrp_hidden",
+        "jrp_mode": "normal",
+        "jrp_visible": false,
+        "visible_delay_frames": 0,
+        "frames": 795,
+        "actual_hits": 9,
+        "actual_misses": 43,
+        "actual_too_early": 1,
+        "actual_overload": false,
+        "physical_keydowns": 10,
+        "actual_display_hit_hooks": 9,
+        "observed_text_changes": 0,
+        "anchored_frames": 0,
+        "jrp_added_frames": 0,
+        "unique_jrp_candidates": 0,
+        "matched_jrp_candidates": 0,
+        "false_jrp_candidates": 0,
+        "unique_jrp_forecasts": 0,
+        "matched_jrp_forecasts": 0,
+        "false_jrp_forecasts": 0,
+        "unique_baseline_elapsed": 52,
+        "matched_baseline_elapsed": 52,
+        "target_count": 52,
+        "matched_combined": 52,
+        "false_combined": 0,
+        "baseline_mae_ms": 7.45368743062439e-06,
+        "combined_mae_ms": 7.45368743062439e-06,
+        "mean_jrp_confidence": null,
+        "cbpm_statuses": [
+          [
+            "no_confirmed_display_anchor",
+            795
+          ]
+        ],
+        "first_jrp_due_s": []
+      },
+      "visible": {
+        "policy_label": "prestige_v2_jrp_hit_epoch_v2",
+        "jrp_mode": "normal",
+        "jrp_visible": true,
+        "visible_delay_frames": 0,
+        "frames": 795,
+        "actual_hits": 9,
+        "actual_misses": 43,
+        "actual_too_early": 1,
+        "actual_overload": false,
+        "physical_keydowns": 10,
+        "actual_display_hit_hooks": 9,
+        "observed_text_changes": 6,
+        "anchored_frames": 3,
+        "jrp_added_frames": 0,
+        "unique_jrp_candidates": 1,
+        "matched_jrp_candidates": 1,
+        "false_jrp_candidates": 0,
+        "unique_jrp_forecasts": 0,
+        "matched_jrp_forecasts": 0,
+        "false_jrp_forecasts": 0,
+        "unique_baseline_elapsed": 52,
+        "matched_baseline_elapsed": 52,
+        "target_count": 52,
+        "matched_combined": 52,
+        "false_combined": 0,
+        "baseline_mae_ms": 7.45368743062439e-06,
+        "combined_mae_ms": 7.45368743062439e-06,
+        "mean_jrp_confidence": null,
+        "cbpm_statuses": [
+          [
+            "eligible",
+            3
+          ],
+          [
+            "no_confirmed_display_anchor",
+            787
+          ],
+          [
+            "outside_horizon",
+            5
+          ]
+        ],
+        "first_jrp_due_s": []
+      }
+    },
+    {
+      "index": 12,
+      "chart": "07322 - Runaway - smy258",
+      "chart_sha256": "2e67ce666b72d72e61f353be22467eef60a10a6cbc935adc73baf833d3cdb27e",
+      "window_s": [
+        39.673611511148984,
+        47.673611511148984
+      ],
+      "same_physical_outcome": true,
+      "hidden": {
+        "policy_label": "prestige_v2_jrp_hidden",
+        "jrp_mode": "normal",
+        "jrp_visible": false,
+        "visible_delay_frames": 0,
+        "frames": 806,
+        "actual_hits": 15,
+        "actual_misses": 110,
+        "actual_too_early": 0,
+        "actual_overload": false,
+        "physical_keydowns": 15,
+        "actual_display_hit_hooks": 15,
+        "observed_text_changes": 0,
+        "anchored_frames": 0,
+        "jrp_added_frames": 0,
+        "unique_jrp_candidates": 0,
+        "matched_jrp_candidates": 0,
+        "false_jrp_candidates": 0,
+        "unique_jrp_forecasts": 0,
+        "matched_jrp_forecasts": 0,
+        "false_jrp_forecasts": 0,
+        "unique_baseline_elapsed": 125,
+        "matched_baseline_elapsed": 124,
+        "target_count": 125,
+        "matched_combined": 124,
+        "false_combined": 1,
+        "baseline_mae_ms": 2.1349924253466133e-06,
+        "combined_mae_ms": 2.1349924253466133e-06,
+        "mean_jrp_confidence": null,
+        "cbpm_statuses": [
+          [
+            "no_confirmed_display_anchor",
+            806
+          ]
+        ],
+        "first_jrp_due_s": []
+      },
+      "visible": {
+        "policy_label": "prestige_v2_jrp_hit_epoch_v2",
+        "jrp_mode": "normal",
+        "jrp_visible": true,
+        "visible_delay_frames": 0,
+        "frames": 806,
+        "actual_hits": 15,
+        "actual_misses": 110,
+        "actual_too_early": 0,
+        "actual_overload": false,
+        "physical_keydowns": 15,
+        "actual_display_hit_hooks": 15,
+        "observed_text_changes": 8,
+        "anchored_frames": 0,
+        "jrp_added_frames": 0,
+        "unique_jrp_candidates": 0,
+        "matched_jrp_candidates": 0,
+        "false_jrp_candidates": 0,
+        "unique_jrp_forecasts": 0,
+        "matched_jrp_forecasts": 0,
+        "false_jrp_forecasts": 0,
+        "unique_baseline_elapsed": 125,
+        "matched_baseline_elapsed": 124,
+        "target_count": 125,
+        "matched_combined": 124,
+        "false_combined": 1,
+        "baseline_mae_ms": 2.1349924253466133e-06,
+        "combined_mae_ms": 2.1349924253466133e-06,
+        "mean_jrp_confidence": null,
+        "cbpm_statuses": [
+          [
+            "no_confirmed_display_anchor",
+            805
+          ],
+          [
+            "outside_horizon",
+            1
+          ]
+        ],
+        "first_jrp_due_s": []
+      }
+    },
+    {
+      "index": 13,
+      "chart": "09315 - Lunar Gateway - hotduck _ oSKYo",
+      "chart_sha256": "30d68709804bb2eb5487bc149b3f1ae483c711638afff4949c030989ae226b26",
+      "window_s": [
+        76.8332556593549,
+        84.8332556593549
+      ],
+      "same_physical_outcome": true,
+      "hidden": {
+        "policy_label": "prestige_v2_jrp_hidden",
+        "jrp_mode": "normal",
+        "jrp_visible": false,
+        "visible_delay_frames": 0,
+        "frames": 822,
+        "actual_hits": 2,
+        "actual_misses": 8,
+        "actual_too_early": 2,
+        "actual_overload": false,
+        "physical_keydowns": 4,
+        "actual_display_hit_hooks": 2,
+        "observed_text_changes": 0,
+        "anchored_frames": 0,
+        "jrp_added_frames": 0,
+        "unique_jrp_candidates": 0,
+        "matched_jrp_candidates": 0,
+        "false_jrp_candidates": 0,
+        "unique_jrp_forecasts": 0,
+        "matched_jrp_forecasts": 0,
+        "false_jrp_forecasts": 0,
+        "unique_baseline_elapsed": 10,
+        "matched_baseline_elapsed": 10,
+        "target_count": 10,
+        "matched_combined": 10,
+        "false_combined": 0,
+        "baseline_mae_ms": 3.3526185534704656e-05,
+        "combined_mae_ms": 3.3526185534704656e-05,
+        "mean_jrp_confidence": null,
+        "cbpm_statuses": [
+          [
+            "no_confirmed_display_anchor",
+            822
+          ]
+        ],
+        "first_jrp_due_s": []
+      },
+      "visible": {
+        "policy_label": "prestige_v2_jrp_hit_epoch_v2",
+        "jrp_mode": "normal",
+        "jrp_visible": true,
+        "visible_delay_frames": 0,
+        "frames": 822,
+        "actual_hits": 2,
+        "actual_misses": 8,
+        "actual_too_early": 2,
+        "actual_overload": false,
+        "physical_keydowns": 4,
+        "actual_display_hit_hooks": 2,
+        "observed_text_changes": 0,
+        "anchored_frames": 0,
+        "jrp_added_frames": 0,
+        "unique_jrp_candidates": 0,
+        "matched_jrp_candidates": 0,
+        "false_jrp_candidates": 0,
+        "unique_jrp_forecasts": 0,
+        "matched_jrp_forecasts": 0,
+        "false_jrp_forecasts": 0,
+        "unique_baseline_elapsed": 10,
+        "matched_baseline_elapsed": 10,
+        "target_count": 10,
+        "matched_combined": 10,
+        "false_combined": 0,
+        "baseline_mae_ms": 3.3526185534704656e-05,
+        "combined_mae_ms": 3.3526185534704656e-05,
+        "mean_jrp_confidence": null,
+        "cbpm_statuses": [
+          [
+            "no_confirmed_display_anchor",
+            822
+          ]
+        ],
+        "first_jrp_due_s": []
+      }
+    },
+    {
+      "index": 14,
+      "chart": "03665 - Nyarlathotep's Dreamland - Silis",
+      "chart_sha256": "3b527ee716a396ab919ac7b563ac5d89f8fa963680dc17a7b3882b5105201ace",
+      "window_s": [
+        68.90000087334529,
+        76.90000087334529
+      ],
+      "same_physical_outcome": true,
+      "hidden": {
+        "policy_label": "prestige_v2_jrp_hidden",
+        "jrp_mode": "normal",
+        "jrp_visible": false,
+        "visible_delay_frames": 0,
+        "frames": 802,
+        "actual_hits": 13,
+        "actual_misses": 129,
+        "actual_too_early": 0,
+        "actual_overload": false,
+        "physical_keydowns": 13,
+        "actual_display_hit_hooks": 13,
+        "observed_text_changes": 0,
+        "anchored_frames": 0,
+        "jrp_added_frames": 0,
+        "unique_jrp_candidates": 0,
+        "matched_jrp_candidates": 0,
+        "false_jrp_candidates": 0,
+        "unique_jrp_forecasts": 0,
+        "matched_jrp_forecasts": 0,
+        "false_jrp_forecasts": 0,
+        "unique_baseline_elapsed": 142,
+        "matched_baseline_elapsed": 142,
+        "target_count": 142,
+        "matched_combined": 142,
+        "false_combined": 0,
+        "baseline_mae_ms": 2.0626522364141882e-06,
+        "combined_mae_ms": 2.0626522364141882e-06,
+        "mean_jrp_confidence": null,
+        "cbpm_statuses": [
+          [
+            "no_confirmed_display_anchor",
+            802
+          ]
+        ],
+        "first_jrp_due_s": []
+      },
+      "visible": {
+        "policy_label": "prestige_v2_jrp_hit_epoch_v2",
+        "jrp_mode": "normal",
+        "jrp_visible": true,
+        "visible_delay_frames": 0,
+        "frames": 802,
+        "actual_hits": 13,
+        "actual_misses": 129,
+        "actual_too_early": 0,
+        "actual_overload": false,
+        "physical_keydowns": 13,
+        "actual_display_hit_hooks": 13,
+        "observed_text_changes": 5,
+        "anchored_frames": 0,
+        "jrp_added_frames": 0,
+        "unique_jrp_candidates": 0,
+        "matched_jrp_candidates": 0,
+        "false_jrp_candidates": 0,
+        "unique_jrp_forecasts": 0,
+        "matched_jrp_forecasts": 0,
+        "false_jrp_forecasts": 0,
+        "unique_baseline_elapsed": 142,
+        "matched_baseline_elapsed": 142,
+        "target_count": 142,
+        "matched_combined": 142,
+        "false_combined": 0,
+        "baseline_mae_ms": 2.0626522364141882e-06,
+        "combined_mae_ms": 2.0626522364141882e-06,
+        "mean_jrp_confidence": null,
+        "cbpm_statuses": [
+          [
+            "no_confirmed_display_anchor",
+            802
+          ]
+        ],
+        "first_jrp_due_s": []
+      }
+    },
+    {
+      "index": 15,
+      "chart": "04173 - Beyond Your Words (feat. vally.exe) - 연석이2 _ Sprout & 2 more",
+      "chart_sha256": "3c73cca4921893eabc3a642508af8892ea741082299666535668ebddd2595fd3",
+      "window_s": [
+        137.79775309742976,
+        145.79775309742976
+      ],
+      "same_physical_outcome": true,
+      "hidden": {
+        "policy_label": "prestige_v2_jrp_hidden",
+        "jrp_mode": "normal",
+        "jrp_visible": false,
+        "visible_delay_frames": 0,
+        "frames": 41,
+        "actual_hits": 0,
+        "actual_misses": 0,
+        "actual_too_early": 3,
+        "actual_overload": true,
+        "physical_keydowns": 3,
+        "actual_display_hit_hooks": 0,
+        "observed_text_changes": 0,
+        "anchored_frames": 0,
+        "jrp_added_frames": 0,
+        "unique_jrp_candidates": 0,
+        "matched_jrp_candidates": 0,
+        "false_jrp_candidates": 0,
+        "unique_jrp_forecasts": 0,
+        "matched_jrp_forecasts": 0,
+        "false_jrp_forecasts": 0,
+        "unique_baseline_elapsed": 0,
+        "matched_baseline_elapsed": 0,
+        "target_count": 20,
+        "matched_combined": 0,
+        "false_combined": 0,
+        "baseline_mae_ms": null,
+        "combined_mae_ms": null,
+        "mean_jrp_confidence": null,
+        "cbpm_statuses": [
+          [
+            "no_confirmed_display_anchor",
+            41
+          ]
+        ],
+        "first_jrp_due_s": []
+      },
+      "visible": {
+        "policy_label": "prestige_v2_jrp_hit_epoch_v2",
+        "jrp_mode": "normal",
+        "jrp_visible": true,
+        "visible_delay_frames": 0,
+        "frames": 41,
+        "actual_hits": 0,
+        "actual_misses": 0,
+        "actual_too_early": 3,
+        "actual_overload": true,
+        "physical_keydowns": 3,
+        "actual_display_hit_hooks": 0,
+        "observed_text_changes": 0,
+        "anchored_frames": 0,
+        "jrp_added_frames": 0,
+        "unique_jrp_candidates": 0,
+        "matched_jrp_candidates": 0,
+        "false_jrp_candidates": 0,
+        "unique_jrp_forecasts": 0,
+        "matched_jrp_forecasts": 0,
+        "false_jrp_forecasts": 0,
+        "unique_baseline_elapsed": 0,
+        "matched_baseline_elapsed": 0,
+        "target_count": 20,
+        "matched_combined": 0,
+        "false_combined": 0,
+        "baseline_mae_ms": null,
+        "combined_mae_ms": null,
+        "mean_jrp_confidence": null,
+        "cbpm_statuses": [
+          [
+            "no_confirmed_display_anchor",
+            41
+          ]
+        ],
+        "first_jrp_due_s": []
+      }
+    },
+    {
+      "index": 16,
+      "chart": "07827 - 24eeev0-$ - hotduck _ COMMON",
+      "chart_sha256": "3e93ec4afae58c516b367a45e1e504cf31628afd205e9f87b0f7f8de465782b3",
+      "window_s": [
+        64.91545605190683,
+        72.91545605190683
+      ],
+      "same_physical_outcome": true,
+      "hidden": {
+        "policy_label": "prestige_v2_jrp_hidden",
+        "jrp_mode": "normal",
+        "jrp_visible": false,
+        "visible_delay_frames": 0,
+        "frames": 782,
+        "actual_hits": 3,
+        "actual_misses": 38,
+        "actual_too_early": 5,
+        "actual_overload": false,
+        "physical_keydowns": 8,
+        "actual_display_hit_hooks": 3,
+        "observed_text_changes": 0,
+        "anchored_frames": 0,
+        "jrp_added_frames": 0,
+        "unique_jrp_candidates": 0,
+        "matched_jrp_candidates": 0,
+        "false_jrp_candidates": 0,
+        "unique_jrp_forecasts": 0,
+        "matched_jrp_forecasts": 0,
+        "false_jrp_forecasts": 0,
+        "unique_baseline_elapsed": 41,
+        "matched_baseline_elapsed": 41,
+        "target_count": 41,
+        "matched_combined": 41,
+        "false_combined": 0,
+        "baseline_mae_ms": 5.100932530702139e-06,
+        "combined_mae_ms": 5.100932530702139e-06,
+        "mean_jrp_confidence": null,
+        "cbpm_statuses": [
+          [
+            "no_confirmed_display_anchor",
+            782
+          ]
+        ],
+        "first_jrp_due_s": []
+      },
+      "visible": {
+        "policy_label": "prestige_v2_jrp_hit_epoch_v2",
+        "jrp_mode": "normal",
+        "jrp_visible": true,
+        "visible_delay_frames": 0,
+        "frames": 782,
+        "actual_hits": 3,
+        "actual_misses": 38,
+        "actual_too_early": 5,
+        "actual_overload": false,
+        "physical_keydowns": 8,
+        "actual_display_hit_hooks": 3,
+        "observed_text_changes": 2,
+        "anchored_frames": 0,
+        "jrp_added_frames": 0,
+        "unique_jrp_candidates": 0,
+        "matched_jrp_candidates": 0,
+        "false_jrp_candidates": 0,
+        "unique_jrp_forecasts": 0,
+        "matched_jrp_forecasts": 0,
+        "false_jrp_forecasts": 0,
+        "unique_baseline_elapsed": 41,
+        "matched_baseline_elapsed": 41,
+        "target_count": 41,
+        "matched_combined": 41,
+        "false_combined": 0,
+        "baseline_mae_ms": 5.100932530702139e-06,
+        "combined_mae_ms": 5.100932530702139e-06,
+        "mean_jrp_confidence": null,
+        "cbpm_statuses": [
+          [
+            "ambiguous_coincident_event",
+            1
+          ],
+          [
+            "no_confirmed_display_anchor",
+            781
+          ]
+        ],
+        "first_jrp_due_s": []
+      }
+    },
+    {
+      "index": 17,
+      "chart": "09853 - Rocky Buinne [Featured ver.] - 2seehyun",
+      "chart_sha256": "3fc3ebfaa773b50e3ed607e2bf0ee7efd865fd8f809a5bb18ee6303b59ddc61e",
+      "window_s": [
+        42.13681857829268,
+        50.13681857829268
+      ],
+      "same_physical_outcome": true,
+      "hidden": {
+        "policy_label": "prestige_v2_jrp_hidden",
+        "jrp_mode": "normal",
+        "jrp_visible": false,
+        "visible_delay_frames": 0,
+        "frames": 794,
+        "actual_hits": 23,
+        "actual_misses": 77,
+        "actual_too_early": 2,
+        "actual_overload": false,
+        "physical_keydowns": 25,
+        "actual_display_hit_hooks": 23,
+        "observed_text_changes": 0,
+        "anchored_frames": 0,
+        "jrp_added_frames": 0,
+        "unique_jrp_candidates": 0,
+        "matched_jrp_candidates": 0,
+        "false_jrp_candidates": 0,
+        "unique_jrp_forecasts": 0,
+        "matched_jrp_forecasts": 0,
+        "false_jrp_forecasts": 0,
+        "unique_baseline_elapsed": 98,
+        "matched_baseline_elapsed": 98,
+        "target_count": 100,
+        "matched_combined": 98,
+        "false_combined": 0,
+        "baseline_mae_ms": 3.369019259572627e-06,
+        "combined_mae_ms": 3.369019259572627e-06,
+        "mean_jrp_confidence": null,
+        "cbpm_statuses": [
+          [
+            "no_confirmed_display_anchor",
+            794
+          ]
+        ],
+        "first_jrp_due_s": []
+      },
+      "visible": {
+        "policy_label": "prestige_v2_jrp_hit_epoch_v2",
+        "jrp_mode": "normal",
+        "jrp_visible": true,
+        "visible_delay_frames": 0,
+        "frames": 794,
+        "actual_hits": 23,
+        "actual_misses": 77,
+        "actual_too_early": 2,
+        "actual_overload": false,
+        "physical_keydowns": 25,
+        "actual_display_hit_hooks": 23,
+        "observed_text_changes": 10,
+        "anchored_frames": 0,
+        "jrp_added_frames": 0,
+        "unique_jrp_candidates": 0,
+        "matched_jrp_candidates": 0,
+        "false_jrp_candidates": 0,
+        "unique_jrp_forecasts": 0,
+        "matched_jrp_forecasts": 0,
+        "false_jrp_forecasts": 0,
+        "unique_baseline_elapsed": 98,
+        "matched_baseline_elapsed": 98,
+        "target_count": 100,
+        "matched_combined": 98,
+        "false_combined": 0,
+        "baseline_mae_ms": 3.369019259572627e-06,
+        "combined_mae_ms": 3.369019259572627e-06,
+        "mean_jrp_confidence": null,
+        "cbpm_statuses": [
+          [
+            "ambiguous_coincident_event",
+            1
+          ],
+          [
+            "no_confirmed_display_anchor",
+            793
+          ]
+        ],
+        "first_jrp_due_s": []
+      }
+    },
+    {
+      "index": 18,
+      "chart": "05661 - Head BONK ache - kernby & yeetyote",
+      "chart_sha256": "4443e64c8622fcb83fe684d57f77ff023c382be246654a3a02f66122210a5ed0",
+      "window_s": [
+        63.72840899317433,
+        71.72840899317433
+      ],
+      "same_physical_outcome": true,
+      "hidden": {
+        "policy_label": "prestige_v2_jrp_hidden",
+        "jrp_mode": "normal",
+        "jrp_visible": false,
+        "visible_delay_frames": 0,
+        "frames": 798,
+        "actual_hits": 14,
+        "actual_misses": 36,
+        "actual_too_early": 6,
+        "actual_overload": false,
+        "physical_keydowns": 20,
+        "actual_display_hit_hooks": 14,
+        "observed_text_changes": 0,
+        "anchored_frames": 0,
+        "jrp_added_frames": 0,
+        "unique_jrp_candidates": 0,
+        "matched_jrp_candidates": 0,
+        "false_jrp_candidates": 0,
+        "unique_jrp_forecasts": 0,
+        "matched_jrp_forecasts": 0,
+        "false_jrp_forecasts": 0,
+        "unique_baseline_elapsed": 50,
+        "matched_baseline_elapsed": 50,
+        "target_count": 50,
+        "matched_combined": 50,
+        "false_combined": 0,
+        "baseline_mae_ms": 5.80883422196532e-06,
+        "combined_mae_ms": 5.80883422196532e-06,
+        "mean_jrp_confidence": null,
+        "cbpm_statuses": [
+          [
+            "no_confirmed_display_anchor",
+            798
+          ]
+        ],
+        "first_jrp_due_s": []
+      },
+      "visible": {
+        "policy_label": "prestige_v2_jrp_hit_epoch_v2",
+        "jrp_mode": "normal",
+        "jrp_visible": true,
+        "visible_delay_frames": 0,
+        "frames": 798,
+        "actual_hits": 14,
+        "actual_misses": 36,
+        "actual_too_early": 6,
+        "actual_overload": false,
+        "physical_keydowns": 20,
+        "actual_display_hit_hooks": 14,
+        "observed_text_changes": 8,
+        "anchored_frames": 6,
+        "jrp_added_frames": 0,
+        "unique_jrp_candidates": 2,
+        "matched_jrp_candidates": 2,
+        "false_jrp_candidates": 0,
+        "unique_jrp_forecasts": 0,
+        "matched_jrp_forecasts": 0,
+        "false_jrp_forecasts": 0,
+        "unique_baseline_elapsed": 50,
+        "matched_baseline_elapsed": 50,
+        "target_count": 50,
+        "matched_combined": 50,
+        "false_combined": 0,
+        "baseline_mae_ms": 5.80883422196532e-06,
+        "combined_mae_ms": 5.80883422196532e-06,
+        "mean_jrp_confidence": null,
+        "cbpm_statuses": [
+          [
+            "anchor_expired",
+            2
+          ],
+          [
+            "eligible",
+            6
+          ],
+          [
+            "no_confirmed_display_anchor",
+            762
+          ],
+          [
+            "outside_horizon",
+            28
+          ]
+        ],
+        "first_jrp_due_s": []
+      }
+    },
+    {
+      "index": 19,
+      "chart": "13945 - Tempest - 冰神 _ NeRvOus",
+      "chart_sha256": "482bf91ff6bbd791093906141377b89031e24da4b4e2e369c0905ec9fee08be0",
+      "window_s": [
+        65.28571470743763,
+        73.28571470743763
+      ],
+      "same_physical_outcome": true,
+      "hidden": {
+        "policy_label": "prestige_v2_jrp_hidden",
+        "jrp_mode": "normal",
+        "jrp_visible": false,
+        "visible_delay_frames": 0,
+        "frames": 796,
+        "actual_hits": 10,
+        "actual_misses": 26,
+        "actual_too_early": 2,
+        "actual_overload": false,
+        "physical_keydowns": 12,
+        "actual_display_hit_hooks": 10,
+        "observed_text_changes": 0,
+        "anchored_frames": 0,
+        "jrp_added_frames": 0,
+        "unique_jrp_candidates": 0,
+        "matched_jrp_candidates": 0,
+        "false_jrp_candidates": 0,
+        "unique_jrp_forecasts": 0,
+        "matched_jrp_forecasts": 0,
+        "false_jrp_forecasts": 0,
+        "unique_baseline_elapsed": 36,
+        "matched_baseline_elapsed": 36,
+        "target_count": 36,
+        "matched_combined": 36,
+        "false_combined": 0,
+        "baseline_mae_ms": 1.18400723130173e-05,
+        "combined_mae_ms": 1.18400723130173e-05,
+        "mean_jrp_confidence": null,
+        "cbpm_statuses": [
+          [
+            "no_confirmed_display_anchor",
+            796
+          ]
+        ],
+        "first_jrp_due_s": []
+      },
+      "visible": {
+        "policy_label": "prestige_v2_jrp_hit_epoch_v2",
+        "jrp_mode": "normal",
+        "jrp_visible": true,
+        "visible_delay_frames": 0,
+        "frames": 796,
+        "actual_hits": 10,
+        "actual_misses": 26,
+        "actual_too_early": 2,
+        "actual_overload": false,
+        "physical_keydowns": 12,
+        "actual_display_hit_hooks": 10,
+        "observed_text_changes": 3,
+        "anchored_frames": 3,
+        "jrp_added_frames": 0,
+        "unique_jrp_candidates": 1,
+        "matched_jrp_candidates": 1,
+        "false_jrp_candidates": 0,
+        "unique_jrp_forecasts": 0,
+        "matched_jrp_forecasts": 0,
+        "false_jrp_forecasts": 0,
+        "unique_baseline_elapsed": 36,
+        "matched_baseline_elapsed": 36,
+        "target_count": 36,
+        "matched_combined": 36,
+        "false_combined": 0,
+        "baseline_mae_ms": 1.18400723130173e-05,
+        "combined_mae_ms": 1.18400723130173e-05,
+        "mean_jrp_confidence": null,
+        "cbpm_statuses": [
+          [
+            "eligible",
+            3
+          ],
+          [
+            "no_confirmed_display_anchor",
+            790
+          ],
+          [
+            "outside_horizon",
+            3
+          ]
+        ],
+        "first_jrp_due_s": []
+      }
+    },
+    {
+      "index": 20,
+      "chart": "09981 - Chronosynchronism - 토끼로봇 & 1 more _ RinkiRin & 2 more",
+      "chart_sha256": "4990095ea658a259d12d5ee78084a80d0bda8eb66e5957c39a32a53ab8400b34",
+      "window_s": [
+        69.71428611752232,
+        77.71428611752232
+      ],
+      "same_physical_outcome": true,
+      "hidden": {
+        "policy_label": "prestige_v2_jrp_hidden",
+        "jrp_mode": "normal",
+        "jrp_visible": false,
+        "visible_delay_frames": 0,
+        "frames": 807,
+        "actual_hits": 11,
+        "actual_misses": 44,
+        "actual_too_early": 4,
+        "actual_overload": false,
+        "physical_keydowns": 15,
+        "actual_display_hit_hooks": 11,
+        "observed_text_changes": 0,
+        "anchored_frames": 0,
+        "jrp_added_frames": 0,
+        "unique_jrp_candidates": 0,
+        "matched_jrp_candidates": 0,
+        "false_jrp_candidates": 0,
+        "unique_jrp_forecasts": 0,
+        "matched_jrp_forecasts": 0,
+        "false_jrp_forecasts": 0,
+        "unique_baseline_elapsed": 56,
+        "matched_baseline_elapsed": 55,
+        "target_count": 55,
+        "matched_combined": 55,
+        "false_combined": 1,
+        "baseline_mae_ms": 5.502349766726346e-06,
+        "combined_mae_ms": 5.502349766726346e-06,
+        "mean_jrp_confidence": null,
+        "cbpm_statuses": [
+          [
+            "no_confirmed_display_anchor",
+            807
+          ]
+        ],
+        "first_jrp_due_s": []
+      },
+      "visible": {
+        "policy_label": "prestige_v2_jrp_hit_epoch_v2",
+        "jrp_mode": "normal",
+        "jrp_visible": true,
+        "visible_delay_frames": 0,
+        "frames": 807,
+        "actual_hits": 11,
+        "actual_misses": 44,
+        "actual_too_early": 4,
+        "actual_overload": false,
+        "physical_keydowns": 15,
+        "actual_display_hit_hooks": 11,
+        "observed_text_changes": 5,
+        "anchored_frames": 0,
+        "jrp_added_frames": 0,
+        "unique_jrp_candidates": 0,
+        "matched_jrp_candidates": 0,
+        "false_jrp_candidates": 0,
+        "unique_jrp_forecasts": 0,
+        "matched_jrp_forecasts": 0,
+        "false_jrp_forecasts": 0,
+        "unique_baseline_elapsed": 56,
+        "matched_baseline_elapsed": 55,
+        "target_count": 55,
+        "matched_combined": 55,
+        "false_combined": 1,
+        "baseline_mae_ms": 5.502349766726346e-06,
+        "combined_mae_ms": 5.502349766726346e-06,
+        "mean_jrp_confidence": null,
+        "cbpm_statuses": [
+          [
+            "no_confirmed_display_anchor",
+            807
+          ]
+        ],
+        "first_jrp_due_s": []
+      }
+    }
+  ]
+}
