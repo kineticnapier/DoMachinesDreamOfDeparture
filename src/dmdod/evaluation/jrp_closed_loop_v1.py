@@ -194,6 +194,7 @@ def run_jrp_closed_loop(
     segment, policy: CausalJrpPolicy, *, policy_label: str,
     jrp_mode: str = 'normal', visible_delay_frames: int = 0,
     jrp_visible: bool = True,
+    timing_bridge=None,
     max_frames: int | None = None,
 ) -> ClosedLoopJrpResult:
     """Evaluate one actual physically stepped environment, no oracle actions.
@@ -213,7 +214,8 @@ def run_jrp_closed_loop(
         physics_dt_s=.001, capture_overload_trace=True,
     )
     obs = env.reset()
-    bridge = CausalJrpTimingBridge()
+    bridge = timing_bridge or CausalJrpTimingBridge()
+    bridge.reset()
     policy.reset()
     text_history: list[tuple[str, str, str] | None] = []
     previous_seen_text = None
