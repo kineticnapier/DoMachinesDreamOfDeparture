@@ -354,6 +354,12 @@ def run(args) -> dict:
 
 
 def main() -> None:
+    # Windows shells may still expose cp932 even when report files are UTF-8.
+    # A chart title must never abort an otherwise deterministic physics run.
+    if hasattr(sys.stdout, "reconfigure"):
+        sys.stdout.reconfigure(errors="backslashreplace")
+    if hasattr(sys.stderr, "reconfigure"):
+        sys.stderr.reconfigure(errors="backslashreplace")
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--inventory", type=Path, required=True)
     parser.add_argument("--checkpoint", type=Path)
