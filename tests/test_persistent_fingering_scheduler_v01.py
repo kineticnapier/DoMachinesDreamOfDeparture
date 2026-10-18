@@ -121,13 +121,14 @@ def test_quomodocunquize_507_559_inflight_thumb_never_reused():
     # Retire the forecast, not the physically armed stroke.
     scheduler.apply_forecast(frame(2, pending=(token(1, .08),), reused=(1,),
                                    elapsed=(0,)), in_flight)
-    assert scheduler.reservation(0).phase is ReservationPhase.CANCELED_IN_FLIGHT
+    assert scheduler.reservation(0).phase is ReservationPhase.ARMED_IN_FLIGHT
+    assert scheduler.reservation(0).retired_reason == "elapsed"
     assert "left_5" not in scheduler.available_axes(in_flight)
     # Retained even if a physical KeyDown occurs after forecast retirement.
     pressed = snap(left_5={"position": .0025, "velocity": .1,
                            "activation": .14, "pressed": True})
     scheduler.observe_physics(pressed, (("left_5", KeyEvent.DOWN),))
-    assert scheduler.reservation(0).phase is ReservationPhase.CANCELED_IN_FLIGHT
+    assert scheduler.reservation(0).phase is ReservationPhase.KEYDOWN_OBSERVED
     recovering = snap(left_5={"position": .0015, "velocity": -.02,
                               "activation": -.10, "pressed": False})
     scheduler.observe_physics(recovering, (("left_5", KeyEvent.UP),))
@@ -155,7 +156,7 @@ def test_quomodocunquize_642_delayed_keydown_cannot_create_second_intent():
                       "activation": .1, "pressed": True}),
         (("right_5", KeyEvent.DOWN),),
     )
-    assert scheduler.reservation(0).phase is ReservationPhase.CANCELED_IN_FLIGHT
+    assert scheduler.reservation(0).phase is ReservationPhase.KEYDOWN_OBSERVED
 
 
 def test_unconfirmed_pause_keeps_armed_and_unarmed_reservations():
@@ -260,3 +261,36 @@ def test_no_evaluator_truth_fields_in_public_scheduler_contract():
 def scheduler_reservation_type():
     from dmdod.planning.persistent_fingering_scheduler_v01 import PhysicalReservation
     return PhysicalReservation
+
+
+def test_explicit_forecast_cancellation_brakes_but_keeps_inflight_axis():
+    planner = PersistentFingeringScheduler()
+    planner.apply_forecast(frame(0, pending=(token(0,.06),), new=(0,)), snap())
+    planner.reserve(0, (PhysicalFinger("left_2"),), snap())
+    planner.arm(0, snap())
+    moving = snap(left_2={"position": .0017, "velocity": .06,
+                          "activation": .04})
+    planner.apply_forecast(frame(1, canceled=(0,)), moving)
+    assert planner.reservation(0).phase is ReservationPhase.CANCELED_IN_FLIGHT
+    assert planner.reservation(0).retired_reason == "canceled"
+    assert "left_2" not in planner.available_axes(moving)
+    planner.observe_physics(snap())
+    assert planner.reservations == ()
+
+
+def test_elapsed_armed_stroke_can_finish_after_predicted_due():
+    planner = PersistentFingeringScheduler()
+    planner.apply_forecast(frame(0, pending=(token(0,.015),), new=(0,)), snap())
+    planner.reserve(0, (PhysicalFinger("left_1"),), snap())
+    planner.arm(0, snap())
+    still_moving = snap(left_1={"position":.0014, "velocity":.05,
+                                "activation":.11})
+    planner.apply_forecast(frame(2, elapsed=(0,)), still_moving)
+    assert planner.reservation(0).phase is ReservationPhase.ARMED_IN_FLIGHT
+    assert planner.reservation(0).retired_reason == "elapsed"
+    down = snap(left_1={"position":.003, "pressed":True,
+                        "velocity":.02, "activation":.08})
+    planner.observe_physics(down, (("left_1", KeyEvent.DOWN),))
+    assert planner.reservation(0).phase is ReservationPhase.KEYDOWN_OBSERVED
+    planner.observe_physics(snap(), (("left_1", KeyEvent.UP),))
+    assert planner.reservations == ()
