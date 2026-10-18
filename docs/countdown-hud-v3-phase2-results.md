@@ -3,7 +3,7 @@
 ## Outcome
 
 Countdown HUD v3から最初の打鍵時刻を推定する、学習なしの因果的Timing経路を
-実装した。固定監査`reports/countdown-timing-phase2-20261018-r1.json`はPASSした。
+実装した。修正後の固定監査`reports/countdown-timing-phase2-20261018-r2.json`はPASSした。
 Validation20、FINAL、checkpoint、Fingering、Motorは使用・変更していない。
 
 ## Implemented modules
@@ -17,8 +17,13 @@ Validation20、FINAL、checkpoint、Fingering、Motorは使用・変更してい
 
 Countdown表示中にv1.4が惑星周回を通常floor eventとして出すraw forecastは、診断用に
 そのまま保存するが、`Ready!`または数字が可視の間はplayable候補として公開しない。
-`Go!`後、Countdown due区間と重なるv1.4候補だけを統合する。通常playのhidden経路では
-v1.4のraw `TimingUpdate`とstatusが完全一致する。
+`Go!`後、Countdown due区間と一意に重なる単一のv1.4候補だけを統合する。余剰候補、
+欠損/stale/invalid cue中の候補、区間矛盾はplayable候補へ漏らさず棄権またはcancelする。
+通常playのhidden経路ではv1.4のraw `TimingUpdate`とstatusが完全一致する。
+
+263DのTile/Real BPMは`mod-visible-tile-real-bpm-v2`契約で画面に数値表示された情報で
+あり、stock-only観測ではない。Compositeは契約を明示的に要求し、stock-only入力を
+fail closedする。凍結Timing v1.4そのものは変更していない。
 
 ## Predeclared gates
 
@@ -33,6 +38,11 @@ v1.4のraw `TimingUpdate`とstatusが完全一致する。
 | 欠損・stale frameで棄権 | PASS |
 | 矛盾digit列で棄権 | PASS |
 | local ID reuse/cancel/conflict | PASS |
+| unconfirmed pending ID reuse / lifecycle partition | PASS |
+| invalid cue中のv1.4 playable漏洩 | 0 / PASS |
+| 余剰v1.4候補をtruthなしで棄権 | PASS |
+| Countdown due区間矛盾時のcancel | PASS |
+| stock-only numeric BPM contract拒否 | PASS |
 | 通常play v1.4 compatibility | PASS |
 | policy truth-field schema/AST | PASS |
 | Train bool first event | PASS |
@@ -63,11 +73,12 @@ v1.4のraw `TimingUpdate`とstatusが完全一致する。
 - First causal prediction time: 2.000 s
 - Predicted interval: [3.979833385, 3.999833385] s
 - Midpoint error: -9.500239 ms
-- Conservative Lead lower: 1989.333624 ms
+- Conservative Lead lower: 1979.833385 ms
 - Countdown local IDs: 1
 - False candidate IDs: 0
 
-chart truthはHUD streamを最後まで収集した後にだけ照合した。collection loopは
+Lead下限は`predicted due lower - observed_at`だけから計算した。chart truthはHUD
+streamを最後まで収集した後にだけ照合した。collection loopは
 `targets`、`target_time_s`、`episode_time_s`を参照しないことをASTで検査している。
 
 ## Known limitations
@@ -82,9 +93,9 @@ chart truthはHUD streamを最後まで収集した後にだけ照合した。co
 ## Reproduction
 
 ```powershell
-.\.venv\Scripts\python.exe -m pytest -q tests/test_countdown_hud_v3.py tests/test_countdown_phase_tracker_v01.py tests/test_countdown_first_event_v01.py tests/test_hud_timing_composite_v20.py tests/test_audit_countdown_timing_phase2_v01.py tests/test_hud_timing_tracker_transition_v14.py tests/test_contact_timing_hud_v01.py --basetemp artifacts/pytest-countdown-phase2-final
+.\.venv\Scripts\python.exe -m pytest -q tests/test_countdown_hud_v3.py tests/test_countdown_phase_tracker_v01.py tests/test_countdown_first_event_v01.py tests/test_hud_timing_composite_v20.py tests/test_audit_countdown_timing_phase2_v01.py tests/test_hud_timing_tracker_transition_v14.py tests/test_contact_timing_hud_v01.py --basetemp artifacts/pytest-countdown-phase2-r2-final
 
-.\.venv\Scripts\python.exe scripts/audit_countdown_timing_phase2_v01.py --output reports/countdown-timing-phase2-<new-run-id>.json
+.\.venv\Scripts\python.exe scripts/audit_countdown_timing_phase2_v01.py --output reports/countdown-timing-phase2-20261018-r2.json
 ```
 
-監査scriptは既存出力を上書きしない。
+上記テスト結果は95 passed。監査scriptは既存出力を上書きしない。

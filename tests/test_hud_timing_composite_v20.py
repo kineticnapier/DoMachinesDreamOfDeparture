@@ -9,7 +9,8 @@ import textwrap
 import pytest
 
 from dmdod.features.countdown_hud_v3 import (
-    CountdownCueKind, CountdownStudentObservation, encode_hud_v3,
+    CountdownCueKind, CountdownStudentObservation, CountdownVisualSensor,
+    RenderedCountdownFrame, encode_hud_v3,
 )
 from dmdod.planning.countdown_first_event_v01 import (
     CountdownFirstEventEstimate, CountdownFirstEventEstimator,
@@ -211,16 +212,31 @@ def test_invalid_countdown_carries_existing_token_unconfirmed_and_reused() -> No
     assert all(item.local_id == "countdown:0" for item in invalid.pending)
 
 
-def test_invalid_or_missing_countdown_frame_never_publishes_v14_candidate() -> None:
+@pytest.mark.parametrize("failure", ["missing", "stale"])
+def test_missing_or_stale_countdown_frame_never_publishes_v14_candidate(
+    failure,
+) -> None:
     tracker = CausalTimingTracker(
         horizon_s=.080,
         predictor=lambda _hud: WindowForecast((1,), (.05,), "eligible"),
     )
     system = composite(v14_tracker=tracker)
-    composite_step(system, 0, CountdownCueKind.READY)
-    invalid = composite_step(
-        system, 1, CountdownCueKind.UNKNOWN, valid=False
+    sensor = CountdownVisualSensor(max_frame_age_s=.005)
+    ready = sensor.observe(
+        step=0, observed_at_s=0.0,
+        frame=RenderedCountdownFrame(0.0, "Ready!"),
     )
+    system.observe(encode_hud_v3(legacy(step=0), ready), ready)
+    failed_frame = (
+        RenderedCountdownFrame(.01, None, frame_available=False)
+        if failure == "missing"
+        else RenderedCountdownFrame(0.0, "Ready!")
+    )
+    cue = sensor.observe(
+        step=1, observed_at_s=.01, frame=failed_frame
+    )
+    invalid = system.observe(encode_hud_v3(legacy(step=1), cue), cue)
+    assert not cue.valid and cue.kind is CountdownCueKind.UNKNOWN
     assert invalid.v14_update.pending
     assert invalid.pending == ()
     assert invalid.new_ids == ()
