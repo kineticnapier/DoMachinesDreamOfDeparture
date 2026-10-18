@@ -1,14 +1,24 @@
 from __future__ import annotations
 
+import ast
+from dataclasses import fields
+import inspect
 from math import cos, pi, sin
+import textwrap
 
 import pytest
 
 from dmdod.features.countdown_hud_v3 import (
     CountdownCueKind, CountdownStudentObservation, encode_hud_v3,
 )
-from dmdod.planning.countdown_first_event_v01 import encode_visible_bpm
-from dmdod.planning.hud_timing_composite_v20 import HUDTimingComposite
+from dmdod.planning.countdown_first_event_v01 import (
+    CountdownFirstEventEstimate, CountdownFirstEventEstimator,
+    encode_visible_bpm,
+)
+from dmdod.planning.countdown_phase_tracker_v01 import CountdownPhaseUpdate
+from dmdod.planning.hud_timing_composite_v20 import (
+    HUDTimingComposite, TimingEventToken, TimingFrameUpdateV20,
+)
 from dmdod.planning.hud_timing_tracker_transition_v14 import (
     CURRENT_SLOT, CausalTimingTracker, FLOOR_DIM, HUD_DIM, HUD_OFFSET,
     MOTOR_FEATURES, SLOT_START, WindowForecast,
@@ -181,3 +191,32 @@ def test_local_clock_and_step_are_strict() -> None:
     )
     with pytest.raises(ValueError, match="10ms"):
         system.observe(encode_hud_v3(legacy(step=0), cue), cue)
+
+
+def test_policy_contract_and_estimators_contain_no_truth_fields() -> None:
+    public = {
+        item.name
+        for cls in (
+            CountdownPhaseUpdate, CountdownFirstEventEstimate,
+            TimingEventToken, TimingFrameUpdateV20,
+        )
+        for item in fields(cls)
+    }
+    forbidden = {
+        "countdownTicks", "countdown_ticks", "target_time_s",
+        "target_index", "target_ordinal", "floor_index", "chart_time",
+        "first_tick_s", "tick_period_s", "judgement", "_used", "_missed",
+    }
+    assert public.isdisjoint(forbidden)
+    for function in (
+        CountdownFirstEventEstimator.observe, HUDTimingComposite.observe,
+    ):
+        tree = ast.parse(textwrap.dedent(inspect.getsource(function)))
+        attributes = {
+            node.attr for node in ast.walk(tree)
+            if isinstance(node, ast.Attribute)
+        }
+        assert attributes.isdisjoint({
+            "targets", "target_time_s", "episode_time_s", "chart_time_s",
+            "countdown_ticks", "_used", "_missed",
+        })

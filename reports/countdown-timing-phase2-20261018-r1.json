@@ -1,0 +1,191 @@
+{
+  "format": "dmdod-countdown-timing-phase2-audit-v0.1",
+  "generated_utc": "2026-10-18T14:37:11.901521+00:00",
+  "status": "PASS",
+  "gates": {
+    "synthetic_n3_n5_120_240_480": true,
+    "pitch_200": true,
+    "false_candidate_zero": true,
+    "unique_first_event_id": true,
+    "due_midpoint_within_10ms": true,
+    "lead_lower_at_least_44ms": true,
+    "train_bool_first_event": true
+  },
+  "synthetic": [
+    {
+      "true_first_due_s_posthoc": 1.500000010079272,
+      "unique_countdown_candidate_ids": 1,
+      "false_candidate_ids_posthoc": [],
+      "first_matching_prediction": {
+        "step": 101,
+        "observed_at_s": 1.01,
+        "local_id": "countdown:0",
+        "due_lower_s": 1.4999999981020964,
+        "due_upper_s": 1.5099999981020964,
+        "due_mid_s": 1.5049999981020963,
+        "source": "countdown_first_event",
+        "confirmed_now": true,
+        "lead_guaranteed": true,
+        "midpoint_error_ms_posthoc": 4.999988,
+        "lead_lower_ms_posthoc": 485.00001
+      },
+      "name": "N3-120bpm-pitch100",
+      "hud_frames": 401,
+      "status": "PASS"
+    },
+    {
+      "true_first_due_s_posthoc": 0.750000005039636,
+      "unique_countdown_candidate_ids": 1,
+      "false_candidate_ids_posthoc": [],
+      "first_matching_prediction": {
+        "step": 51,
+        "observed_at_s": 0.51,
+        "local_id": "countdown:0",
+        "due_lower_s": 0.7499999990510482,
+        "due_upper_s": 0.7599999990510482,
+        "due_mid_s": 0.7549999990510482,
+        "source": "countdown_first_event",
+        "confirmed_now": true,
+        "lead_guaranteed": true,
+        "midpoint_error_ms_posthoc": 4.999994,
+        "lead_lower_ms_posthoc": 235.000005
+      },
+      "name": "N3-240bpm-pitch100",
+      "hud_frames": 221,
+      "status": "PASS"
+    },
+    {
+      "true_first_due_s_posthoc": 0.375000002519818,
+      "unique_countdown_candidate_ids": 1,
+      "false_candidate_ids_posthoc": [],
+      "first_matching_prediction": {
+        "step": 26,
+        "observed_at_s": 0.26,
+        "local_id": "countdown:0",
+        "due_lower_s": 0.37499999952552415,
+        "due_upper_s": 0.38499999952552416,
+        "due_mid_s": 0.37999999952552416,
+        "source": "countdown_first_event",
+        "confirmed_now": true,
+        "lead_guaranteed": true,
+        "midpoint_error_ms_posthoc": 4.999997,
+        "lead_lower_ms_posthoc": 110.000003
+      },
+      "name": "N3-480bpm-pitch100",
+      "hud_frames": 113,
+      "status": "PASS"
+    },
+    {
+      "true_first_due_s_posthoc": 2.500000010079272,
+      "unique_countdown_candidate_ids": 1,
+      "false_candidate_ids_posthoc": [],
+      "first_matching_prediction": {
+        "step": 201,
+        "observed_at_s": 2.0100000000000002,
+        "local_id": "countdown:0",
+        "due_lower_s": 2.4999999981020964,
+        "due_upper_s": 2.5099999981020966,
+        "due_mid_s": 2.5049999981020967,
+        "source": "countdown_first_event",
+        "confirmed_now": true,
+        "lead_guaranteed": true,
+        "midpoint_error_ms_posthoc": 4.999988,
+        "lead_lower_ms_posthoc": 485.00001
+      },
+      "name": "N5-120bpm-pitch100",
+      "hud_frames": 401,
+      "status": "PASS"
+    },
+    {
+      "true_first_due_s_posthoc": 1.250000005039636,
+      "unique_countdown_candidate_ids": 1,
+      "false_candidate_ids_posthoc": [],
+      "first_matching_prediction": {
+        "step": 101,
+        "observed_at_s": 1.01,
+        "local_id": "countdown:0",
+        "due_lower_s": 1.2499999990510482,
+        "due_upper_s": 1.2599999990510482,
+        "due_mid_s": 1.2549999990510483,
+        "source": "countdown_first_event",
+        "confirmed_now": true,
+        "lead_guaranteed": true,
+        "midpoint_error_ms_posthoc": 4.999994,
+        "lead_lower_ms_posthoc": 235.000005
+      },
+      "name": "N5-240bpm-pitch100",
+      "hud_frames": 271,
+      "status": "PASS"
+    },
+    {
+      "true_first_due_s_posthoc": 0.625000002519818,
+      "unique_countdown_candidate_ids": 1,
+      "false_candidate_ids_posthoc": [],
+      "first_matching_prediction": {
+        "step": 38,
+        "observed_at_s": 0.38,
+        "local_id": "countdown:0",
+        "due_lower_s": 0.6149999995255242,
+        "due_upper_s": 0.6349999995255242,
+        "due_mid_s": 0.6249999995255242,
+        "source": "countdown_first_event",
+        "confirmed_now": true,
+        "lead_guaranteed": true,
+        "midpoint_error_ms_posthoc": -3e-06,
+        "lead_lower_ms_posthoc": 235.000003
+      },
+      "name": "N5-480bpm-pitch100",
+      "hud_frames": 138,
+      "status": "PASS"
+    }
+  ],
+  "pitch": {
+    "true_first_due_s_posthoc": 1.000000005039636,
+    "unique_countdown_candidate_ids": 1,
+    "false_candidate_ids_posthoc": [],
+    "first_matching_prediction": {
+      "step": 76,
+      "observed_at_s": 0.76,
+      "local_id": "countdown:0",
+      "due_lower_s": 0.9999999990510482,
+      "due_upper_s": 1.0099999990510482,
+      "due_mid_s": 1.0049999990510483,
+      "source": "countdown_first_event",
+      "confirmed_now": true,
+      "lead_guaranteed": true,
+      "midpoint_error_ms_posthoc": 4.999994,
+      "lead_lower_ms_posthoc": 235.000005
+    },
+    "name": "N4-120bpm-pitch200",
+    "hud_frames": 246,
+    "status": "PASS"
+  },
+  "train_bool": {
+    "true_first_due_s_posthoc": 3.999333624280351,
+    "unique_countdown_candidate_ids": 1,
+    "false_candidate_ids_posthoc": [],
+    "first_matching_prediction": {
+      "step": 200,
+      "observed_at_s": 2.0,
+      "local_id": "countdown:0",
+      "due_lower_s": 3.9798333852764323,
+      "due_upper_s": 3.9998333852764323,
+      "due_mid_s": 3.989833385276432,
+      "source": "countdown_first_event",
+      "confirmed_now": true,
+      "lead_guaranteed": true,
+      "midpoint_error_ms_posthoc": -9.500239,
+      "lead_lower_ms_posthoc": 1989.333624
+    },
+    "name": "Train bool first 5s",
+    "hud_frames": 501,
+    "status": "PASS",
+    "chart": "04042 - bool - vo[ICE].adofai",
+    "sha256": "04981e92f74288b8aac7286e83420b933036d2caead9c157bc33b706779ad1b1"
+  },
+  "limitations": [
+    "Renderer settings are used only to draw the observed cue stream.",
+    "Target truth is joined only after the full HUD stream is collected.",
+    "No learning, checkpoint update, Validation20, or Motor run was performed."
+  ]
+}
