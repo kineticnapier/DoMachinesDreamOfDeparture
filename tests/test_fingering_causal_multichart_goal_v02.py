@@ -110,7 +110,7 @@ def test_parallel_progress_uses_measured_batch_wall_not_arm_sum(tmp_path):
     assert state["active_invocation_wall_s"] == 20.0
     assert state["projected_total_s"] == 20.0
     assert state["goal_projection_basis"] == "cumulative_active_invocation_wall_clock"
-    assert state["goal_status"] == "projected_within_target"
+    assert state["goal_status"] == "met"
 
 
 def test_runtime_ledger_accumulates_clean_resumed_invocations(tmp_path):
@@ -152,7 +152,7 @@ def test_goal_is_reporting_only_and_does_not_stop_evaluation(tmp_path, monkeypat
     assert len(executed) == 4
     assert result["completed_arms"] == 4
     assert result["completed_charts"] == 1
-    assert result["goal_status"] == "projected_over_target"
+    assert result["goal_status"] == "missed"
     assert result["aggregate_completed_pairs_only"]["free"]["completed_charts"] == 1
     assert (output / "progress.json").is_file()
 

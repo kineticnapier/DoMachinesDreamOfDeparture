@@ -327,6 +327,8 @@ def snapshot(report: dict, output_dir: Path, goal_seconds: float | None,
         "goal_status": (
             "not_set" if goal_seconds is None else
             "insufficient_samples" if not completed else
+            "met" if completed == total and projected_total <= goal_seconds else
+            "missed" if completed == total else
             "projected_within_target" if projected_total <= goal_seconds else
             "projected_over_target"
         ),
