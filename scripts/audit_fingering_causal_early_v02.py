@@ -341,7 +341,56 @@ def analyze(chart: Path, checkpoint: Path, saved: Path,
     output_dir.mkdir(parents=True, exist_ok=False)
     with (output_dir / "causal-early-summary.json").open("x", encoding="utf-8") as f:
         json.dump(report, f, ensure_ascii=False, indent=2)
+    with (output_dir / "causal-early-summary.html").open("x", encoding="utf-8") as f:
+        f.write(render_html(report))
     return report
+
+
+def render_html(report: dict) -> str:
+    body = []
+    for policy, arms in report["policies"].items():
+        for arm in ARMS:
+            row = arms[arm]
+            m = row["stats"]
+            body.append("<tr>" + "".join(
+                f"<td>{escape(str(v) if v is not None else '—')}</td>"
+                for v in (
+                    policy, arm, m["hits"], m["misses"],
+                    m["x_accuracy_percent"], m["timing_mae_ms"],
+                    m["too_early"], m["overloaded"],
+                    m["physical_keydowns"], row["unassigned"],
+                    row["changed_allocations_vs_baseline"],
+                    row["mean_decision_lead_ms"], row["extra_lead_events"],
+                    row["interventions"].get("actual_early_axis_steps", 0),
+                    row["interventions"].get("release_coast_axis_steps", 0),
+                    row["termination_reason"],
+                )
+            ) + "</tr>")
+    return (
+        "<!doctype html><html lang='ja'><meta charset='utf-8'>"
+        "<title>Causal Early Fingering v0.2</title>"
+        "<style>body{max-width:1600px;margin:25px auto;padding:0 16px;"
+        "font:14px/1.6 system-ui;background:#101723;color:#e9f0fa}"
+        "table{border-collapse:collapse;width:100%}"
+        "td,th{padding:9px;text-align:left;border-bottom:1px solid #43526c}"
+        "th{position:sticky;top:0;background:#21314a}"
+        "p{max-width:950px}</style>"
+        "<h1>Causal Early Fingering v0.2 — 4条件比較</h1>"
+        f"<p>{escape(report['chart'])}｜保存済みの未来運指は不使用。"
+        "各条件で現在のMotor状態を入力し、Networkが運指を新規選択。"
+        "ただしTimingはAutoPlay Oracleを使用。</p>"
+        "<table><thead><tr><th>方式</th><th>条件</th><th>Hit</th>"
+        "<th>Miss</th><th>X Accuracy</th><th>Timing MAE(ms)</th>"
+        "<th>TooEarly</th><th>Overload</th><th>KeyDown</th>"
+        "<th>運指未割当</th><th>旧運指との差</th><th>決定先行(ms)</th>"
+        "<th>追加Lead選択</th><th>追加押下Step</th>"
+        "<th>解放調整Step</th><th>終了理由</th></tr></thead><tbody>"
+        + "".join(body) + "</tbody></table>"
+        "<p>Baselineのみ元のKeyDown・判定・Network運指と厳密照合。"
+        "その他の条件でHitやKeyDownが一致する保証はない。"
+        "単一Train譜面の研究用診断であり、HUD-only Studentの評価ではない。</p>"
+        "</html>\n"
+    )
 
 
 def main() -> None:
@@ -373,6 +422,7 @@ def main() -> None:
                   f"unassigned={row['unassigned']}, "
                   f"extra_press_steps={row['interventions'].get('actual_early_axis_steps', 0)}")
     print("report:", args.output_dir / "causal-early-summary.json")
+    print("viewer:", args.output_dir / "causal-early-summary.html")
 
 
 if __name__ == "__main__":
