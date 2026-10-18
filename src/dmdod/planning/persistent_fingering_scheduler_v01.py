@@ -97,6 +97,22 @@ class MotorPhysicalSnapshot:
         except ValueError as exc:
             raise KeyError(name) from exc
 
+    def ready_to_arm_reserved(self, name: str) -> bool:
+        """Arm only an *existing*, exclusively held reservation.
+
+        A neutral-command Motor finger can drift upward with tiny positive
+        velocity due to spring/hand dynamics while activation stays negative.
+        That is NOT another stroke and must not void its prior reservation.
+        Fresh allocation remains stricter through ready(), including a
+        positive-velocity veto. Do not use this method to allocate axes.
+        """
+        x = self.axis(name)
+        return (
+            not x.pressed
+            and x.position_m <= self.reset_m
+            and x.activation <= 0.0
+        )
+
     def ready(self, name: str) -> bool:
         """Conservative pre-reservation check, with no scorer information.
 
@@ -268,8 +284,13 @@ class PersistentFingeringScheduler:
             raise ValueError("only a reserved physical intent can be armed")
         if not entry.confirmed or local_id not in self._pending:
             raise ValueError("cannot arm an unconfirmed/retired forecast")
-        if any(not snapshot.ready(axis) for axis in entry.axes):
-            raise ValueError("reserved physical axis is no longer ready")
+        # The axis was already checked with the strict physical idle
+        # predicate at reserve(). While it is exclusively owned, small
+        # passive positive velocity can appear even under neutral commands;
+        # rejecting it here discards the strike at exactly its start frame.
+        # Still reject a pressed, above-reset, or actively driven axis.
+        if any(not snapshot.ready_to_arm_reserved(axis) for axis in entry.axes):
+            raise ValueError("reserved physical axis has an active/unreset stroke")
         self._reservations[local_id] = replace(
             entry, phase=ReservationPhase.ARMED_IN_FLIGHT
         )
