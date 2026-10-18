@@ -239,6 +239,22 @@ def execute(segment, model, policy: str, alpha: float, arm: str,
     }
 
 
+def verify_baseline_choices(result: dict, saved_replay: dict, policy: str) -> None:
+    """Protect causal experiments against inference/selection drift as well as physics drift."""
+    saved = [ev["decisions"][policy] for ev in saved_replay["events"]
+             if ev.get("decisions", {}).get(policy) is not None]
+    actual = result["decisions"]
+    if len(actual) != len(saved):
+        raise RuntimeError(f"{policy}: baseline decision count drift: "
+                           f"{len(actual)} != {len(saved)}")
+    for old, new in zip(saved, actual):
+        if (int(old["event_index"]) != int(new["event_index"])
+                or old["chosen"] != new["chosen"]
+                or abs(float(old["decision_s"]) * 1000.0 - new["decision_ms"]) > .002):
+            raise RuntimeError(f"{policy}: baseline Network decision drift at "
+                               f"event {new['event_index']}")
+
+
 def summarize_arm(result: dict, baseline: dict, arm: str) -> dict:
     baseline_choices = {r["event_index"]: r["chosen"] for r in baseline["decisions"]}
     choices = result["decisions"]
@@ -303,6 +319,7 @@ def analyze(chart: Path, checkpoint: Path, saved: Path,
             baseline["env"], replay["policies"][policy],
             baseline["actual_downs"], policy
         )
+        verify_baseline_choices(baseline, replay, policy)
         rows = {"baseline": summarize_arm(baseline, baseline, "baseline")}
         for arm in ARMS[1:]:
             attempt = execute(segment, model, policy, alpha, arm,
@@ -344,9 +361,12 @@ def main() -> None:
         for arm in ARMS:
             row = arms[arm]
             m = row["stats"]
+            xacc = ("n/a" if m["x_accuracy_percent"] is None
+                    else f"{m['x_accuracy_percent']:.4f}%")
+            mae = ("n/a" if m["timing_mae_ms"] is None
+                   else f"{m['timing_mae_ms']:.3f}ms")
             print(f"  {arm}: H={m['hits']}/{m['targets']}, miss={m['misses']}, "
-                  f"X={m['x_accuracy_percent']:.4f}%, "
-                  f"MAE={m['timing_mae_ms']:.3f}ms, "
+                  f"X={xacc}, MAE={mae}, "
                   f"TE={m['too_early']}, overload={m['overloaded']}, "
                   f"keydowns={m['physical_keydowns']}, "
                   f"choice_changed={row['changed_allocations_vs_baseline']}, "
