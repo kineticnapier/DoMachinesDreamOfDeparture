@@ -72,10 +72,10 @@ and policy results are unchanged. To correct the existing Human-Proxy HTML
 **without rerunning physics or loading a checkpoint**, after pulling:
 
 ```powershell
-.\\.venv\\Scripts\\python.exe scripts/remap_fingering_replay_key_overlay.py \`
-  --source-json artifacts/fingering_network_v011/full-20261018-r2-comparison/replay-v011.json \`
+.\.venv\Scripts\python.exe scripts/remap_fingering_replay_key_overlay.py `
+  --source-json artifacts/fingering_network_v011/full-20261018-r2-comparison/replay-v011.json `
   --output-html artifacts/fingering_network_v011/full-20261018-r2-comparison/replay-v011-keymap-fixed.html
-start .\\artifacts\\fingering_network_v011\\full-20261018-r2-comparison\\replay-v011-keymap-fixed.html
+start .\artifacts\fingering_network_v011\full-20261018-r2-comparison\replay-v011-keymap-fixed.html
 ```
 
 The new output is write-once; use another filename if it already exists.
