@@ -187,21 +187,26 @@ class PersistentFingeringScheduler:
         candidate_validator = copy(self._validator)
         candidate_validator.accept(frame)
         new_pending = {item.local_id: item for item in frame.pending}
-        retired = {
-            **{x: "canceled" for x in frame.canceled_ids},
-            **{x: "elapsed" for x in frame.elapsed_ids},
-        }
+        canceled_ids = set(frame.canceled_ids)
+        elapsed_ids = set(frame.elapsed_ids)
         updated = dict(self._reservations)
         for local_id, entry in self._reservations.items():
-            if local_id in retired:
+            if local_id in canceled_ids or local_id in elapsed_ids:
                 if entry.phase is ReservationPhase.RESERVED:
-                    # No command has been issued; this does not release an
-                    # existing stroke, because every issued stroke is ARMED.
+                    # No physical intent has been issued.
                     updated.pop(local_id)
-                else:
+                elif local_id in canceled_ids:
+                    # Explicit contradiction: brake and quarantine physical axis.
                     updated[local_id] = replace(
                         entry, phase=ReservationPhase.CANCELED_IN_FLIGHT,
-                        confirmed=False, retired_reason=retired[local_id],
+                        confirmed=False, retired_reason="canceled",
+                    )
+                else:
+                    # Passing the predicted *due clock* is NOT a cancellation.
+                    # Keep armed strokes pressing until KeyDown or the
+                    # controller's explicit due+tail physical deadline.
+                    updated[local_id] = replace(
+                        entry, retired_reason="elapsed",
                     )
                 continue
             if local_id in new_pending:
