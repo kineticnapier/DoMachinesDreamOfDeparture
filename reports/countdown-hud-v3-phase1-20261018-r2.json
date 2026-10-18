@@ -1,0 +1,88 @@
+{
+  "format": "dmdod-countdown-hud-v3-phase1-audit-v0.1",
+  "generated_utc": "2026-10-18T14:15:47.129037+00:00",
+  "status": "PASS",
+  "capture_contract": {
+    "control_interval_ms": 10.0,
+    "synthetic_capture_latency_ms": 0.0,
+    "student_fields": [
+      "digit",
+      "kind",
+      "observed_at_s",
+      "rendered_at_s",
+      "sensor_version",
+      "step",
+      "valid"
+    ],
+    "forbidden_truth_fields_absent": true,
+    "note": "Display capture is completed before evaluator-only target times are read. Real display/capture latency is not measured."
+  },
+  "legacy_hud263": {
+    "case": "countdown_count",
+    "status": "INDISTINGUISHABLE",
+    "first_different_target_ordinal_posthoc": 0,
+    "first_different_due_a_s_posthoc": 2.999500219262498,
+    "first_different_due_b_s_posthoc": 4.999167029298204,
+    "future_due_difference_ms_posthoc": 1999.667,
+    "last_identical_frame": 294,
+    "last_identical_local_clock_s": 2.94,
+    "earliest_due_remaining_at_probe_ms": 59.5,
+    "compared_prefix_frames": 295,
+    "maximum_visible_hud263_feature_difference": 1.7484556000744134e-07,
+    "same_hud_tolerance": 5e-05,
+    "same_deterministic_v14_prediction": true,
+    "v14_probe_status": "countdown_before_special_arrival",
+    "v14_probe_forecasts_s_relative": [],
+    "limitation": "This proves indistinguishable current/past HUD263 features in a constructed pair, not a verified inability to infer the timing of any other user chart. No oracle fallback allowed."
+  },
+  "countdown_3_vs_5": {
+    "first_distinguishable_observation_a": {
+      "step": 26,
+      "observed_at_s": 0.26,
+      "rendered_at_s": 0.26,
+      "valid": true,
+      "kind": "number",
+      "digit": 2,
+      "sensor_version": "stock-countdown-text-sensor-v1",
+      "latency_s": 0.0
+    },
+    "first_distinguishable_observation_b": {
+      "step": 26,
+      "observed_at_s": 0.26,
+      "rendered_at_s": 0.26,
+      "valid": true,
+      "kind": "number",
+      "digit": 4,
+      "sensor_version": "stock-countdown-text-sensor-v1",
+      "latency_s": 0.0
+    },
+    "first_distinguishable_s": 0.26,
+    "first_tick_boundary_s": 0.25,
+    "sampling_delay_after_strict_boundary_ms": 10.0,
+    "first_target_a_s_posthoc": 3.249500219262498,
+    "first_target_b_s_posthoc": 5.249167029298204,
+    "lead_a_ms_posthoc": 2989.500219,
+    "lead_b_ms_posthoc": 4989.167029,
+    "required_motor_lead_ms": 44.0,
+    "required_lead_met_in_fixture": true
+  },
+  "go_to_first_target_is_not_fixed": {
+    "status": "PASS",
+    "fixtures": [
+      {
+        "bpm": 120.0,
+        "first_observed_go_s": 1.76,
+        "first_target_s_posthoc": 2.250000010079272,
+        "go_to_first_target_ms_posthoc": 490.00001
+      },
+      {
+        "bpm": 240.0,
+        "first_observed_go_s": 1.01,
+        "first_target_s_posthoc": 1.250000005039636,
+        "go_to_first_target_ms_posthoc": 240.000005
+      }
+    ],
+    "note": "These target times are evaluator-only. Countdown text alone does not supply an exact first-hit deadline."
+  },
+  "scope": "Controlled normal-start fixtures only. Fast takeoff, checkpoints, localized/occluded text, and real capture latency remain unverified."
+}
