@@ -48,12 +48,15 @@ class OracleForecastSource:
                 coalesced.append(item)
         if any(x.chord_size > 8 for x in coalesced):
             raise ValueError("chord exceeds eight logical contacts")
-        self._events = tuple(enumerate(coalesced))
+        self._events = tuple(coalesced)
         self._horizon_s = horizon_s
         self.reset()
 
     def reset(self) -> None:
         self._next_step = 0
+        self._next_local_id = 0
+        self._local_id_by_event: dict[int, int] = {}
+        self._due_by_local_id: dict[int, float] = {}
         self._live: frozenset[int] = frozenset()
         self._validator = TimingFrameSequenceValidator()
 
@@ -61,16 +64,28 @@ class OracleForecastSource:
         if type(step) is not int or step != self._next_step:
             raise ValueError("Oracle steps must be consecutive, starting at zero")
         now = step * .010
-        pending = tuple(
-            TimingEventToken(
-                local_id=index, due_local_s=event.due_local_s,
-                chord_size=event.chord_size,
-            )
-            for index, event in self._events
+        # Allocate local IDs only when an event first becomes observable in
+        # this 80ms window. Never copy a chart event/target ordinal into a
+        # policy-visible local token identity.
+        visible = tuple(
+            (index, event) for index, event in enumerate(self._events)
             if now < event.due_local_s <= now + self._horizon_s + 1e-9
         )
+        for index, event in visible:
+            if index not in self._local_id_by_event:
+                local_id = self._next_local_id
+                self._next_local_id += 1
+                self._local_id_by_event[index] = local_id
+                self._due_by_local_id[local_id] = event.due_local_s
+        pending = tuple(
+            TimingEventToken(
+                local_id=self._local_id_by_event[index],
+                due_local_s=event.due_local_s,
+                chord_size=event.chord_size,
+            )
+            for index, event in visible
+        )
         ids = frozenset(item.local_id for item in pending)
-        previously_due = dict((index, item.due_local_s) for index, item in self._events)
         retired = self._live - ids
         frame = TimingFrameUpdate(
             step=step, status=ELIGIBLE, covered_until_s=now + self._horizon_s,
@@ -78,9 +93,9 @@ class OracleForecastSource:
             new_ids=tuple(sorted(ids - self._live)),
             reused_ids=tuple(sorted(ids & self._live)),
             elapsed_ids=tuple(sorted(x for x in retired
-                                     if previously_due[x] <= now + 1e-9)),
+                                     if self._due_by_local_id[x] <= now + 1e-9)),
             canceled_ids=tuple(sorted(x for x in retired
-                                      if previously_due[x] > now + 1e-9)),
+                                      if self._due_by_local_id[x] > now + 1e-9)),
         )
         self._validator.accept(frame)
         self._live = ids
