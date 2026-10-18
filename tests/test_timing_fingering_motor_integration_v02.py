@@ -352,3 +352,42 @@ def test_oracle_local_ids_not_preassigned_from_hidden_event_ordinals():
     assert 2 not in source._local_id_by_event
     source.observe(5)
     assert 2 in source._local_id_by_event
+
+
+def test_axis_trace_observes_motor_only_without_altering_scores():
+    """Opt-in physical trace is diagnostic, not a feedback signal."""
+    fixture = runner.synthetic_segment(120.)
+    plain = runner.simulate(
+        fixture, None, "hud_center_first", wall_timeout_s=90.
+    )
+    traced = runner.simulate(
+        fixture, None, "hud_center_first", wall_timeout_s=90.,
+        trace_axis="left_1", trace_window_s=(.10, .20),
+    )
+    assert plain["stats"] == traced["stats"]
+    assert plain["decisions"] == traced["decisions"]
+    assert plain["diagnostic_control_trace"] == []
+    frames = traced["diagnostic_control_trace"]
+    assert len(frames) == 11
+    assert [f["step"] for f in frames] == list(range(10,21))
+    assert all(f["axis"] == "left_1" for f in frames)
+    for frame in frames:
+        assert {"position_m", "velocity_m_s", "activation", "pressed"} <= (
+            frame["axis_before"].keys()
+        )
+        assert frame["axis_command"] in (-1.0, 0.0, 1.0)
+        assert isinstance(frame["physical_edges"], list)
+
+
+def test_axis_trace_requires_full_valid_local_diagnostic_window():
+    fixture = runner.synthetic_segment(120.)
+    with pytest.raises(ValueError, match="both axis and window"):
+        runner.simulate(
+            fixture, None, "hud_center_first",
+            trace_axis="left_1",
+        )
+    with pytest.raises(ValueError, match="invalid diagnostic trace"):
+        runner.simulate(
+            fixture, None, "hud_center_first",
+            trace_axis="left_1", trace_window_s=(.3, .2),
+        )
