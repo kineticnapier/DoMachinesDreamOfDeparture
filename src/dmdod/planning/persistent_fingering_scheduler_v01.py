@@ -29,7 +29,9 @@ from dmdod.planning.timing_fingering_contract_v02 import (
 )
 
 # Do not add unvalidated tolerances that could mask an in-flight stroke.
-MAX_ARMED_RETIME_S = 0.0
+# Match the frozen Timing v1.4 reconciler tolerance; an armed due time
+# itself is NOT modified, only tiny incoming estimate drift is accepted.
+MAX_ARMED_RETIME_S = .00075
 
 
 class ReservationPhase(str, Enum):
@@ -316,6 +318,18 @@ class PersistentFingeringScheduler:
                                ReservationPhase.CANCELED_IN_FLIGHT):
                 if all(snapshot.ready(axis) for axis in entry.axes):
                     self._reservations.pop(local_id)
+
+    def cancel_armed(self, local_id: int, reason: str) -> None:
+        """Physically brake an in-flight stroke without releasing its axes."""
+        if type(reason) is not str or not reason.strip():
+            raise ValueError("physical cancellation requires a reason")
+        entry = self._reservations[local_id]
+        if entry.phase is not ReservationPhase.ARMED_IN_FLIGHT:
+            raise ValueError("only a moving armed intent can be canceled")
+        self._reservations[local_id] = replace(
+            entry, phase=ReservationPhase.CANCELED_IN_FLIGHT,
+            confirmed=False, retired_reason=reason,
+        )
 
     def cancel_unarmed(self, local_id: int) -> None:
         """Explicit external cancellation, safe only before command issuance."""
