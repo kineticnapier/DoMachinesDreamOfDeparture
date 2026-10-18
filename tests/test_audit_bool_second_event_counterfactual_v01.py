@@ -10,9 +10,9 @@ from dmdod.adofai.chart import parse_adofai_text
 from scripts import audit_bool_second_event_counterfactual_v01 as audit
 
 
-def synthetic_chart(*, action=True):
+def synthetic_chart(*, action=True, second_angle=150.0):
     raw = {
-        "angleData": [0, 90, 180, 270, 0, 90, 180],
+        "angleData": [0, second_angle, 180, 270, 0, 90, 180],
         "settings": {"bpm": 120.0, "countdownTicks": 3, "pitch": 100.0},
         "actions": ([{
             "floor": 1,
@@ -46,11 +46,43 @@ def test_synthetic_predeadline_hud278_indistinguishable():
     original, alternate, intervention = audit.compile_pair(synthetic_chart())
     report = audit.compare_pair(original, alternate, intervention)
     assert report["first_due_unchanged"]
+    # Floor 1 is a 30-degree rotation, i.e. 20.833ms at 480 BPM.
+    # A 44ms preparation deadline is strictly BEFORE the first event,
+    # so the new BPM cannot become visible on the current floor yet.
+    assert (report["deadline_44ms_s_posthoc"]
+            < report["first_due_original_s_posthoc"])
     assert report["first_three_floors_visible_topology_equal"]
     assert report["second_due_gap_ms_posthoc"] > 44.0
     assert report["indistinguishable_prefix"]
     assert report["first_distinguishable_frame_in_prefix"] is None
     assert report["status"] == "INDISTINGUISHABLE_BEFORE_44MS_DEADLINE"
+
+
+def test_wide_arc_negative_control_becomes_distinguishable_before_deadline():
+    # 90-degree Floor 1 takes 62.5ms at 480 BPM. The 44ms deadline
+    # is AFTER the first target, so the current-floor Mod BPM reveals
+    # the changed SetSpeed value. The audit must NOT claim aliasing.
+    original, alternate, intervention = audit.compile_pair(
+        synthetic_chart(second_angle=90.0)
+    )
+    report = audit.compare_pair(original, alternate, intervention)
+    assert (report["deadline_44ms_s_posthoc"]
+            > report["first_due_original_s_posthoc"])
+    assert report["second_due_gap_ms_posthoc"] > 44.0
+    assert not report["indistinguishable_prefix"]
+    assert report["first_distinguishable_frame_in_prefix"] is not None
+    assert report["status"] == "NOT_PROVEN"
+
+
+def test_short_arc_is_aligned_with_bool_second_event_spacing():
+    chart = synthetic_chart()
+    original, alternate, _ = audit.compile_pair(chart)
+    gap = (original.targets[1].episode_time_s
+           - original.targets[0].episode_time_s)
+    assert gap * 1000.0 == pytest.approx(20.833333, abs=.01)
+    assert (alternate.targets[1].episode_time_s
+            - original.targets[1].episode_time_s) > .044
+
 
 
 def test_capture_function_does_not_read_target_truth_or_setspeed_values():
