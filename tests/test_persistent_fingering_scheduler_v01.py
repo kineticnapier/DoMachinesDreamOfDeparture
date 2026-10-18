@@ -86,7 +86,10 @@ def test_atomic_chord_reservation_and_double_booking_prevention():
 
 def test_flat_thumb_and_edge_represent_two_contacts_on_one_axis():
     scheduler = PersistentFingeringScheduler()
-    scheduler.apply_forecast(frame(0, pending=(token(0, .10, 2),), new=(0,)), snap())
+    scheduler.apply_forecast(
+        frame(0, pending=(token(0, .10, 2), token(1, .12, 2)),
+              new=(0, 1)), snap()
+    )
     scheduler.reserve(0, (PhysicalFinger("left_5", 2),), snap())
     assert scheduler.reservation(0).axes == ("left_5",)
     with pytest.raises(ValueError, match="topology"):
