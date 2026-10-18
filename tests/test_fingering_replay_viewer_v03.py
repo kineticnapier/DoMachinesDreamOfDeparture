@@ -181,3 +181,51 @@ def test_regenerate_saved_viewer_remaps_without_touching_metrics(tmp_path):
     assert source.read_text(encoding="utf-8") == json.dumps(source_payload, ensure_ascii=False)
     with pytest.raises(FileExistsError):
         remap.regenerate(source, dest)
+
+
+def test_key_overlay_pressing_follows_axis_names_and_fast_keydowns_flash(tmp_path):
+    """Run extracted viewer JavaScript in Node to catch reverse left-axis ordering.
+
+    KeyDown events can be shorter than the 10ms trace cadence; a recent event
+    still needs an overlay flash, without claiming that the key remains held.
+    """
+    html = v03.render_html(_html_payload())
+    match = re.search(r"<script>(.*)</script>", html, re.S)
+    assert match
+    js = match.group(1)
+    pressed = re.search(r"(function pressedContacts\(frame\).*?)(?=function keydownFlashContacts)", js, re.S)
+    flashed = re.search(r"(function keydownFlashContacts\(keydowns,time\).*?)(?=function renderKeys)", js, re.S)
+    assert pressed and flashed
+    assert "AXES.indexOf(axis)" in pressed.group(1)
+    assert "KEY_FLASH_SECONDS=0.085" in js
+    if not shutil.which("node"):
+        pytest.skip("node is unavailable")
+
+    script = tmp_path / "key_overlay_regression.js"
+    script.write_text(
+        """const assert=require('node:assert/strict');
+const AXES=['left_6','left_5','left_4','left_3','left_2','left_1',
+            'right_1','right_2','right_3','right_4','right_5','right_6'];
+const KEY_FLASH_SECONDS=0.085;
+const lowerGT=(rows,t)=>rows.filter(r=>r.episode_s<=t).length;
+""" + pressed.group(1) + flashed.group(1) + """
+function frame(active=[],modes=['off','off'],edges=[0,0]) {
+  const down=AXES.map(axis=>+active.includes(axis));
+  return [0,[],[],down,modes,edges];
+}
+const arr=s=>[...s].sort();
+assert.deepEqual(arr(pressedContacts(frame(['left_1']))),['left_1']);
+assert.deepEqual(arr(pressedContacts(frame(['left_6'],['off','off'],[1,0]))),['left_7','left_8']);
+assert.deepEqual(arr(pressedContacts(frame(['left_5'],['tip','off']))),['left_5']);
+assert.deepEqual(arr(pressedContacts(frame(['left_5'],['flat','off']))),['left_5','left_6']);
+assert.deepEqual(arr(pressedContacts(frame(['right_1','right_5'],['off','flat']))),['right_1','right_5','right_6']);
+assert.deepEqual(arr(pressedContacts(frame(['right_6'],['off','off'],[0,1]))),['right_7','right_8']);
+const events=[{episode_s:1.002,contact:'left_1'},{episode_s:1.010,contact:'right_4'}];
+assert.deepEqual(arr(keydownFlashContacts(events,1.001)),[]);
+assert.deepEqual(arr(keydownFlashContacts(events,1.003)),['left_1']);
+assert.deepEqual(arr(keydownFlashContacts(events,1.02)),['left_1','right_4']);
+assert.deepEqual(arr(keydownFlashContacts(events,1.10)),[]);
+""", encoding="utf-8",
+    )
+    checked = subprocess.run(["node", str(script)], capture_output=True, text=True)
+    assert checked.returncode == 0, checked.stderr

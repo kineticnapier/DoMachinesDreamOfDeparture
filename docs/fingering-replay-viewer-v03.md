@@ -79,3 +79,25 @@ start .\artifacts\fingering_network_v011\full-20261018-r2-comparison\replay-v011
 ```
 
 The new output is write-once; use another filename if it already exists.
+
+## KeyDown increments without a visible flash (fixed)
+
+The previous overlay indexed the left physical-axis array in forward order,
+but `n_key_names(12)` enumerates `left_6 ... left_1, right_1 ... right_6`.
+It could therefore highlight a different key than the actual pressed axis.
+
+The overlay now resolves pressed flags via the exact axis names in
+`PHYSICAL_AXES`. It also flashes the corresponding contact for 85ms after
+each saved physical KeyDown, because a KeyDown recorded by 1ms physics may
+occur between the 10ms Motor trace snapshots. The flash is a **recent input
+indicator**, not an assertion that the key is still physically held.
+
+Rebuild an existing Human-Proxy Viewer from its saved JSON, with no inference,
+training or physics rerun, using the same write-once regeneration script:
+
+```powershell
+.\\.venv\\Scripts\\python.exe scripts/remap_fingering_replay_key_overlay.py `
+  --source-json artifacts/fingering_network_v011/full-20261018-r2-comparison/replay-v011.json `
+  --output-html artifacts/fingering_network_v011/full-20261018-r2-comparison/replay-v011-keyflash-fixed.html
+start .\\artifacts\\fingering_network_v011\\full-20261018-r2-comparison\\replay-v011-keyflash-fixed.html
+```
