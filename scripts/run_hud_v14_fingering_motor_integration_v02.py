@@ -26,6 +26,8 @@ from dmdod.envs.contact_hud_chart_v02 import HudCoupledContactRealChartEnv
 from dmdod.planning.hud_v14_forecast_source_v02 import HUDV14ForecastSource
 from dmdod.planning.oracle_forecast_source_v02 import OracleDue, OracleForecastSource
 from dmdod.planning.timing_fingering_motor_policy_v02 import TimingFingeringMotorPolicy
+from dmdod.planning.persistent_fingering_scheduler_v01 import MotorPhysicalSnapshot
+from dmdod.motor.contact_16k import PHYSICAL_AXES
 
 
 FORMAT = "dmdod-hud-v14-fingering-motor-integration-v0.2"
@@ -214,11 +216,22 @@ def _diagnose_misses_posthoc(segment, env, first_seen: list[dict],
     return rows
 
 
-def simulate(segment, model, arm: str, *, wall_timeout_s: float = 180.0):
+def simulate(segment, model, arm: str, *, wall_timeout_s: float = 180.0,
+             trace_axis: str | None = None,
+             trace_window_s: tuple[float, float] | None = None):
     source_kind = next((src for name, src, _ in ARMS if name == arm), None)
     selector = next((sel for name, _, sel in ARMS if name == arm), None)
     if source_kind is None or selector is None:
         raise ValueError(f"unknown comparison arm: {arm}")
+    if (trace_axis is None) != (trace_window_s is None):
+        raise ValueError("diagnostic trace requires both axis and window")
+    if trace_axis is not None:
+        if trace_axis not in PHYSICAL_AXES:
+            raise ValueError("diagnostic trace axis must be a 12-axis Motor actuator")
+        from math import isfinite
+        if (len(trace_window_s) != 2 or not all(isfinite(x) for x in trace_window_s)
+                or trace_window_s[0] < 0 or trace_window_s[1] <= trace_window_s[0]):
+            raise ValueError("invalid diagnostic trace time window")
     env = HudCoupledContactRealChartEnv(
         segment, control_dt_s=.010, physics_dt_s=.001,
         tail_s=.040,
@@ -241,6 +254,7 @@ def simulate(segment, model, arm: str, *, wall_timeout_s: float = 180.0):
     forecast_lifecycle_trace = []
     raw_new_ids = []
     observed = Counter()
+    control_trace = []
     started = time.monotonic()
     max_steps = int((segment.duration_s + 2.0) / .010) + 200
     for step in range(max_steps):
@@ -276,7 +290,24 @@ def simulate(segment, model, arm: str, *, wall_timeout_s: float = 180.0):
                     for t in forecast.pending
                 ],
             })
+        capture_axis = (
+            trace_axis is not None
+            and trace_window_s[0] - 1e-9 <= forecast.local_clock_s
+            <= trace_window_s[1] + 1e-9
+        )
+        before_axis = (MotorPhysicalSnapshot.from_motor(env.motor).axis(trace_axis)
+                       if capture_axis else None)
         action = policy.command(forecast, env.motor)
+        reserved = ([
+            {"local_id": reservation.local_id,
+             "phase": reservation.phase.value,
+             "confirmed": reservation.confirmed,
+             "due_local_s": reservation.due_local_s,
+             "retired_reason": reservation.retired_reason,
+             "down_axes": sorted(reservation.down_axes)}
+            for reservation in policy.scheduler.reservations
+            if trace_axis in reservation.axes
+        ] if capture_axis else [])
         outcome = env.step(action)
         # These are raw physical contacts, not scorer judgements.
         transition = env.motor.motor.last_transition
@@ -288,6 +319,45 @@ def simulate(segment, model, arm: str, *, wall_timeout_s: float = 180.0):
         } for e in env.last_events)
         # The shared policy reads only the physical NKeyMotor transition.
         policy.observe_physics(env.motor)
+        if capture_axis:
+            after_axis = MotorPhysicalSnapshot.from_motor(env.motor).axis(trace_axis)
+            index = PHYSICAL_AXES.index(trace_axis)
+            control_trace.append({
+                "step": step,
+                "local_clock_s": round(forecast.local_clock_s, 6),
+                "forecast_status": forecast.status,
+                "forecast_pending": [
+                    {"local_id": t.local_id, "due_local_s": t.due_local_s,
+                     "confirmed_now": t.confirmed_now}
+                    for t in forecast.pending
+                    if abs(t.due_local_s - forecast.local_clock_s) <= .100
+                ],
+                "axis": trace_axis,
+                "axis_before": {
+                    "position_m": before_axis.position_m,
+                    "velocity_m_s": before_axis.velocity_m_s,
+                    "activation": before_axis.activation,
+                    "pressed": before_axis.pressed,
+                },
+                "axis_command": action.commands[index],
+                "reservation_after_command": reserved,
+                "axis_after": {
+                    "position_m": after_axis.position_m,
+                    "velocity_m_s": after_axis.velocity_m_s,
+                    "activation": after_axis.activation,
+                    "pressed": after_axis.pressed,
+                },
+                "physical_edges": [
+                    {"time_s": event.time_s, "edge": event.event.value}
+                    for event in transition.evaluator_events
+                    if event.key == trace_axis
+                ],
+                "reservation_after_physics": [
+                    {"local_id": q.local_id, "phase": q.phase.value,
+                     "confirmed": q.confirmed, "retired_reason": q.retired_reason}
+                    for q in policy.scheduler.reservations if trace_axis in q.axes
+                ],
+            })
         if outcome.done:
             break
         obs = outcome.observation
@@ -295,6 +365,7 @@ def simulate(segment, model, arm: str, *, wall_timeout_s: float = 180.0):
         raise RuntimeError(f"{arm}: bounded simulation did not terminate")
     result = {
         "arm": arm,
+        "diagnostic_control_trace": control_trace,
         "timing_source": source_kind,
         "fingering_selector": selector,
         "stats": _arm_stats(env),
@@ -344,7 +415,9 @@ def simulate(segment, model, arm: str, *, wall_timeout_s: float = 180.0):
 
 
 def run_fixed(segment, *, checkpoint: Path, label: str,
-              timeout: float, arm_filter: str | None = None) -> dict:
+              timeout: float, arm_filter: str | None = None,
+              trace_axis: str | None = None,
+              trace_window_s: tuple[float, float] | None = None) -> dict:
     model = frozen.load_model(checkpoint)
     rows = {}
     for name, _, _ in ARMS:
@@ -352,7 +425,8 @@ def run_fixed(segment, *, checkpoint: Path, label: str,
             continue
         print(f"{label} {name} starting", flush=True)
         try:
-            value = simulate(segment, model, name, wall_timeout_s=timeout)
+            value = simulate(segment, model, name, wall_timeout_s=timeout,
+                             trace_axis=trace_axis, trace_window_s=trace_window_s)
         except Exception as exc:
             value = {"arm": name, "error": f"{type(exc).__name__}: {exc}"}
         rows[name] = value
@@ -388,6 +462,10 @@ def main():
                    default=None, help="rerun only one failing comparison arm")
     p.add_argument("--case", default=None,
                    help="run only one named fixture/case from the selected mode")
+    p.add_argument("--trace-axis", choices=PHYSICAL_AXES,
+                   default=None, help="diagnose one physical axis only")
+    p.add_argument("--trace-start-s", type=float, default=None)
+    p.add_argument("--trace-end-s", type=float, default=None)
     p.add_argument("--wall-timeout-s", type=float, default=180.0)
     p.add_argument("--output-dir", type=Path, required=True)
     args = p.parse_args()
@@ -395,6 +473,14 @@ def main():
         p.error("output directory exists; refusing overwrite")
     if args.wall_timeout_s <= 0:
         p.error("--wall-timeout-s must be positive")
+    if args.trace_axis is None and (
+        args.trace_start_s is not None or args.trace_end_s is not None
+    ):
+        p.error("--trace-axis is required with --trace-start-s and --trace-end-s")
+    if args.trace_axis is not None and (
+        args.trace_start_s is None or args.trace_end_s is None
+    ):
+        p.error("--trace-axis requires --trace-start-s and --trace-end-s")
     if args.train_chart is not None:
         if "train" not in (part.lower() for part in args.train_chart.parts):
             p.error("train-only integration gate; select an explicit Train chart")
@@ -427,7 +513,11 @@ def main():
         ),
         "cases": [run_fixed(s, checkpoint=args.checkpoint,
                             label=name, timeout=args.wall_timeout_s,
-                            arm_filter=args.arm)
+                            arm_filter=args.arm, trace_axis=args.trace_axis,
+                            trace_window_s=(
+                                (args.trace_start_s, args.trace_end_s)
+                                if args.trace_axis is not None else None
+                            ))
                   for name, s in cases],
         "limitations": [
             "No training, no neural Timing v3; Timing v1.4 uses up to 80ms.",
