@@ -87,7 +87,6 @@ def select_charts(root: Path, explicit: list[Path],
         raise ValueError("no chart candidates supplied")
     checks = []
     seen_paths = set()
-    seen_hashes = set()
     for path in ordered:
         if not path.is_file() or path.suffix.lower() != ".adofai":
             raise FileNotFoundError(f"ADOFAI chart not found: {path}")
@@ -96,23 +95,31 @@ def select_charts(root: Path, explicit: list[Path],
             raise ValueError(f"Train chart forbidden in independent evaluation: {path}")
         if split not in allowed_splits:
             raise ValueError(f"unexpected evaluation split: {path} ({split})")
-        digest = viewer.file_sha256(path)
-        if digest == PREVIOUS_BOOL_SHA256:
-            raise ValueError(f"previously evaluated bool chart forbidden: {path}")
-        if path in seen_paths or digest in seen_hashes:
-            raise ValueError(f"duplicate path/chart content in evaluation pool: {path}")
+        if path in seen_paths:
+            raise ValueError(f"duplicate chart path in evaluation pool: {path}")
         seen_paths.add(path)
-        seen_hashes.add(digest)
         checks.append({
             "path": str(path),
             "name": path.name,
-            "sha256": digest,
             "split": split,
-            "provenance": "heldout_directory_name" if split != "unspecified"
-                          else "externally_supplied_unverified_split",
         })
     selected = (equally_spaced(checks, max_charts) if not explicit
                 else checks[:max_charts])
+    # Hash only preselected charts. A large chart corpus may contain thousands
+    # of non-selected files, so hashing its entire contents is unnecessary.
+    seen_hashes = set()
+    for row in selected:
+        digest = viewer.file_sha256(Path(row["path"]))
+        if digest == PREVIOUS_BOOL_SHA256:
+            raise ValueError(f"previously evaluated bool chart forbidden: {row['path']}")
+        if digest in seen_hashes:
+            raise ValueError(f"duplicate chart content in selected sample: {row['path']}")
+        seen_hashes.add(digest)
+        row["sha256"] = digest
+        row["provenance"] = (
+            "heldout_directory_name" if row["split"] != "unspecified"
+            else "externally_supplied_unverified_split"
+        )
     return selected, {
         "selection_basis": basis,
         "population_n": len(checks),
@@ -123,7 +130,6 @@ def select_charts(root: Path, explicit: list[Path],
         "selection_rule": ("equally_spaced_sorted_paths_before_scoring" if not explicit
                            else "explicit_paths_in_command_line_order_before_scoring"),
     }
-
 
 def _summarize_run(run: dict) -> dict:
     stats = run["stats"]
