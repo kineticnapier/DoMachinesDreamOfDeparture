@@ -65,3 +65,30 @@ def test_sampler_never_selects_more_than_requested():
     assert 1 not in selected  # zero-activation first use is not an intervention
     assert 7 not in selected  # no observed <100ms physical reuse
     assert 8 not in selected  # positive activation is not zeroed
+
+
+def test_case_metadata_uses_oracle_due_time_not_missing_onset_field():
+    # Real motor-onset JSON stores command lead, not a top-level due_ms.
+    anchor = {
+        "event_index": 392,
+        "reuse_band": "reuse_100_200ms",
+        "axis": "right_1",
+        "activation_at_command": -.088,
+        "position_at_command_mm": -.631,
+        "velocity_at_command_mm_s": -50.264,
+        "finger_fatigue_at_command": .094,
+        "command_lead_ms": 39.1,
+        "first_positive_command_ms": 1234.5,
+    }
+    assert "due_ms" not in anchor
+    result = audit._case_metadata(anchor, 1.2736)
+    assert result == {
+        "event_index": 392,
+        "reuse_band": "reuse_100_200ms",
+        "axis": "right_1",
+        "due_ms": pytest.approx(1273.6),
+        "start_activation": pytest.approx(-.088),
+        "start_position_mm": pytest.approx(-.631),
+        "start_velocity_mm_s": pytest.approx(-50.264),
+        "start_finger_fatigue": pytest.approx(.094),
+    }
