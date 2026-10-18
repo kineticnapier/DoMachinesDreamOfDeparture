@@ -109,8 +109,36 @@ def implicated_predecessors(scoring: dict, ordinal: int, due_s: float) -> tuple[
     }))
 
 
+def predecessor_chain(
+    record: dict, scoring: dict, missed: int,
+) -> tuple[int, ...]:
+    """Walk back through actual earlier-target KeyDown consumption.
+
+    This is a temporal/ordered-scorer ancestry, NOT proof that a forecast
+    for target k intentionally generated that physical key. Stop when no
+    preceding consumer appears near that target's due, or on ambiguity.
+    """
+    due_by_ordinal = tuple(
+        float(t["due_s"]) for t in record["target_outcomes_posthoc"]
+    )
+    chain: list[int] = []
+    current = missed
+    while len(chain) < len(due_by_ordinal):
+        candidates = implicated_predecessors(
+            scoring, current, due_by_ordinal[current]
+        )
+        if len(candidates) != 1:
+            break
+        parent = candidates[0]
+        if parent >= current or parent in chain:
+            break
+        chain.append(parent)
+        current = parent
+    return tuple(chain)
+
+
 def inspect_case(arms: dict) -> list[dict]:
-    """Cross-arm windows for the missed target AND earlier actual consumer(s)."""
+    """Cross-arm cascade from a Miss back to its earliest scorer consumer."""
     invalid = [name for name, (_, scorer) in arms.items()
                if not scorer["score_replay_exact_match"]]
     if invalid:
@@ -130,15 +158,22 @@ def inspect_case(arms: dict) -> list[dict]:
                 scoring, missed, record["target_outcomes_posthoc"][missed]["due_s"]
             )
         })
-        focus = sorted(set([missed, *parents]))
-        # Add one earlier event to tell whether the preceding 'parent'
-        # was itself delayed or already stolen by an even earlier target.
-        focus = sorted(set(
-            focus + [max(0, parent - 1) for parent in parents]
-        ))
+        chains = {
+            name: predecessor_chain(record, scorer, missed)
+            for name, (record, scorer) in arms.items()
+        }
+        focus = sorted(set([missed, *parents,
+                            *(index for chain in chains.values() for index in chain)]))
+        # Also display one predecessor before the terminal parent to reveal
+        # a missing stroke even when no further scored KeyDown exists.
+        focus = sorted(set(focus + [max(0, min(chain) - 1)
+                                    for chain in chains.values() if chain]))
         results.append({
             "missed_target_ordinal": missed,
             "earlier_scorer_consumers": parents,
+            "ordered_scorer_ancestry_by_arm": {
+                name: list(chain) for name, chain in chains.items()
+            },
             "comparison": {
                 str(index): {
                     name: target_view(record, scorer, index)
