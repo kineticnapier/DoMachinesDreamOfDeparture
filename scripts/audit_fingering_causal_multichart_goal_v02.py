@@ -9,6 +9,7 @@ loads the exact frozen preselected chart manifest and all finished arms.
 """
 
 import argparse
+from concurrent.futures import ProcessPoolExecutor, as_completed
 from contextlib import contextmanager
 from datetime import datetime, timezone
 from hashlib import sha256
@@ -37,6 +38,8 @@ POLICIES = multichart.POLICIES
 ARMS = multichart.ARMS
 MANIFEST = "run-manifest.json"
 POLICY_ARMS = len(POLICIES) * len(ARMS)
+_WORKER_MODEL = None
+_WORKER_SEGMENTS: dict[str, object] = {}
 
 
 def utc() -> str:
@@ -180,6 +183,10 @@ def checkpoint_payload(run: dict, *, chart_sha: str, checkpoint_sha: str,
         "result": {
             "stats": run["stats"],
             "decisions": run["decisions"],
+            # Preserve every physical event time/contact so optimized and
+            # resumed runs can be checked beyond aggregate metrics.
+            "keydowns": run["keydowns"],
+            "actual_downs": run["actual_downs"],
             "interventions": run["interventions"],
             "termination_reason": run["termination_reason"],
             "elapsed_wall_s": run["elapsed_wall_s"],
@@ -203,7 +210,9 @@ def load_arm(path: Path, *, chart_sha: str, checkpoint_sha: str,
     return saved
 
 
-def snapshot(report: dict, output_dir: Path, goal_seconds: float | None) -> dict:
+def snapshot(report: dict, output_dir: Path, goal_seconds: float | None,
+             *, active_invocation_wall_s: float | None = None,
+             workers: int = 1) -> dict:
     """Reconstruct from durable arm checkpoints; incomplete pairs stay visible."""
     rows = []
     duration = 0.0
@@ -238,9 +247,17 @@ def snapshot(report: dict, output_dir: Path, goal_seconds: float | None) -> dict
         entry["completed_arm_count"] = sum(len(runs) for runs in raw_pairs.values())
         rows.append(entry)
     remaining = total - completed
-    estimated_remaining = (duration / completed * remaining) if completed else None
-    projected_total = (duration + estimated_remaining
-                       if estimated_remaining is not None else None)
+    compute_remaining = (duration / completed * remaining) if completed else None
+    compute_projected = (duration + compute_remaining
+                         if compute_remaining is not None else None)
+    if active_invocation_wall_s is not None and completed:
+        estimated_remaining = active_invocation_wall_s / completed * remaining
+        projected_total = active_invocation_wall_s + estimated_remaining
+        goal_basis = "active_invocation_wall_clock"
+    else:
+        estimated_remaining = compute_remaining
+        projected_total = compute_projected
+        goal_basis = "completed_arm_wall_sum"
     return {
         "format": FORMAT + "-progress",
         "updated_at_utc": utc(),
@@ -252,6 +269,12 @@ def snapshot(report: dict, output_dir: Path, goal_seconds: float | None) -> dict
         "completed_charts": sum(row["completed_arm_count"] == POLICY_ARMS for row in rows),
         "total_charts": len(rows),
         "spent_completed_arms_s": round(duration, 3),
+        "active_invocation_wall_s": (
+            round(active_invocation_wall_s, 3)
+            if active_invocation_wall_s is not None else None
+        ),
+        "workers": workers,
+        "goal_projection_basis": goal_basis,
         "estimated_remaining_s": (
             round(estimated_remaining, 3) if estimated_remaining is not None else None
         ),
@@ -277,8 +300,14 @@ def snapshot(report: dict, output_dir: Path, goal_seconds: float | None) -> dict
 
 
 def publish_progress(manifest: dict, output_dir: Path,
-                     goal_seconds: float | None) -> dict:
-    state = snapshot(manifest, output_dir, goal_seconds)
+                     goal_seconds: float | None, *,
+                     active_invocation_wall_s: float | None = None,
+                     workers: int = 1) -> dict:
+    state = snapshot(
+        manifest, output_dir, goal_seconds,
+        active_invocation_wall_s=active_invocation_wall_s,
+        workers=workers,
+    )
     write_json_atomic(output_dir / "progress.json", state, create_only=False)
     return state
 
@@ -305,8 +334,127 @@ def print_progress(progress: dict) -> None:
     )
 
 
+def _worker_initialize(checkpoint: str) -> None:
+    global _WORKER_MODEL, _WORKER_SEGMENTS
+    _WORKER_MODEL = causal.runner.load_model(Path(checkpoint))
+    _WORKER_SEGMENTS = {}
+
+
+def _worker_run_arm(task: tuple) -> tuple[int, str, str, dict]:
+    chart_index, chart, policy, alpha, arm, wall_timeout_s, checkpoint_sha = task
+    path = Path(chart["path"])
+    key = str(path)
+    segment = _WORKER_SEGMENTS.get(key)
+    if segment is None:
+        if hash_file(path) != chart["sha256"]:
+            raise RuntimeError(f"chart changed during evaluation: {path}")
+        segment = build_playable_segment(compile_adofai(load_adofai(path)))
+        _WORKER_SEGMENTS[key] = segment
+    started = time.perf_counter()
+    result = causal.execute(
+        segment, _WORKER_MODEL, policy, alpha, arm,
+        wall_timeout_s=wall_timeout_s,
+    )
+    elapsed_s = time.perf_counter() - started
+    return chart_index, policy, arm, checkpoint_payload(
+        result,
+        chart_sha=chart["sha256"],
+        checkpoint_sha=checkpoint_sha,
+        policy=policy,
+        arm=arm,
+        elapsed_s=elapsed_s,
+    )
+
+
+def run_parallel(manifest: dict, output_dir: Path, *, wall_timeout_s: float,
+                 goal_seconds: float | None, checkpoint: Path,
+                 workers: int) -> dict:
+    """Run independent arms in spawn-safe worker processes; save in parent."""
+    if workers < 2:
+        raise ValueError("parallel runner requires at least two workers")
+    protocol = manifest["protocol"]
+    tasks = []
+    charts_by_index = {}
+    for index, chart in enumerate(manifest["selected"], start=1):
+        path = Path(chart["path"])
+        if hash_file(path) != chart["sha256"]:
+            raise RuntimeError(f"chart changed during evaluation: {path}")
+        charts_by_index[index] = chart
+        for policy, alpha in POLICIES:
+            for arm in ARMS:
+                destination = checkpoint_path(
+                    output_dir, index, chart["sha256"], policy, arm
+                )
+                saved = load_arm(
+                    destination, chart_sha=chart["sha256"],
+                    checkpoint_sha=protocol["checkpoint_sha256"],
+                    policy=policy, arm=arm,
+                )
+                if saved is not None:
+                    print(f"[{index}/{len(manifest['selected'])}] "
+                          f"skip saved {policy}/{arm}: {chart['name']}", flush=True)
+                    continue
+                tasks.append((
+                    index, chart, policy, alpha, arm, wall_timeout_s,
+                    protocol["checkpoint_sha256"],
+                ))
+    begun = time.perf_counter()
+    if not tasks:
+        return publish_progress(
+            manifest, output_dir, goal_seconds,
+            active_invocation_wall_s=0.0, workers=workers,
+        )
+    executor = ProcessPoolExecutor(
+        max_workers=workers,
+        initializer=_worker_initialize,
+        initargs=(str(checkpoint),),
+    )
+    futures = {executor.submit(_worker_run_arm, task): task for task in tasks}
+    try:
+        for future in as_completed(futures):
+            index, policy, arm, value = future.result()
+            chart = charts_by_index[index]
+            destination = checkpoint_path(
+                output_dir, index, chart["sha256"], policy, arm
+            )
+            write_json_atomic(destination, value, create_only=True)
+            stats = value["result"]["stats"]
+            print(
+                f"[{index}/{len(manifest['selected'])}] {chart['name']} "
+                f"{policy}/{arm}: H={stats['hits']}/{stats['targets']} "
+                f"miss={stats['misses']} X={stats['x_accuracy_percent']}% "
+                f"TE={stats['too_early']} OL={stats['overloaded']} "
+                f"arm-wall={value['measured_wall_s']:.2f}s; saved",
+                flush=True,
+            )
+            state = publish_progress(
+                manifest, output_dir, goal_seconds,
+                active_invocation_wall_s=time.perf_counter() - begun,
+                workers=workers,
+            )
+            print_progress(state)
+    except BaseException:
+        for future in futures:
+            future.cancel()
+        executor.shutdown(wait=False, cancel_futures=True)
+        raise
+    else:
+        executor.shutdown(wait=True)
+    return publish_progress(
+        manifest, output_dir, goal_seconds,
+        active_invocation_wall_s=time.perf_counter() - begun,
+        workers=workers,
+    )
+
+
 def run(manifest: dict, output_dir: Path, *, wall_timeout_s: float,
-        goal_seconds: float | None, checkpoint: Path) -> dict:
+        goal_seconds: float | None, checkpoint: Path,
+        workers: int = 1) -> dict:
+    if workers > 1:
+        return run_parallel(
+            manifest, output_dir, wall_timeout_s=wall_timeout_s,
+            goal_seconds=goal_seconds, checkpoint=checkpoint, workers=workers,
+        )
     model = causal.runner.load_model(checkpoint)
     protocol = manifest["protocol"]
     for index, chart in enumerate(manifest["selected"], start=1):
@@ -366,6 +514,8 @@ def main() -> None:
                    help="total accumulated arm evaluation time goal; never a cutoff")
     p.add_argument("--wall-timeout-s", type=float, default=600.0,
                    help="per-arm safety timeout; unrelated to --goal-seconds")
+    p.add_argument("--workers", type=int, default=1,
+                   help="independent CPU arm processes (default: 1)")
     args = p.parse_args()
     if args.wall_timeout_s <= 0 or not math.isfinite(args.wall_timeout_s):
         p.error("--wall-timeout-s must be finite and positive")
@@ -373,6 +523,8 @@ def main() -> None:
         not math.isfinite(args.goal_seconds) or args.goal_seconds <= 0
     ):
         p.error("--goal-seconds must be finite and positive")
+    if args.workers < 1:
+        p.error("--workers must be >= 1")
     if args.resume and args.chart:
         p.error("--resume cannot add or change charts; chart selection is frozen")
     # A resumed run does not reselect charts. max-charts/chart-root are ignored.
@@ -390,7 +542,8 @@ def main() -> None:
             finished = run(manifest, args.output_dir,
                            wall_timeout_s=args.wall_timeout_s,
                            goal_seconds=args.goal_seconds,
-                           checkpoint=args.checkpoint)
+                           checkpoint=args.checkpoint,
+                           workers=args.workers)
         except KeyboardInterrupt:
             # Never discard already published per-arm checkpoints.
             stopped = publish_progress(manifest, args.output_dir, args.goal_seconds)
@@ -414,6 +567,10 @@ def main() -> None:
                     "measured_completed_arm_wall_seconds": finished[
                         "spent_completed_arms_s"
                     ],
+                    "measured_active_invocation_wall_seconds": finished[
+                        "active_invocation_wall_s"
+                    ],
+                    "workers": args.workers,
                     "status": finished["goal_status"],
                     "counts_only_successful_finished_arm_time": True,
                 },

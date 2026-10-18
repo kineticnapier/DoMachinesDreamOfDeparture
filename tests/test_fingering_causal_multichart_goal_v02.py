@@ -48,6 +48,8 @@ def _run(hits=3):
             "overloaded": False, "physical_keydowns": 3,
         },
         "decisions": [{"event_index": 0, "chosen": "right_1"}],
+        "keydowns": [{"axis": "right_1", "contact": "right_1", "time_ms": 1.0}],
+        "actual_downs": [(1.0, "right_1")],
         "interventions": {"actual_early_axis_steps": 1},
         "termination_reason": "chart_complete",
         "elapsed_wall_s": .5,
@@ -79,6 +81,36 @@ def test_goal_progress_handles_incomplete_policy_pair(tmp_path):
     assert state["goal_status"] == "projected_within_target"
     assert state["charts"][0]["policies"]["free"]["pending_arms"] == ["causal_lead"]
     assert state["aggregate_completed_pairs_only"]["free"]["completed_charts"] == 0
+
+
+def test_parallel_progress_uses_measured_batch_wall_not_arm_sum(tmp_path):
+    manifest = _manifest(tmp_path)
+    output = tmp_path / "out"
+    output.mkdir()
+    chart = manifest["selected"][0]
+    for policy, _alpha in goal.POLICIES:
+        for arm in goal.ARMS:
+            path = goal.checkpoint_path(
+                output, 1, chart["sha256"], policy, arm
+            )
+            goal.write_json_atomic(path, {
+                "format": goal.FORMAT + "-arm",
+                "chart_sha256": chart["sha256"],
+                "checkpoint_sha256": manifest["protocol"]["checkpoint_sha256"],
+                "policy": policy,
+                "arm": arm,
+                "measured_wall_s": 10.0,
+                "result": _run(),
+            }, create_only=True)
+    state = goal.snapshot(
+        manifest, output, goal_seconds=25.0,
+        active_invocation_wall_s=20.0, workers=2,
+    )
+    assert state["spent_completed_arms_s"] == 40.0
+    assert state["active_invocation_wall_s"] == 20.0
+    assert state["projected_total_s"] == 20.0
+    assert state["goal_projection_basis"] == "active_invocation_wall_clock"
+    assert state["goal_status"] == "projected_within_target"
 
 
 def test_goal_is_reporting_only_and_does_not_stop_evaluation(tmp_path, monkeypatch):
