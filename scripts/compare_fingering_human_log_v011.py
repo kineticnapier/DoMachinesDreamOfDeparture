@@ -131,8 +131,21 @@ def analyze(payload: dict, human: list[dict]) -> tuple[dict, list[dict]]:
     traces = [policies[name].get("trace") or [] for name in ("free", "human_proxy")]
     if not all(traces):
         raise ValueError("both policies must include replay trace frames")
-    common_end_s = min(float(trace[-1][0]) for trace in traces)
-    events = [e for e in events if float(e["episode_s"]) <= common_end_s + 1e-6]
+    # A model can finish the final target *before* its nominal due timestamp
+    # because the physics judgement accepts an early KeyDown. Do not discard
+    # such a fully judged last event merely because trace[-1] < due_s.
+    full_event_count = len(events)
+    all_events_judged = all(
+        int(policies[name].get("saved_metrics", {}).get("hits", -1))
+        + int(policies[name].get("saved_metrics", {}).get("misses", -1))
+        >= full_event_count
+        for name in ("free", "human_proxy")
+    )
+    common_end_s = (max(float(trace[-1][0]) for trace in traces)
+                    if all_events_judged
+                    else min(float(trace[-1][0]) for trace in traces))
+    if not all_events_judged:
+        events = [e for e in events if float(e["episode_s"]) <= common_end_s + 1e-6]
     if not events:
         raise ValueError("both model runs ended before the first event")
     if len(events) > len(human):
@@ -165,6 +178,7 @@ def analyze(payload: dict, human: list[dict]) -> tuple[dict, list[dict]]:
         "human_events_in_full_log": full_human_count,
         "model_events": len(events),
         "common_end_s": round(common_end_s, 6),
+        "all_model_events_judged": all_events_judged,
         "comparison_coverage_percent": round(100 * len(events) / full_human_count, 3),
         "estimated_human_minus_oracle_offset_ms": round(shift, 3),
         "median_absolute_residual_ms": round(median(errors), 3),
