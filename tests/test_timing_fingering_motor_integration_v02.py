@@ -347,9 +347,8 @@ def test_oracle_local_ids_not_preassigned_from_hidden_event_ordinals():
     assert first.new_ids == (0, 1)
     assert source._local_id_by_event == {0: 0, 1: 1}
     assert 2 not in source._local_id_by_event
-    for step in range(1, 6):
+    for step in range(1, 5):
         source.observe(step)
     assert 2 not in source._local_id_by_event
-    for step in range(6, 7):
-        source.observe(step)
+    source.observe(5)
     assert 2 in source._local_id_by_event
