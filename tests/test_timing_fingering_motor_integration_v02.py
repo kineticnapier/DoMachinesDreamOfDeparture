@@ -8,7 +8,12 @@ from types import SimpleNamespace
 import pytest
 import torch
 
-from dmdod.motor.contact_16k import Coupled16ContactMotor
+from dmdod.motor.contact_16k import ContactAction, Coupled16ContactMotor
+from dmdod.envs.contact_hud_chart_v02 import HudCoupledContactRealChartEnv
+from dmdod.envs.n_key import DiagnosticHudNKeyRealChartMotorEnv
+from dmdod.motor.n_key import NKeyAction
+from dmdod.features.real_chart import DEFAULT_REAL_CHART_FEATURE_CONFIG as FLOORS
+from scripts.audit_hud_timing_tracker_transition_v14_matrix import generated
 from dmdod.planning import contact_fingering_candidates_v02 as candidates
 from dmdod.planning import hud_v14_forecast_source_v02 as hud_source
 from dmdod.planning import oracle_forecast_source_v02 as oracle
@@ -229,3 +234,103 @@ def test_oracle_and_hud_forecast_frames_share_public_type():
     assert oracle_frame.pending[0].local_id == 0
     assert oracle_frame.pending[0].due_local_s == .055
     assert not hasattr(oracle_frame.pending[0], "target_index")
+
+
+@pytest.mark.parametrize("variant", ("speed_double", "twirl_speed", "pause_1"))
+def test_current_contact_hud_renderer_matches_legacy_display(variant):
+    segment = generated((0., 90., 180., 270.), 496., variant)
+    cenv = HudCoupledContactRealChartEnv(
+        segment, tail_s=.040, control_dt_s=.010, physics_dt_s=.001,
+        behind_floors=FLOORS.behind_floors, ahead_floors=FLOORS.ahead_floors
+    )
+    renv = DiagnosticHudNKeyRealChartMotorEnv(
+        segment, key_count=8, tail_s=.040,
+        control_dt_s=.010, physics_dt_s=.001,
+        behind_floors=FLOORS.behind_floors, ahead_floors=FLOORS.ahead_floors,
+    )
+    contact, legacy = cenv.reset(), renv.reset()
+    source = hud_source.HUDV14ForecastSource()
+    reference = CausalTimingTracker(horizon_s=.080)
+    for step in range(30):
+        assert contact.tile_bpm == legacy.tile_bpm
+        assert contact.real_bpm == legacy.real_bpm
+        frame = source.hud.encode(step, contact)
+        known = tuple(__import__(
+            "dmdod.envs.n_key", fromlist=["encode_n_key_hud_real_chart_observation"]
+        ).encode_n_key_hud_real_chart_observation(legacy))
+        assert frame.features == (0.,)*24 + known[24:]
+        updated = source.observe(frame)
+        expected = reference.observe(step, known)
+        assert updated.status == (
+            expected.status if expected.status in ("eligible", "eligible_partial")
+            else "abstain"
+        )
+        c = cenv.step(ContactAction((0.,)*12))
+        n = renv.step(NKeyAction((0.,)*8))
+        assert c.done == n.done
+        contact, legacy = c.observation, n.observation
+        if c.done:
+            break
+
+
+def test_prefix_only_hud_frames_cannot_depend_on_future_heldout_suffix():
+    segment = generated((0., 90., 180., 270.), 496., "speed_double")
+    env = HudCoupledContactRealChartEnv(segment, tail_s=.04)
+    obs = env.reset()
+    frames = []
+    for step in range(12):
+        frames.append(hud_source.HUDV14ForecastSource().hud.encode(step, obs))
+        output = env.step(ContactAction((0.,)*12))
+        obs = output.observation
+        if output.done:
+            break
+    first = hud_source.HUDV14ForecastSource()
+    second = hud_source.HUDV14ForecastSource()
+    prefix_count = min(5, len(frames))
+    prefix1 = tuple(first.observe(x) for x in frames[:prefix_count])
+    prefix2 = tuple(second.observe(x) for x in frames[:prefix_count])
+    assert prefix1 == prefix2
+    if len(frames) > prefix_count:
+        first.observe(frames[prefix_count])
+        assert prefix2 == prefix1
+
+
+def test_candidate_selection_identical_for_bitwise_same_context(monkeypatch):
+    motor = Coupled16ContactMotor()
+    update = TimingFrameUpdate(
+        step=2, status=ELIGIBLE, covered_until_s=.10, source="fixture",
+        pending=(TimingEventToken(0, .065, 1),), new_ids=(0,),
+    )
+    adapted = context.encode_context_from_timing_update(
+        motor, update, set()
+    )
+    direct = frozen_network.encode_context(
+        motor, (SimpleNamespace(episode_time_s=.065, chord_size=1),),
+        .020, set(),
+    )
+    assert torch.equal(adapted, direct)
+    model = frozen_network.FingeringRanker()
+    choices = candidates.finger_options(1)
+    eligibility = (True,) * len(choices)
+    aa = frozen_network.choose_candidate_styled(
+        model, adapted, choices, eligibility, alpha=.5
+    )
+    bb = frozen_network.choose_candidate_styled(
+        model, direct, choices, eligibility, alpha=.5
+    )
+    assert aa == bb
+
+
+def test_integration_reports_full_and_supported_denominators_separately():
+    segment = runner.synthetic_segment(120.)
+    result = runner.simulate(
+        segment, model=None, arm="hud_center_first", wall_timeout_s=90.
+    )
+    full = result["stats"]
+    supported = result["supported_event_posthoc"]
+    assert full["targets"] == len(segment.targets)
+    assert supported["sufficient_lead_supported_truth_events"] <= full["targets"]
+    assert supported["supported_truth_hit_by_ordered_scorer"] <= (
+        supported["sufficient_lead_supported_truth_events"]
+    )
+    assert result["forecast_posthoc"]["true_targets"] == full["targets"]
