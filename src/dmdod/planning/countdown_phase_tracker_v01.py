@@ -162,10 +162,14 @@ class CountdownPhaseTracker:
                     elif self._last_digit != 1:
                         self._fail("go_before_digit_one")
                 elif observation.kind is CountdownCueKind.READY:
-                    if self._last_kind is not None:
+                    if self._last_kind not in (None, CountdownCueKind.HIDDEN):
                         self._fail("countdown_restarted")
                 elif observation.kind is CountdownCueKind.HIDDEN:
-                    if self._last_kind is not CountdownCueKind.GO:
+                    idle = (
+                        self._last_kind in (None, CountdownCueKind.HIDDEN)
+                        and not self._numeric_onsets
+                    )
+                    if not idle and self._last_kind is not CountdownCueKind.GO:
                         self._fail("countdown_hidden_before_go")
                 else:
                     self._fail("unknown_countdown_cue")

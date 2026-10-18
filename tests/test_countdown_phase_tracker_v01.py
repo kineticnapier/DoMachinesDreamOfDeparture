@@ -82,6 +82,14 @@ def test_go_requires_observed_digit_one_and_hidden_after_go_is_valid() -> None:
     assert hidden.valid and hidden.status == "hidden"
 
 
+def test_hidden_idle_and_hidden_to_ready_are_valid() -> None:
+    tracker = CountdownPhaseTracker()
+    idle = tracker.observe(cue(0, CountdownCueKind.HIDDEN))
+    ready = tracker.observe(cue(1, CountdownCueKind.READY))
+    assert idle.valid and idle.status == "hidden"
+    assert ready.valid and ready.status == "ready"
+
+
 def test_tracker_rejects_nonsequential_or_backward_observation() -> None:
     tracker = CountdownPhaseTracker()
     with pytest.raises(ValueError, match="consecutive"):
