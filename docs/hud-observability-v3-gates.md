@@ -115,3 +115,49 @@ Do not bluff target timing. Keep status ABSTAIN or report
 insufficient_observable_lead, preserve full Hit/Miss coverage
 denominators, and maintain physical-axis reservation correctness.
 A partial success on eligible forecasts is not full-chart success.
+
+
+## Real gameplay observation — bool recording (2026-10-18)
+
+The user provided a full-screen, 60fps, 1920x1080 recording with
+48kHz stereo audio (67.85 seconds). Approximate times below are
+VIDEO-relative, not simulator episode times.
+
+| Video time | Observed player-perceivable signal |
+| --- | --- |
+| 0.8–1.2s | A prominent on-screen 'Ready!' graphic |
+| 1.44s, 2.44s, 3.44s, 4.44s | Four distinct audio pulses, one-second spacing |
+| ~4.47s | On-screen 'Go!' is visible |
+| ~5.44–5.45s | First input/hit advance and sustained song/audio start |
+
+The audio pulses are grounded in the recorded track, not inferred
+from future chart target data. On this one clip, the on-screen Go!
+appeared almost a second before the first actual note inputs.
+
+**Additional potentially decisive difference:** The recording's
+top-right display before the first note visibly reads
+'TBPM 60.01' and 'CBPM 15'. The current DMDOD implementation in
+src/dmdod/features/hud.py::hud_bpms_for_floor explicitly returns
+(tile_bpm, tile_bpm) for floor index zero, so its startup
+Real BPM channel would show 60.01 instead of the distinct 15
+readout seen in this video. This difference may matter for
+identifying the initial countdown duration.
+
+DO NOT directly treat displayed CBPM as DMDOD's Real BPM without
+verifying its semantic definition, whether the overlay is base-game
+UI or a Mod, and the causal update time. A chart-derived
+floor-0 duration is privileged unless it is demonstrably the
+exact displayed quantity at that frame.
+
+These cues are preliminary evidence that stock HUD263 *omits*
+real signals rather than proving that the full player-visible
+observation is non-identifiable. The old paired 3-count/5-count
+HUD263 proof remains correct for THAT input contract.
+
+Next smallest disambiguating comparison: two short recordings
+with the same notes and initial Tile BPM, but different
+countdownTicks (3 versus 5). Compare visible Ready/Go onset times,
+audio pulse pattern, and top-right CBPM as a function of
+time since record/game-start. Determine whether each observable
+difference first occurs >=44ms before the shorter-world
+first target. No v1.4 or Motor changes before that check.
