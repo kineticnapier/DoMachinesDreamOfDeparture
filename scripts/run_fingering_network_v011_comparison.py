@@ -47,6 +47,7 @@ def _decision_view(row: dict | None) -> dict | None:
 def policy_statistics(result: dict, event_times: dict[int, float]) -> dict:
     decisions = result["decisions"]
     classes = Counter(row["style_class"] for row in decisions)
+    axes = Counter(axis for row in decisions for axis in row.get("axes", []))
     dense = []
     for index, row in enumerate(decisions):
         due = event_times[row["event_index"]]
@@ -65,6 +66,9 @@ def policy_statistics(result: dict, event_times: dict[int, float]) -> dict:
         "index_proxy_rate": classes["index_proxy"] / total,
         "ordinary_proxy_rate": (classes["index_proxy"] + classes["ordinary_proxy"]) / total,
         "thumb_or_side_rate": classes["thumb_or_side"] / total,
+        "thumb_uses": sum(value for axis, value in axes.items() if axis.endswith("_5")),
+        "side_uses": sum(value for axis, value in axes.items() if axis.endswith("_6")),
+        "axis_uses": dict(sorted(axes.items())),
         "dense_le_35ms_special_events": dense,
     }
 
@@ -75,6 +79,7 @@ def compare_results(free: dict, human: dict, event_times: dict[int, float]) -> d
     common = sorted(free_by.keys() & human_by.keys())
     different = [index for index in common if free_by[index]["chosen"] != human_by[index]["chosen"]]
     worsened = []
+    improved = []
     for index in common:
         left, right = free_by[index], human_by[index]
         left_error, right_error = left.get("actual_error_ms"), right.get("actual_error_ms")
@@ -87,10 +92,19 @@ def compare_results(free: dict, human: dict, event_times: dict[int, float]) -> d
             worsened.append({"event_index": index, "reason": reason,
                              "free_error_ms": left_error, "human_error_ms": right_error,
                              "free": left["chosen"], "human_proxy": right["chosen"]})
+        elif left_error is not None and right_error is not None and abs(right_error) + 1e-6 < abs(left_error):
+            improved.append(index)
+    special_avoided = [index for index in common
+                       if free_by[index]["style_class"] == "thumb_or_side"
+                       and human_by[index]["style_class"] != "thumb_or_side"]
     return {
         "different_events": different, "different_event_count": len(different),
         "human_proxy_worsened_events": worsened,
         "human_proxy_worsened_event_count": len(worsened),
+        "human_proxy_improved_timing_events": improved,
+        "human_proxy_improved_timing_event_count": len(improved),
+        "special_fingering_avoided_events": special_avoided,
+        "special_fingering_avoided_event_count": len(special_avoided),
         "free_style": policy_statistics(free, event_times),
         "human_proxy_style": policy_statistics(human, event_times),
     }

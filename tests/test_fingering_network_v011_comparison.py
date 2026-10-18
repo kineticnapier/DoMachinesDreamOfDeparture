@@ -23,6 +23,8 @@ def test_comparison_reports_differences_worsening_and_dense_specials():
     result = compare.compare_results(free, human, {0: .1, 1: .12})
     assert result["different_events"] == [0]
     assert result["human_proxy_worsened_events"][0]["event_index"] == 0
+    assert result["human_proxy_improved_timing_events"] == [1]
+    assert result["special_fingering_avoided_events"] == [0]
     assert result["free_style"]["dense_le_35ms_special_events"] == [0]
     assert result["human_proxy_style"]["thumb_or_side_uses"] == 0
 

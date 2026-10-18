@@ -1,0 +1,5935 @@
+{
+  "format": "dmdod-fingering-network-v0.1.1-human-proxy-comparison",
+  "generated_at_utc": "2026-10-17T23:59:54.165986+00:00",
+  "chart": "03640 - 東 - prisMKa _ Sprout.adofai",
+  "chart_sha256": "e23c48c66e956a6e820fff2a5ed352718efb7f5e861094207cc49f6dcabdd622",
+  "checkpoint_sha256": "cca1bfcc2d8e2988eeabf602a57211c8d8b66a54bfbbcbe0e3a9409ec167d2d8",
+  "duration_s": 129.63414733881555,
+  "events": 1222,
+  "runtime_s": 124.07400000000001,
+  "fixed_human_proxy_alpha": 0.5,
+  "alpha_selected_before_full_run": true,
+  "hyperparameter_search": false,
+  "free": {
+    "stats": {
+      "targets": 1222,
+      "hits": 1222,
+      "misses": 0,
+      "too_early": 0,
+      "overloaded": false,
+      "overload_counter": 0.0,
+      "x_accuracy_percent": 99.16530278232406,
+      "timing_mae_ms": 10.549035334647085,
+      "physical_keydowns": 1222
+    },
+    "termination_reason": "chart_complete",
+    "replay_end_s": 129.52
+  },
+  "human_proxy": {
+    "stats": {
+      "targets": 1222,
+      "hits": 1222,
+      "misses": 0,
+      "too_early": 0,
+      "overloaded": false,
+      "overload_counter": 0.0,
+      "x_accuracy_percent": 99.4721767594108,
+      "timing_mae_ms": 10.502665251580643,
+      "physical_keydowns": 1222
+    },
+    "termination_reason": "chart_complete",
+    "replay_end_s": 129.52
+  },
+  "comparison": {
+    "different_events": [
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      12,
+      13,
+      14,
+      15,
+      16,
+      17,
+      18,
+      19,
+      20,
+      21,
+      22,
+      23,
+      24,
+      25,
+      26,
+      27,
+      28,
+      29,
+      30,
+      31,
+      33,
+      34,
+      35,
+      36,
+      37,
+      38,
+      40,
+      41,
+      42,
+      44,
+      45,
+      46,
+      47,
+      48,
+      49,
+      50,
+      51,
+      52,
+      53,
+      54,
+      55,
+      56,
+      57,
+      58,
+      62,
+      63,
+      65,
+      66,
+      68,
+      69,
+      70,
+      71,
+      72,
+      73,
+      74,
+      75,
+      76,
+      77,
+      78,
+      79,
+      80,
+      81,
+      82,
+      83,
+      85,
+      86,
+      88,
+      89,
+      90,
+      91,
+      92,
+      93,
+      94,
+      95,
+      97,
+      98,
+      99,
+      100,
+      101,
+      102,
+      104,
+      105,
+      107,
+      108,
+      109,
+      110,
+      111,
+      112,
+      113,
+      114,
+      115,
+      116,
+      117,
+      118,
+      119,
+      120,
+      121,
+      122,
+      123,
+      124,
+      125,
+      126,
+      127,
+      128,
+      129,
+      130,
+      131,
+      132,
+      133,
+      134,
+      135,
+      136,
+      137,
+      138,
+      139,
+      140,
+      141,
+      142,
+      144,
+      146,
+      147,
+      148,
+      149,
+      151,
+      152,
+      153,
+      157,
+      158,
+      160,
+      161,
+      162,
+      163,
+      164,
+      165,
+      166,
+      167,
+      168,
+      169,
+      170,
+      171,
+      172,
+      173,
+      174,
+      175,
+      176,
+      178,
+      183,
+      184,
+      185,
+      186,
+      187,
+      188,
+      190,
+      191,
+      192,
+      193,
+      194,
+      195,
+      196,
+      198,
+      199,
+      200,
+      201,
+      202,
+      203,
+      204,
+      205,
+      206,
+      207,
+      208,
+      209,
+      210,
+      211,
+      212,
+      213,
+      214,
+      215,
+      216,
+      217,
+      218,
+      219,
+      220,
+      221,
+      222,
+      224,
+      225,
+      227,
+      229,
+      230,
+      231,
+      232,
+      233,
+      234,
+      236,
+      237,
+      238,
+      239,
+      240,
+      241,
+      242,
+      243,
+      244,
+      245,
+      247,
+      248,
+      249,
+      250,
+      251,
+      253,
+      254,
+      257,
+      258,
+      259,
+      260,
+      261,
+      262,
+      264,
+      265,
+      267,
+      268,
+      269,
+      270,
+      271,
+      272,
+      273,
+      274,
+      276,
+      277,
+      278,
+      283,
+      285,
+      286,
+      287,
+      288,
+      289,
+      290,
+      295,
+      296,
+      297,
+      298,
+      299,
+      300,
+      301,
+      302,
+      307,
+      308,
+      309,
+      310,
+      311,
+      312,
+      313,
+      314,
+      316,
+      317,
+      318,
+      319,
+      320,
+      321,
+      322,
+      323,
+      324,
+      325,
+      327,
+      328,
+      329,
+      330,
+      332,
+      333,
+      334,
+      335,
+      336,
+      337,
+      339,
+      341,
+      342,
+      343,
+      344,
+      345,
+      346,
+      347,
+      348,
+      349,
+      350,
+      351,
+      354,
+      355,
+      356,
+      357,
+      358,
+      359,
+      360,
+      361,
+      363,
+      364,
+      366,
+      367,
+      368,
+      369,
+      370,
+      372,
+      373,
+      374,
+      375,
+      376,
+      377,
+      379,
+      380,
+      381,
+      382,
+      383,
+      385,
+      386,
+      387,
+      388,
+      390,
+      391,
+      392,
+      393,
+      398,
+      399,
+      400,
+      401,
+      402,
+      403,
+      404,
+      405,
+      406,
+      407,
+      409,
+      411,
+      412,
+      413,
+      414,
+      415,
+      416,
+      417,
+      418,
+      419,
+      420,
+      421,
+      422,
+      423,
+      427,
+      428,
+      429,
+      430,
+      431,
+      432,
+      433,
+      435,
+      436,
+      437,
+      438,
+      439,
+      440,
+      441,
+      442,
+      443,
+      444,
+      445,
+      448,
+      449,
+      450,
+      451,
+      457,
+      458,
+      459,
+      460,
+      461,
+      462,
+      463,
+      464,
+      465,
+      466,
+      468,
+      473,
+      474,
+      475,
+      476,
+      477,
+      483,
+      485,
+      486,
+      489,
+      490,
+      493,
+      494,
+      495,
+      496,
+      497,
+      498,
+      500,
+      508,
+      509,
+      510,
+      511,
+      512,
+      513,
+      514,
+      515,
+      516,
+      517,
+      518,
+      519,
+      520,
+      521,
+      522,
+      523,
+      524,
+      525,
+      526,
+      527,
+      529,
+      530,
+      531,
+      532,
+      533,
+      536,
+      538,
+      540,
+      541,
+      542,
+      543,
+      545,
+      546,
+      547,
+      548,
+      549,
+      550,
+      551,
+      552,
+      553,
+      557,
+      559,
+      562,
+      563,
+      564,
+      566,
+      567,
+      568,
+      569,
+      570,
+      571,
+      572,
+      573,
+      575,
+      576,
+      577,
+      578,
+      579,
+      580,
+      581,
+      582,
+      583,
+      585,
+      586,
+      587,
+      593,
+      594,
+      595,
+      596,
+      599,
+      600,
+      602,
+      603,
+      606,
+      607,
+      612,
+      613,
+      614,
+      615,
+      618,
+      619,
+      622,
+      623,
+      624,
+      625,
+      626,
+      627,
+      628,
+      631,
+      633,
+      634,
+      635,
+      636,
+      637,
+      638,
+      640,
+      647,
+      648,
+      649,
+      650,
+      651,
+      652,
+      653,
+      654,
+      655,
+      656,
+      657,
+      658,
+      659,
+      660,
+      661,
+      663,
+      664,
+      665,
+      666,
+      668,
+      669,
+      671,
+      672,
+      673,
+      674,
+      676,
+      677,
+      678,
+      679,
+      680,
+      681,
+      682,
+      683,
+      684,
+      685,
+      686,
+      687,
+      688,
+      689,
+      690,
+      691,
+      692,
+      693,
+      694,
+      695,
+      696,
+      697,
+      698,
+      699,
+      702,
+      703,
+      704,
+      705,
+      706,
+      707,
+      709,
+      710,
+      711,
+      712,
+      713,
+      715,
+      716,
+      717,
+      718,
+      719,
+      720,
+      721,
+      722,
+      723,
+      724,
+      725,
+      726,
+      727,
+      728,
+      730,
+      731,
+      732,
+      733,
+      734,
+      735,
+      736,
+      737,
+      738,
+      739,
+      740,
+      741,
+      742,
+      743,
+      744,
+      745,
+      746,
+      747,
+      748,
+      749,
+      750,
+      751,
+      752,
+      753,
+      755,
+      760,
+      763,
+      764,
+      765,
+      766,
+      767,
+      768,
+      769,
+      772,
+      773,
+      774,
+      775,
+      776,
+      777,
+      778,
+      779,
+      780,
+      782,
+      783,
+      784,
+      787,
+      789,
+      790,
+      791,
+      792,
+      793,
+      794,
+      796,
+      797,
+      798,
+      799,
+      800,
+      802,
+      804,
+      805,
+      806,
+      807,
+      808,
+      810,
+      811,
+      812,
+      813,
+      814,
+      815,
+      816,
+      817,
+      818,
+      819,
+      820,
+      821,
+      822,
+      823,
+      825,
+      826,
+      827,
+      828,
+      829,
+      830,
+      832,
+      833,
+      834,
+      835,
+      836,
+      837,
+      838,
+      839,
+      840,
+      842,
+      843,
+      844,
+      845,
+      846,
+      847,
+      849,
+      850,
+      851,
+      852,
+      853,
+      854,
+      855,
+      856,
+      857,
+      859,
+      861,
+      862,
+      863,
+      864,
+      865,
+      867,
+      868,
+      869,
+      870,
+      871,
+      872,
+      873,
+      874,
+      875,
+      876,
+      877,
+      878,
+      879,
+      880,
+      882,
+      883,
+      884,
+      885,
+      886,
+      891,
+      892,
+      893,
+      894,
+      895,
+      896,
+      898,
+      899,
+      900,
+      902,
+      903,
+      906,
+      907,
+      908,
+      909,
+      910,
+      911,
+      912,
+      913,
+      914,
+      915,
+      916,
+      917,
+      918,
+      919,
+      920,
+      921,
+      924,
+      925,
+      927,
+      928,
+      929,
+      930,
+      932,
+      933,
+      934,
+      935,
+      936,
+      938,
+      939,
+      940,
+      941,
+      942,
+      943,
+      944,
+      945,
+      951,
+      952,
+      953,
+      954,
+      955,
+      956,
+      957,
+      959,
+      960,
+      961,
+      962,
+      963,
+      964,
+      967,
+      969,
+      971,
+      972,
+      974,
+      975,
+      976,
+      977,
+      978,
+      979,
+      980,
+      981,
+      982,
+      983,
+      984,
+      985,
+      987,
+      988,
+      989,
+      991,
+      992,
+      993,
+      994,
+      995,
+      996,
+      997,
+      998,
+      999,
+      1000,
+      1002,
+      1003,
+      1004,
+      1005,
+      1006,
+      1007,
+      1008,
+      1010,
+      1011,
+      1012,
+      1013,
+      1014,
+      1015,
+      1016,
+      1017,
+      1018,
+      1019,
+      1021,
+      1022,
+      1023,
+      1024,
+      1025,
+      1026,
+      1027,
+      1028,
+      1029,
+      1030,
+      1031,
+      1032,
+      1033,
+      1034,
+      1035,
+      1036,
+      1037,
+      1038,
+      1039,
+      1040,
+      1046,
+      1047,
+      1048,
+      1049,
+      1054,
+      1055,
+      1057,
+      1058,
+      1059,
+      1060,
+      1061,
+      1062,
+      1064,
+      1065,
+      1067,
+      1068,
+      1069,
+      1070,
+      1071,
+      1072,
+      1073,
+      1074,
+      1075,
+      1076,
+      1077,
+      1078,
+      1079,
+      1080,
+      1081,
+      1083,
+      1084,
+      1086,
+      1087,
+      1088,
+      1089,
+      1090,
+      1091,
+      1092,
+      1093,
+      1098,
+      1099,
+      1100,
+      1101,
+      1102,
+      1103,
+      1104,
+      1105,
+      1106,
+      1107,
+      1108,
+      1109,
+      1110,
+      1112,
+      1113,
+      1114,
+      1115,
+      1119,
+      1120,
+      1121,
+      1122,
+      1124,
+      1125,
+      1126,
+      1127,
+      1128,
+      1129,
+      1130,
+      1131,
+      1132,
+      1133,
+      1136,
+      1137,
+      1138,
+      1139,
+      1140,
+      1141,
+      1143,
+      1144,
+      1145,
+      1147,
+      1148,
+      1149,
+      1150,
+      1151,
+      1152,
+      1153,
+      1155,
+      1156,
+      1158,
+      1160,
+      1164,
+      1165,
+      1166,
+      1168,
+      1169,
+      1170,
+      1171,
+      1172,
+      1173,
+      1174,
+      1176,
+      1177,
+      1178,
+      1179,
+      1180,
+      1181,
+      1182,
+      1183,
+      1184,
+      1185,
+      1186,
+      1187,
+      1188,
+      1189,
+      1194,
+      1195,
+      1196,
+      1197,
+      1198,
+      1199,
+      1200,
+      1202,
+      1203,
+      1204,
+      1205,
+      1206,
+      1208,
+      1209,
+      1210,
+      1211,
+      1212,
+      1213,
+      1214,
+      1215,
+      1216,
+      1217,
+      1218,
+      1219,
+      1220,
+      1221
+    ],
+    "different_event_count": 965,
+    "human_proxy_worsened_events": [
+      {
+        "event_index": 4,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 8.439,
+        "human_error_ms": 19.439,
+        "free": "right_5/tip",
+        "human_proxy": "left_1"
+      },
+      {
+        "event_index": 5,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 5.976,
+        "human_error_ms": 9.976,
+        "free": "left_4",
+        "human_proxy": "right_1"
+      },
+      {
+        "event_index": 10,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 0.683,
+        "human_error_ms": 1.683,
+        "free": "left_2",
+        "human_proxy": "left_2"
+      },
+      {
+        "event_index": 12,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": -1.268,
+        "human_error_ms": 15.732,
+        "free": "right_2",
+        "human_proxy": "left_1"
+      },
+      {
+        "event_index": 16,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 7.878,
+        "human_error_ms": 10.878,
+        "free": "right_3",
+        "human_proxy": "left_4"
+      },
+      {
+        "event_index": 19,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 7.707,
+        "human_error_ms": 9.707,
+        "free": "left_5/tip",
+        "human_proxy": "right_2"
+      },
+      {
+        "event_index": 22,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 5.098,
+        "human_error_ms": 6.098,
+        "free": "left_5/tip",
+        "human_proxy": "right_2"
+      },
+      {
+        "event_index": 23,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 7.634,
+        "human_error_ms": 11.634,
+        "free": "left_1",
+        "human_proxy": "left_3"
+      },
+      {
+        "event_index": 27,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 5.854,
+        "human_error_ms": 14.854,
+        "free": "left_2",
+        "human_proxy": "left_1"
+      },
+      {
+        "event_index": 28,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 10.39,
+        "human_error_ms": 13.39,
+        "free": "left_5/tip",
+        "human_proxy": "right_1"
+      },
+      {
+        "event_index": 30,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 1.463,
+        "human_error_ms": 8.463,
+        "free": "right_3",
+        "human_proxy": "left_3"
+      },
+      {
+        "event_index": 31,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": -1.781,
+        "human_error_ms": 8.219,
+        "free": "right_2",
+        "human_proxy": "left_1"
+      },
+      {
+        "event_index": 32,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 3.537,
+        "human_error_ms": 10.537,
+        "free": "left_1",
+        "human_proxy": "left_1"
+      },
+      {
+        "event_index": 34,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 13.61,
+        "human_error_ms": 16.61,
+        "free": "right_5/tip",
+        "human_proxy": "left_1"
+      },
+      {
+        "event_index": 37,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 8.219,
+        "human_error_ms": 9.219,
+        "free": "right_1",
+        "human_proxy": "left_3"
+      },
+      {
+        "event_index": 40,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 3.854,
+        "human_error_ms": 9.854,
+        "free": "left_2",
+        "human_proxy": "right_1"
+      },
+      {
+        "event_index": 44,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 3.976,
+        "human_error_ms": 10.976,
+        "free": "right_2",
+        "human_proxy": "right_1"
+      },
+      {
+        "event_index": 47,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 5.805,
+        "human_error_ms": 6.805,
+        "free": "right_1",
+        "human_proxy": "left_3"
+      },
+      {
+        "event_index": 51,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 7.415,
+        "human_error_ms": 10.415,
+        "free": "left_2",
+        "human_proxy": "left_1"
+      },
+      {
+        "event_index": 52,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 0.439,
+        "human_error_ms": 6.439,
+        "free": "left_1",
+        "human_proxy": "left_2"
+      },
+      {
+        "event_index": 56,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 4.512,
+        "human_error_ms": 22.512,
+        "free": "right_3",
+        "human_proxy": "right_1"
+      },
+      {
+        "event_index": 57,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 0.024,
+        "human_error_ms": 7.024,
+        "free": "right_2",
+        "human_proxy": "left_3"
+      },
+      {
+        "event_index": 58,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 12.561,
+        "human_error_ms": 19.561,
+        "free": "left_2",
+        "human_proxy": "right_3"
+      },
+      {
+        "event_index": 62,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 6.707,
+        "human_error_ms": 12.707,
+        "free": "right_5/tip",
+        "human_proxy": "left_1"
+      },
+      {
+        "event_index": 64,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 6.78,
+        "human_error_ms": 17.78,
+        "free": "left_1",
+        "human_proxy": "left_1"
+      },
+      {
+        "event_index": 68,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 8.854,
+        "human_error_ms": 24.854,
+        "free": "right_3",
+        "human_proxy": "right_2"
+      },
+      {
+        "event_index": 70,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 8.927,
+        "human_error_ms": 28.927,
+        "free": "left_2",
+        "human_proxy": "right_2"
+      },
+      {
+        "event_index": 76,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 4.829,
+        "human_error_ms": 17.829,
+        "free": "left_3",
+        "human_proxy": "left_1"
+      },
+      {
+        "event_index": 78,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 6.146,
+        "human_error_ms": 26.146,
+        "free": "right_2",
+        "human_proxy": "left_1"
+      },
+      {
+        "event_index": 79,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 9.683,
+        "human_error_ms": 11.683,
+        "free": "left_2",
+        "human_proxy": "right_1"
+      },
+      {
+        "event_index": 80,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 10.219,
+        "human_error_ms": 13.219,
+        "free": "left_1",
+        "human_proxy": "right_2"
+      },
+      {
+        "event_index": 84,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 18.366,
+        "human_error_ms": 19.366,
+        "free": "left_1",
+        "human_proxy": "left_1"
+      },
+      {
+        "event_index": 88,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 5.439,
+        "human_error_ms": 21.439,
+        "free": "right_3",
+        "human_proxy": "right_2"
+      },
+      {
+        "event_index": 89,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 0.976,
+        "human_error_ms": 3.976,
+        "free": "right_2",
+        "human_proxy": "right_3"
+      },
+      {
+        "event_index": 90,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 6.512,
+        "human_error_ms": 26.512,
+        "free": "left_2",
+        "human_proxy": "right_2"
+      },
+      {
+        "event_index": 93,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 8.659,
+        "human_error_ms": 11.659,
+        "free": "left_5/tip",
+        "human_proxy": "right_2"
+      },
+      {
+        "event_index": 96,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 10.195,
+        "human_error_ms": 15.195,
+        "free": "right_1",
+        "human_proxy": "right_1"
+      },
+      {
+        "event_index": 97,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 4.732,
+        "human_error_ms": 23.732,
+        "free": "right_3",
+        "human_proxy": "right_2"
+      },
+      {
+        "event_index": 98,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 0.268,
+        "human_error_ms": 2.268,
+        "free": "right_2",
+        "human_proxy": "left_2"
+      },
+      {
+        "event_index": 102,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 10.634,
+        "human_error_ms": 13.634,
+        "free": "left_5/tip",
+        "human_proxy": "left_2"
+      },
+      {
+        "event_index": 103,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 7.951,
+        "human_error_ms": 15.951,
+        "free": "left_1",
+        "human_proxy": "left_1"
+      },
+      {
+        "event_index": 108,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": -1.439,
+        "human_error_ms": 1.561,
+        "free": "right_2",
+        "human_proxy": "left_3"
+      },
+      {
+        "event_index": 115,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 8.0,
+        "human_error_ms": 23.0,
+        "free": "left_3",
+        "human_proxy": "left_1"
+      },
+      {
+        "event_index": 117,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": -0.683,
+        "human_error_ms": 21.317,
+        "free": "right_2",
+        "human_proxy": "left_1"
+      },
+      {
+        "event_index": 118,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 13.854,
+        "human_error_ms": 14.854,
+        "free": "left_2",
+        "human_proxy": "right_1"
+      },
+      {
+        "event_index": 124,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 4.756,
+        "human_error_ms": 7.756,
+        "free": "left_2",
+        "human_proxy": "left_1"
+      },
+      {
+        "event_index": 125,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": -2.22,
+        "human_error_ms": 7.78,
+        "free": "left_1",
+        "human_proxy": "left_2"
+      },
+      {
+        "event_index": 129,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 4.902,
+        "human_error_ms": 11.902,
+        "free": "right_3",
+        "human_proxy": "left_1"
+      },
+      {
+        "event_index": 133,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 8.122,
+        "human_error_ms": 9.122,
+        "free": "right_5/tip",
+        "human_proxy": "left_1"
+      },
+      {
+        "event_index": 135,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 9.219,
+        "human_error_ms": 12.219,
+        "free": "left_2",
+        "human_proxy": "left_1"
+      },
+      {
+        "event_index": 136,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 3.268,
+        "human_error_ms": 10.268,
+        "free": "left_5/tip",
+        "human_proxy": "right_1"
+      },
+      {
+        "event_index": 139,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 5.488,
+        "human_error_ms": 13.488,
+        "free": "right_2",
+        "human_proxy": "left_1"
+      },
+      {
+        "event_index": 142,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 4.317,
+        "human_error_ms": 18.317,
+        "free": "right_3",
+        "human_proxy": "right_1"
+      },
+      {
+        "event_index": 143,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 1.707,
+        "human_error_ms": 4.707,
+        "free": "left_1",
+        "human_proxy": "left_1"
+      },
+      {
+        "event_index": 146,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 10.854,
+        "human_error_ms": 18.854,
+        "free": "right_2",
+        "human_proxy": "right_1"
+      },
+      {
+        "event_index": 148,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 3.951,
+        "human_error_ms": 11.951,
+        "free": "left_2",
+        "human_proxy": "left_1"
+      },
+      {
+        "event_index": 150,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 5.146,
+        "human_error_ms": 13.146,
+        "free": "left_1",
+        "human_proxy": "left_1"
+      },
+      {
+        "event_index": 154,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 12.39,
+        "human_error_ms": 23.39,
+        "free": "left_1",
+        "human_proxy": "left_1"
+      },
+      {
+        "event_index": 156,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 1.195,
+        "human_error_ms": -3.805,
+        "free": "right_2",
+        "human_proxy": "right_2"
+      },
+      {
+        "event_index": 160,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 0.732,
+        "human_error_ms": 1.732,
+        "free": "right_3",
+        "human_proxy": "right_2"
+      },
+      {
+        "event_index": 161,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 6.488,
+        "human_error_ms": 20.488,
+        "free": "right_2",
+        "human_proxy": "right_1"
+      },
+      {
+        "event_index": 164,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 8.951,
+        "human_error_ms": 14.951,
+        "free": "right_5/tip",
+        "human_proxy": "left_1"
+      },
+      {
+        "event_index": 166,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 3.024,
+        "human_error_ms": 12.024,
+        "free": "left_2",
+        "human_proxy": "left_1"
+      },
+      {
+        "event_index": 167,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 3.097,
+        "human_error_ms": 9.097,
+        "free": "right_2",
+        "human_proxy": "left_1"
+      },
+      {
+        "event_index": 169,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 3.683,
+        "human_error_ms": 4.683,
+        "free": "right_3",
+        "human_proxy": "left_2"
+      },
+      {
+        "event_index": 173,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 6.927,
+        "human_error_ms": 8.927,
+        "free": "left_2",
+        "human_proxy": "left_1"
+      },
+      {
+        "event_index": 176,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": -0.927,
+        "human_error_ms": -2.927,
+        "free": "right_3",
+        "human_proxy": "right_1"
+      },
+      {
+        "event_index": 178,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 12.122,
+        "human_error_ms": 23.122,
+        "free": "right_5/tip",
+        "human_proxy": "left_1"
+      },
+      {
+        "event_index": 179,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 1.219,
+        "human_error_ms": 11.219,
+        "free": "left_1",
+        "human_proxy": "left_1"
+      },
+      {
+        "event_index": 184,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 15.415,
+        "human_error_ms": 18.415,
+        "free": "left_5/tip",
+        "human_proxy": "left_1"
+      },
+      {
+        "event_index": 185,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 5.512,
+        "human_error_ms": 8.512,
+        "free": "right_5/tip",
+        "human_proxy": "left_1"
+      },
+      {
+        "event_index": 187,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 9.122,
+        "human_error_ms": 15.122,
+        "free": "left_2",
+        "human_proxy": "left_1"
+      },
+      {
+        "event_index": 188,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 2.658,
+        "human_error_ms": 4.658,
+        "free": "left_1",
+        "human_proxy": "right_1"
+      },
+      {
+        "event_index": 190,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 12.707,
+        "human_error_ms": 20.707,
+        "free": "right_5/tip",
+        "human_proxy": "left_1"
+      },
+      {
+        "event_index": 191,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 13.805,
+        "human_error_ms": 14.805,
+        "free": "right_5/tip",
+        "human_proxy": "left_1"
+      },
+      {
+        "event_index": 193,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 9.415,
+        "human_error_ms": 13.415,
+        "free": "left_2",
+        "human_proxy": "left_1"
+      },
+      {
+        "event_index": 194,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 1.951,
+        "human_error_ms": 4.951,
+        "free": "left_1",
+        "human_proxy": "right_1"
+      },
+      {
+        "event_index": 196,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 10.244,
+        "human_error_ms": 20.244,
+        "free": "right_2",
+        "human_proxy": "right_1"
+      },
+      {
+        "event_index": 197,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 0.024,
+        "human_error_ms": -1.976,
+        "free": "right_3",
+        "human_proxy": "right_3"
+      },
+      {
+        "event_index": 198,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": -1.439,
+        "human_error_ms": 15.561,
+        "free": "right_4",
+        "human_proxy": "right_2"
+      },
+      {
+        "event_index": 203,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 12.707,
+        "human_error_ms": 13.707,
+        "free": "right_1",
+        "human_proxy": "right_2"
+      },
+      {
+        "event_index": 205,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 7.244,
+        "human_error_ms": 16.244,
+        "free": "right_3",
+        "human_proxy": "left_3"
+      },
+      {
+        "event_index": 210,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 13.39,
+        "human_error_ms": 21.39,
+        "free": "left_1",
+        "human_proxy": "left_3"
+      },
+      {
+        "event_index": 212,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 9.927,
+        "human_error_ms": 14.927,
+        "free": "right_2",
+        "human_proxy": "left_1"
+      },
+      {
+        "event_index": 213,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 3.463,
+        "human_error_ms": 14.463,
+        "free": "left_2",
+        "human_proxy": "right_1"
+      },
+      {
+        "event_index": 216,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 10.536,
+        "human_error_ms": 14.536,
+        "free": "right_1",
+        "human_proxy": "left_1"
+      },
+      {
+        "event_index": 217,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 0.073,
+        "human_error_ms": 14.073,
+        "free": "right_3",
+        "human_proxy": "right_1"
+      },
+      {
+        "event_index": 219,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 13.171,
+        "human_error_ms": 15.171,
+        "free": "left_1",
+        "human_proxy": "right_1"
+      },
+      {
+        "event_index": 220,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 8.219,
+        "human_error_ms": 15.219,
+        "free": "right_5/tip",
+        "human_proxy": "right_1"
+      },
+      {
+        "event_index": 222,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 6.902,
+        "human_error_ms": 8.902,
+        "free": "left_1",
+        "human_proxy": "right_1"
+      },
+      {
+        "event_index": 224,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 2.975,
+        "human_error_ms": 4.975,
+        "free": "right_3",
+        "human_proxy": "left_3"
+      },
+      {
+        "event_index": 228,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 4.122,
+        "human_error_ms": 10.122,
+        "free": "right_1",
+        "human_proxy": "right_1"
+      },
+      {
+        "event_index": 231,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 3.805,
+        "human_error_ms": 10.805,
+        "free": "right_5/tip",
+        "human_proxy": "left_1"
+      },
+      {
+        "event_index": 232,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 12.878,
+        "human_error_ms": 17.878,
+        "free": "left_2",
+        "human_proxy": "left_1"
+      },
+      {
+        "event_index": 233,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 7.951,
+        "human_error_ms": 14.951,
+        "free": "right_2",
+        "human_proxy": "left_1"
+      },
+      {
+        "event_index": 239,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 0.171,
+        "human_error_ms": 1.171,
+        "free": "left_1",
+        "human_proxy": "left_2"
+      },
+      {
+        "event_index": 240,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 5.244,
+        "human_error_ms": 10.244,
+        "free": "left_5/tip",
+        "human_proxy": "left_1"
+      },
+      {
+        "event_index": 241,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 11.39,
+        "human_error_ms": 14.39,
+        "free": "right_5/tip",
+        "human_proxy": "left_1"
+      },
+      {
+        "event_index": 244,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 4.0,
+        "human_error_ms": 5.0,
+        "free": "right_1",
+        "human_proxy": "left_3"
+      },
+      {
+        "event_index": 245,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": -0.464,
+        "human_error_ms": 1.536,
+        "free": "right_3",
+        "human_proxy": "left_4"
+      },
+      {
+        "event_index": 246,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 6.61,
+        "human_error_ms": 11.61,
+        "free": "left_1",
+        "human_proxy": "left_1"
+      },
+      {
+        "event_index": 247,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 10.683,
+        "human_error_ms": 15.683,
+        "free": "right_5/tip",
+        "human_proxy": "left_1"
+      },
+      {
+        "event_index": 248,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 8.756,
+        "human_error_ms": 12.756,
+        "free": "left_5/tip",
+        "human_proxy": "left_1"
+      },
+      {
+        "event_index": 249,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 0.829,
+        "human_error_ms": 9.829,
+        "free": "left_2",
+        "human_proxy": "left_1"
+      },
+      {
+        "event_index": 250,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 9.902,
+        "human_error_ms": 16.902,
+        "free": "right_2",
+        "human_proxy": "left_1"
+      },
+      {
+        "event_index": 253,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 3.049,
+        "human_error_ms": 6.049,
+        "free": "right_5/tip",
+        "human_proxy": "left_1"
+      },
+      {
+        "event_index": 254,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 11.122,
+        "human_error_ms": 19.122,
+        "free": "left_2",
+        "human_proxy": "left_1"
+      },
+      {
+        "event_index": 255,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": -1.805,
+        "human_error_ms": 15.195,
+        "free": "left_1",
+        "human_proxy": "left_1"
+      },
+      {
+        "event_index": 259,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 3.341,
+        "human_error_ms": 6.341,
+        "free": "right_2",
+        "human_proxy": "left_1"
+      },
+      {
+        "event_index": 260,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 10.414,
+        "human_error_ms": 24.414,
+        "free": "left_5/tip",
+        "human_proxy": "left_1"
+      },
+      {
+        "event_index": 261,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 7.488,
+        "human_error_ms": 12.488,
+        "free": "right_5/tip",
+        "human_proxy": "left_1"
+      },
+      {
+        "event_index": 262,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 6.561,
+        "human_error_ms": 10.561,
+        "free": "right_2",
+        "human_proxy": "left_1"
+      },
+      {
+        "event_index": 266,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 1.853,
+        "human_error_ms": 14.853,
+        "free": "left_1",
+        "human_proxy": "left_1"
+      },
+      {
+        "event_index": 268,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 7.927,
+        "human_error_ms": 17.927,
+        "free": "right_5/tip",
+        "human_proxy": "left_1"
+      },
+      {
+        "event_index": 269,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 8.683,
+        "human_error_ms": 11.683,
+        "free": "left_5/tip",
+        "human_proxy": "left_2"
+      },
+      {
+        "event_index": 272,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 9.073,
+        "human_error_ms": 12.073,
+        "free": "right_2",
+        "human_proxy": "left_1"
+      },
+      {
+        "event_index": 273,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 12.146,
+        "human_error_ms": 17.146,
+        "free": "left_2",
+        "human_proxy": "left_1"
+      },
+      {
+        "event_index": 275,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 3.244,
+        "human_error_ms": 13.244,
+        "free": "left_1",
+        "human_proxy": "left_1"
+      },
+      {
+        "event_index": 276,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 7.292,
+        "human_error_ms": 17.292,
+        "free": "right_2",
+        "human_proxy": "right_1"
+      },
+      {
+        "event_index": 277,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 10.366,
+        "human_error_ms": 14.366,
+        "free": "right_5/tip",
+        "human_proxy": "left_1"
+      },
+      {
+        "event_index": 281,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 19.341,
+        "human_error_ms": 22.341,
+        "free": "left_2",
+        "human_proxy": "left_2"
+      },
+      {
+        "event_index": 282,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 6.122,
+        "human_error_ms": 7.122,
+        "free": "right_1",
+        "human_proxy": "right_1"
+      },
+      {
+        "event_index": 285,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 4.951,
+        "human_error_ms": 8.951,
+        "free": "left_5/tip",
+        "human_proxy": "left_2"
+      },
+      {
+        "event_index": 286,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 9.268,
+        "human_error_ms": 11.268,
+        "free": "right_5/tip",
+        "human_proxy": "left_1"
+      },
+      {
+        "event_index": 287,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 2.805,
+        "human_error_ms": 5.805,
+        "free": "left_4",
+        "human_proxy": "right_1"
+      },
+      {
+        "event_index": 295,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": -3.903,
+        "human_error_ms": 7.097,
+        "free": "right_3",
+        "human_proxy": "right_2"
+      },
+      {
+        "event_index": 296,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 5.634,
+        "human_error_ms": 10.634,
+        "free": "left_2",
+        "human_proxy": "left_3"
+      },
+      {
+        "event_index": 303,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 5.463,
+        "human_error_ms": 18.463,
+        "free": "left_1",
+        "human_proxy": "left_1"
+      },
+      {
+        "event_index": 305,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 11.536,
+        "human_error_ms": 19.536,
+        "free": "left_1",
+        "human_proxy": "left_1"
+      },
+      {
+        "event_index": 306,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": -2.927,
+        "human_error_ms": 5.073,
+        "free": "right_1",
+        "human_proxy": "right_1"
+      },
+      {
+        "event_index": 307,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 6.61,
+        "human_error_ms": 13.61,
+        "free": "right_3",
+        "human_proxy": "right_2"
+      },
+      {
+        "event_index": 309,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 1.658,
+        "human_error_ms": 16.658,
+        "free": "left_2",
+        "human_proxy": "left_1"
+      },
+      {
+        "event_index": 310,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 20.683,
+        "human_error_ms": 26.683,
+        "free": "right_1",
+        "human_proxy": "left_2"
+      },
+      {
+        "event_index": 312,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 2.756,
+        "human_error_ms": 5.756,
+        "free": "right_2",
+        "human_proxy": "right_1"
+      },
+      {
+        "event_index": 313,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 4.829,
+        "human_error_ms": 9.829,
+        "free": "left_5/tip",
+        "human_proxy": "left_1"
+      },
+      {
+        "event_index": 314,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 13.366,
+        "human_error_ms": 15.366,
+        "free": "left_1",
+        "human_proxy": "right_1"
+      },
+      {
+        "event_index": 323,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": -1.269,
+        "human_error_ms": 8.731,
+        "free": "left_1",
+        "human_proxy": "left_3"
+      },
+      {
+        "event_index": 325,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": -1.195,
+        "human_error_ms": 9.805,
+        "free": "right_3",
+        "human_proxy": "right_1"
+      },
+      {
+        "event_index": 330,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 1.561,
+        "human_error_ms": 10.561,
+        "free": "left_2",
+        "human_proxy": "left_1"
+      },
+      {
+        "event_index": 331,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 1.634,
+        "human_error_ms": 18.634,
+        "free": "left_1",
+        "human_proxy": "left_1"
+      },
+      {
+        "event_index": 333,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 11.146,
+        "human_error_ms": 13.146,
+        "free": "right_3",
+        "human_proxy": "right_2"
+      },
+      {
+        "event_index": 334,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 10.707,
+        "human_error_ms": 23.707,
+        "free": "left_5/tip",
+        "human_proxy": "left_1"
+      },
+      {
+        "event_index": 335,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 6.78,
+        "human_error_ms": 10.78,
+        "free": "right_5/tip",
+        "human_proxy": "left_1"
+      },
+      {
+        "event_index": 337,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 10.927,
+        "human_error_ms": 15.927,
+        "free": "left_2",
+        "human_proxy": "left_1"
+      },
+      {
+        "event_index": 340,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": -1.927,
+        "human_error_ms": 6.073,
+        "free": "left_1",
+        "human_proxy": "left_1"
+      },
+      {
+        "event_index": 341,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 12.122,
+        "human_error_ms": 32.122,
+        "free": "left_5/tip",
+        "human_proxy": "left_1"
+      },
+      {
+        "event_index": 343,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 7.219,
+        "human_error_ms": 17.219,
+        "free": "right_1",
+        "human_proxy": "left_1"
+      },
+      {
+        "event_index": 349,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": -0.415,
+        "human_error_ms": 8.585,
+        "free": "left_2",
+        "human_proxy": "left_1"
+      },
+      {
+        "event_index": 352,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": -1.195,
+        "human_error_ms": 12.805,
+        "free": "left_1",
+        "human_proxy": "left_1"
+      },
+      {
+        "event_index": 355,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 9.878,
+        "human_error_ms": 20.878,
+        "free": "right_5/tip",
+        "human_proxy": "left_1"
+      },
+      {
+        "event_index": 357,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 2.951,
+        "human_error_ms": 12.951,
+        "free": "left_5/tip",
+        "human_proxy": "right_2"
+      },
+      {
+        "event_index": 359,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 4.097,
+        "human_error_ms": 18.097,
+        "free": "right_2",
+        "human_proxy": "left_1"
+      },
+      {
+        "event_index": 361,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 1.707,
+        "human_error_ms": 4.707,
+        "free": "right_3",
+        "human_proxy": "right_1"
+      },
+      {
+        "event_index": 365,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 5.39,
+        "human_error_ms": 11.39,
+        "free": "left_1",
+        "human_proxy": "left_1"
+      },
+      {
+        "event_index": 368,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 2.487,
+        "human_error_ms": 20.487,
+        "free": "left_4",
+        "human_proxy": "left_1"
+      },
+      {
+        "event_index": 369,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 25.244,
+        "human_error_ms": 26.244,
+        "free": "left_5/tip",
+        "human_proxy": "right_2"
+      },
+      {
+        "event_index": 370,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 13.0,
+        "human_error_ms": 14.0,
+        "free": "right_5/tip",
+        "human_proxy": "left_2"
+      },
+      {
+        "event_index": 371,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 7.585,
+        "human_error_ms": 17.585,
+        "free": "left_1",
+        "human_proxy": "left_1"
+      },
+      {
+        "event_index": 372,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 20.341,
+        "human_error_ms": 21.341,
+        "free": "right_5/tip",
+        "human_proxy": "right_2"
+      },
+      {
+        "event_index": 374,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 9.683,
+        "human_error_ms": 13.683,
+        "free": "right_2",
+        "human_proxy": "left_1"
+      },
+      {
+        "event_index": 375,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 13.756,
+        "human_error_ms": 18.756,
+        "free": "right_5/tip",
+        "human_proxy": "left_1"
+      },
+      {
+        "event_index": 376,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 3.829,
+        "human_error_ms": 13.829,
+        "free": "left_2",
+        "human_proxy": "left_1"
+      },
+      {
+        "event_index": 377,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 15.902,
+        "human_error_ms": 18.902,
+        "free": "right_2",
+        "human_proxy": "left_1"
+      },
+      {
+        "event_index": 378,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 1.975,
+        "human_error_ms": 15.975,
+        "free": "left_1",
+        "human_proxy": "left_1"
+      },
+      {
+        "event_index": 380,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 6.488,
+        "human_error_ms": 8.488,
+        "free": "right_3",
+        "human_proxy": "right_2"
+      },
+      {
+        "event_index": 381,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 5.048,
+        "human_error_ms": 15.048,
+        "free": "left_2",
+        "human_proxy": "left_1"
+      },
+      {
+        "event_index": 382,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 14.122,
+        "human_error_ms": 20.122,
+        "free": "right_5/tip",
+        "human_proxy": "left_1"
+      },
+      {
+        "event_index": 383,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 7.878,
+        "human_error_ms": 16.878,
+        "free": "left_5/tip",
+        "human_proxy": "right_2"
+      },
+      {
+        "event_index": 384,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 11.195,
+        "human_error_ms": 20.195,
+        "free": "left_1",
+        "human_proxy": "left_1"
+      },
+      {
+        "event_index": 386,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 14.707,
+        "human_error_ms": 22.707,
+        "free": "left_2",
+        "human_proxy": "right_2"
+      },
+      {
+        "event_index": 387,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 17.268,
+        "human_error_ms": 23.268,
+        "free": "right_5/tip",
+        "human_proxy": "left_1"
+      },
+      {
+        "event_index": 391,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 13.853,
+        "human_error_ms": 18.853,
+        "free": "right_3",
+        "human_proxy": "right_2"
+      },
+      {
+        "event_index": 392,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 17.414,
+        "human_error_ms": 19.414,
+        "free": "right_5/tip",
+        "human_proxy": "left_1"
+      },
+      {
+        "event_index": 395,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 2.561,
+        "human_error_ms": 12.561,
+        "free": "left_1",
+        "human_proxy": "left_1"
+      },
+      {
+        "event_index": 398,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 20.634,
+        "human_error_ms": 21.634,
+        "free": "right_5/tip",
+        "human_proxy": "left_1"
+      },
+      {
+        "event_index": 400,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 3.707,
+        "human_error_ms": 11.707,
+        "free": "left_5/tip",
+        "human_proxy": "right_2"
+      },
+      {
+        "event_index": 402,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 0.78,
+        "human_error_ms": 7.78,
+        "free": "right_3",
+        "human_proxy": "left_1"
+      },
+      {
+        "event_index": 403,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 1.317,
+        "human_error_ms": 10.317,
+        "free": "right_2",
+        "human_proxy": "right_1"
+      },
+      {
+        "event_index": 404,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 15.853,
+        "human_error_ms": 18.853,
+        "free": "left_2",
+        "human_proxy": "right_2"
+      },
+      {
+        "event_index": 406,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 10.927,
+        "human_error_ms": 16.927,
+        "free": "right_5/tip",
+        "human_proxy": "left_1"
+      },
+      {
+        "event_index": 408,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": -1.464,
+        "human_error_ms": 9.536,
+        "free": "left_1",
+        "human_proxy": "left_1"
+      },
+      {
+        "event_index": 412,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 11.219,
+        "human_error_ms": 21.219,
+        "free": "right_5/tip",
+        "human_proxy": "left_1"
+      },
+      {
+        "event_index": 413,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 3.292,
+        "human_error_ms": 23.292,
+        "free": "left_2",
+        "human_proxy": "left_1"
+      },
+      {
+        "event_index": 418,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 3.439,
+        "human_error_ms": 12.439,
+        "free": "right_3",
+        "human_proxy": "left_1"
+      },
+      {
+        "event_index": 421,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 4.048,
+        "human_error_ms": 14.048,
+        "free": "left_5/tip",
+        "human_proxy": "left_3"
+      },
+      {
+        "event_index": 422,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": -4.415,
+        "human_error_ms": 10.585,
+        "free": "right_1",
+        "human_proxy": "left_1"
+      },
+      {
+        "event_index": 424,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 9.658,
+        "human_error_ms": 15.658,
+        "free": "right_2",
+        "human_proxy": "right_2"
+      },
+      {
+        "event_index": 426,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": -0.269,
+        "human_error_ms": 7.731,
+        "free": "left_1",
+        "human_proxy": "left_1"
+      },
+      {
+        "event_index": 427,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 4.805,
+        "human_error_ms": 11.805,
+        "free": "right_5/tip",
+        "human_proxy": "left_1"
+      },
+      {
+        "event_index": 428,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 4.829,
+        "human_error_ms": 6.829,
+        "free": "left_4",
+        "human_proxy": "left_2"
+      },
+      {
+        "event_index": 432,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 21.024,
+        "human_error_ms": 22.024,
+        "free": "right_5/tip",
+        "human_proxy": "left_1"
+      },
+      {
+        "event_index": 433,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 4.097,
+        "human_error_ms": 10.097,
+        "free": "left_2",
+        "human_proxy": "left_1"
+      },
+      {
+        "event_index": 434,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 1.17,
+        "human_error_ms": 17.17,
+        "free": "left_1",
+        "human_proxy": "left_1"
+      },
+      {
+        "event_index": 436,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 9.244,
+        "human_error_ms": 20.244,
+        "free": "left_5/tip",
+        "human_proxy": "left_1"
+      },
+      {
+        "event_index": 437,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 6.317,
+        "human_error_ms": 22.317,
+        "free": "right_5/tip",
+        "human_proxy": "left_1"
+      },
+      {
+        "event_index": 438,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 13.39,
+        "human_error_ms": 19.39,
+        "free": "left_2",
+        "human_proxy": "left_1"
+      },
+      {
+        "event_index": 441,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 2.219,
+        "human_error_ms": -3.781,
+        "free": "right_2",
+        "human_proxy": "right_3"
+      },
+      {
+        "event_index": 442,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 1.0,
+        "human_error_ms": 4.0,
+        "free": "right_3",
+        "human_proxy": "left_3"
+      },
+      {
+        "event_index": 443,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": -0.464,
+        "human_error_ms": 8.536,
+        "free": "right_4",
+        "human_proxy": "left_1"
+      },
+      {
+        "event_index": 444,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 2.073,
+        "human_error_ms": 11.073,
+        "free": "right_5/tip",
+        "human_proxy": "right_1"
+      },
+      {
+        "event_index": 445,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 12.609,
+        "human_error_ms": 13.609,
+        "free": "left_4",
+        "human_proxy": "right_2"
+      },
+      {
+        "event_index": 446,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 5.683,
+        "human_error_ms": 16.683,
+        "free": "left_1",
+        "human_proxy": "left_1"
+      },
+      {
+        "event_index": 448,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 5.756,
+        "human_error_ms": 12.756,
+        "free": "right_3",
+        "human_proxy": "right_2"
+      },
+      {
+        "event_index": 450,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 4.292,
+        "human_error_ms": 6.292,
+        "free": "right_4",
+        "human_proxy": "left_3"
+      },
+      {
+        "event_index": 452,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 7.902,
+        "human_error_ms": 9.902,
+        "free": "left_1",
+        "human_proxy": "left_1"
+      },
+      {
+        "event_index": 456,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 6.048,
+        "human_error_ms": 12.048,
+        "free": "left_1",
+        "human_proxy": "left_1"
+      },
+      {
+        "event_index": 457,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 13.805,
+        "human_error_ms": 19.805,
+        "free": "left_5/tip",
+        "human_proxy": "right_2"
+      },
+      {
+        "event_index": 458,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 23.122,
+        "human_error_ms": 27.122,
+        "free": "left_5/tip",
+        "human_proxy": "left_1"
+      },
+      {
+        "event_index": 460,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 15.268,
+        "human_error_ms": 24.268,
+        "free": "left_5/tip",
+        "human_proxy": "left_1"
+      },
+      {
+        "event_index": 461,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 4.341,
+        "human_error_ms": 12.341,
+        "free": "right_5/tip",
+        "human_proxy": "left_1"
+      },
+      {
+        "event_index": 463,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 8.414,
+        "human_error_ms": 18.414,
+        "free": "left_2",
+        "human_proxy": "left_1"
+      },
+      {
+        "event_index": 464,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 7.487,
+        "human_error_ms": 15.487,
+        "free": "right_2",
+        "human_proxy": "left_1"
+      },
+      {
+        "event_index": 468,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 6.39,
+        "human_error_ms": 18.39,
+        "free": "right_5/tip",
+        "human_proxy": "left_1"
+      },
+      {
+        "event_index": 469,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 2.707,
+        "human_error_ms": 24.707,
+        "free": "left_1",
+        "human_proxy": "left_1"
+      },
+      {
+        "event_index": 470,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 0.731,
+        "human_error_ms": -1.269,
+        "free": "left_2",
+        "human_proxy": "left_2"
+      },
+      {
+        "event_index": 471,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 1.756,
+        "human_error_ms": 11.756,
+        "free": "right_1",
+        "human_proxy": "right_1"
+      },
+      {
+        "event_index": 473,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 13.853,
+        "human_error_ms": 15.853,
+        "free": "left_5/tip",
+        "human_proxy": "left_1"
+      },
+      {
+        "event_index": 474,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 13.926,
+        "human_error_ms": 25.926,
+        "free": "right_5/tip",
+        "human_proxy": "left_1"
+      },
+      {
+        "event_index": 478,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 4.073,
+        "human_error_ms": 8.073,
+        "free": "left_1",
+        "human_proxy": "left_1"
+      },
+      {
+        "event_index": 479,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 21.146,
+        "human_error_ms": 22.146,
+        "free": "left_1",
+        "human_proxy": "left_1"
+      },
+      {
+        "event_index": 480,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 1.17,
+        "human_error_ms": 5.17,
+        "free": "left_2",
+        "human_proxy": "left_2"
+      },
+      {
+        "event_index": 482,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 0.219,
+        "human_error_ms": 5.219,
+        "free": "right_2",
+        "human_proxy": "right_2"
+      },
+      {
+        "event_index": 485,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 8.365,
+        "human_error_ms": 13.365,
+        "free": "left_5/tip",
+        "human_proxy": "left_1"
+      },
+      {
+        "event_index": 486,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 14.439,
+        "human_error_ms": 23.439,
+        "free": "right_5/tip",
+        "human_proxy": "left_1"
+      },
+      {
+        "event_index": 487,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 6.512,
+        "human_error_ms": 13.512,
+        "free": "left_1",
+        "human_proxy": "left_1"
+      },
+      {
+        "event_index": 489,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 11.585,
+        "human_error_ms": 12.585,
+        "free": "right_5/tip",
+        "human_proxy": "left_1"
+      },
+      {
+        "event_index": 490,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 6.658,
+        "human_error_ms": 17.658,
+        "free": "left_2",
+        "human_proxy": "left_1"
+      },
+      {
+        "event_index": 491,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 3.731,
+        "human_error_ms": 14.731,
+        "free": "left_1",
+        "human_proxy": "left_1"
+      },
+      {
+        "event_index": 494,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 6.561,
+        "human_error_ms": 21.561,
+        "free": "right_2",
+        "human_proxy": "left_1"
+      },
+      {
+        "event_index": 498,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 2.951,
+        "human_error_ms": 14.951,
+        "free": "left_5/tip",
+        "human_proxy": "left_1"
+      },
+      {
+        "event_index": 499,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 4.024,
+        "human_error_ms": 12.024,
+        "free": "left_1",
+        "human_proxy": "left_1"
+      },
+      {
+        "event_index": 502,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 2.146,
+        "human_error_ms": 7.146,
+        "free": "left_2",
+        "human_proxy": "left_2"
+      },
+      {
+        "event_index": 503,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 4.17,
+        "human_error_ms": 13.17,
+        "free": "right_1",
+        "human_proxy": "right_1"
+      },
+      {
+        "event_index": 506,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 12.292,
+        "human_error_ms": 14.292,
+        "free": "right_1",
+        "human_proxy": "right_1"
+      },
+      {
+        "event_index": 507,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 0.317,
+        "human_error_ms": -4.683,
+        "free": "right_2",
+        "human_proxy": "right_2"
+      },
+      {
+        "event_index": 508,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 14.39,
+        "human_error_ms": 17.39,
+        "free": "left_5/tip",
+        "human_proxy": "left_1"
+      },
+      {
+        "event_index": 509,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 7.146,
+        "human_error_ms": 15.146,
+        "free": "right_5/tip",
+        "human_proxy": "left_2"
+      },
+      {
+        "event_index": 511,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 20.536,
+        "human_error_ms": 23.536,
+        "free": "left_5/tip",
+        "human_proxy": "left_1"
+      },
+      {
+        "event_index": 512,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 10.609,
+        "human_error_ms": 20.609,
+        "free": "left_2",
+        "human_proxy": "left_1"
+      },
+      {
+        "event_index": 513,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 3.634,
+        "human_error_ms": 5.634,
+        "free": "left_1",
+        "human_proxy": "left_2"
+      },
+      {
+        "event_index": 521,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 6.439,
+        "human_error_ms": 14.439,
+        "free": "right_5/tip",
+        "human_proxy": "left_1"
+      },
+      {
+        "event_index": 522,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 7.975,
+        "human_error_ms": 11.975,
+        "free": "left_4",
+        "human_proxy": "right_1"
+      },
+      {
+        "event_index": 523,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 12.731,
+        "human_error_ms": 13.731,
+        "free": "left_5/tip",
+        "human_proxy": "left_3"
+      },
+      {
+        "event_index": 526,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 1.585,
+        "human_error_ms": 19.585,
+        "free": "right_2",
+        "human_proxy": "left_3"
+      },
+      {
+        "event_index": 528,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": -0.805,
+        "human_error_ms": 9.195,
+        "free": "left_1",
+        "human_proxy": "left_1"
+      },
+      {
+        "event_index": 529,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 9.268,
+        "human_error_ms": 20.268,
+        "free": "right_5/tip",
+        "human_proxy": "left_1"
+      },
+      {
+        "event_index": 532,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 25.414,
+        "human_error_ms": 27.414,
+        "free": "right_5/tip",
+        "human_proxy": "left_1"
+      },
+      {
+        "event_index": 533,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 9.487,
+        "human_error_ms": 16.487,
+        "free": "left_2",
+        "human_proxy": "left_1"
+      },
+      {
+        "event_index": 535,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": -1.439,
+        "human_error_ms": 14.561,
+        "free": "left_1",
+        "human_proxy": "left_1"
+      },
+      {
+        "event_index": 536,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 21.317,
+        "human_error_ms": 27.317,
+        "free": "left_2",
+        "human_proxy": "right_2"
+      },
+      {
+        "event_index": 537,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": -2.903,
+        "human_error_ms": -5.903,
+        "free": "right_1",
+        "human_proxy": "right_1"
+      },
+      {
+        "event_index": 539,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 5.634,
+        "human_error_ms": 9.634,
+        "free": "right_3",
+        "human_proxy": "right_3"
+      },
+      {
+        "event_index": 544,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 10.463,
+        "human_error_ms": 13.463,
+        "free": "left_1",
+        "human_proxy": "left_1"
+      },
+      {
+        "event_index": 545,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 18.78,
+        "human_error_ms": 20.78,
+        "free": "right_5/tip",
+        "human_proxy": "left_1"
+      },
+      {
+        "event_index": 551,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 3.0,
+        "human_error_ms": 4.0,
+        "free": "right_3",
+        "human_proxy": "left_4"
+      },
+      {
+        "event_index": 554,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 3.682,
+        "human_error_ms": 20.682,
+        "free": "left_1",
+        "human_proxy": "left_1"
+      },
+      {
+        "event_index": 555,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 10.219,
+        "human_error_ms": 11.219,
+        "free": "right_1",
+        "human_proxy": "right_1"
+      },
+      {
+        "event_index": 558,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 14.292,
+        "human_error_ms": 15.292,
+        "free": "left_1",
+        "human_proxy": "left_1"
+      },
+      {
+        "event_index": 560,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 19.365,
+        "human_error_ms": 30.365,
+        "free": "left_1",
+        "human_proxy": "left_1"
+      },
+      {
+        "event_index": 561,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 11.902,
+        "human_error_ms": 23.902,
+        "free": "right_1",
+        "human_proxy": "right_1"
+      },
+      {
+        "event_index": 563,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 10.975,
+        "human_error_ms": 13.975,
+        "free": "left_5/tip",
+        "human_proxy": "left_1"
+      },
+      {
+        "event_index": 564,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 10.512,
+        "human_error_ms": 17.512,
+        "free": "left_1",
+        "human_proxy": "right_1"
+      },
+      {
+        "event_index": 566,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": -1.415,
+        "human_error_ms": 9.585,
+        "free": "left_2",
+        "human_proxy": "left_3"
+      },
+      {
+        "event_index": 567,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 11.658,
+        "human_error_ms": 12.658,
+        "free": "right_5/tip",
+        "human_proxy": "left_1"
+      },
+      {
+        "event_index": 568,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 8.195,
+        "human_error_ms": 9.195,
+        "free": "left_4",
+        "human_proxy": "right_1"
+      },
+      {
+        "event_index": 571,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": -0.659,
+        "human_error_ms": -3.659,
+        "free": "left_5/tip",
+        "human_proxy": "right_2"
+      },
+      {
+        "event_index": 572,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 9.878,
+        "human_error_ms": 12.878,
+        "free": "left_1",
+        "human_proxy": "left_3"
+      },
+      {
+        "event_index": 573,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 8.634,
+        "human_error_ms": 18.634,
+        "free": "right_1",
+        "human_proxy": "left_1"
+      },
+      {
+        "event_index": 574,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 21.951,
+        "human_error_ms": 26.951,
+        "free": "left_1",
+        "human_proxy": "left_1"
+      },
+      {
+        "event_index": 575,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": -0.513,
+        "human_error_ms": 9.487,
+        "free": "left_2",
+        "human_proxy": "right_1"
+      },
+      {
+        "event_index": 577,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 11.78,
+        "human_error_ms": 22.78,
+        "free": "right_3",
+        "human_proxy": "right_1"
+      },
+      {
+        "event_index": 578,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 3.097,
+        "human_error_ms": 6.097,
+        "free": "right_5/tip",
+        "human_proxy": "left_1"
+      },
+      {
+        "event_index": 579,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 12.634,
+        "human_error_ms": 18.634,
+        "free": "left_4",
+        "human_proxy": "right_1"
+      },
+      {
+        "event_index": 582,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 1.317,
+        "human_error_ms": 10.317,
+        "free": "right_2",
+        "human_proxy": "left_1"
+      },
+      {
+        "event_index": 584,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 0.926,
+        "human_error_ms": 14.926,
+        "free": "left_1",
+        "human_proxy": "left_1"
+      },
+      {
+        "event_index": 586,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 9.0,
+        "human_error_ms": 19.0,
+        "free": "right_5/tip",
+        "human_proxy": "left_1"
+      },
+      {
+        "event_index": 588,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 15.609,
+        "human_error_ms": 25.609,
+        "free": "left_1",
+        "human_proxy": "left_1"
+      },
+      {
+        "event_index": 589,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 24.682,
+        "human_error_ms": 26.682,
+        "free": "left_1",
+        "human_proxy": "left_1"
+      },
+      {
+        "event_index": 590,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 0.707,
+        "human_error_ms": 1.707,
+        "free": "left_2",
+        "human_proxy": "left_2"
+      },
+      {
+        "event_index": 592,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 1.756,
+        "human_error_ms": -2.244,
+        "free": "right_2",
+        "human_proxy": "right_2"
+      },
+      {
+        "event_index": 593,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 4.829,
+        "human_error_ms": 7.829,
+        "free": "left_5/tip",
+        "human_proxy": "left_1"
+      },
+      {
+        "event_index": 595,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 11.439,
+        "human_error_ms": 17.439,
+        "free": "right_5/tip",
+        "human_proxy": "left_1"
+      },
+      {
+        "event_index": 596,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 7.975,
+        "human_error_ms": 12.975,
+        "free": "left_4",
+        "human_proxy": "right_1"
+      },
+      {
+        "event_index": 597,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 8.048,
+        "human_error_ms": 11.048,
+        "free": "left_1",
+        "human_proxy": "left_1"
+      },
+      {
+        "event_index": 599,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 13.122,
+        "human_error_ms": 18.122,
+        "free": "right_2",
+        "human_proxy": "left_1"
+      },
+      {
+        "event_index": 600,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 4.658,
+        "human_error_ms": 8.658,
+        "free": "right_3",
+        "human_proxy": "right_1"
+      },
+      {
+        "event_index": 603,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 12.487,
+        "human_error_ms": 17.487,
+        "free": "right_5/tip",
+        "human_proxy": "left_1"
+      },
+      {
+        "event_index": 604,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 3.804,
+        "human_error_ms": 19.804,
+        "free": "left_1",
+        "human_proxy": "left_1"
+      },
+      {
+        "event_index": 605,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": -1.659,
+        "human_error_ms": 3.341,
+        "free": "right_1",
+        "human_proxy": "right_1"
+      },
+      {
+        "event_index": 607,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 10.414,
+        "human_error_ms": 15.414,
+        "free": "right_2",
+        "human_proxy": "left_3"
+      },
+      {
+        "event_index": 608,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 5.487,
+        "human_error_ms": 7.487,
+        "free": "left_1",
+        "human_proxy": "left_1"
+      },
+      {
+        "event_index": 612,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 9.634,
+        "human_error_ms": 13.634,
+        "free": "left_5/tip",
+        "human_proxy": "left_1"
+      },
+      {
+        "event_index": 613,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 1.39,
+        "human_error_ms": 5.39,
+        "free": "left_4",
+        "human_proxy": "right_3"
+      },
+      {
+        "event_index": 614,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 10.707,
+        "human_error_ms": 26.707,
+        "free": "right_5/tip",
+        "human_proxy": "left_1"
+      },
+      {
+        "event_index": 616,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 11.853,
+        "human_error_ms": 21.853,
+        "free": "left_1",
+        "human_proxy": "left_1"
+      },
+      {
+        "event_index": 618,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 14.926,
+        "human_error_ms": 26.926,
+        "free": "right_5/tip",
+        "human_proxy": "left_1"
+      },
+      {
+        "event_index": 619,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 3.0,
+        "human_error_ms": 14.0,
+        "free": "left_2",
+        "human_proxy": "left_1"
+      },
+      {
+        "event_index": 620,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 0.073,
+        "human_error_ms": 11.073,
+        "free": "left_1",
+        "human_proxy": "left_1"
+      },
+      {
+        "event_index": 622,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 5.146,
+        "human_error_ms": 7.146,
+        "free": "right_3",
+        "human_proxy": "right_2"
+      },
+      {
+        "event_index": 624,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 5.219,
+        "human_error_ms": 9.219,
+        "free": "right_5/tip",
+        "human_proxy": "left_1"
+      },
+      {
+        "event_index": 625,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 11.975,
+        "human_error_ms": 24.975,
+        "free": "right_2",
+        "human_proxy": "right_1"
+      },
+      {
+        "event_index": 626,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 8.292,
+        "human_error_ms": 23.292,
+        "free": "left_5/tip",
+        "human_proxy": "left_1"
+      },
+      {
+        "event_index": 627,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 1.829,
+        "human_error_ms": 15.829,
+        "free": "left_1",
+        "human_proxy": "right_1"
+      },
+      {
+        "event_index": 629,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 13.975,
+        "human_error_ms": 20.975,
+        "free": "left_1",
+        "human_proxy": "left_1"
+      },
+      {
+        "event_index": 631,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 15.048,
+        "human_error_ms": 24.048,
+        "free": "left_5/tip",
+        "human_proxy": "left_1"
+      },
+      {
+        "event_index": 634,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 9.731,
+        "human_error_ms": 13.731,
+        "free": "right_5/tip",
+        "human_proxy": "left_1"
+      },
+      {
+        "event_index": 635,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 3.268,
+        "human_error_ms": 4.268,
+        "free": "left_4",
+        "human_proxy": "right_1"
+      },
+      {
+        "event_index": 637,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 9.56,
+        "human_error_ms": 19.56,
+        "free": "left_2",
+        "human_proxy": "right_1"
+      },
+      {
+        "event_index": 639,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 1.024,
+        "human_error_ms": 13.024,
+        "free": "left_1",
+        "human_proxy": "left_1"
+      },
+      {
+        "event_index": 642,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 2.682,
+        "human_error_ms": 12.682,
+        "free": "left_2",
+        "human_proxy": "left_2"
+      },
+      {
+        "event_index": 643,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 3.195,
+        "human_error_ms": 4.195,
+        "free": "right_1",
+        "human_proxy": "right_1"
+      },
+      {
+        "event_index": 648,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 17.78,
+        "human_error_ms": 23.78,
+        "free": "right_1",
+        "human_proxy": "right_2"
+      },
+      {
+        "event_index": 652,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 5.536,
+        "human_error_ms": 6.536,
+        "free": "right_5/tip",
+        "human_proxy": "left_1"
+      },
+      {
+        "event_index": 654,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 14.634,
+        "human_error_ms": 24.634,
+        "free": "right_2",
+        "human_proxy": "left_1"
+      },
+      {
+        "event_index": 655,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 12.682,
+        "human_error_ms": 13.682,
+        "free": "left_2",
+        "human_proxy": "right_1"
+      },
+      {
+        "event_index": 657,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 0.78,
+        "human_error_ms": -3.22,
+        "free": "right_3",
+        "human_proxy": "left_2"
+      },
+      {
+        "event_index": 658,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 4.804,
+        "human_error_ms": 11.804,
+        "free": "left_3",
+        "human_proxy": "right_1"
+      },
+      {
+        "event_index": 664,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 10.195,
+        "human_error_ms": 24.195,
+        "free": "right_2",
+        "human_proxy": "left_1"
+      },
+      {
+        "event_index": 665,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 6.268,
+        "human_error_ms": 13.268,
+        "free": "left_2",
+        "human_proxy": "left_1"
+      },
+      {
+        "event_index": 669,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 9.634,
+        "human_error_ms": 23.634,
+        "free": "left_2",
+        "human_proxy": "left_1"
+      },
+      {
+        "event_index": 670,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 2.17,
+        "human_error_ms": 3.17,
+        "free": "right_1",
+        "human_proxy": "right_1"
+      },
+      {
+        "event_index": 671,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 2.707,
+        "human_error_ms": 5.707,
+        "free": "right_3",
+        "human_proxy": "right_2"
+      },
+      {
+        "event_index": 675,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 6.853,
+        "human_error_ms": 12.853,
+        "free": "left_1",
+        "human_proxy": "left_1"
+      },
+      {
+        "event_index": 676,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 10.926,
+        "human_error_ms": 17.926,
+        "free": "right_5/tip",
+        "human_proxy": "left_1"
+      },
+      {
+        "event_index": 677,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 9.951,
+        "human_error_ms": 11.951,
+        "free": "left_4",
+        "human_proxy": "left_2"
+      },
+      {
+        "event_index": 680,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 2.536,
+        "human_error_ms": 5.536,
+        "free": "right_3",
+        "human_proxy": "left_3"
+      },
+      {
+        "event_index": 681,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": -0.927,
+        "human_error_ms": 7.073,
+        "free": "right_2",
+        "human_proxy": "left_1"
+      },
+      {
+        "event_index": 684,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 11.219,
+        "human_error_ms": 16.219,
+        "free": "right_5/tip",
+        "human_proxy": "left_1"
+      },
+      {
+        "event_index": 686,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 11.365,
+        "human_error_ms": 18.365,
+        "free": "right_2",
+        "human_proxy": "left_1"
+      },
+      {
+        "event_index": 688,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 7.512,
+        "human_error_ms": 14.512,
+        "free": "left_2",
+        "human_proxy": "left_1"
+      },
+      {
+        "event_index": 690,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 0.731,
+        "human_error_ms": 3.731,
+        "free": "left_1",
+        "human_proxy": "right_2"
+      },
+      {
+        "event_index": 691,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 5.243,
+        "human_error_ms": 7.243,
+        "free": "left_2",
+        "human_proxy": "left_1"
+      },
+      {
+        "event_index": 692,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 0.341,
+        "human_error_ms": 13.341,
+        "free": "left_5/tip",
+        "human_proxy": "left_1"
+      },
+      {
+        "event_index": 694,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 7.951,
+        "human_error_ms": 12.951,
+        "free": "right_5/tip",
+        "human_proxy": "left_1"
+      },
+      {
+        "event_index": 697,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 6.536,
+        "human_error_ms": 15.536,
+        "free": "left_2",
+        "human_proxy": "left_1"
+      },
+      {
+        "event_index": 698,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 16.634,
+        "human_error_ms": 21.634,
+        "free": "right_5/tip",
+        "human_proxy": "left_1"
+      },
+      {
+        "event_index": 700,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 2.243,
+        "human_error_ms": 11.243,
+        "free": "left_1",
+        "human_proxy": "left_1"
+      },
+      {
+        "event_index": 701,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 0.78,
+        "human_error_ms": 2.78,
+        "free": "right_1",
+        "human_proxy": "right_1"
+      },
+      {
+        "event_index": 703,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 11.829,
+        "human_error_ms": 13.829,
+        "free": "left_5/tip",
+        "human_proxy": "left_1"
+      },
+      {
+        "event_index": 704,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 10.926,
+        "human_error_ms": 19.926,
+        "free": "right_5/tip",
+        "human_proxy": "left_1"
+      },
+      {
+        "event_index": 706,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 2.536,
+        "human_error_ms": 9.536,
+        "free": "left_2",
+        "human_proxy": "left_1"
+      },
+      {
+        "event_index": 709,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 17.121,
+        "human_error_ms": 22.121,
+        "free": "right_5/tip",
+        "human_proxy": "left_1"
+      },
+      {
+        "event_index": 712,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 2.829,
+        "human_error_ms": 8.829,
+        "free": "left_2",
+        "human_proxy": "left_1"
+      },
+      {
+        "event_index": 715,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 0.658,
+        "human_error_ms": -1.342,
+        "free": "right_4",
+        "human_proxy": "right_3"
+      },
+      {
+        "event_index": 717,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 6.975,
+        "human_error_ms": 9.975,
+        "free": "left_4",
+        "human_proxy": "left_1"
+      },
+      {
+        "event_index": 718,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 3.512,
+        "human_error_ms": 8.512,
+        "free": "left_5/tip",
+        "human_proxy": "right_1"
+      },
+      {
+        "event_index": 719,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 17.268,
+        "human_error_ms": 28.268,
+        "free": "left_2",
+        "human_proxy": "left_3"
+      },
+      {
+        "event_index": 720,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 5.048,
+        "human_error_ms": 13.048,
+        "free": "right_1",
+        "human_proxy": "right_3"
+      },
+      {
+        "event_index": 721,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 4.585,
+        "human_error_ms": 17.585,
+        "free": "right_3",
+        "human_proxy": "left_1"
+      },
+      {
+        "event_index": 722,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 12.121,
+        "human_error_ms": 25.121,
+        "free": "right_2",
+        "human_proxy": "right_1"
+      },
+      {
+        "event_index": 723,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 7.877,
+        "human_error_ms": 19.877,
+        "free": "right_4",
+        "human_proxy": "left_3"
+      },
+      {
+        "event_index": 726,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 9.951,
+        "human_error_ms": 23.951,
+        "free": "left_5/tip",
+        "human_proxy": "left_3"
+      },
+      {
+        "event_index": 728,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 9.268,
+        "human_error_ms": 13.268,
+        "free": "right_3",
+        "human_proxy": "right_1"
+      },
+      {
+        "event_index": 729,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 7.804,
+        "human_error_ms": 8.804,
+        "free": "right_2",
+        "human_proxy": "right_2"
+      },
+      {
+        "event_index": 731,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 8.341,
+        "human_error_ms": 14.341,
+        "free": "right_5/tip",
+        "human_proxy": "left_3"
+      },
+      {
+        "event_index": 733,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 11.414,
+        "human_error_ms": 12.414,
+        "free": "left_5/tip",
+        "human_proxy": "right_1"
+      },
+      {
+        "event_index": 734,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 3.17,
+        "human_error_ms": 24.17,
+        "free": "left_2",
+        "human_proxy": "left_3"
+      },
+      {
+        "event_index": 735,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 0.951,
+        "human_error_ms": 18.951,
+        "free": "left_1",
+        "human_proxy": "right_3"
+      },
+      {
+        "event_index": 736,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 17.487,
+        "human_error_ms": 20.487,
+        "free": "right_2",
+        "human_proxy": "left_1"
+      },
+      {
+        "event_index": 737,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 15.536,
+        "human_error_ms": 16.536,
+        "free": "left_2",
+        "human_proxy": "right_1"
+      },
+      {
+        "event_index": 738,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 11.585,
+        "human_error_ms": 13.585,
+        "free": "left_5/tip",
+        "human_proxy": "right_1"
+      },
+      {
+        "event_index": 744,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 3.926,
+        "human_error_ms": 4.926,
+        "free": "right_3",
+        "human_proxy": "left_4"
+      },
+      {
+        "event_index": 749,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 14.609,
+        "human_error_ms": 16.609,
+        "free": "right_3",
+        "human_proxy": "left_3"
+      },
+      {
+        "event_index": 750,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 6.146,
+        "human_error_ms": 13.146,
+        "free": "right_4",
+        "human_proxy": "left_1"
+      },
+      {
+        "event_index": 751,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 4.682,
+        "human_error_ms": 10.682,
+        "free": "right_5/tip",
+        "human_proxy": "right_1"
+      },
+      {
+        "event_index": 753,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 0.756,
+        "human_error_ms": 14.756,
+        "free": "left_5/tip",
+        "human_proxy": "left_3"
+      },
+      {
+        "event_index": 754,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 3.292,
+        "human_error_ms": 12.292,
+        "free": "left_1",
+        "human_proxy": "left_1"
+      },
+      {
+        "event_index": 755,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 5.829,
+        "human_error_ms": 6.829,
+        "free": "right_2",
+        "human_proxy": "right_1"
+      },
+      {
+        "event_index": 757,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 0.463,
+        "human_error_ms": -0.537,
+        "free": "left_2",
+        "human_proxy": "left_2"
+      },
+      {
+        "event_index": 758,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 2.487,
+        "human_error_ms": 11.487,
+        "free": "right_1",
+        "human_proxy": "right_1"
+      },
+      {
+        "event_index": 761,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 5.585,
+        "human_error_ms": 10.585,
+        "free": "left_1",
+        "human_proxy": "left_1"
+      },
+      {
+        "event_index": 762,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 17.121,
+        "human_error_ms": 18.121,
+        "free": "right_1",
+        "human_proxy": "right_1"
+      },
+      {
+        "event_index": 763,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 4.658,
+        "human_error_ms": 9.658,
+        "free": "right_3",
+        "human_proxy": "right_2"
+      },
+      {
+        "event_index": 764,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 3.731,
+        "human_error_ms": 9.731,
+        "free": "right_5/tip",
+        "human_proxy": "left_1"
+      },
+      {
+        "event_index": 766,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 2.78,
+        "human_error_ms": 10.78,
+        "free": "left_5/tip",
+        "human_proxy": "right_1"
+      },
+      {
+        "event_index": 770,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 11.414,
+        "human_error_ms": 12.414,
+        "free": "left_2",
+        "human_proxy": "left_2"
+      },
+      {
+        "event_index": 771,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": -1.513,
+        "human_error_ms": 5.487,
+        "free": "left_1",
+        "human_proxy": "left_1"
+      },
+      {
+        "event_index": 774,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 4.097,
+        "human_error_ms": 5.097,
+        "free": "left_5/tip",
+        "human_proxy": "left_3"
+      },
+      {
+        "event_index": 776,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 6.707,
+        "human_error_ms": 7.707,
+        "free": "left_4",
+        "human_proxy": "right_1"
+      },
+      {
+        "event_index": 777,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 6.316,
+        "human_error_ms": 7.316,
+        "free": "right_2",
+        "human_proxy": "left_1"
+      },
+      {
+        "event_index": 778,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": -1.659,
+        "human_error_ms": -4.659,
+        "free": "right_3",
+        "human_proxy": "left_2"
+      },
+      {
+        "event_index": 779,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 32.365,
+        "human_error_ms": 33.365,
+        "free": "right_2",
+        "human_proxy": "left_1"
+      },
+      {
+        "event_index": 780,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 12.39,
+        "human_error_ms": 24.39,
+        "free": "left_1",
+        "human_proxy": "left_2"
+      },
+      {
+        "event_index": 781,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 1.926,
+        "human_error_ms": 6.926,
+        "free": "right_1",
+        "human_proxy": "right_1"
+      },
+      {
+        "event_index": 789,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 12.365,
+        "human_error_ms": 23.365,
+        "free": "left_2",
+        "human_proxy": "left_1"
+      },
+      {
+        "event_index": 792,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 5.512,
+        "human_error_ms": 14.512,
+        "free": "right_5/tip",
+        "human_proxy": "left_1"
+      },
+      {
+        "event_index": 793,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 3.048,
+        "human_error_ms": 10.048,
+        "free": "left_4",
+        "human_proxy": "right_1"
+      },
+      {
+        "event_index": 795,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 5.658,
+        "human_error_ms": 12.658,
+        "free": "left_1",
+        "human_proxy": "left_1"
+      },
+      {
+        "event_index": 796,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 10.195,
+        "human_error_ms": 14.195,
+        "free": "right_2",
+        "human_proxy": "right_1"
+      },
+      {
+        "event_index": 797,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 3.731,
+        "human_error_ms": 8.731,
+        "free": "left_2",
+        "human_proxy": "right_2"
+      },
+      {
+        "event_index": 799,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": -0.196,
+        "human_error_ms": 9.804,
+        "free": "right_1",
+        "human_proxy": "left_1"
+      },
+      {
+        "event_index": 800,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": -2.659,
+        "human_error_ms": 8.341,
+        "free": "right_3",
+        "human_proxy": "right_1"
+      },
+      {
+        "event_index": 801,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 13.877,
+        "human_error_ms": 16.877,
+        "free": "right_2",
+        "human_proxy": "right_2"
+      },
+      {
+        "event_index": 803,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 2.951,
+        "human_error_ms": 9.951,
+        "free": "left_1",
+        "human_proxy": "left_1"
+      },
+      {
+        "event_index": 806,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 5.56,
+        "human_error_ms": 13.56,
+        "free": "left_1",
+        "human_proxy": "left_3"
+      },
+      {
+        "event_index": 807,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": -0.903,
+        "human_error_ms": 10.097,
+        "free": "right_1",
+        "human_proxy": "left_1"
+      },
+      {
+        "event_index": 808,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 9.634,
+        "human_error_ms": 16.634,
+        "free": "right_3",
+        "human_proxy": "right_1"
+      },
+      {
+        "event_index": 810,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 1.78,
+        "human_error_ms": 5.78,
+        "free": "right_5/tip",
+        "human_proxy": "left_1"
+      },
+      {
+        "event_index": 812,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 0.829,
+        "human_error_ms": 4.829,
+        "free": "left_5/tip",
+        "human_proxy": "right_1"
+      },
+      {
+        "event_index": 813,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 13.853,
+        "human_error_ms": 14.853,
+        "free": "right_1",
+        "human_proxy": "right_2"
+      },
+      {
+        "event_index": 814,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 10.39,
+        "human_error_ms": 11.39,
+        "free": "right_3",
+        "human_proxy": "left_3"
+      },
+      {
+        "event_index": 815,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 8.926,
+        "human_error_ms": 15.926,
+        "free": "right_2",
+        "human_proxy": "left_1"
+      },
+      {
+        "event_index": 816,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 9.463,
+        "human_error_ms": 11.463,
+        "free": "left_2",
+        "human_proxy": "right_1"
+      },
+      {
+        "event_index": 817,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": -2.001,
+        "human_error_ms": 12.999,
+        "free": "left_1",
+        "human_proxy": "right_2"
+      },
+      {
+        "event_index": 818,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 7.073,
+        "human_error_ms": 10.073,
+        "free": "right_5/tip",
+        "human_proxy": "left_1"
+      },
+      {
+        "event_index": 820,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 11.121,
+        "human_error_ms": 18.121,
+        "free": "left_5/tip",
+        "human_proxy": "right_1"
+      },
+      {
+        "event_index": 822,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 7.682,
+        "human_error_ms": 10.682,
+        "free": "right_3",
+        "human_proxy": "left_3"
+      },
+      {
+        "event_index": 828,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 10.438,
+        "human_error_ms": 11.438,
+        "free": "right_1",
+        "human_proxy": "left_3"
+      },
+      {
+        "event_index": 831,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 6.121,
+        "human_error_ms": 17.121,
+        "free": "left_1",
+        "human_proxy": "left_1"
+      },
+      {
+        "event_index": 832,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 11.658,
+        "human_error_ms": 14.658,
+        "free": "right_2",
+        "human_proxy": "right_1"
+      },
+      {
+        "event_index": 834,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 7.731,
+        "human_error_ms": 8.731,
+        "free": "left_5/tip",
+        "human_proxy": "left_3"
+      },
+      {
+        "event_index": 836,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 4.341,
+        "human_error_ms": 5.341,
+        "free": "right_5/tip",
+        "human_proxy": "left_1"
+      },
+      {
+        "event_index": 840,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 5.951,
+        "human_error_ms": 19.951,
+        "free": "right_2",
+        "human_proxy": "left_1"
+      },
+      {
+        "event_index": 841,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 6.024,
+        "human_error_ms": 22.024,
+        "free": "left_1",
+        "human_proxy": "left_1"
+      },
+      {
+        "event_index": 845,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 6.707,
+        "human_error_ms": 8.707,
+        "free": "right_5/tip",
+        "human_proxy": "left_1"
+      },
+      {
+        "event_index": 846,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 9.243,
+        "human_error_ms": 10.243,
+        "free": "left_4",
+        "human_proxy": "right_1"
+      },
+      {
+        "event_index": 847,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 1.78,
+        "human_error_ms": 3.78,
+        "free": "left_5/tip",
+        "human_proxy": "right_2"
+      },
+      {
+        "event_index": 848,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 9.853,
+        "human_error_ms": 15.853,
+        "free": "left_1",
+        "human_proxy": "left_1"
+      },
+      {
+        "event_index": 849,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 14.39,
+        "human_error_ms": 17.39,
+        "free": "right_2",
+        "human_proxy": "right_1"
+      },
+      {
+        "event_index": 850,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 4.926,
+        "human_error_ms": 9.926,
+        "free": "left_2",
+        "human_proxy": "right_2"
+      },
+      {
+        "event_index": 851,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 8.999,
+        "human_error_ms": 13.999,
+        "free": "right_5/tip",
+        "human_proxy": "left_1"
+      },
+      {
+        "event_index": 853,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 2.072,
+        "human_error_ms": 10.072,
+        "free": "left_5/tip",
+        "human_proxy": "right_2"
+      },
+      {
+        "event_index": 855,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 10.633,
+        "human_error_ms": 12.633,
+        "free": "left_2",
+        "human_proxy": "left_1"
+      },
+      {
+        "event_index": 856,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 10.658,
+        "human_error_ms": 27.658,
+        "free": "right_1",
+        "human_proxy": "left_2"
+      },
+      {
+        "event_index": 857,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 4.682,
+        "human_error_ms": 14.682,
+        "free": "right_3",
+        "human_proxy": "right_1"
+      },
+      {
+        "event_index": 858,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 4.219,
+        "human_error_ms": 8.219,
+        "free": "right_2",
+        "human_proxy": "right_2"
+      },
+      {
+        "event_index": 860,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 4.292,
+        "human_error_ms": 11.292,
+        "free": "left_1",
+        "human_proxy": "left_1"
+      },
+      {
+        "event_index": 864,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 5.438,
+        "human_error_ms": 9.438,
+        "free": "right_1",
+        "human_proxy": "left_1"
+      },
+      {
+        "event_index": 865,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 4.975,
+        "human_error_ms": 12.975,
+        "free": "right_3",
+        "human_proxy": "right_1"
+      },
+      {
+        "event_index": 867,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 8.121,
+        "human_error_ms": 13.121,
+        "free": "right_5/tip",
+        "human_proxy": "left_1"
+      },
+      {
+        "event_index": 869,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 7.17,
+        "human_error_ms": 12.17,
+        "free": "left_5/tip",
+        "human_proxy": "right_1"
+      },
+      {
+        "event_index": 872,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 5.268,
+        "human_error_ms": 12.268,
+        "free": "right_2",
+        "human_proxy": "left_1"
+      },
+      {
+        "event_index": 873,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 5.804,
+        "human_error_ms": 12.804,
+        "free": "left_2",
+        "human_proxy": "right_1"
+      },
+      {
+        "event_index": 874,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": -5.659,
+        "human_error_ms": 9.341,
+        "free": "left_1",
+        "human_proxy": "right_2"
+      },
+      {
+        "event_index": 877,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 7.463,
+        "human_error_ms": 9.463,
+        "free": "left_5/tip",
+        "human_proxy": "right_1"
+      },
+      {
+        "event_index": 879,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 4.024,
+        "human_error_ms": 7.024,
+        "free": "right_3",
+        "human_proxy": "left_3"
+      },
+      {
+        "event_index": 881,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 6.097,
+        "human_error_ms": 7.097,
+        "free": "left_2",
+        "human_proxy": "left_2"
+      },
+      {
+        "event_index": 885,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 6.78,
+        "human_error_ms": 7.78,
+        "free": "right_1",
+        "human_proxy": "left_3"
+      },
+      {
+        "event_index": 887,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 8.926,
+        "human_error_ms": 16.926,
+        "free": "left_1",
+        "human_proxy": "left_1"
+      },
+      {
+        "event_index": 891,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": -2.928,
+        "human_error_ms": 16.072,
+        "free": "right_2",
+        "human_proxy": "left_1"
+      },
+      {
+        "event_index": 895,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 2.219,
+        "human_error_ms": 3.219,
+        "free": "right_3",
+        "human_proxy": "left_4"
+      },
+      {
+        "event_index": 897,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 0.829,
+        "human_error_ms": 3.829,
+        "free": "right_1",
+        "human_proxy": "right_1"
+      },
+      {
+        "event_index": 899,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 5.438,
+        "human_error_ms": 16.438,
+        "free": "right_5/tip",
+        "human_proxy": "left_1"
+      },
+      {
+        "event_index": 900,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 5.975,
+        "human_error_ms": 9.975,
+        "free": "left_4",
+        "human_proxy": "right_1"
+      },
+      {
+        "event_index": 901,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 0.048,
+        "human_error_ms": 15.048,
+        "free": "left_1",
+        "human_proxy": "left_1"
+      },
+      {
+        "event_index": 902,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 5.585,
+        "human_error_ms": 14.585,
+        "free": "right_2",
+        "human_proxy": "right_1"
+      },
+      {
+        "event_index": 904,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 10.194,
+        "human_error_ms": 12.194,
+        "free": "left_1",
+        "human_proxy": "left_1"
+      },
+      {
+        "event_index": 905,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 1.731,
+        "human_error_ms": 10.731,
+        "free": "right_1",
+        "human_proxy": "right_1"
+      },
+      {
+        "event_index": 906,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 1.268,
+        "human_error_ms": 6.268,
+        "free": "right_3",
+        "human_proxy": "right_2"
+      },
+      {
+        "event_index": 907,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 0.341,
+        "human_error_ms": 10.341,
+        "free": "right_5/tip",
+        "human_proxy": "left_1"
+      },
+      {
+        "event_index": 908,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 13.877,
+        "human_error_ms": 17.877,
+        "free": "left_4",
+        "human_proxy": "right_1"
+      },
+      {
+        "event_index": 909,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 4.414,
+        "human_error_ms": 15.414,
+        "free": "left_5/tip",
+        "human_proxy": "right_2"
+      },
+      {
+        "event_index": 912,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 2.024,
+        "human_error_ms": 8.024,
+        "free": "left_2",
+        "human_proxy": "right_1"
+      },
+      {
+        "event_index": 921,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 9.853,
+        "human_error_ms": 13.853,
+        "free": "left_2",
+        "human_proxy": "left_1"
+      },
+      {
+        "event_index": 922,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": -1.537,
+        "human_error_ms": 17.463,
+        "free": "left_1",
+        "human_proxy": "left_1"
+      },
+      {
+        "event_index": 925,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 15.536,
+        "human_error_ms": 17.536,
+        "free": "left_2",
+        "human_proxy": "left_1"
+      },
+      {
+        "event_index": 926,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": -2.928,
+        "human_error_ms": 21.072,
+        "free": "right_1",
+        "human_proxy": "right_1"
+      },
+      {
+        "event_index": 928,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 7.146,
+        "human_error_ms": 11.146,
+        "free": "right_2",
+        "human_proxy": "left_3"
+      },
+      {
+        "event_index": 930,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 3.755,
+        "human_error_ms": 8.755,
+        "free": "left_5/tip",
+        "human_proxy": "left_1"
+      },
+      {
+        "event_index": 933,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 7.853,
+        "human_error_ms": 9.853,
+        "free": "right_4",
+        "human_proxy": "left_2"
+      },
+      {
+        "event_index": 934,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 5.877,
+        "human_error_ms": 19.877,
+        "free": "right_5/tip",
+        "human_proxy": "left_1"
+      },
+      {
+        "event_index": 935,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 11.902,
+        "human_error_ms": 28.902,
+        "free": "left_4",
+        "human_proxy": "left_2"
+      },
+      {
+        "event_index": 936,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 11.438,
+        "human_error_ms": 19.438,
+        "free": "left_5/tip",
+        "human_proxy": "left_1"
+      },
+      {
+        "event_index": 937,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 2.511,
+        "human_error_ms": 14.511,
+        "free": "left_1",
+        "human_proxy": "left_1"
+      },
+      {
+        "event_index": 939,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": -0.415,
+        "human_error_ms": -1.415,
+        "free": "left_2",
+        "human_proxy": "right_2"
+      },
+      {
+        "event_index": 946,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": -5.44,
+        "human_error_ms": 6.56,
+        "free": "left_1",
+        "human_proxy": "left_1"
+      },
+      {
+        "event_index": 948,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 23.609,
+        "human_error_ms": 33.609,
+        "free": "left_1",
+        "human_proxy": "left_1"
+      },
+      {
+        "event_index": 949,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 20.633,
+        "human_error_ms": 31.633,
+        "free": "left_2",
+        "human_proxy": "left_2"
+      },
+      {
+        "event_index": 950,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 3.17,
+        "human_error_ms": 7.17,
+        "free": "right_1",
+        "human_proxy": "right_1"
+      },
+      {
+        "event_index": 952,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 2.243,
+        "human_error_ms": 5.243,
+        "free": "right_2",
+        "human_proxy": "left_3"
+      },
+      {
+        "event_index": 954,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 2.316,
+        "human_error_ms": 6.316,
+        "free": "left_5/tip",
+        "human_proxy": "left_2"
+      },
+      {
+        "event_index": 958,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 1.536,
+        "human_error_ms": 7.536,
+        "free": "left_1",
+        "human_proxy": "left_1"
+      },
+      {
+        "event_index": 960,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 9.609,
+        "human_error_ms": 12.609,
+        "free": "left_2",
+        "human_proxy": "right_2"
+      },
+      {
+        "event_index": 961,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 11.682,
+        "human_error_ms": 16.682,
+        "free": "right_5/tip",
+        "human_proxy": "left_1"
+      },
+      {
+        "event_index": 963,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 2.755,
+        "human_error_ms": 12.755,
+        "free": "left_5/tip",
+        "human_proxy": "right_2"
+      },
+      {
+        "event_index": 967,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 2.194,
+        "human_error_ms": 6.194,
+        "free": "right_2",
+        "human_proxy": "left_2"
+      },
+      {
+        "event_index": 969,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 18.267,
+        "human_error_ms": 27.267,
+        "free": "left_5/tip",
+        "human_proxy": "left_2"
+      },
+      {
+        "event_index": 971,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 2.963,
+        "human_error_ms": 15.963,
+        "free": "left_4",
+        "human_proxy": "left_2"
+      },
+      {
+        "event_index": 974,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 4.658,
+        "human_error_ms": 24.658,
+        "free": "right_3",
+        "human_proxy": "right_2"
+      },
+      {
+        "event_index": 975,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 7.194,
+        "human_error_ms": 23.194,
+        "free": "right_2",
+        "human_proxy": "left_2"
+      },
+      {
+        "event_index": 976,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 7.731,
+        "human_error_ms": 12.731,
+        "free": "left_2",
+        "human_proxy": "left_1"
+      },
+      {
+        "event_index": 977,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 4.804,
+        "human_error_ms": 10.804,
+        "free": "right_5/tip",
+        "human_proxy": "left_1"
+      },
+      {
+        "event_index": 979,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 11.853,
+        "human_error_ms": 12.853,
+        "free": "left_5/tip",
+        "human_proxy": "right_1"
+      },
+      {
+        "event_index": 982,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 13.633,
+        "human_error_ms": 18.633,
+        "free": "left_2",
+        "human_proxy": "left_1"
+      },
+      {
+        "event_index": 985,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 14.487,
+        "human_error_ms": 16.487,
+        "free": "left_1",
+        "human_proxy": "right_1"
+      },
+      {
+        "event_index": 988,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 5.097,
+        "human_error_ms": 6.097,
+        "free": "right_5/tip",
+        "human_proxy": "left_1"
+      },
+      {
+        "event_index": 990,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 12.17,
+        "human_error_ms": 28.17,
+        "free": "left_1",
+        "human_proxy": "left_1"
+      },
+      {
+        "event_index": 994,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 1.243,
+        "human_error_ms": 24.243,
+        "free": "right_3",
+        "human_proxy": "left_1"
+      },
+      {
+        "event_index": 996,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 5.316,
+        "human_error_ms": 8.316,
+        "free": "left_2",
+        "human_proxy": "right_2"
+      },
+      {
+        "event_index": 998,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 9.926,
+        "human_error_ms": 14.926,
+        "free": "left_4",
+        "human_proxy": "right_1"
+      },
+      {
+        "event_index": 999,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 7.463,
+        "human_error_ms": 8.463,
+        "free": "left_5/tip",
+        "human_proxy": "right_2"
+      },
+      {
+        "event_index": 1001,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 4.219,
+        "human_error_ms": 23.219,
+        "free": "left_1",
+        "human_proxy": "left_1"
+      },
+      {
+        "event_index": 1003,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 3.536,
+        "human_error_ms": 23.536,
+        "free": "right_3",
+        "human_proxy": "left_1"
+      },
+      {
+        "event_index": 1004,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 1.072,
+        "human_error_ms": 10.072,
+        "free": "right_2",
+        "human_proxy": "right_1"
+      },
+      {
+        "event_index": 1005,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 15.609,
+        "human_error_ms": 17.609,
+        "free": "right_5/tip",
+        "human_proxy": "right_2"
+      },
+      {
+        "event_index": 1009,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 7.755,
+        "human_error_ms": 24.755,
+        "free": "left_1",
+        "human_proxy": "left_1"
+      },
+      {
+        "event_index": 1013,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 1.828,
+        "human_error_ms": 13.828,
+        "free": "right_3",
+        "human_proxy": "left_1"
+      },
+      {
+        "event_index": 1015,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 10.902,
+        "human_error_ms": 14.902,
+        "free": "left_2",
+        "human_proxy": "right_2"
+      },
+      {
+        "event_index": 1018,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 6.024,
+        "human_error_ms": 8.024,
+        "free": "left_5/tip",
+        "human_proxy": "right_1"
+      },
+      {
+        "event_index": 1020,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 9.426,
+        "human_error_ms": 19.426,
+        "free": "left_1",
+        "human_proxy": "left_1"
+      },
+      {
+        "event_index": 1023,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 11.121,
+        "human_error_ms": 29.121,
+        "free": "right_2",
+        "human_proxy": "left_1"
+      },
+      {
+        "event_index": 1024,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 11.658,
+        "human_error_ms": 19.658,
+        "free": "left_2",
+        "human_proxy": "right_1"
+      },
+      {
+        "event_index": 1025,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 12.194,
+        "human_error_ms": 14.194,
+        "free": "left_1",
+        "human_proxy": "right_2"
+      },
+      {
+        "event_index": 1030,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 3.56,
+        "human_error_ms": 7.56,
+        "free": "left_2",
+        "human_proxy": "left_1"
+      },
+      {
+        "event_index": 1031,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": -3.415,
+        "human_error_ms": 6.585,
+        "free": "left_1",
+        "human_proxy": "left_2"
+      },
+      {
+        "event_index": 1036,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 8.17,
+        "human_error_ms": 12.17,
+        "free": "right_4",
+        "human_proxy": "left_3"
+      },
+      {
+        "event_index": 1037,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 6.707,
+        "human_error_ms": 27.707,
+        "free": "right_5/tip",
+        "human_proxy": "right_3"
+      },
+      {
+        "event_index": 1038,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 7.243,
+        "human_error_ms": 14.243,
+        "free": "left_4",
+        "human_proxy": "left_1"
+      },
+      {
+        "event_index": 1039,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 1.78,
+        "human_error_ms": 11.78,
+        "free": "left_5/tip",
+        "human_proxy": "right_1"
+      },
+      {
+        "event_index": 1040,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 20.536,
+        "human_error_ms": 23.536,
+        "free": "left_2",
+        "human_proxy": "left_3"
+      },
+      {
+        "event_index": 1041,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 8.853,
+        "human_error_ms": 22.853,
+        "free": "left_1",
+        "human_proxy": "left_1"
+      },
+      {
+        "event_index": 1043,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 16.926,
+        "human_error_ms": 27.926,
+        "free": "left_1",
+        "human_proxy": "left_1"
+      },
+      {
+        "event_index": 1044,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 21.304,
+        "human_error_ms": 22.304,
+        "free": "left_2",
+        "human_proxy": "left_2"
+      },
+      {
+        "event_index": 1046,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 1.463,
+        "human_error_ms": 13.463,
+        "free": "right_1",
+        "human_proxy": "left_3"
+      },
+      {
+        "event_index": 1047,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 2.999,
+        "human_error_ms": 22.999,
+        "free": "right_3",
+        "human_proxy": "left_1"
+      },
+      {
+        "event_index": 1048,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 1.536,
+        "human_error_ms": 4.536,
+        "free": "right_4",
+        "human_proxy": "right_1"
+      },
+      {
+        "event_index": 1049,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": -0.928,
+        "human_error_ms": 9.072,
+        "free": "right_5/tip",
+        "human_proxy": "right_2"
+      },
+      {
+        "event_index": 1050,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 9.146,
+        "human_error_ms": 18.146,
+        "free": "left_1",
+        "human_proxy": "left_1"
+      },
+      {
+        "event_index": 1053,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 4.219,
+        "human_error_ms": 9.219,
+        "free": "right_2",
+        "human_proxy": "right_2"
+      },
+      {
+        "event_index": 1054,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 11.597,
+        "human_error_ms": 29.597,
+        "free": "right_3",
+        "human_proxy": "left_1"
+      },
+      {
+        "event_index": 1056,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 1.755,
+        "human_error_ms": 6.755,
+        "free": "left_3",
+        "human_proxy": "left_3"
+      },
+      {
+        "event_index": 1057,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 1.292,
+        "human_error_ms": 20.292,
+        "free": "left_4",
+        "human_proxy": "left_1"
+      },
+      {
+        "event_index": 1058,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": -2.172,
+        "human_error_ms": 13.828,
+        "free": "left_5/tip",
+        "human_proxy": "right_1"
+      },
+      {
+        "event_index": 1060,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 11.121,
+        "human_error_ms": 12.121,
+        "free": "right_1",
+        "human_proxy": "right_3"
+      },
+      {
+        "event_index": 1061,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 11.438,
+        "human_error_ms": 16.438,
+        "free": "right_5/tip",
+        "human_proxy": "left_1"
+      },
+      {
+        "event_index": 1063,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 14.511,
+        "human_error_ms": 20.511,
+        "free": "left_1",
+        "human_proxy": "left_1"
+      },
+      {
+        "event_index": 1067,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 0.585,
+        "human_error_ms": 17.585,
+        "free": "right_3",
+        "human_proxy": "right_2"
+      },
+      {
+        "event_index": 1068,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 7.121,
+        "human_error_ms": 8.121,
+        "free": "right_2",
+        "human_proxy": "right_3"
+      },
+      {
+        "event_index": 1069,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 10.658,
+        "human_error_ms": 18.658,
+        "free": "left_2",
+        "human_proxy": "right_2"
+      },
+      {
+        "event_index": 1072,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 3.804,
+        "human_error_ms": 9.804,
+        "free": "left_5/tip",
+        "human_proxy": "right_2"
+      },
+      {
+        "event_index": 1074,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 10.56,
+        "human_error_ms": 21.56,
+        "free": "left_1",
+        "human_proxy": "right_1"
+      },
+      {
+        "event_index": 1082,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 3.097,
+        "human_error_ms": 20.097,
+        "free": "left_1",
+        "human_proxy": "left_1"
+      },
+      {
+        "event_index": 1084,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 26.853,
+        "human_error_ms": 28.853,
+        "free": "left_5/tip",
+        "human_proxy": "right_2"
+      },
+      {
+        "event_index": 1086,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 8.17,
+        "human_error_ms": 27.17,
+        "free": "right_3",
+        "human_proxy": "right_2"
+      },
+      {
+        "event_index": 1088,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 10.243,
+        "human_error_ms": 17.243,
+        "free": "left_2",
+        "human_proxy": "right_2"
+      },
+      {
+        "event_index": 1091,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 11.365,
+        "human_error_ms": 32.365,
+        "free": "left_5/tip",
+        "human_proxy": "left_1"
+      },
+      {
+        "event_index": 1092,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 15.389,
+        "human_error_ms": 22.389,
+        "free": "right_1",
+        "human_proxy": "left_2"
+      },
+      {
+        "event_index": 1093,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 5.767,
+        "human_error_ms": 16.767,
+        "free": "left_1",
+        "human_proxy": "right_2"
+      },
+      {
+        "event_index": 1095,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 11.926,
+        "human_error_ms": 12.926,
+        "free": "right_3",
+        "human_proxy": "right_3"
+      },
+      {
+        "event_index": 1096,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 6.463,
+        "human_error_ms": 25.463,
+        "free": "right_2",
+        "human_proxy": "right_2"
+      },
+      {
+        "event_index": 1097,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 8.999,
+        "human_error_ms": 22.999,
+        "free": "left_2",
+        "human_proxy": "left_2"
+      },
+      {
+        "event_index": 1100,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 14.146,
+        "human_error_ms": 22.146,
+        "free": "right_5/tip",
+        "human_proxy": "left_1"
+      },
+      {
+        "event_index": 1105,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 2.926,
+        "human_error_ms": 9.926,
+        "free": "left_1",
+        "human_proxy": "left_2"
+      },
+      {
+        "event_index": 1109,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 4.048,
+        "human_error_ms": 8.048,
+        "free": "right_1",
+        "human_proxy": "left_1"
+      },
+      {
+        "event_index": 1110,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": -2.415,
+        "human_error_ms": 9.585,
+        "free": "right_3",
+        "human_proxy": "right_1"
+      },
+      {
+        "event_index": 1111,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 6.121,
+        "human_error_ms": 14.121,
+        "free": "right_2",
+        "human_proxy": "right_2"
+      },
+      {
+        "event_index": 1113,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 11.194,
+        "human_error_ms": 17.194,
+        "free": "left_5/tip",
+        "human_proxy": "left_1"
+      },
+      {
+        "event_index": 1116,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 10.365,
+        "human_error_ms": 18.365,
+        "free": "left_1",
+        "human_proxy": "left_1"
+      },
+      {
+        "event_index": 1117,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 11.414,
+        "human_error_ms": 15.414,
+        "free": "right_1",
+        "human_proxy": "right_1"
+      },
+      {
+        "event_index": 1121,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 8.633,
+        "human_error_ms": 20.633,
+        "free": "left_2",
+        "human_proxy": "left_1"
+      },
+      {
+        "event_index": 1122,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 4.17,
+        "human_error_ms": 7.17,
+        "free": "left_1",
+        "human_proxy": "right_1"
+      },
+      {
+        "event_index": 1124,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": -0.537,
+        "human_error_ms": -3.537,
+        "free": "right_1",
+        "human_proxy": "right_3"
+      },
+      {
+        "event_index": 1126,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 14.853,
+        "human_error_ms": 23.853,
+        "free": "right_5/tip",
+        "human_proxy": "left_1"
+      },
+      {
+        "event_index": 1130,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 0.999,
+        "human_error_ms": 8.999,
+        "free": "right_3",
+        "human_proxy": "left_1"
+      },
+      {
+        "event_index": 1131,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 8.755,
+        "human_error_ms": 17.755,
+        "free": "right_2",
+        "human_proxy": "right_1"
+      },
+      {
+        "event_index": 1132,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 9.097,
+        "human_error_ms": 17.097,
+        "free": "left_5/tip",
+        "human_proxy": "left_1"
+      },
+      {
+        "event_index": 1134,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 1.292,
+        "human_error_ms": 10.292,
+        "free": "left_1",
+        "human_proxy": "left_1"
+      },
+      {
+        "event_index": 1136,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 13.365,
+        "human_error_ms": 18.365,
+        "free": "right_5/tip",
+        "human_proxy": "left_1"
+      },
+      {
+        "event_index": 1140,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 4.511,
+        "human_error_ms": 8.511,
+        "free": "right_1",
+        "human_proxy": "left_1"
+      },
+      {
+        "event_index": 1141,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": -0.952,
+        "human_error_ms": 10.048,
+        "free": "right_3",
+        "human_proxy": "right_1"
+      },
+      {
+        "event_index": 1142,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": -3.416,
+        "human_error_ms": 5.584,
+        "free": "right_2",
+        "human_proxy": "right_2"
+      },
+      {
+        "event_index": 1144,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 13.658,
+        "human_error_ms": 18.658,
+        "free": "left_5/tip",
+        "human_proxy": "left_1"
+      },
+      {
+        "event_index": 1147,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 3.804,
+        "human_error_ms": 4.804,
+        "free": "right_3",
+        "human_proxy": "right_2"
+      },
+      {
+        "event_index": 1148,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 0.341,
+        "human_error_ms": -1.659,
+        "free": "right_2",
+        "human_proxy": "left_2"
+      },
+      {
+        "event_index": 1151,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 11.95,
+        "human_error_ms": 26.95,
+        "free": "left_5/tip",
+        "human_proxy": "left_1"
+      },
+      {
+        "event_index": 1153,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 4.097,
+        "human_error_ms": 11.097,
+        "free": "right_5/tip",
+        "human_proxy": "left_1"
+      },
+      {
+        "event_index": 1154,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 10.17,
+        "human_error_ms": 18.17,
+        "free": "left_1",
+        "human_proxy": "left_1"
+      },
+      {
+        "event_index": 1156,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 3.243,
+        "human_error_ms": 21.243,
+        "free": "left_2",
+        "human_proxy": "left_1"
+      },
+      {
+        "event_index": 1157,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 5.316,
+        "human_error_ms": 11.316,
+        "free": "left_1",
+        "human_proxy": "left_1"
+      },
+      {
+        "event_index": 1161,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 0.926,
+        "human_error_ms": 3.926,
+        "free": "right_1",
+        "human_proxy": "right_1"
+      },
+      {
+        "event_index": 1165,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 3.072,
+        "human_error_ms": 10.072,
+        "free": "right_5/tip",
+        "human_proxy": "left_1"
+      },
+      {
+        "event_index": 1167,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 8.682,
+        "human_error_ms": 16.682,
+        "free": "left_1",
+        "human_proxy": "left_1"
+      },
+      {
+        "event_index": 1171,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 12.365,
+        "human_error_ms": 22.365,
+        "free": "right_5/tip",
+        "human_proxy": "left_1"
+      },
+      {
+        "event_index": 1174,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 1.511,
+        "human_error_ms": 3.511,
+        "free": "right_3",
+        "human_proxy": "right_1"
+      },
+      {
+        "event_index": 1176,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 10.56,
+        "human_error_ms": 14.56,
+        "free": "left_2",
+        "human_proxy": "left_1"
+      },
+      {
+        "event_index": 1177,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 13.658,
+        "human_error_ms": 20.658,
+        "free": "right_5/tip",
+        "human_proxy": "left_1"
+      },
+      {
+        "event_index": 1183,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 11.95,
+        "human_error_ms": 18.95,
+        "free": "right_5/tip",
+        "human_proxy": "left_1"
+      },
+      {
+        "event_index": 1185,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 6.56,
+        "human_error_ms": 9.56,
+        "free": "right_2",
+        "human_proxy": "left_1"
+      },
+      {
+        "event_index": 1188,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 14.389,
+        "human_error_ms": 15.389,
+        "free": "left_5/tip",
+        "human_proxy": "right_1"
+      },
+      {
+        "event_index": 1190,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 12.706,
+        "human_error_ms": 16.706,
+        "free": "right_2",
+        "human_proxy": "right_2"
+      },
+      {
+        "event_index": 1193,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": -1.221,
+        "human_error_ms": 3.779,
+        "free": "left_1",
+        "human_proxy": "left_1"
+      },
+      {
+        "event_index": 1197,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 10.389,
+        "human_error_ms": 20.389,
+        "free": "left_4",
+        "human_proxy": "left_3"
+      },
+      {
+        "event_index": 1198,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 7.926,
+        "human_error_ms": 11.926,
+        "free": "left_5/tip",
+        "human_proxy": "left_1"
+      },
+      {
+        "event_index": 1200,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 6.219,
+        "human_error_ms": 22.219,
+        "free": "right_1",
+        "human_proxy": "left_3"
+      },
+      {
+        "event_index": 1201,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 4.999,
+        "human_error_ms": 16.999,
+        "free": "right_3",
+        "human_proxy": "right_3"
+      },
+      {
+        "event_index": 1202,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 5.536,
+        "human_error_ms": 20.536,
+        "free": "right_2",
+        "human_proxy": "left_1"
+      },
+      {
+        "event_index": 1203,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 7.072,
+        "human_error_ms": 10.072,
+        "free": "left_2",
+        "human_proxy": "right_1"
+      },
+      {
+        "event_index": 1206,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 12.877,
+        "human_error_ms": 17.877,
+        "free": "right_1",
+        "human_proxy": "left_3"
+      },
+      {
+        "event_index": 1208,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 19.682,
+        "human_error_ms": 20.682,
+        "free": "left_2",
+        "human_proxy": "right_1"
+      },
+      {
+        "event_index": 1211,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 4.316,
+        "human_error_ms": 7.316,
+        "free": "right_2",
+        "human_proxy": "left_1"
+      },
+      {
+        "event_index": 1212,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 25.365,
+        "human_error_ms": 33.365,
+        "free": "left_5/tip",
+        "human_proxy": "left_1"
+      },
+      {
+        "event_index": 1215,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 0.584,
+        "human_error_ms": -3.416,
+        "free": "left_2",
+        "human_proxy": "right_2"
+      },
+      {
+        "event_index": 1217,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": 4.658,
+        "human_error_ms": 5.658,
+        "free": "right_3",
+        "human_proxy": "left_4"
+      },
+      {
+        "event_index": 1220,
+        "reason": "larger_absolute_timing_error",
+        "free_error_ms": -3.733,
+        "human_error_ms": 6.267,
+        "free": "left_1",
+        "human_proxy": "right_1"
+      }
+    ],
+    "human_proxy_worsened_event_count": 594,
+    "free_style": {
+      "decisions": 1222,
+      "index_proxy_uses": 296,
+      "ordinary_proxy_uses": 877,
+      "thumb_or_side_uses": 345,
+      "index_proxy_rate": 0.24222585924713586,
+      "ordinary_proxy_rate": 0.7176759410801964,
+      "thumb_or_side_rate": 0.2823240589198036,
+      "dense_le_35ms_special_events": [
+        3,
+        18,
+        19,
+        33,
+        46,
+        49,
+        50,
+        62,
+        63,
+        65,
+        66,
+        81,
+        82,
+        83,
+        85,
+        86,
+        93,
+        99,
+        101,
+        102,
+        104,
+        105,
+        120,
+        122,
+        123,
+        136,
+        147,
+        164,
+        165,
+        171,
+        172,
+        178,
+        184,
+        185,
+        186,
+        190,
+        191,
+        192,
+        199,
+        207,
+        215,
+        268,
+        269,
+        270,
+        271,
+        285,
+        288,
+        289,
+        297,
+        318,
+        319,
+        327,
+        366,
+        369,
+        370,
+        372,
+        373,
+        382,
+        383,
+        387,
+        388,
+        393,
+        411,
+        457,
+        461,
+        462,
+        468,
+        508,
+        509,
+        523,
+        529,
+        530,
+        540,
+        542,
+        545,
+        546,
+        576,
+        603,
+        612,
+        624,
+        636,
+        647,
+        692,
+        696,
+        698,
+        703,
+        704,
+        705,
+        709,
+        710,
+        711,
+        718,
+        726,
+        733,
+        969,
+        972,
+        988,
+        989,
+        991,
+        992,
+        999,
+        1005,
+        1006,
+        1007,
+        1008,
+        1010,
+        1011,
+        1026,
+        1028,
+        1029,
+        1039,
+        1061,
+        1062,
+        1064,
+        1065,
+        1072,
+        1078,
+        1080,
+        1081,
+        1083,
+        1084,
+        1099,
+        1100,
+        1101,
+        1102,
+        1103,
+        1112,
+        1164,
+        1165,
+        1166,
+        1171,
+        1172,
+        1177,
+        1178,
+        1183,
+        1184,
+        1188,
+        1196
+      ]
+    },
+    "human_proxy_style": {
+      "decisions": 1222,
+      "index_proxy_uses": 679,
+      "ordinary_proxy_uses": 1222,
+      "thumb_or_side_uses": 0,
+      "index_proxy_rate": 0.5556464811783961,
+      "ordinary_proxy_rate": 1.0,
+      "thumb_or_side_rate": 0.0,
+      "dense_le_35ms_special_events": []
+    }
+  },
+  "training_performed": false,
+  "teacher_shadow_rollout_used": false,
+  "failure_continuation": false,
+  "assembled_without_inference": true,
+  "source_policy_results": {
+    "free": "artifacts\\fingering_network_v011\\full-20261018-r2-free\\policy-result.json",
+    "human_proxy": "artifacts\\fingering_network_v011\\full-20261018-r2-human\\policy-result.json"
+  }
+}
