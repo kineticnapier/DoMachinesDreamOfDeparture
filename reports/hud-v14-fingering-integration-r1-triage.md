@@ -161,3 +161,57 @@ comparing the same target across all three frozen arms. This does
 Use its earliest anomaly per chain as the next physical Motor/axis
 command candidate. Do not modify the ADOFAI scorer, Network weights,
 Timing v1.4 confidence or reservation limits to force a PASS.
+
+
+## Predecessor chain result (2026-10-18 user-provided output)
+
+The read-only predecessor cascade isolates different root conditions:
+
+- **Ordinary 480, HUD Network:** target33's scorer ancestry is
+  33 -> 32 -> 31 -> 30 -> **29**. The first unobserved selected-axis
+  physical KeyDown is target29: right_3 has no KeyDown within +/-100ms
+  of due=1.937500s, even though the HUD Timing error is 0.000ms,
+  first-seen lead is 77.5ms, and an assignment was made. The Oracle
+  Network selected the *same* right_3 and pressed +5.5ms. The two
+  arms differ in earlier Motor state and computed additional lead:
+  HUD 5.274ms versus Oracle 18.622ms. This suggests physical
+  activation/command readiness and requires per-frame verification,
+  not timing tolerance adjustment.
+- **SetSpeed early:** target5 is first predicted with 23.145ms lead,
+  below the frozen 44ms normal physical lead, and intentionally
+  unassigned. Target7's KeyDown then scores target5 VeryLate;
+  target9's KeyDown scores target7 VeryLate. This is a genuine
+  observation/physical-lead deficit for v1.4, not a bad target9
+  forecast (which is numerically exact). Target6 is also marked
+  insufficient lead by the earlier saved report.
+- **SetSpeed late:** HUD Network and CenterFirst have score drift
+  several targets before missed targets30/31. The full precursor
+  trace shows the roots are earlier than target29. Compare physical
+  chosen-axis timing rather than treating target30 as the first cause.
+- **Pause:** Oracle Network and HUD Network share the same physical
+  path. Target11 selects left_3 with extra lead 6.224ms but has
+  no physical KeyDown within +/-100ms. Target12's right_2 KeyDown
+  is instead consumed by target11 at +55.742ms; target13's
+  left_1 KeyDown is consumed by target12 at +63.258ms. CenterFirst
+  uses a different path and scores 32/32. This is a Motor/selection
+  reachability candidate independent of HUD-only timing accuracy.
+- **Train first 5s:** target0 is not forecast at all, target1 first
+  appears with 20.163ms lead. Both have no logical/physical
+  KeyDown and cannot be repaired by choosing different fingers
+  for later already forecast events.
+
+### Root-Motor diagnostic (frozen policy, no tuning)
+
+The runner now supports an optional isolated per-10ms trace of one
+physical axis, including pre/post position, velocity, activation,
+KeyDown edges, issued command, reservation state and forecast status.
+
+    .venv\Scripts\python.exe -u scripts/run_hud_v14_fingering_motor_integration_v02.py --fixtures --case ordinary-480bpm --arm hud_network --trace-axis right_3 --trace-start-s 1.86 --trace-end-s 2.00 --output-dir artifacts/fingering_network_v02/hud-v14-right3-root-r1
+
+    .venv\Scripts\python.exe -u scripts/run_hud_v14_fingering_motor_integration_v02.py --special-fixtures --case special-pause_1 --arm oracle_network --trace-axis left_3 --trace-start-s .83 --trace-end-s .97 --output-dir artifacts/fingering_network_v02/hud-v14-left3-root-r1
+
+Both are predeclared Train/synthetic diagnosis, with no Validation20
+and no changes to model weights or Motor physical constants.
+Read the AXIS_TRACE rows first to distinguish no positive Motor
+command, command withdrawn early, and genuinely insufficient
+actuator acceleration. No root performance fix is claimed yet.
