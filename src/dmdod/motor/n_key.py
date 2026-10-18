@@ -428,6 +428,8 @@ class NKeyMotorEnv:
         if len(values) != self.key_count:
             raise ValueError(f"expected {self.key_count} action values, got {len(values)}")
         clamped = NKeyAction(tuple(max(-1.0, min(1.0, value)) for value in values))
+        if not self.capture_physics_trace:
+            return self._step_held_exact(clamped)
         events: list[TimedKeyEvent] = []
         physics_samples: list[NKeyPhysicsSample] = []
         for _ in range(self.physics_substeps):
@@ -449,6 +451,214 @@ class NKeyMotorEnv:
             tuple(events),
             self.diagnostics(),
             tuple(physics_samples),
+        )
+        self.last_transition = transition
+        return transition
+
+    def _step_held_exact(self, action: NKeyAction) -> NKeyTransition:
+        """Integrate one held control command without 1 kHz object churn.
+
+        This is the N-key equivalent of ``motor.fast.step_held_exact``.  It
+        deliberately retains the scalar equation and reduction order from
+        ``NKeyBody.step`` and samples every keyboard threshold at 1 ms.  Only
+        intermediate ``FingerState``/tuple/list materialization is removed;
+        the public state is materialized once after the held command.
+        """
+        body = self.body
+        dt_s = self.physics_dt_s
+        commands = action.values
+        configs = body.configs
+        count = self.key_count
+        split = body.per_hand
+
+        positions = [state.position_m for state in body.states]
+        velocities = [state.velocity_m_s for state in body.states]
+        activations = [state.activation for state in body.states]
+        fatigues = [state.fatigue for state in body.states]
+        last_signs = [state.last_nonzero_command_sign for state in body.states]
+        pressed = [state.pressed for state in self.keyboard.states]
+
+        left_hand_fatigue = body.left_hand_state.fatigue
+        right_hand_fatigue = body.right_hand_state.fatigue
+        left_hand_coordination = body.left_hand_state.coordination
+        right_hand_coordination = body.right_hand_state.coordination
+        bilateral_coordination = body.bilateral_state.coordination
+        left_cfg = body.left_hand_config
+        right_cfg = body.right_hand_config
+        bilateral_cfg = body.bilateral_config
+        coordination_positions = body._coordination_positions(split)
+        actuation_m = self.keyboard.config.actuation_m
+        reset_m = self.keyboard.config.reset_m
+        events: list[TimedKeyEvent] = []
+
+        for _ in range(self.physics_substeps):
+            for index in range(count):
+                cfg = configs[index]
+                command = commands[index]
+                activation = (
+                    activations[index]
+                    + (command - activations[index]) * dt_s / cfg.activation_tau_s
+                )
+                activation = max(-1.0, min(1.0, activation))
+                activations[index] = activation
+
+                threshold = max(0.0, min(0.99, cfg.fatigue_threshold))
+                normalized = max(0.0, abs(activation) - threshold) / (1.0 - threshold)
+                load = normalized ** max(1.0, cfg.fatigue_exponent)
+                command_sign = body._command_sign(command)
+                reversed_direction = (
+                    command_sign != 0
+                    and last_signs[index] != 0
+                    and command_sign != last_signs[index]
+                )
+                reversal_cost = (
+                    cfg.switch_fatigue_per_reversal if reversed_direction else 0.0
+                )
+                fatigue = (
+                    fatigues[index]
+                    + (cfg.fatigue_gain_s * load
+                       - cfg.fatigue_recovery_s * fatigues[index]) * dt_s
+                    + reversal_cost
+                )
+                fatigues[index] = max(0.0, min(1.0, fatigue))
+                if command_sign != 0:
+                    last_signs[index] = command_sign
+
+            hand_scales: list[float] = []
+            for start, hand_cfg, hand_fatigue, hand_coordination in (
+                (0, left_cfg, left_hand_fatigue, left_hand_coordination),
+                (split, right_cfg, right_hand_fatigue, right_hand_coordination),
+            ):
+                stop = start + split
+                demand = sum(abs(activations[index]) for index in range(start, stop))
+                normalized_demand = min(1.0, demand / max(hand_cfg.capacity, 1e-9))
+                threshold = max(0.0, min(0.99, hand_cfg.fatigue_threshold))
+                normalized = max(0.0, normalized_demand - threshold) / (1.0 - threshold)
+                load = normalized ** max(1.0, hand_cfg.fatigue_exponent)
+                hand_fatigue = max(
+                    0.0,
+                    min(
+                        1.0,
+                        hand_fatigue
+                        + (hand_cfg.fatigue_gain_s * load
+                           - hand_cfg.fatigue_recovery_s * hand_fatigue) * dt_s,
+                    ),
+                )
+                usable_capacity = hand_cfg.capacity * (1.0 - hand_fatigue)
+                capacity_scale = 1.0
+                if demand > usable_capacity and demand > 0.0:
+                    capacity_scale = usable_capacity / demand
+
+                positive = tuple(
+                    max(0.0, activations[index]) for index in range(start, stop)
+                )
+                press_demand = sum(positive)
+                coordination = [1.0] * split
+                if press_demand > 1e-9 and split > 1:
+                    target = sum(
+                        position * value
+                        for position, value in zip(coordination_positions, positive)
+                    ) / press_demand
+                    tau = max(hand_cfg.switch_tau_s, dt_s)
+                    hand_coordination += (
+                        target - hand_coordination
+                    ) * dt_s / tau
+                    hand_coordination = max(-1.0, min(1.0, hand_coordination))
+                    floor = max(0.0, min(1.0, hand_cfg.coordination_floor))
+                    coordination = [
+                        floor
+                        + (1.0 - floor)
+                        * 0.5
+                        * (1.0 + hand_coordination * position)
+                        for position in coordination_positions
+                    ]
+                hand_scales.extend(
+                    capacity_scale * scale for scale in coordination
+                )
+                if start == 0:
+                    left_hand_fatigue = hand_fatigue
+                    left_hand_coordination = hand_coordination
+                else:
+                    right_hand_fatigue = hand_fatigue
+                    right_hand_coordination = hand_coordination
+
+            left_press = sum(max(0.0, activations[index]) for index in range(split))
+            right_press = sum(
+                max(0.0, activations[index]) for index in range(split, count)
+            )
+            bilateral_demand = left_press + right_press
+            bilateral_left = 1.0
+            bilateral_right = 1.0
+            if bilateral_demand > 1e-9:
+                target = (left_press - right_press) / bilateral_demand
+                tau = max(bilateral_cfg.switch_tau_s, dt_s)
+                bilateral_coordination += (
+                    target - bilateral_coordination
+                ) * dt_s / tau
+                bilateral_coordination = max(
+                    -1.0, min(1.0, bilateral_coordination)
+                )
+                floor = max(0.0, min(1.0, bilateral_cfg.coordination_floor))
+                left_affinity = 0.5 * (1.0 + bilateral_coordination)
+                right_affinity = 1.0 - left_affinity
+                bilateral_left = floor + (1.0 - floor) * left_affinity
+                bilateral_right = floor + (1.0 - floor) * right_affinity
+
+            for index in range(count):
+                cfg = configs[index]
+                scale = hand_scales[index] * (
+                    bilateral_left if index < split else bilateral_right
+                )
+                muscle_force = (
+                    cfg.max_force_n
+                    * (1.0 - fatigues[index])
+                    * activations[index]
+                    * scale
+                )
+                spring_force = -cfg.spring_n_m * (
+                    positions[index] - cfg.rest_position_m
+                )
+                damping_force = -cfg.damping_n_s_m * velocities[index]
+                acceleration = (
+                    muscle_force + spring_force + damping_force
+                ) / cfg.mass_kg
+                velocity = velocities[index] + acceleration * dt_s
+                position = positions[index] + velocity * dt_s
+                if position <= cfg.min_position_m:
+                    position = cfg.min_position_m
+                    velocity = max(0.0, velocity)
+                elif position >= cfg.max_position_m:
+                    position = cfg.max_position_m
+                    velocity = min(0.0, velocity)
+                positions[index] = position
+                velocities[index] = velocity
+
+            self.time_s += dt_s
+            for index, (name, position) in enumerate(zip(self.key_names, positions)):
+                if not pressed[index] and position >= actuation_m:
+                    pressed[index] = True
+                    events.append(TimedKeyEvent(self.time_s, name, KeyEvent.DOWN))
+                elif pressed[index] and position <= reset_m:
+                    pressed[index] = False
+                    events.append(TimedKeyEvent(self.time_s, name, KeyEvent.UP))
+
+        body.states = [
+            FingerState(
+                positions[index], velocities[index], activations[index],
+                fatigues[index], commands[index], last_signs[index]
+            )
+            for index in range(count)
+        ]
+        body.left_hand_state.fatigue = left_hand_fatigue
+        body.right_hand_state.fatigue = right_hand_fatigue
+        body.left_hand_state.coordination = left_hand_coordination
+        body.right_hand_state.coordination = right_hand_coordination
+        body.bilateral_state.coordination = bilateral_coordination
+        for index, value in enumerate(pressed):
+            self.keyboard.states[index].pressed = value
+
+        transition = NKeyTransition(
+            self.observe(), tuple(events), self.diagnostics(), ()
         )
         self.last_transition = transition
         return transition

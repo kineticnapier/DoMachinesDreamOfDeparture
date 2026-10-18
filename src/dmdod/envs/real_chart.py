@@ -123,6 +123,7 @@ class RealChartMotorEnv:
         self._total_reward = 0.0
         self._done = False
         self._failed_on_miss = False
+        self._next_unresolved_cursor = 0
 
     def reset(self) -> RealChartObservation:
         motor = self.motor.reset()
@@ -139,6 +140,7 @@ class RealChartMotorEnv:
         self._total_reward = 0.0
         self._done = False
         self._failed_on_miss = False
+        self._next_unresolved_cursor = 0
         return self._observation(motor, 0.0)
 
     def observe(self) -> RealChartObservation:
@@ -184,9 +186,14 @@ class RealChartMotorEnv:
         )
 
     def _next_target_index(self) -> int | None:
-        for index, (used, missed) in enumerate(zip(self._used, self._missed)):
-            if not used and not missed:
-                return index
+        index = self._next_unresolved_cursor
+        while index < len(self._used) and (
+            self._used[index] or self._missed[index]
+        ):
+            index += 1
+        self._next_unresolved_cursor = index
+        if index < len(self._used):
+            return index
         return None
 
     def _record_margin(self, judgement: TimingJudgement) -> None:
@@ -264,9 +271,12 @@ class RealChartMotorEnv:
 
     def _expire_misses(self, now_s: float) -> float:
         reward = 0.0
-        for index, target in enumerate(self.segment.targets):
+        index = self._next_unresolved_cursor
+        while index < len(self.segment.targets):
             if self._used[index] or self._missed[index]:
+                index += 1
                 continue
+            target = self.segment.targets[index]
             if target.episode_time_s + self._windows(target).pass_s < now_s:
                 self._missed[index] = True
                 self._misses += 1
@@ -274,6 +284,12 @@ class RealChartMotorEnv:
                 reward -= self.reward_config.miss_penalty
                 if self.reward_config.fail_on_miss:
                     self._failed_on_miss = True
+                index += 1
+                continue
+            # Playable targets are time ordered, so no later target can expire
+            # while this first unresolved target remains inside its window.
+            break
+        self._next_unresolved_cursor = index
         return reward
 
     def _advance_overload(self, to_time_s: float) -> None:
