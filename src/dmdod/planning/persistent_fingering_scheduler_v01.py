@@ -16,6 +16,7 @@ The future Timing v1.4 adapter and integration runner will own that loop.
 No evaluator, chart ordinal, or Motor parameter is changed here.
 """
 
+from copy import copy
 from dataclasses import dataclass, replace
 from enum import Enum
 from math import isfinite
@@ -181,7 +182,8 @@ class PersistentFingeringScheduler:
                        snapshot: MotorPhysicalSnapshot) -> None:
         """Apply one current/previous-only Timing update; no future truth."""
         # The externally supplied frame must already be a valid causal update.
-        self._validator.accept(frame)
+        candidate_validator = copy(self._validator)
+        candidate_validator.accept(frame)
         new_pending = {item.local_id: item for item in frame.pending}
         retired = {
             **{x: "canceled" for x in frame.canceled_ids},
@@ -218,6 +220,7 @@ class PersistentFingeringScheduler:
                     confirmed=(frame.status != ABSTAIN
                                and updated_token.confirmed_now),
                 )
+        self._validator = candidate_validator
         self._pending = new_pending
         self._reservations = updated
         # A retained retired stroke can become free only after the Motor
@@ -289,8 +292,14 @@ class PersistentFingeringScheduler:
             if edge is KeyEvent.DOWN:
                 down = entry.down_axes | frozenset((axis,))
                 phase = entry.phase
-                if phase is ReservationPhase.ARMED_IN_FLIGHT and set(entry.axes) <= down:
-                    phase = ReservationPhase.KEYDOWN_OBSERVED
+                if phase in (ReservationPhase.ARMED_IN_FLIGHT,
+                             ReservationPhase.RESERVED) and set(entry.axes) <= down:
+                    phase = (ReservationPhase.RELEASING if entry.up_axes
+                             else ReservationPhase.KEYDOWN_OBSERVED)
+                elif phase is ReservationPhase.RESERVED:
+                    # An unexpected physical stroke cannot be treated as an
+                    # unarmed, instantly cancellable reservation.
+                    phase = ReservationPhase.CANCELED_IN_FLIGHT
                 updated[local_id] = replace(entry, down_axes=down, phase=phase)
             else:
                 up = entry.up_axes | frozenset((axis,))
