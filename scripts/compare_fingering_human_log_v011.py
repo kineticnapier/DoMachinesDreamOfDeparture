@@ -123,10 +123,23 @@ def analyze(payload: dict, human: list[dict]) -> tuple[dict, list[dict]]:
     policies = payload.get("policies") or {}
     if not all(name in policies for name in ("free", "human_proxy")):
         raise ValueError("requires v0.1.1 Free/Human-Proxy comparison replay")
+    full_human_count = len(human)
     events = sorted(payload.get("events") or [], key=lambda e: e["event_index"])
-    if len(events) != len(human):
-        raise ValueError(f"event count mismatch: model={len(events)}, human={len(human)}. "
-                         "Refusing unsafe event-order alignment.")
+    # Compare only the time span that BOTH policies physically reached.
+    # A dense chart can terminate either policy early; that must not prevent
+    # reporting a useful, explicitly labelled common-prefix comparison.
+    traces = [policies[name].get("trace") or [] for name in ("free", "human_proxy")]
+    if not all(traces):
+        raise ValueError("both policies must include replay trace frames")
+    common_end_s = min(float(trace[-1][0]) for trace in traces)
+    events = [e for e in events if float(e["episode_s"]) <= common_end_s + 1e-6]
+    if not events:
+        raise ValueError("both model runs ended before the first event")
+    if len(events) > len(human):
+        raise ValueError(f"event count mismatch: common model prefix={len(events)}, "
+                         f"human log={len(human)}. Refusing unsafe alignment.")
+    # The selected comparison is a prefix if either policy terminates early.
+    human = human[:len(events)]
     if any(int(e.get("chord_size", 1)) != 1 for e in events):
         raise ValueError("human 0-ms-chord log requires all comparison events to be single-contact")
     if len({e["event_index"] for e in events}) != len(events):
@@ -148,8 +161,11 @@ def analyze(payload: dict, human: list[dict]) -> tuple[dict, list[dict]]:
     drift = offsets[-1] - offsets[0]
     alignment = {
         "method": "event order, fixed median clock offset; not verified solely by equal count",
-        "human_events": len(human),
+        "human_events_compared": len(human),
+        "human_events_in_full_log": full_human_count,
         "model_events": len(events),
+        "common_end_s": round(common_end_s, 6),
+        "comparison_coverage_percent": round(100 * len(events) / full_human_count, 3),
         "estimated_human_minus_oracle_offset_ms": round(shift, 3),
         "median_absolute_residual_ms": round(median(errors), 3),
         "p95_absolute_residual_ms": round(p95_error, 3),
@@ -191,7 +207,8 @@ def analyze(payload: dict, human: list[dict]) -> tuple[dict, list[dict]]:
             }
         raw_strokes = [(float(down.get("time_ms", float(down["episode_s"]) * 1000)),
                         str(down["axis"]))
-                       for down in policies[name].get("keydowns", [])]
+                       for down in policies[name].get("keydowns", [])
+                       if float(down["episode_s"]) <= common_end_s + 1e-6]
         per_policy[name] = {
             "axis_matches": matches, "axis_match_rate": round(matches / len(rows), 5),
             "hand_matches": hands, "hand_match_rate": round(hands / len(rows), 5),
@@ -229,7 +246,9 @@ def analyze(payload: dict, human: list[dict]) -> tuple[dict, list[dict]]:
         "generated_at_utc": datetime.now(timezone.utc).isoformat(),
         "chart": payload.get("chart"),
         "checkpoint_sha256": payload.get("checkpoint_sha256"),
-        "human_input_count": len(human),
+        "human_input_count": full_human_count,
+        "compared_events": len(human),
+        "common_prefix_only": len(human) < full_human_count,
         "alignment": alignment,
         "human": summarize_strokes(human_strokes),
         "policies": per_policy,
@@ -240,6 +259,7 @@ def analyze(payload: dict, human: list[dict]) -> tuple[dict, list[dict]]:
             "Model thumb/side contacts may produce two logical keys from one physical stroke.",
             "KeyDown reuse rates are from the actual recorded physical strokes per source.",
             "Event-order pairing is valid only if recording has exactly one hit per chart event.",
+            "A terminated policy limits the comparison to the common played prefix.",
             "Model timing uses privileged AutoPlay; human recording uses real player timing.",
         ],
     }
@@ -301,6 +321,9 @@ def render_html(report: dict, rows: list[dict]) -> str:
     caution = ("時刻差分の整合性は良好。ただしイベント順の対応は記録の欠落がない前提。" if
                status == "intervals_consistent" else
                "時刻差分の検証に失敗。以下の運指一致率は暫定値で、同一譜面・欠落なしを確認する必要がある。")
+    if report["common_prefix_only"]:
+        caution += (f' 一方のモデルが途中終了したため、全{report["human_input_count"]}件中'
+                    f'{report["compared_events"]}件の共通区間のみ比較しています。')
     css = """*{box-sizing:border-box}body{margin:0;background:#101521;color:#e8edf5;font:14px/1.55 system-ui,sans-serif}
 main{max-width:1280px;padding:24px;margin:auto}h1{font-size:25px;margin:0 0 6px}h2{font-size:18px;margin:28px 0 10px}
 small,.muted{color:#a7b3c6}.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(215px,1fr));gap:12px}
