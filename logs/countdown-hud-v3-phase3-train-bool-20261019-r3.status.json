@@ -1,0 +1,11 @@
+{
+  "pid": 24832,
+  "started_local": "2026-10-19T00:19:14.5568295+09:00",
+  "finished_local": "2026-10-19T00:19:24.4443655+09:00",
+  "exit_code": 0,
+  "output": "artifacts/countdown_hud_v3_phase3/train-bool-20261019-r3",
+  "stdout": "logs/countdown-hud-v3-phase3-train-bool-20261019-r3.stdout.log",
+  "stderr": "logs/countdown-hud-v3-phase3-train-bool-20261019-r3.stderr.log",
+  "wall_timeout_s_per_arm": 180,
+  "status": "completed"
+}
