@@ -109,8 +109,24 @@ def test_parallel_progress_uses_measured_batch_wall_not_arm_sum(tmp_path):
     assert state["spent_completed_arms_s"] == 40.0
     assert state["active_invocation_wall_s"] == 20.0
     assert state["projected_total_s"] == 20.0
-    assert state["goal_projection_basis"] == "active_invocation_wall_clock"
+    assert state["goal_projection_basis"] == "cumulative_active_invocation_wall_clock"
     assert state["goal_status"] == "projected_within_target"
+
+
+def test_runtime_ledger_accumulates_clean_resumed_invocations(tmp_path):
+    output = tmp_path / "out"
+    output.mkdir()
+    goal.record_runtime_session(
+        output, started_at_utc="first", active_wall_s=12.5,
+        completed_before=0, completed_after=8, workers=4,
+    )
+    goal.record_runtime_session(
+        output, started_at_utc="second", active_wall_s=10.0,
+        completed_before=8, completed_after=16, workers=4,
+    )
+    assert goal.cumulative_runtime_s(output) == 22.5
+    ledger = json.loads((output / goal.RUNTIME_LEDGER).read_text(encoding="utf-8"))
+    assert [row["completed_arms_after"] for row in ledger["sessions"]] == [8, 16]
 
 
 def test_goal_is_reporting_only_and_does_not_stop_evaluation(tmp_path, monkeypatch):

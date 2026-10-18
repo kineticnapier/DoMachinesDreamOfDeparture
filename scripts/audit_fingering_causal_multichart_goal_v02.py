@@ -21,6 +21,8 @@ import sys
 import tempfile
 import time
 
+PROCESS_STARTED_PERF = time.perf_counter()
+
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import audit_fingering_causal_early_v02 as causal
 import audit_fingering_causal_multichart_v02 as multichart
@@ -37,6 +39,7 @@ FORMAT = "dmdod-fingering-v02-causal-multichart-goal-resumable-v1"
 POLICIES = multichart.POLICIES
 ARMS = multichart.ARMS
 MANIFEST = "run-manifest.json"
+RUNTIME_LEDGER = "runtime-sessions.json"
 POLICY_ARMS = len(POLICIES) * len(ARMS)
 _WORKER_MODEL = None
 _WORKER_SEGMENTS: dict[str, object] = {}
@@ -80,6 +83,36 @@ def write_json_atomic(path: Path, payload: dict, *, create_only: bool) -> None:
         os.replace(tmp, path)
     finally:
         tmp.unlink(missing_ok=True)
+
+
+def load_runtime_ledger(output_dir: Path) -> dict:
+    path = output_dir / RUNTIME_LEDGER
+    if not path.exists():
+        return {"format": FORMAT + "-runtime-sessions", "sessions": []}
+    value = json.loads(path.read_text(encoding="utf-8"))
+    if value.get("format") != FORMAT + "-runtime-sessions":
+        raise ValueError(f"invalid runtime ledger: {path}")
+    return value
+
+
+def cumulative_runtime_s(output_dir: Path) -> float:
+    return sum(float(row["active_wall_s"])
+               for row in load_runtime_ledger(output_dir)["sessions"])
+
+
+def record_runtime_session(output_dir: Path, *, started_at_utc: str,
+                           active_wall_s: float, completed_before: int,
+                           completed_after: int, workers: int) -> None:
+    ledger = load_runtime_ledger(output_dir)
+    ledger["sessions"].append({
+        "started_at_utc": started_at_utc,
+        "finished_at_utc": utc(),
+        "active_wall_s": round(active_wall_s, 6),
+        "completed_arms_before": completed_before,
+        "completed_arms_after": completed_after,
+        "workers": workers,
+    })
+    write_json_atomic(output_dir / RUNTIME_LEDGER, ledger, create_only=False)
 
 
 @contextmanager
@@ -212,7 +245,7 @@ def load_arm(path: Path, *, chart_sha: str, checkpoint_sha: str,
 
 def snapshot(report: dict, output_dir: Path, goal_seconds: float | None,
              *, active_invocation_wall_s: float | None = None,
-             workers: int = 1) -> dict:
+             prior_active_wall_s: float = 0.0, workers: int = 1) -> dict:
     """Reconstruct from durable arm checkpoints; incomplete pairs stay visible."""
     rows = []
     duration = 0.0
@@ -250,10 +283,11 @@ def snapshot(report: dict, output_dir: Path, goal_seconds: float | None,
     compute_remaining = (duration / completed * remaining) if completed else None
     compute_projected = (duration + compute_remaining
                          if compute_remaining is not None else None)
-    if active_invocation_wall_s is not None and completed:
-        estimated_remaining = active_invocation_wall_s / completed * remaining
-        projected_total = active_invocation_wall_s + estimated_remaining
-        goal_basis = "active_invocation_wall_clock"
+    cumulative_active = prior_active_wall_s + (active_invocation_wall_s or 0.0)
+    if cumulative_active > 0.0 and completed:
+        estimated_remaining = cumulative_active / completed * remaining
+        projected_total = cumulative_active + estimated_remaining
+        goal_basis = "cumulative_active_invocation_wall_clock"
     else:
         estimated_remaining = compute_remaining
         projected_total = compute_projected
@@ -263,7 +297,7 @@ def snapshot(report: dict, output_dir: Path, goal_seconds: float | None,
         "updated_at_utc": utc(),
         "goal_seconds": goal_seconds,
         "goal_mode_enabled": goal_seconds is not None,
-        "goal_kind": "total_accumulated_completed_arm_wall_time_not_hard_timeout",
+        "goal_kind": "cumulative_active_process_wall_time_not_hard_timeout",
         "completed_arms": completed,
         "total_arms": total,
         "completed_charts": sum(row["completed_arm_count"] == POLICY_ARMS for row in rows),
@@ -273,6 +307,7 @@ def snapshot(report: dict, output_dir: Path, goal_seconds: float | None,
             round(active_invocation_wall_s, 3)
             if active_invocation_wall_s is not None else None
         ),
+        "cumulative_active_wall_s": round(cumulative_active, 3),
         "workers": workers,
         "goal_projection_basis": goal_basis,
         "estimated_remaining_s": (
@@ -302,10 +337,12 @@ def snapshot(report: dict, output_dir: Path, goal_seconds: float | None,
 def publish_progress(manifest: dict, output_dir: Path,
                      goal_seconds: float | None, *,
                      active_invocation_wall_s: float | None = None,
+                     prior_active_wall_s: float = 0.0,
                      workers: int = 1) -> dict:
     state = snapshot(
         manifest, output_dir, goal_seconds,
         active_invocation_wall_s=active_invocation_wall_s,
+        prior_active_wall_s=prior_active_wall_s,
         workers=workers,
     )
     write_json_atomic(output_dir / "progress.json", state, create_only=False)
@@ -329,7 +366,8 @@ def print_progress(progress: dict) -> None:
         f"progress {n}/{total} arms, {progress['completed_charts']}/"
         f"{progress['total_charts']} charts; "
         f"completed-arm CPU/wall run-time sum="
-        f"{progress['spent_completed_arms_s']:.1f}s{target_message}",
+        f"{progress['spent_completed_arms_s']:.1f}s; active wall="
+        f"{progress['cumulative_active_wall_s']:.1f}s{target_message}",
         flush=True,
     )
 
@@ -368,7 +406,9 @@ def _worker_run_arm(task: tuple) -> tuple[int, str, str, dict]:
 
 def run_parallel(manifest: dict, output_dir: Path, *, wall_timeout_s: float,
                  goal_seconds: float | None, checkpoint: Path,
-                 workers: int) -> dict:
+                 workers: int, max_arms_this_run: int | None = None,
+                 prior_active_wall_s: float = 0.0,
+                 invocation_started_perf: float | None = None) -> dict:
     """Run independent arms in spawn-safe worker processes; save in parent."""
     if workers < 2:
         raise ValueError("parallel runner requires at least two workers")
@@ -398,11 +438,15 @@ def run_parallel(manifest: dict, output_dir: Path, *, wall_timeout_s: float,
                     index, chart, policy, alpha, arm, wall_timeout_s,
                     protocol["checkpoint_sha256"],
                 ))
-    begun = time.perf_counter()
+    if max_arms_this_run is not None:
+        tasks = tasks[:max_arms_this_run]
+    begun = (time.perf_counter() if invocation_started_perf is None
+             else invocation_started_perf)
     if not tasks:
         return publish_progress(
             manifest, output_dir, goal_seconds,
             active_invocation_wall_s=0.0, workers=workers,
+            prior_active_wall_s=prior_active_wall_s,
         )
     executor = ProcessPoolExecutor(
         max_workers=workers,
@@ -430,6 +474,7 @@ def run_parallel(manifest: dict, output_dir: Path, *, wall_timeout_s: float,
             state = publish_progress(
                 manifest, output_dir, goal_seconds,
                 active_invocation_wall_s=time.perf_counter() - begun,
+                prior_active_wall_s=prior_active_wall_s,
                 workers=workers,
             )
             print_progress(state)
@@ -443,17 +488,23 @@ def run_parallel(manifest: dict, output_dir: Path, *, wall_timeout_s: float,
     return publish_progress(
         manifest, output_dir, goal_seconds,
         active_invocation_wall_s=time.perf_counter() - begun,
+        prior_active_wall_s=prior_active_wall_s,
         workers=workers,
     )
 
 
 def run(manifest: dict, output_dir: Path, *, wall_timeout_s: float,
         goal_seconds: float | None, checkpoint: Path,
-        workers: int = 1) -> dict:
+        workers: int = 1, max_arms_this_run: int | None = None,
+        prior_active_wall_s: float = 0.0,
+        invocation_started_perf: float | None = None) -> dict:
     if workers > 1:
         return run_parallel(
             manifest, output_dir, wall_timeout_s=wall_timeout_s,
             goal_seconds=goal_seconds, checkpoint=checkpoint, workers=workers,
+            max_arms_this_run=max_arms_this_run,
+            prior_active_wall_s=prior_active_wall_s,
+            invocation_started_perf=invocation_started_perf,
         )
     model = causal.runner.load_model(checkpoint)
     protocol = manifest["protocol"]
@@ -511,11 +562,13 @@ def main() -> None:
     p.add_argument("--resume", action="store_true",
                    help="resume from immutable run manifest, skipping saved arms")
     p.add_argument("--goal-seconds", "--target-seconds", type=float, default=None,
-                   help="total accumulated arm evaluation time goal; never a cutoff")
+                   help="cumulative active wall-time goal; never a cutoff")
     p.add_argument("--wall-timeout-s", type=float, default=600.0,
                    help="per-arm safety timeout; unrelated to --goal-seconds")
     p.add_argument("--workers", type=int, default=1,
                    help="independent CPU arm processes (default: 1)")
+    p.add_argument("--max-arms-this-run", type=int, default=None,
+                   help="finish at most N pending arms, then exit cleanly for resume")
     args = p.parse_args()
     if args.wall_timeout_s <= 0 or not math.isfinite(args.wall_timeout_s):
         p.error("--wall-timeout-s must be finite and positive")
@@ -525,6 +578,8 @@ def main() -> None:
         p.error("--goal-seconds must be finite and positive")
     if args.workers < 1:
         p.error("--workers must be >= 1")
+    if args.max_arms_this_run is not None and args.max_arms_this_run < 1:
+        p.error("--max-arms-this-run must be >= 1")
     if args.resume and args.chart:
         p.error("--resume cannot add or change charts; chart selection is frozen")
     # A resumed run does not reselect charts. max-charts/chart-root are ignored.
@@ -537,13 +592,24 @@ def main() -> None:
     print(f"locked chart sample: {len(manifest['selected'])} "
           f"from {manifest['selection']['selection_basis']}", flush=True)
     with exclusive_run_lock(args.output_dir):
-        print_progress(publish_progress(manifest, args.output_dir, args.goal_seconds))
+        prior_active = cumulative_runtime_s(args.output_dir)
+        completed_before = snapshot(manifest, args.output_dir, args.goal_seconds)[
+            "completed_arms"
+        ]
+        invocation_started = utc()
+        print_progress(publish_progress(
+            manifest, args.output_dir, args.goal_seconds,
+            prior_active_wall_s=prior_active, workers=args.workers,
+        ))
         try:
             finished = run(manifest, args.output_dir,
                            wall_timeout_s=args.wall_timeout_s,
                            goal_seconds=args.goal_seconds,
                            checkpoint=args.checkpoint,
-                           workers=args.workers)
+                           workers=args.workers,
+                           max_arms_this_run=args.max_arms_this_run,
+                           prior_active_wall_s=prior_active,
+                           invocation_started_perf=PROCESS_STARTED_PERF)
         except KeyboardInterrupt:
             # Never discard already published per-arm checkpoints.
             stopped = publish_progress(manifest, args.output_dir, args.goal_seconds)
@@ -552,6 +618,20 @@ def main() -> None:
             print("Resume: re-run with --resume and the SAME --output-dir",
                   flush=True)
             raise SystemExit(130) from None
+        record_runtime_session(
+            args.output_dir,
+            started_at_utc=invocation_started,
+            active_wall_s=finished["active_invocation_wall_s"] or 0.0,
+            completed_before=completed_before,
+            completed_after=finished["completed_arms"],
+            workers=args.workers,
+        )
+        runtime_ledger = load_runtime_ledger(args.output_dir)
+        finished = publish_progress(
+            manifest, args.output_dir, args.goal_seconds,
+            prior_active_wall_s=cumulative_runtime_s(args.output_dir),
+            workers=args.workers,
+        )
         print_progress(finished)
         print("progress file:", args.output_dir / "progress.json", flush=True)
         if finished["completed_arms"] == finished["total_arms"]:
@@ -569,18 +649,22 @@ def main() -> None:
                     ],
                     "measured_active_invocation_wall_seconds": finished[
                         "active_invocation_wall_s"
+                    ] if finished["active_invocation_wall_s"] is not None else
+                    runtime_ledger["sessions"][-1]["active_wall_s"],
+                    "measured_cumulative_active_wall_seconds": finished[
+                        "cumulative_active_wall_s"
                     ],
                     "workers": args.workers,
                     "status": finished["goal_status"],
-                    "counts_only_successful_finished_arm_time": True,
+                    "includes_import_startup_and_clean_completed_invocations": True,
                 },
                 "charts": finished["charts"],
                 "aggregate": finished["aggregate_completed_pairs_only"],
                 "limitations": [
                     "Timing is still exact AutoPlay Oracle, not HUD-only Student.",
                     "Goal is a reporting target, NEVER an experimental cutoff.",
-                    "Time goal sums finished arm wall times; interruptions and loading"
-                    " overhead are excluded; ETA is a rough arm-average projection.",
+                    "Loading overhead is tracked in the cumulative active-process ledger; "
+                    "ETA is a rough completed-arm throughput projection.",
                     "Immutable checkpoint/selection/protocol hashes guard resumed runs.",
                 ],
             }
