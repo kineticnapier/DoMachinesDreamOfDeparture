@@ -172,6 +172,29 @@ difference first occurs >=44ms before the shorter-world
 first target. No v1.4 or Motor changes before that check.
 
 
+## Stock Countdown channel: DLL-confirmed implementation details
+
+Assembly-CSharp IL and decompiled C# were inspected from the user Library.
+See [adofai-countdown-dll-audit.md](adofai-countdown-dll-audit.md).
+
+The stock scrCountdown UI renders Ready, numeric remaining ticks, and
+Go. scrConductor optionally schedules one sndHat for each countdown
+tick. For ordinary start, the first numeric display after tick zero is
+N-1, where N is the hidden countdownTicks setting. Unlike the old
+HUD263 (which excludes this text), the full game screen for N=3 and
+N=5 shows different digits (2 versus 4) after the first audible tick.
+
+Go is shown at countdown tick N-1, NOT at the first playable target
+necessarily; the target's exact time also depends on floor-0 angle
+travel. Therefore avoid any hardcoded 1-second Go-to-hit rule.
+This code establishes the game's rendering/scheduling mechanism;
+actual cue detection must still be performed on pixels/samples.
+
+No future/hidden countdownTicks or chart event times may be passed to
+the policy. The original HUD263 non-identifiability evidence remains
+valid for the frozen 263D contract, not for full stock-game sensory
+observation. SetSpeed's separate future-numeric-BPM alias remains.
+
 ## Stock Countdown channel: next controlled validation
 
 - Source: actual rendered Ready!/Go! pixels or recorded audible tick,
@@ -180,10 +203,11 @@ first target. No v1.4 or Motor changes before that check.
   audio-onset detections; include observed/unknown validity bit.
 - Time origin: relative to *perceived cue arrival*, calibrated
   against actual captured video/audio latency, never chart time.
-- Pair test: record two otherwise identical charts with countdown
-  tick counts 3 and 5; extract the first perceptible divergence
-  of their 263D-plus-cue prefixes. The legacy HUD263 prefixes
-  must remain indistinguishable as previously verified.
+- Pair test: DLL already establishes that different numeric countdown
+  digits are rendered for counts 3 and 5. Capture two otherwise
+  identical charts if measuring practical video/audio detection
+  latency, not as a prerequisite to establishing the source-code
+  display rule. Legacy HUD263 remains indistinguishable.
 - Physical gate: first distinguishing cue must leave at least
   44ms to the *shorter-world first playable note*; otherwise
   it is too late even if it distinguishes the worlds.
