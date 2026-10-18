@@ -136,3 +136,48 @@ def test_html_is_self_contained_and_javascript_parses(tmp_path):
     script.write_text(match.group(1), encoding="utf-8")
     completed = subprocess.run(["node", "--check", str(script)], capture_output=True, text=True)
     assert completed.returncode == 0, completed.stderr
+
+def test_key_overlay_matches_user_supplied_finger_layout():
+    expected = (
+        ("Tab", "left_4"), ("1", "left_3"), ("2", "left_2"), ("E", "left_1"),
+        ("P", "right_1"), ("^", "right_2"), ("|", "right_3"),
+        ("Enter", "right_4"),
+        ("LShift", "left_7"), ("LCtrl", "left_8"),
+        ("C", "left_6"), ("無変換", "left_5"),
+        ("RAlt", "right_5"), (".", "right_6"),
+        ("RCtrl", "right_7"), ("RShift", "right_8"),
+    )
+    assert v03.KEY_DISPLAY_MAP == expected
+    contacts = [contact for _, contact in v03.KEY_DISPLAY_MAP]
+    assert len(contacts) == len(set(contacts)) == 16
+    assert set(contacts) == set(v03.LOGICAL_KEYS)
+
+
+def test_regenerate_saved_viewer_remaps_without_touching_metrics(tmp_path):
+    import remap_fingering_replay_key_overlay as remap
+
+    source_payload = _html_payload()
+    source_payload["key_overlay"]["mapping"] = [
+        {"label": label, "contact": contact}
+        for label, contact in zip(
+            ("Tab", "1", "2", "E", "P", "^", "|", "Enter",
+             "LShift", "LCtrl", "C", "無変換", "RAlt", ".", "RCtrl", "RShift"),
+            v03.LOGICAL_KEYS,
+        )
+    ]
+    source = tmp_path / "old.json"
+    dest = tmp_path / "new.html"
+    source.write_text(json.dumps(source_payload, ensure_ascii=False), encoding="utf-8")
+    summary = remap.regenerate(source, dest)
+    assert summary["events"] == 1
+    assert summary["policy_count"] == 1
+    assert summary["mapping_only"] is True
+    html = dest.read_text(encoding="utf-8")
+    assert '"label":"E","contact":"left_1"' in html
+    assert '"label":"P","contact":"right_1"' in html
+    assert '"label":"C","contact":"left_6"' in html
+    assert '"label":"無変換","contact":"left_5"' in html
+    assert '"x_accuracy_percent":100.0' in html
+    assert source.read_text(encoding="utf-8") == json.dumps(source_payload, ensure_ascii=False)
+    with pytest.raises(FileExistsError):
+        remap.regenerate(source, dest)

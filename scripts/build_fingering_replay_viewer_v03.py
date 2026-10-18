@@ -21,9 +21,29 @@ from dmdod.motor.contact_16k import LOGICAL_KEYS, PHYSICAL_AXES
 
 
 FORMAT = "dmdod-full-chart-fingering-replay-v0.3"
-KEY_LABELS = ("Tab", "1", "2", "E", "P", "^", "|", "Enter",
-              "LShift", "LCtrl", "C", "無変換", "RAlt", ".", "RCtrl", "RShift")
-KEY_DISPLAY_MAP = tuple(zip(KEY_LABELS, LOGICAL_KEYS))
+# User-specified physical key layout (top row: ordinary fingers, bottom: thumb/side).
+# The labels represent OS keys, but keydowns are simulator logical contacts.
+# Side contact ordering (Shift/Ctrl) is display-only within each coupled edge axis.
+KEY_DISPLAY_MAP = (
+    ("Tab", "left_4"),    # left little
+    ("1", "left_3"),      # left ring
+    ("2", "left_2"),      # left middle
+    ("E", "left_1"),      # left index
+    ("P", "right_1"),     # right index
+    ("^", "right_2"),     # right middle
+    ("|", "right_3"),     # right ring
+    ("Enter", "right_4"), # right little
+    ("LShift", "left_7"), # left hand-side contact A
+    ("LCtrl", "left_8"),  # left hand-side contact B
+    ("C", "left_6"),      # left thumb (flat pose only)
+    ("無変換", "left_5"), # left thumb (tip or flat pose)
+    ("RAlt", "right_5"),  # right thumb (tip or flat pose)
+    (".", "right_6"),     # right thumb (flat pose only)
+    ("RCtrl", "right_7"), # right hand-side contact A
+    ("RShift", "right_8"),# right hand-side contact B
+)
+if len(KEY_DISPLAY_MAP) != 16 or {c for _, c in KEY_DISPLAY_MAP} != set(LOGICAL_KEYS):
+    raise RuntimeError("Viewer key mapping must cover every logical contact exactly once")
 
 
 def _write_once(path: Path, text: str) -> None:
@@ -158,7 +178,7 @@ def build_payload(source: dict, chart_path: Path) -> dict:
     payload["key_overlay"] = {
         "mapping": [{"label": label, "contact": contact}
                     for label, contact in KEY_DISPLAY_MAP],
-        "mapping_semantics": "Viewer label only; not a claim about physical keyboard binding.",
+        "mapping_semantics": "User-provided key layout mapped to simulated logical contacts; not actual OS-key events.",
         "counter_source": "policies[policy].keydowns[].contact and episode_s",
         "pressed_source": "saved 12-axis trace plus thumb/edge topology",
     }
@@ -166,7 +186,7 @@ def build_payload(source: dict, chart_path: Path) -> dict:
         "Gameplay timing/geometry only; decorations, camera events and Unity easing are not rendered.",
         "Two-planet circular orbit, direction, pause and arrival geometry are reproduced from compiled timing.",
         "Three-planet mode uses the compiled primary-orbit correction and diagnostic equally-spaced auxiliary planets; it is not a claim of Unity-identical artwork.",
-        "Display key labels are configurable aliases for logical contacts, not verified OS keyboard bindings.",
+        "User-provided key layout labels mapped to simulated contacts; real OS key signals are not evaluated.",
         "Saved physical metrics are copied unchanged and are not recomputed.",
     ]
     return payload
@@ -189,7 +209,7 @@ def render_html(payload: dict) -> str:
 .axisgrid{{display:grid;grid-template-columns:1fr 1fr;gap:4px}}.axis{{display:grid;grid-template-columns:62px 1fr 48px;align-items:center;gap:5px;padding:4px;background:#0a1020;border-radius:5px}}.bar{{height:8px;background:#283048;border-radius:5px;overflow:hidden}}.fill{{height:100%;background:#8b63cf}}.axis.down{{outline:2px solid #d193ff}}.axis.recover{{outline:1px solid #eead57}}details{{margin-top:8px}}summary{{cursor:pointer;color:#cbb9ea}}.card{{background:#0a1020;padding:7px;border-radius:6px}}.card.different{{outline:2px solid #b778e8}}.Hit{{color:#7ce197}}.Miss{{color:#ff718a}}.events{{max-height:145px;overflow:auto;font:12px/1.5 ui-monospace,monospace}}.now{{color:#f0c8ff}}@media(max-width:980px){{.layout{{grid-template-columns:1fr}}#chart{{height:50vh}}.keygrid{{gap:3px}}.key .label{{font-size:9px}}}}
 </style></head><body><main><h1>{title}</h1><div class="sub">Saved Network replay / Viewer v0.3 / no inference, training or physics rerun</div>
 <div class="controls"><button id="play">▶ 再生</button><button id="prev">← Event</button><button id="next">Event →</button><label>速度 <select id="speed"><option>.25</option><option>.5</option><option selected>1</option><option>2</option></select>×</label><label>Policy <select id="policy">{policy_options}</select></label><label>Event <input id="jump" type="number" min="0" style="width:82px"></label><button id="jumpBtn">移動</button><input id="seek" type="range" min="0" step="0.001"><span id="clock"></span></div>
-<section class="panel"><div class="keyhead"><b>16 Contact KeyDown Counter</b><div class="keytotals">KPS <b id="kps">0</b>　Total <b id="total">0</b></div></div><div id="keys" class="keygrid"></div><div class="note">表示名は論理接点への変更可能なalias。実キーボード配線を表しません。</div></section>
+<section class="panel"><div class="keyhead"><b>16 Contact KeyDown Counter</b><div class="keytotals">KPS <b id="kps">0</b>　Total <b id="total">0</b></div></div><div id="keys" class="keygrid"></div><div class="note">キー配置はユーザー指定。打鍵・押下状態はシミュレータ内の接点記録に基づき、実キーボード信号の検証ではありません。</div></section>
 <div class="layout"><section class="panel"><canvas id="chart" width="920" height="600"></canvas><div class="times"><div class="metric">episode<br><b id="episode"></b></div><div class="metric">chart<br><b id="chartTime"></b></div><div class="metric">audio<br><b id="audioTime"></b></div><div class="metric">floor/event<br><b id="floorEvent"></b></div></div><p class="note">円軌道はcompiled entry/exit angle・回転量・方向・Pause・SetSpeed区間を使用。装飾・camera・Unity easingは未対応。</p></section>
 <aside class="panel"><div id="metrics" class="metric"></div><h3>現在イベント</h3><div id="decision"></div><h3>実KeyDown</h3><div id="keydowns" class="events"></div><details open><summary>12物理軸 Motor詳細</summary><div id="axes" class="axisgrid"></div></details></aside></div>
 <script>const D={_json(payload)},AXES={_json(list(PHYSICAL_AXES))},LABELS={_json(v01.AXIS_LABELS)};const $=x=>document.getElementById(x),canvas=$('chart'),ctx=canvas.getContext('2d'),duration=D.timebase.episode_duration_s;let t=0,playing=false,lastWall=0,P=D.policies[D.default_policy||Object.keys(D.policies)[0]];$('policy').value=D.default_policy||Object.keys(D.policies)[0];$('seek').max=duration;

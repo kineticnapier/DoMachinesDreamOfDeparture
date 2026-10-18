@@ -50,3 +50,32 @@ new `file://` URLs, and the computer-use rules prohibit automating the Codex
 desktop UI itself.  JavaScript syntax and self-containment are mechanically
 verified; final human visual checks should cover play/pause, arbitrary seeking,
 speed changes, event jumps, counters, KPS and planet continuity.
+
+## User-confirmed 16-key overlay correction
+
+The old `zip(KEY_LABELS, LOGICAL_KEYS)` paired the first eight displayed
+keys with logical left contacts in reverse motor order. The actual user
+layout is now explicitly mapped in `KEY_DISPLAY_MAP`:
+
+- top: `Tab/1/2/E` = left little/ring/middle/index (`left_4/3/2/1`);
+  `P/^/|/Enter` = right index/middle/ring/little (`right_1/2/3/4`)
+- bottom: `LShift/LCtrl` = left coupled side (`left_7/8`);
+  `C` = left flat-thumb-only (`left_6`);
+  `無変換` = left thumb tip-or-flat (`left_5`);
+  `RAlt` = right thumb tip-or-flat (`right_5`);
+  `.` = right flat-thumb-only (`right_6`);
+  `RCtrl/RShift` = right coupled side (`right_7/8`)
+
+The side keys are coupled physical motions; individual side-contact ordering
+is a viewer mapping, not independently actuated physical fingers. Saved Motor
+and policy results are unchanged. To correct the existing Human-Proxy HTML
+**without rerunning physics or loading a checkpoint**, after pulling:
+
+```powershell
+.\\.venv\\Scripts\\python.exe scripts/remap_fingering_replay_key_overlay.py \`
+  --source-json artifacts/fingering_network_v011/full-20261018-r2-comparison/replay-v011.json \`
+  --output-html artifacts/fingering_network_v011/full-20261018-r2-comparison/replay-v011-keymap-fixed.html
+start .\\artifacts\\fingering_network_v011\\full-20261018-r2-comparison\\replay-v011-keymap-fixed.html
+```
+
+The new output is write-once; use another filename if it already exists.
