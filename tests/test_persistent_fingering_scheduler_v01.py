@@ -285,6 +285,10 @@ def test_elapsed_armed_stroke_can_finish_after_predicted_due():
     planner.arm(0, snap())
     still_moving = snap(left_1={"position":.0014, "velocity":.05,
                                 "activation":.11})
+    # The local forecast contract requires a consecutive 10ms step stream.
+    planner.apply_forecast(
+        frame(1, pending=(token(0, .015),), reused=(0,)), still_moving
+    )
     planner.apply_forecast(frame(2, elapsed=(0,)), still_moving)
     assert planner.reservation(0).phase is ReservationPhase.ARMED_IN_FLIGHT
     assert planner.reservation(0).retired_reason == "elapsed"
