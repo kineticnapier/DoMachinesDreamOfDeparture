@@ -49,6 +49,14 @@ def utc() -> str:
     return datetime.now(timezone.utc).isoformat()
 
 
+def configure_utf8_logs() -> None:
+    """Keep non-ASCII chart names writable under redirected Windows stdout."""
+    for stream in (sys.stdout, sys.stderr):
+        reconfigure = getattr(stream, "reconfigure", None)
+        if reconfigure is not None:
+            reconfigure(encoding="utf-8", errors="backslashreplace")
+
+
 def hash_file(path: Path) -> str:
     return viewer.file_sha256(path)
 
@@ -551,6 +559,7 @@ def run(manifest: dict, output_dir: Path, *, wall_timeout_s: float,
 
 
 def main() -> None:
+    configure_utf8_logs()
     p = argparse.ArgumentParser(description=__doc__)
     p.add_argument("--chart-root", type=Path,
                    default=Path("data/DMDOD-v140-tuf-p11-p20"))
@@ -610,14 +619,34 @@ def main() -> None:
                            max_arms_this_run=args.max_arms_this_run,
                            prior_active_wall_s=prior_active,
                            invocation_started_perf=PROCESS_STARTED_PERF)
-        except KeyboardInterrupt:
-            # Never discard already published per-arm checkpoints.
-            stopped = publish_progress(manifest, args.output_dir, args.goal_seconds)
-            print("\nStopped by Ctrl+C. Finished arms remain saved.", flush=True)
-            print_progress(stopped)
-            print("Resume: re-run with --resume and the SAME --output-dir",
-                  flush=True)
-            raise SystemExit(130) from None
+        except BaseException as exc:
+            # Persist active time and completed checkpoints even for encoding,
+            # worker, timeout, or Ctrl+C failures.
+            stopped = publish_progress(
+                manifest, args.output_dir, args.goal_seconds,
+                active_invocation_wall_s=time.perf_counter() - PROCESS_STARTED_PERF,
+                prior_active_wall_s=prior_active, workers=args.workers,
+            )
+            record_runtime_session(
+                args.output_dir,
+                started_at_utc=invocation_started,
+                active_wall_s=stopped["active_invocation_wall_s"] or 0.0,
+                completed_before=completed_before,
+                completed_after=stopped["completed_arms"],
+                workers=args.workers,
+            )
+            stopped = publish_progress(
+                manifest, args.output_dir, args.goal_seconds,
+                prior_active_wall_s=cumulative_runtime_s(args.output_dir),
+                workers=args.workers,
+            )
+            if isinstance(exc, KeyboardInterrupt):
+                print("\nStopped by Ctrl+C. Finished arms remain saved.", flush=True)
+                print_progress(stopped)
+                print("Resume: re-run with --resume and the SAME --output-dir",
+                      flush=True)
+                raise SystemExit(130) from None
+            raise
         record_runtime_session(
             args.output_dir,
             started_at_utc=invocation_started,
