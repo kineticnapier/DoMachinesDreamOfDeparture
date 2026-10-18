@@ -119,3 +119,45 @@ Run from the repository root, after pulling the new code:
 No physical experiment or new output artifact is created by the
 scorer replay. Do not alter timing tolerance, student checkpoints,
 Motor constants, or the evaluator to make these results PASS.
+
+
+## Exact scorer replay: confirmed target-consumption chains
+
+User-ran replay_hud_v14_scorer_routing_v02.py on saved raw switch traces.
+**All twelve** case/arm scorer reconstructions matched the original
+Hit/Miss/TooEarly counts and target flags exactly. This confirms the
+following *immediate* consumption links:
+
+| Case/arm | Missed ordinal | KeyDown intended near missed due actually scored |
+| --- | ---: | --- |
+| ordinary 480 / HUD Network | 33 | target 32: target33-adjacent +2.5ms KeyDown scores 32 at +65.0ms VeryLate |
+| SetSpeed / HUD Network | 9 | target 7: -4.113ms vs target9, +56.371ms on target7 |
+| SetSpeed / HUD CenterFirst | 9 | target 7: +0.887ms vs target9, +61.371ms on target7 |
+| SetSpeed / HUD Network | 30 | target 29: +3.806ms vs target30, +34.048ms on target29 |
+| SetSpeed / HUD CenterFirst | 30 | target 29: +9.806ms vs target30, +40.048ms on target29 |
+| SetSpeed / HUD Network | 31 | no logical KeyDown within 25ms |
+| SetSpeed / HUD CenterFirst | 31 | nearest target31-adjacent KeyDown scores 29 instead |
+| Pause / Oracle and HUD Network | 13 | target 12: +2.774ms vs target13, +63.258ms on target12 |
+| Train bool first 5s / both HUD arms | 0, 1 | no logical KeyDown within 25ms; 0 has no forecast, 1 has only 20.163ms lead |
+
+This is **not a scorer bug**: the scorer intentionally scores the
+first unresolved target and uses its Normal-mode pass window (which
+can overlap the next event). Thus a KeyDown accurate for target i may
+legally be a VeryLate hit for target i-1 or even i-2. A downstream
+Miss is a symptom of an earlier unserved stroke; simply widening
+HUD Timing tolerances or reassigning the scorer target would conceal
+the underlying scheduling failure.
+
+The immediate predecessor is not necessarily the *first* failed
+actuation. The latest read-only diagnostic recursively inspects the
+ordered-scorer ancestry and the chosen axis's nearest real KeyDowns,
+comparing the same target across all three frozen arms. This does
+**not** rerun physical simulation:
+
+    .venv\Scripts\python.exe -m pytest tests/test_diagnose_hud_v14_predecessor_cascade_v02.py -q
+
+    .venv\Scripts\python.exe -u scripts/diagnose_hud_v14_predecessor_cascade_v02.py --input-dir artifacts/fingering_network_v02/hud-v14-failure-crosscheck-r1
+
+Use its earliest anomaly per chain as the next physical Motor/axis
+command candidate. Do not modify the ADOFAI scorer, Network weights,
+Timing v1.4 confidence or reservation limits to force a PASS.
