@@ -215,3 +215,58 @@ and no changes to model weights or Motor physical constants.
 Read the AXIS_TRACE rows first to distinguish no positive Motor
 command, command withdrawn early, and genuinely insufficient
 actuator acceleration. No root performance fix is claimed yet.
+
+
+## Confirmed Motor arm-boundary bug (2026-10-18)
+
+Targeted +10ms-frame physical logs showed **neither a positive command
+nor KeyDown** for the two first-failing selected actuators, and both
+reservations disappeared *at exactly the planned arming step*:
+
+- Ordinary 480 HUD Network target29 right_3 was reserved at 1.87/1.88s;
+  canceled at 1.89s (due 1.9375s, nominal lead 44ms + extra 5.274ms,
+  arming starts at 1.888226s). At 1.89s pos was -0.000997m,
+  velocity +0.0008m/s, activation -0.0177, pressed false.
+- Pause Oracle Network target11 left_3 was reserved at 0.84/0.85s;
+  canceled at 0.86s (due 0.907258s, nominal lead 44ms + extra
+  6.224ms, arming starts at 0.857034s). At 0.86s pos was
+  -0.000999m, velocity +0.0002m/s, activation -0.0209,
+  pressed false.
+
+Code root: PersistentFingeringScheduler.arm() applied
+MotorPhysicalSnapshot.ready() *again* at arming. That predicate
+intentionally rejects ANY positive velocity for *fresh* allocation,
+but it was reused for an axis that had already been exclusively
+reserved for 20ms. While commanded neutral, the frozen physical
+spring/hand model generated tiny positive passive velocity. arm()
+raised ValueError; policy.command() then called cancel_unarmed()
+and permanently marked that local event decided. This caused
+zero Motor command, despite an exact Timing forecast and an
+otherwise valid physical path.
+
+Minimal fix: retain strict ready() when allocating a new axis, but
+introduce ready_to_arm_reserved() for an ALREADY-EXCLUSIVELY-HELD
+reservation. Require not pressed, below keyboard reset threshold,
+and activation <=0; passive positive velocity alone no longer
+deletes the reserved stroke. Existing true in-flight/pressed
+release quarantine behavior is unchanged. Added independent scheduler
+tests reproducing the observed right_3 and left_3 states plus a full
+Timing-to-Motor command regression.
+
+This fixes a proven source-code failure, **not a claimed new
+Hit-rate result** until the user runs post-patch replay. All physical
+constants, checkpoint, Timing v1.4 and scorer remain unchanged.
+
+Minimal post-fix confirmation (create NEW output paths):
+
+    .venv\Scripts\python.exe -m pytest tests/test_persistent_fingering_scheduler_v01.py tests/test_timing_fingering_motor_integration_v02.py -q
+
+    .venv\Scripts\python.exe -u scripts/run_hud_v14_fingering_motor_integration_v02.py --fixtures --case ordinary-480bpm --output-dir artifacts/fingering_network_v02/hud-v14-480-armfix-r1
+
+    .venv\Scripts\python.exe -u scripts/run_hud_v14_fingering_motor_integration_v02.py --special-fixtures --case special-pause_1 --output-dir artifacts/fingering_network_v02/hud-v14-pause-armfix-r1
+
+The SetSpeed early-forecast deficiency (target5 lead 23.145ms)
+and Train first-forecast deficiency (target0 absent, target1
+lead 20.163ms) are separate, **not fixed by this Motor change**.
+If the two Motor fixtures still FAIL, examine changed first-failing
+target and real KeyDown, do not loosen the fixed thresholds.
