@@ -12,12 +12,15 @@ import argparse
 from collections import Counter
 import json
 from pathlib import Path
+import sys
+
+sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 from dmdod.adofai.chart import load_adofai
 from dmdod.adofai.playable import build_playable_segment
 from dmdod.adofai.timing import compile_adofai
-from scripts.audit_hud_timing_tracker_transition_v14_matrix import generated
-from scripts.run_hud_v14_fingering_motor_integration_v02 import (
+from audit_hud_timing_tracker_transition_v14_matrix import generated
+from run_hud_v14_fingering_motor_integration_v02 import (
     DEFAULT_TRAIN_CHART, synthetic_segment,
 )
 
