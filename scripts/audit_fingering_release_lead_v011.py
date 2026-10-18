@@ -148,7 +148,7 @@ def _metrics(env: CoupledContactRealChartEnv, decisions: list, ordinals: dict,
         "episode_end_s": round(env.privileged_episode_time_s(), 6),
         "event_outcomes": per_event,
         "release_coast_axes_steps": intervention_stats["release_coast_axes_steps"],
-        "anticipatory_events_armed": len(early_armed),
+        "anticipatory_events_armed": intervention_stats["anticipatory_events_new"],
         "anticipatory_positive_axis_steps": intervention_stats["anticipatory_positive_axis_steps"],
         "future_allocation_leak": bool(early_armed),
     }
