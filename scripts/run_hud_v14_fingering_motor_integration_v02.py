@@ -315,10 +315,59 @@ def main():
         ],
     }
     args.output_dir.mkdir(parents=True, exist_ok=False)
+    gates = {}
+    for case in report["cases"]:
+        arm_gates = {}
+        for arm_name, record in case["arms"].items():
+            if "error" in record:
+                arm_gates[arm_name] = {
+                    "passed": False,
+                    "reason": record["error"],
+                }
+                continue
+            stats = record["stats"]
+            supported = record["supported_event_posthoc"]
+            match = record["forecast_posthoc"]
+            supported_safe = (
+                supported["supported_truth_misses"] == 0
+                and stats["too_early"] == 0
+                and not stats["overloaded"]
+            )
+            no_false = (
+                arm_name == "oracle_network"
+                or match["matched_20ms"] == match["unique_forecasts"]
+            )
+            arm_gates[arm_name] = {
+                "passed": supported_safe and no_false,
+                "supported_truth_misses": supported["supported_truth_misses"],
+                "too_early": stats["too_early"],
+                "overloaded": stats["overloaded"],
+                "false_forecast_ids_20ms": (
+                    match["unique_forecasts"] - match["matched_20ms"]
+                ),
+                "uncovered_truth_targets": (
+                    match["true_targets"] - match["matched_20ms"]
+                ),
+                "all_target_hit_fraction": (
+                    stats["hits"] / stats["targets"] if stats["targets"] else None
+                ),
+                "supported_only_hit_fraction": supported[
+                    "sufficient_lead_supported_hit_fraction"
+                ],
+            }
+        gates[case["label"]] = arm_gates
+    report["predeclared_gates"] = gates
+    report["status"] = (
+        "PASS" if all(x["passed"] for arms in gates.values()
+                      for x in arms.values()) else "FAIL"
+    )
     (args.output_dir / "integration-summary.json").write_text(
         json.dumps(report, ensure_ascii=False, indent=2), encoding="utf-8"
     )
     print("saved:", args.output_dir / "integration-summary.json", flush=True)
+    print("gate:", report["status"], flush=True)
+    if report["status"] != "PASS":
+        raise SystemExit(1)
 
 
 if __name__ == "__main__":
