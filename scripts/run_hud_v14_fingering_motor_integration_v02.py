@@ -146,6 +146,74 @@ def _supported_posthoc(first_seen: list[dict], decisions: list,
     }
 
 
+def _diagnose_misses_posthoc(segment, env, first_seen: list[dict],
+                              decisions: list, physical_switch_trace: list[dict],
+                              forecast_lifecycle_trace: list[dict]) -> list[dict]:
+    """Cross-reference missed target ordinals AFTER policy and Motor finish.
+
+    The nearest forecast is a diagnostic *candidate*, not a proof that a
+    particular local ID or finger was intended to hit this scorer target.
+    """
+    decisions_by_id = {item.local_id: item for item in decisions}
+    rows = []
+    for index, target in enumerate(segment.targets):
+        if not env._missed[index]:
+            continue
+        due = float(target.episode_time_s)
+        nearest = min(
+            first_seen,
+            key=lambda row: abs(row["due_local_s"] - due),
+            default=None,
+        )
+        if nearest is not None and abs(nearest["due_local_s"] - due) > .020:
+            nearest = None
+        decision = (
+            decisions_by_id.get(nearest["local_id"])
+            if nearest is not None else None
+        )
+        surrounding_keys = [
+            dict(item) for item in physical_switch_trace
+            if abs(item["time_s"] - due) <= .10
+            and "down" in str(item["edge"]).lower()
+        ]
+        statuses = [
+            {"step": item["step"], "status": item["status"],
+             "reason": item["abstention_reason"]}
+            for item in forecast_lifecycle_trace
+            if due - .100 <= item["local_clock_s"] <= due
+        ]
+        if nearest is None:
+            category = "no_forecast_within_20ms"
+        elif decision is None:
+            category = "forecast_without_decision"
+        elif decision.reason != "assigned":
+            category = decision.reason
+        else:
+            category = "assigned_but_scorer_missed_check_physical_trace"
+        rows.append({
+            "target_ordinal": index, "target_due_s": due,
+            "category": category,
+            "nearest_local_forecast": (
+                {"local_id": nearest["local_id"],
+                 "forecast_due_s": nearest["due_local_s"],
+                 "due_error_ms": round(
+                     (nearest["due_local_s"] - due) * 1000, 3
+                 ),
+                 "first_seen_lead_ms": round(
+                     (nearest["due_local_s"] - nearest["first_seen_s"]) * 1000, 3
+                 )} if nearest is not None else None
+            ),
+            "decision": (
+                {"choice": decision.choice, "reason": decision.reason,
+                 "step": decision.step, "extra_lead_s": decision.extra_lead_s}
+                if decision is not None else None
+            ),
+            "nearby_physical_keydowns": surrounding_keys,
+            "recent_forecast_statuses": statuses,
+        })
+    return rows
+
+
 def simulate(segment, model, arm: str, *, wall_timeout_s: float = 180.0):
     source_kind = next((src for name, src, _ in ARMS if name == arm), None)
     selector = next((sel for name, _, sel in ARMS if name == arm), None)
@@ -264,6 +332,10 @@ def simulate(segment, model, arm: str, *, wall_timeout_s: float = 180.0):
          "hit": bool(env._used[i]), "miss": bool(env._missed[i])}
         for i, item in enumerate(segment.targets)
     ]
+    result["miss_diagnostics_posthoc"] = _diagnose_misses_posthoc(
+        segment, env, raw_new_ids, policy.decisions,
+        physical_switch_trace, forecast_lifecycle_trace,
+    )
     result["forecast_posthoc"] = _forecast_posthoc(raw_new_ids, segment)
     result["supported_event_posthoc"] = _supported_posthoc(
         raw_new_ids, policy.decisions, env, segment
@@ -289,6 +361,12 @@ def run_fixed(segment, *, checkpoint: Path, label: str,
             print(f"  H={s['hits']}/{s['targets']} Miss={s['misses']} "
                   f"TE={s['too_early']} OL={s['overloaded']} "
                   f"X={s['x_accuracy_percent']:.4f}%", flush=True)
+            for miss in value.get("miss_diagnostics_posthoc", ()):
+                print("  MISS", miss["target_ordinal"],
+                      "due=", round(miss["target_due_s"], 4),
+                      "category=", miss["category"],
+                      "nearest=", miss["nearest_local_forecast"],
+                      "decision=", miss["decision"], flush=True)
         else:
             print("  FAILED:", value["error"], flush=True)
     return {"label": label, "arms": rows}
