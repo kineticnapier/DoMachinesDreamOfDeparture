@@ -34,8 +34,8 @@ def hud(*, bpm: float, orbit: float, entry=0.0, exit_angle=pi / 2,
     return tuple(values)
 
 
-def phase(step, time_s, *, digit=1, period=(.49, .51),
-          onset=(.99, 1.01), valid=True, status="number"):
+def phase(step, time_s, *, digit=1, period=(.495, .505),
+          onset=(.995, 1.005), valid=True, status="number"):
     return CountdownPhaseUpdate(
         step=step, observed_at_s=time_s, status=status,
         displayed_digit=digit if status == "number" else None,
@@ -59,8 +59,8 @@ def test_visible_geometry_forecasts_due_interval_and_lead(bpm) -> None:
     )
     arc_s = (pi / 2) / speed
     assert not first.eligible
-    assert result.due_interval_s.lower_s == pytest.approx(.99 + .49 + arc_s)
-    assert result.due_interval_s.upper_s == pytest.approx(1.01 + .51 + arc_s)
+    assert result.due_interval_s.lower_s == pytest.approx(.995 + .495 + arc_s)
+    assert result.due_interval_s.upper_s == pytest.approx(1.005 + .505 + arc_s)
     assert result.lead_guaranteed
 
 
@@ -68,15 +68,30 @@ def test_pitch_effect_is_carried_by_observed_real_bpm_and_period() -> None:
     estimator = CountdownFirstEventEstimator()
     bpm = 240.0  # 120 BPM chart at 200% pitch, as visibly rendered.
     estimator.observe(
-        phase(0, .50, period=(.24, .26), onset=None),
+        phase(0, .50, period=(.2475, .2525), onset=None),
         hud(bpm=bpm, orbit=0.0),
     )
     result = estimator.observe(
-        phase(1, .51, period=(.24, .26), onset=(.49, .51)),
+        phase(1, .51, period=(.2475, .2525), onset=(.4975, .5025)),
         hud(bpm=bpm, orbit=pi * bpm / 60.0 * .01),
     )
     assert result.eligible
-    assert result.due_interval_s.width_s == pytest.approx(.04)
+    assert result.due_interval_s.width_s == pytest.approx(.01)
+
+
+def test_wide_due_interval_abstains_until_more_evidence() -> None:
+    estimator = CountdownFirstEventEstimator()
+    bpm = 120.0
+    estimator.observe(
+        phase(0, 1.0, period=(.49, .51), onset=None),
+        hud(bpm=bpm, orbit=0.0),
+    )
+    wide = estimator.observe(
+        phase(1, 1.01, period=(.49, .51), onset=(.99, 1.01)),
+        hud(bpm=bpm, orbit=pi * bpm / 60.0 * .01),
+    )
+    assert not wide.eligible
+    assert wide.status == "due_uncertainty_exceeds_10ms"
 
 
 def test_due_lower_bound_controls_44ms_guarantee() -> None:

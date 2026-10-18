@@ -72,17 +72,30 @@ def test_countdown_token_id_is_stable_and_reused() -> None:
         (CountdownCueKind.READY, None),
         (CountdownCueKind.NUMBER, 2),
         (CountdownCueKind.NUMBER, 1),
-        (CountdownCueKind.NUMBER, 1),
+        (CountdownCueKind.GO, None),
+        (CountdownCueKind.HIDDEN, None),
     ]
     results = []
     for step, (kind, digit) in enumerate(sequence):
         results.append(composite_step(system, step, kind, digit))
-    created = results[2]
-    reused = results[3]
+    created = results[3]
+    reused = results[4]
     assert created.pending[0].local_id == "countdown:0"
     assert created.new_ids == ("countdown:0",)
     assert reused.pending[0].local_id == "countdown:0"
     assert reused.reused_ids == ("countdown:0",)
+
+
+def test_visible_number_suppresses_raw_v14_countdown_orbit_candidates() -> None:
+    tracker = CausalTimingTracker(
+        horizon_s=.080,
+        predictor=lambda _hud: WindowForecast((1,), (.05,), "eligible"),
+    )
+    system = HUDTimingComposite(v14_tracker=tracker)
+    ready = composite_step(system, 0, CountdownCueKind.READY)
+    number = composite_step(system, 1, CountdownCueKind.NUMBER, 2)
+    assert ready.v14_update.pending and number.v14_update.pending
+    assert ready.pending == () and number.pending == ()
 
 
 def test_overlapping_sources_reuse_single_countdown_local_id() -> None:
@@ -101,6 +114,7 @@ def test_overlapping_sources_reuse_single_countdown_local_id() -> None:
         (CountdownCueKind.READY, None),
         (CountdownCueKind.NUMBER, 2),
         (CountdownCueKind.NUMBER, 1),
+        (CountdownCueKind.GO, None),
     ]):
         result = composite_step(
             system, step, kind, digit,
@@ -117,19 +131,22 @@ def test_nonoverlapping_sources_cancel_existing_token_and_abstain() -> None:
         calls += 1
         return (
             WindowForecast((1,), (.01,), "eligible")
-            if calls >= 4 else WindowForecast((), (), "insufficient_lookahead")
+            if calls >= 5 else WindowForecast((), (), "insufficient_lookahead")
         )
     system = HUDTimingComposite(v14_tracker=CausalTimingTracker(
         horizon_s=.080, predictor=predictor
     ))
-    frames = [legacy(step=step, arc=pi * .1) for step in range(4)]
+    frames = [legacy(step=step, arc=pi * .1) for step in range(6)]
     composite_step(system, 0, CountdownCueKind.READY, hud=frames[0])
     composite_step(system, 1, CountdownCueKind.NUMBER, 2, hud=frames[1])
-    created = composite_step(
+    composite_step(
         system, 2, CountdownCueKind.NUMBER, 1, hud=frames[2]
     )
+    created = composite_step(
+        system, 3, CountdownCueKind.GO, hud=frames[3]
+    )
     conflict = composite_step(
-        system, 3, CountdownCueKind.NUMBER, 1, hud=frames[3]
+        system, 4, CountdownCueKind.HIDDEN, hud=frames[4]
     )
     assert created.pending[0].local_id == "countdown:0"
     assert conflict.status == "source_conflict"
@@ -137,8 +154,7 @@ def test_nonoverlapping_sources_cancel_existing_token_and_abstain() -> None:
     assert [item.local_id for item in conflict.canceled] == ["countdown:0"]
     assert conflict.new_ids == ()
     after = composite_step(
-        system, 4, CountdownCueKind.NUMBER, 1,
-        hud=legacy(step=4, arc=pi * .1),
+        system, 5, CountdownCueKind.HIDDEN, hud=frames[5],
     )
     assert all(item.local_id != "countdown:0" for item in after.pending)
 
@@ -147,9 +163,10 @@ def test_invalid_countdown_carries_existing_token_unconfirmed() -> None:
     system = HUDTimingComposite()
     composite_step(system, 0, CountdownCueKind.READY)
     composite_step(system, 1, CountdownCueKind.NUMBER, 2)
-    created = composite_step(system, 2, CountdownCueKind.NUMBER, 1)
+    composite_step(system, 2, CountdownCueKind.NUMBER, 1)
+    created = composite_step(system, 3, CountdownCueKind.GO)
     invalid = composite_step(
-        system, 3, CountdownCueKind.UNKNOWN, valid=False
+        system, 4, CountdownCueKind.UNKNOWN, valid=False
     )
     assert created.pending[0].local_id == "countdown:0"
     assert invalid.pending[0].local_id == "countdown:0"

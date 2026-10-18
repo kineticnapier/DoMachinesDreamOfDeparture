@@ -23,6 +23,7 @@ from dmdod.planning.hud_timing_tracker_transition_v14 import (
 
 FIRST_EVENT_ESTIMATOR_VERSION = "countdown-first-event-v0.1"
 MOTOR_LEAD_S = .044
+MAX_DUE_UNCERTAINTY_S = .010
 EPS = 1e-9
 
 
@@ -51,10 +52,14 @@ def encode_visible_bpm(bpm: float) -> float:
 class CountdownFirstEventEstimator:
     """Combine observed countdown phase with visible current-floor geometry."""
 
-    def __init__(self, *, required_lead_s: float = MOTOR_LEAD_S) -> None:
+    def __init__(self, *, required_lead_s: float = MOTOR_LEAD_S,
+                 max_due_uncertainty_s: float = MAX_DUE_UNCERTAINTY_S) -> None:
         if not isfinite(required_lead_s) or required_lead_s < 0.0:
             raise ValueError("required lead must be nonnegative and finite")
+        if not isfinite(max_due_uncertainty_s) or max_due_uncertainty_s < 0.0:
+            raise ValueError("maximum due uncertainty must be nonnegative and finite")
         self.required_lead_s = float(required_lead_s)
+        self.max_due_uncertainty_s = float(max_due_uncertainty_s)
         self.reset()
 
     def reset(self) -> None:
@@ -169,22 +174,27 @@ class CountdownFirstEventEstimator:
                         due = TimeInterval(
                             go.lower_s + arc_s, go.upper_s + arc_s
                         )
-                        lead = TimeInterval(
-                            due.lower_s - phase.observed_at_s,
-                            due.upper_s - phase.observed_at_s,
-                        )
-                        guaranteed = lead.lower_s + EPS >= self.required_lead_s
-                        result = CountdownFirstEventEstimate(
-                            step=phase.step,
-                            observed_at_s=phase.observed_at_s,
-                            status=(
-                                "eligible_lead_guaranteed" if guaranteed
-                                else "eligible_insufficient_lead"
-                            ),
-                            due_interval_s=due,
-                            lead_interval_s=lead,
-                            lead_guaranteed=guaranteed,
-                        )
+                        if due.width_s * .5 > self.max_due_uncertainty_s + EPS:
+                            result = self._abstain(
+                                phase, "due_uncertainty_exceeds_10ms"
+                            )
+                        else:
+                            lead = TimeInterval(
+                                due.lower_s - phase.observed_at_s,
+                                due.upper_s - phase.observed_at_s,
+                            )
+                            guaranteed = lead.lower_s + EPS >= self.required_lead_s
+                            result = CountdownFirstEventEstimate(
+                                step=phase.step,
+                                observed_at_s=phase.observed_at_s,
+                                status=(
+                                    "eligible_lead_guaranteed" if guaranteed
+                                    else "eligible_insufficient_lead"
+                                ),
+                                due_interval_s=due,
+                                lead_interval_s=lead,
+                                lead_guaranteed=guaranteed,
+                            )
 
         self._previous_hud = tuple(legacy_hud263) if len(legacy_hud263) == HUD_DIM else None
         self._previous_time_s = phase.observed_at_s

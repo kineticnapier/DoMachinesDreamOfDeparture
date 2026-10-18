@@ -186,7 +186,14 @@ class HUDTimingComposite:
             self._countdown_token = None
             self._countdown_closed = True
 
-        v14_tokens = [self._v14_token(item, now_s) for item in v14.pending]
+        # Visible Ready/number means these orbit cycles are countdown motion,
+        # not playable floor hits. Keep the frozen raw update for diagnostics,
+        # but do not publish it as a playable candidate until Go/normal play.
+        suppress_v14_countdown_motion = phase.status in ("ready", "number")
+        v14_tokens = (
+            [] if suppress_v14_countdown_motion else
+            [self._v14_token(item, now_s) for item in v14.pending]
+        )
         pending: list[TimingEventToken] = []
         conflict = False
         countdown_token = self._countdown_token
@@ -206,6 +213,10 @@ class HUDTimingComposite:
                     [countdown_token.due_interval_s.upper_s]
                     + [item.due_interval_s.upper_s for item in overlaps]
                 )
+                if lower > upper:
+                    # Both sources agree within the composite reconciliation
+                    # epsilon; collapse floating-point roundoff to one point.
+                    lower = upper = (lower + upper) * .5
                 countdown_token = replace(
                     countdown_token,
                     due_interval_s=TimeInterval(lower, upper),
