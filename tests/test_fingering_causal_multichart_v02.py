@@ -117,3 +117,25 @@ def test_error_cases_are_not_counted_as_completed():
     result = audit.aggregate(results)
     assert result["free"]["completed_charts"] == 0
     assert result["human_proxy"]["completed_charts"] == 0
+
+
+def test_explicit_paths_above_limit_are_rejected_not_silently_ignored(tmp_path):
+    a = _chart(tmp_path / "Test", "a.adofai", "a")
+    b = _chart(tmp_path / "Test", "b.adofai", "b")
+    with pytest.raises(ValueError, match="increase --max-charts"):
+        audit.select_charts(tmp_path, [a, b], 1)
+
+
+def test_frozen_checkpoint_identity_checked_before_model_load(
+        tmp_path, monkeypatch):
+    ck = tmp_path / "frozen.pt"
+    ck.write_bytes(b"fake checkpoint; must not load")
+    selected = []
+    called = []
+    monkeypatch.setattr(
+        audit.causal.runner, "load_model",
+        lambda _path: called.append(True)
+    )
+    with pytest.raises(ValueError, match="checkpoint SHA256 mismatch"):
+        audit.evaluate(ck, selected, 1.0, "0" * 64)
+    assert called == []
