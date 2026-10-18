@@ -125,9 +125,10 @@ class TimingFingeringMotorPolicy:
             # Stable acquisition is only at the frozen 69ms decision window,
             # not as soon as an Oracle can see an arbitrarily distant event.
             remaining = token.due_local_s - now
+            conservative_remaining = token.remaining_lower_s(update.step)
             if not token.confirmed_now or remaining > DECISION_LEAD_S + 1e-9:
                 continue
-            if remaining < NORMAL_LEAD_S - 1e-9:
+            if conservative_remaining < NORMAL_LEAD_S - 1e-9:
                 self.insufficient_observable_lead += 1
                 self._decided_ids.add(token.local_id)
                 self.decisions.append(FingeringDecision(

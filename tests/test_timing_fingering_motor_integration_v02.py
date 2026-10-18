@@ -172,6 +172,25 @@ def test_late_forecast_is_recorded_not_silently_backfilled():
     assert planner.decisions[0].reason == "insufficient_observable_lead"
 
 
+def test_interval_lower_bound_controls_44ms_decision_gate():
+    motor = Coupled16ContactMotor()
+    planner = policy.TimingFingeringMotorPolicy(
+        model=None, selector="center_first"
+    )
+    update = TimingFrameUpdate(
+        step=0, status=ELIGIBLE, source="fixture",
+        covered_until_s=.080,
+        pending=(TimingEventToken(
+            0, .050, 1, uncertainty_s=.010
+        ),),
+        new_ids=(0,),
+    )
+    planner.command(update, motor)
+    assert planner.insufficient_observable_lead == 1
+    assert planner.decisions[0].reason == "insufficient_observable_lead"
+    assert planner.scheduler.reservations == ()
+
+
 def test_policy_stops_positive_commands_on_abstention():
     motor = Coupled16ContactMotor()
     planner = policy.TimingFingeringMotorPolicy(

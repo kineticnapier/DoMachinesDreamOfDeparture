@@ -78,6 +78,11 @@ class TimingEventToken:
             raise ValueError("step must be a nonnegative integer")
         return self.due_local_s - step * CONTROL_DT_S
 
+    def remaining_lower_s(self, step: int) -> float:
+        """Conservative remaining time from the due interval lower bound."""
+        uncertainty = 0.0 if self.uncertainty_s is None else self.uncertainty_s
+        return self.remaining_s(step) - uncertainty
+
 
 @dataclass(frozen=True, slots=True)
 class TimingFrameUpdate:

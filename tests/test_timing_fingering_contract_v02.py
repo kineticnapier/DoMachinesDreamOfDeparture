@@ -36,6 +36,13 @@ def test_local_clock_uses_only_policy_steps_and_signed_remaining():
         f.remaining_s(5)
 
 
+def test_interval_lower_remaining_uses_uncertainty_without_changing_v14_default():
+    interval = token(due=.069, uncertainty_s=.010)
+    point = token(due=.069)
+    assert interval.remaining_lower_s(0) == pytest.approx(.059)
+    assert point.remaining_lower_s(0) == pytest.approx(.069)
+
+
 def test_two_events_inside_one_control_interval_stay_distinct():
     a = token(0, .055)
     b = token(1, .058)
