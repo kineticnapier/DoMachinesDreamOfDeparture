@@ -67,3 +67,55 @@ to improve scores before examining the physical timeline. If a condition
 is genuinely unobservable or the available lead is shorter than the
 Motor's physical response time, report abstention/miss instead of
 filling in Oracle true time.
+
+
+## Target-level findings from first crosscheck (user-provided console output)
+
+The targeted crosscheck finished all 4 frozen cases x 3 arms.
+These are observations from the returned console output, not a proof
+of evaluator attribution until the saved logical-event scorer replay agrees.
+
+- Ordinary 480 HUD Network: target 33 Miss, even though selected left_1
+  had a physical KeyDown at +2.500ms to the target. Oracle Network
+  left_1 was -3.500ms and CenterFirst left_2 was -0.500ms; both Hit.
+  All three had a correct +0.000ms Timing forecast for target 33.
+- SetSpeed HUD Network and CenterFirst: actual Miss target ordinals
+  **9, 30, and 31**. Forecast insufficiency ordinals 5 and 6
+  were NOT themselves the reported missed target ordinals.
+  Target 9: HUD Network left_2 at -4.113ms and CenterFirst right_1
+  at +0.887ms, yet both target9 Miss.
+  Target 30: HUD Network left_1 +3.806ms and CenterFirst right_2
+  +9.806ms, both Miss.
+  Target 31: the selected axis (HUD Net right_3, CenterFirst left_1)
+  has no physical KeyDown within the reported 100ms window.
+- Pause: target 13 Miss for both Network arms; both chose left_1
+  with +2.774ms physical KeyDown. CenterFirst chose left_2 with
+  -1.226ms and Hit. The frozen Timing due was exact for these events.
+- Train bool first 5s: target 0 has no local forecast/physical KeyDown;
+  target 1 has only ~20.163ms first-seen forecast lead and no physical
+  KeyDown; both HUD arms Miss those ordinals. Oracle hits both.
+
+### Why physical KeyDown near a missed due is not proof of a bad scorer
+
+The existing RealChartMotorEnv._score_event uses _next_target_index
+(the first still-unresolved target) rather than the intended local
+Timing token. A physical KeyDown close to target i could therefore
+have scored a previous unresolved target j. That hypothesis is especially
+relevant for 480/SetSpeed/Pause where selected physical press times
+are within a few ms of the missing target due.
+
+New replay_hud_v14_scorer_routing_v02.py consumes the *saved logical*
+switch streams, reruns only the scorer (no Motor/Network/Timing rollouts),
+and compares every Hit/Miss flag and aggregate count against the
+saved per-arm JSON. It reports target consumption only when scorer
+reconstruction matches the saved original exactly.
+
+Run from the repository root, after pulling the new code:
+
+    .venv\Scripts\python.exe -m pytest tests/test_replay_hud_v14_scorer_routing_v02.py -q
+
+    .venv\Scripts\python.exe -u scripts/replay_hud_v14_scorer_routing_v02.py --input-dir artifacts/fingering_network_v02/hud-v14-failure-crosscheck-r1
+
+No physical experiment or new output artifact is created by the
+scorer replay. Do not alter timing tolerance, student checkpoints,
+Motor constants, or the evaluator to make these results PASS.
