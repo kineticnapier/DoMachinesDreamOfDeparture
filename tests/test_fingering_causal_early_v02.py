@@ -107,3 +107,52 @@ def test_baseline_checks_actual_saved_network_choices():
 def test_activation_lead_bounded_for_large_negative_state():
     assert audit.activation_extra_s(-.99, .28) == audit.EXTRA_LEAD_S
     assert audit.activation_extra_s(0.0, .28) == 0.0
+
+
+def _naive_pending(events, selected, now, horizon):
+    """Original v0.2 selection logic for parity testing."""
+    upcoming = tuple(event for event in events
+                     if event.event_index not in selected
+                     and event.episode_time_s + audit.teacher.PREVIEW_TAIL >= now)
+    due = tuple(event for event in upcoming
+                if event.episode_time_s <= now + horizon + 1e-9)
+    return upcoming, due
+
+
+@pytest.mark.parametrize("horizon", [
+    audit.teacher.LEAD,
+    audit.teacher.LEAD + audit.EXTRA_LEAD_S,
+])
+def test_monotone_cursor_matches_old_full_event_scan(horizon):
+    # Consecutive same-time events, near window boundaries, and long idle gaps.
+    times = (.011, .011, .022, .045, .095, .095, .138,
+             .139, .250, .251, .400, .402)
+    events = tuple(SimpleNamespace(event_index=i, episode_time_s=t)
+                   for i, t in enumerate(times))
+    selected = set()
+    cursor = 0
+    for tick in range(52):
+        now = tick * .010
+        old_upcoming, old_due = _naive_pending(events, selected, now, horizon)
+        new_upcoming, new_due, cursor = audit.pending_decision_events(
+            events, selected, cursor, now, horizon
+        )
+        assert new_upcoming == old_upcoming if old_due else new_upcoming == ()
+        assert new_due == old_due
+        selected.update(event.event_index for event in new_due)
+
+
+def test_monotone_cursor_handles_late_expired_unselected_event():
+    events = (
+        SimpleNamespace(event_index=0, episode_time_s=.0),
+        SimpleNamespace(event_index=1, episode_time_s=.150),
+    )
+    up, due, cursor = audit.pending_decision_events(
+        events, set(), 0, .100, audit.teacher.LEAD
+    )
+    assert cursor == 1
+    assert up == () and due == ()
+    up, due, cursor = audit.pending_decision_events(
+        events, set(), cursor, .110, audit.teacher.LEAD
+    )
+    assert [event.event_index for event in due] == [1]
