@@ -359,3 +359,60 @@ BPM beyond a future SetSpeed boundary. First establish whether the
 information is truly absent from the HUD or merely rejected by the
 v1.4 estimator. Treat idle-to-Motor HUD parity failures as a blocker
 to making that inference.
+
+
+## HUD-only observability audit (2026-10-18, user Windows console)
+
+The idle Contact HUD investigation passed parity against the previously
+saved full-HUD Motor runs for BOTH fixed cases:
+
+    speed: idle_to_motor_hud_parity.matched=True, no mismatched ordinals
+    Train: idle_to_motor_hud_parity.matched=True, no mismatched ordinals
+
+SetSpeed special-speed_double:
+- Ordinal4 arrives at 0.362903s, forecast first appears at 0.290s,
+  sufficient 72.903ms lead. Pre-arrival HUD shows tile BPM496,
+  Real BPM992 and a *future SetSpeed marker* but no future numeric speed.
+- When entering SetSpeed at ~0.37s, the visible BPM changes to Tile992,
+  Real1984. Ordinal5 at 0.393145s then first appears with 23.145ms
+  lead. Ordinal6 at 0.423387s first appears only at 0.400s,
+  23.387ms lead, because the current SetSpeed floor is treated as
+  the end of verified extrapolation. Frozen Motor normal lead is 44ms.
+- Ordinals27..31 have 78.468..79.435ms lead; their numerical Timing
+  estimates are near exact (1e-6..4e-6ms). Their previous Miss cascade
+  cannot be attributed to lack of first-seen prediction coverage.
+
+Train bool five-second smoke:
+- Target0 at 3.999334s is never predicted; 3.92..3.99s are marked
+  countdown_before_special_arrival with old displayed Tile/Real
+  BPM60.01 and next-floor SetSpeed marker.
+- At 4.00s the current HUD switches to Tile480.08,
+  Real2880.479. Target1 at 4.020163s becomes predictable but has
+  only 20.163ms lead. Its 44ms physical preparation target was
+  already in the past.
+
+### Information sufficiency question
+
+The engine's early SetSpeed marker does not reveal the numeric new
+BPM; the HUD263 layout has only current displayed Tile/Real BPM.
+The floor-0 countdown orbit may repeat angular phases without exposing
+the number of remaining countdown ticks. A guard removal alone could
+thus lead to confident wrong-timing forecasts.
+
+scripts/audit_hud263_nonidentifiability_v01.py and its tests construct
+two causal counterfactual pairs:
+1. Same geometry, same marker, different future SetSpeed numeric values.
+2. Same geometry, old BPM and future SetSpeed marker, countdown tick
+   counts differing by two rotations.
+
+The program compares COMPLETE time-matched prefix HUD263 vectors,
+then checks that future target deadlines differ by >44ms. It is an
+offline counterfactual information test: true chart targets choose the
+offline comparison horizon only, never enter a tracker or policy.
+
+Passing pairs establish inability to recover all relevant future
+deadlines *from the existing HUD263 observations alone*; not
+necessarily an information limit for a richer genuinely player-visible
+countdown or numeric preview. These new pairs and tests have not
+yet been run by the user as of writing. No model/engine/policy code
+or thresholds were changed.
