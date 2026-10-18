@@ -59,6 +59,20 @@ def choose_events(onset_report: dict, policy: str, per_band: int) -> dict[int, d
     return picks
 
 
+def _case_metadata(anchor: dict, due_s: float) -> dict:
+    """The onset audit stores command lead, but not the due timestamp itself."""
+    return {
+        "event_index": int(anchor["event_index"]),
+        "reuse_band": anchor["reuse_band"],
+        "axis": anchor["axis"],
+        "due_ms": round(float(due_s) * 1000.0, 3),
+        "start_activation": anchor["activation_at_command"],
+        "start_position_mm": anchor["position_at_command_mm"],
+        "start_velocity_mm_s": anchor["velocity_at_command_mm_s"],
+        "start_finger_fatigue": anchor["finger_fatigue_at_command"],
+    }
+
+
 def _scheduled_commit(env, committed: dict, rows: list[dict],
                       event_by_index: dict, cursor: int, now: float) -> int:
     """The frozen allocation replay uses the production controller unchanged."""
@@ -200,14 +214,7 @@ def _replay_policy(segment, replay: dict, onset_report: dict,
                 )
             actual = intervention["keydown_ms"]
             captured.append({
-                "event_index": ix,
-                "reuse_band": anchor["reuse_band"],
-                "axis": axis,
-                "due_ms": round(due_s * 1000.0, 3),
-                "start_activation": anchor["activation_at_command"],
-                "start_position_mm": anchor["position_at_command_mm"],
-                "start_velocity_mm_s": anchor["velocity_at_command_mm_s"],
-                "start_finger_fatigue": anchor["finger_fatigue_at_command"],
+                **_case_metadata(anchor, due_s),
                 "baseline": control,
                 "activation_zero": intervention,
                 "keydown_shift_ms": (
