@@ -8,6 +8,7 @@ from datetime import datetime, timezone
 from hashlib import sha256
 import json
 from pathlib import Path
+import sys
 import time
 
 from dmdod.adofai.chart import load_adofai
@@ -26,7 +27,8 @@ from dmdod.planning.hud_v3_composite_forecast_source_v30 import (
 from dmdod.planning.timing_fingering_motor_policy_v02 import (
     TimingFingeringMotorPolicy,
 )
-from scripts import run_full_chart_fingering_replay_v02 as frozen
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+import run_full_chart_fingering_replay_v02 as frozen
 
 
 FORMAT = "dmdod-countdown-hud-v3-motor-phase3-v0.1"

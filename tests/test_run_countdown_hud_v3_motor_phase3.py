@@ -2,6 +2,8 @@ from __future__ import annotations
 
 import ast
 import inspect
+from pathlib import Path
+import subprocess
 import textwrap
 
 import pytest
@@ -37,3 +39,18 @@ def test_output_directory_is_create_only(tmp_path) -> None:
     existing.mkdir()
     with pytest.raises(FileExistsError):
         existing.mkdir(parents=True, exist_ok=False)
+
+
+def test_cli_help_starts_from_repository_root() -> None:
+    completed = subprocess.run(
+        [
+            str(Path(".venv/Scripts/python.exe")),
+            "scripts/run_countdown_hud_v3_motor_phase3.py",
+            "--help",
+        ],
+        check=False,
+        capture_output=True,
+        text=True,
+        timeout=30,
+    )
+    assert completed.returncode == 0, completed.stderr
