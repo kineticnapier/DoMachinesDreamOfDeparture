@@ -1,5 +1,8 @@
 from __future__ import annotations
 
+import ast
+import inspect
+
 from scripts import audit_countdown_hud_v3_phase1 as audit
 
 
@@ -20,3 +23,13 @@ def test_audit_contract_has_no_truth_fields_and_go_gap_is_not_constant() -> None
     assert gaps["status"] == "PASS"
     values = [x["go_to_first_target_ms_posthoc"] for x in gaps["fixtures"]]
     assert values[0] != values[1]
+
+
+def test_capture_pass_cannot_read_target_truth() -> None:
+    tree = ast.parse(inspect.getsource(audit._capture))
+    attributes = {
+        node.attr for node in ast.walk(tree) if isinstance(node, ast.Attribute)
+    }
+    assert "targets" not in attributes
+    assert "target_time_s" not in attributes
+    assert "episode_time_s" not in attributes
