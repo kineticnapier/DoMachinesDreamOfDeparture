@@ -82,3 +82,17 @@ def test_no_forecast_does_not_invent_physical_intent():
     assert selected["forecast"] is None
     assert selected["decision"] is None
     assert selected["chosen_axis_nearest_physical_downs"] == []
+
+
+def test_transitive_earlier_target_consumption_chain():
+    record, scorer = _arm(miss=False), _scorer(miss=True)
+    record["target_outcomes_posthoc"].append({
+        "ordinal": 2, "due_s": .22, "hit": False, "miss": True
+    })
+    scorer["logical_down_target_routing"].append({
+        "time_s": .221, "key": "left_2",
+        "consumed_target_ordinal": 1,
+        "assigned_error_ms": 61.,
+        "margin": "very_late",
+    })
+    assert cascade.predecessor_chain(record, scorer, 2) == (1, 0)
