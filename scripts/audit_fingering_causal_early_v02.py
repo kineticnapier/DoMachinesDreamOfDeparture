@@ -248,6 +248,8 @@ def execute(segment, model, policy: str, alpha: float, arm: str,
                 "committed": tuple(committed.values()),
             })
         judgement_count = len(env.judgement_trace)
+        missed_before = tuple(env._missed)
+        too_early_before = env._too_early
         step = env.step(action)
         if diagnostic_probe is not None:
             diagnostic_probe("after_step", {
@@ -257,6 +259,12 @@ def execute(segment, model, policy: str, alpha: float, arm: str,
                 "step": step,
                 "logical_events": env.last_events,
                 "judgements": tuple(env.judgement_trace[judgement_count:]),
+                "new_miss_ordinals": tuple(
+                    index for index, (before, after) in enumerate(
+                        zip(missed_before, env._missed)
+                    ) if not before and after
+                ),
+                "new_too_early": env._too_early - too_early_before,
             })
         for event in env.last_events:
             if event.event is KeyEvent.DOWN:

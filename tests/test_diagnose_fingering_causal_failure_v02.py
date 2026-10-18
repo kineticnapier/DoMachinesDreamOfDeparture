@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from types import SimpleNamespace
 
 from dmdod.motor.contact_16k import ContactAction
 
@@ -47,3 +48,23 @@ def test_execute_probe_parameter_is_optional() -> None:
     # The signature guard protects all existing audit callers from needing a
     # diagnostic callback and makes the probe observational by construction.
     assert diagnostic.causal.execute.__kwdefaults__["diagnostic_probe"] is None
+
+
+def test_window_probe_records_resolution_deltas(monkeypatch) -> None:
+    monkeypatch.setattr(
+        diagnostic, "physical_snapshot", lambda env: {"episode_ms": 1010.0}
+    )
+    probe = diagnostic.WindowProbe({7: 1.0}, radius_s=.080)
+    action = ContactAction((0.0,) * 12)
+    env = SimpleNamespace(privileged_episode_time_s=lambda: 1.01)
+    probe("after_step", {
+        "now_s": 1.0,
+        "env": env,
+        "action": action,
+        "logical_events": (),
+        "judgements": (),
+        "new_miss_ordinals": (9,),
+        "new_too_early": 1,
+    })
+    assert probe.frames[0]["new_miss_ordinals"] == [9]
+    assert probe.frames[0]["new_too_early"] == 1

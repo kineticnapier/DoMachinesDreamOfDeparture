@@ -151,6 +151,8 @@ class WindowProbe:
                 }
                 for row in payload["judgements"]
             ],
+            "new_miss_ordinals": list(payload["new_miss_ordinals"]),
+            "new_too_early": int(payload["new_too_early"]),
             "state": physical_snapshot(payload["env"]),
         })
 
