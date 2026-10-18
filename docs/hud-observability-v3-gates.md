@@ -1,0 +1,114 @@
+# DMDOD — HUD-only observability barrier and v3 sensor gates
+
+## Basis: frozen Windows counterfactual evidence
+
+Run: scripts/audit_hud263_nonidentifiability_v01.py
+
+| Hidden variable changed between two charts | Difference in all observed HUD263 frames through probe | Future event-time disagreement | Verdict |
+| --- | ---: | ---: | --- |
+| Future numeric SetSpeed value, unchanged visible geometry and marker | 0.0 | 90.726ms | INDISTINGUISHABLE |
+| Countdown length, changed by two rotations | <=1.7484556000744134e-7 | 1999.667ms | INDISTINGUISHABLE |
+
+The equality tolerance was 5e-5, fixed before running.
+The SetSpeed probe was at local time 0.33s, status eligible_partial.
+The countdown probe was at 2.94s, status countdown_before_special_arrival.
+
+For those constructed worlds there is NO deterministic mapping from
+the same causal HUD263 prefix to two different correct future event
+times. It is inappropriate to fix this by introducing the hidden
+chart values to the Timing model.
+
+This is an existential identifiability result, not proof that every
+possible chart fails. Even a stochastic model cannot guarantee the
+correct unseen alternative in both indistinguishable worlds.
+
+## Research goal
+
+Distinguish genuinely player-perceivable information from evaluator
+truth, and determine whether a *new sensor* can separate the two
+counterfactual worlds early enough to issue a 44ms Motor command.
+
+The requirement is NOT merely that a future target becomes observable
+eventually. For a finger requiring 44ms ordinary lead, the
+distinguishing observation must be received with enough time to
+command the physical Motor; otherwise the target remains uncovered.
+
+## Candidate observation channels (not yet approved)
+
+1. Actual game-displayed countdown digit/tick or other visible
+   remaining-countdown indicator, recorded on the same frame as the
+   player's view. Do not use countdownTicks from the parsed chart.
+2. Audio samples that the player actually hears at the current frame,
+   with recording/playback latency and an explicit causal sampling
+   boundary. Only actual audio distinguishes worlds; do not infer
+   unknown BPM from chart actions or future targets.
+3. An actually displayed numerical future speed preview, if the
+   game renderer exposes one. A SetSpeed event marker alone does not
+   reveal its numeric speed; the current HUD's Tile/Real BPM are for
+   the current floor, not the next floor.
+4. A genuinely visible count of completed floor-0 countdown cycles,
+   but ONLY if display state makes it measurable. A pure orbit-phase
+   counter cannot recover different unseen countdown lengths by
+   accumulating phase from the start, as both pairs have identical
+   phase histories.
+
+These are research questions, not a decision to add features. New
+numeric channels require provenance that they are truly perceivable
+before passing them to a HUD-only student.
+
+## Versioned v3 boundary
+
+Retain existing 263D as the frozen v1/v2 compatibility view. Any
+approved observation must be a NEW versioned view, with a separate
+dimensionality and a documented causal timestamp. Never write hidden
+values into unused HUD263 fields or reuse the legacy first-24D motor
+zeros as unversioned extra data.
+
+The sensor boundary must state:
+- When a player first sees/hears the signal, and sampling latency.
+- Whether it is available on control frame t with access to frames
+  <=t ONLY.
+- Missing/unreadable signal representation (validity mask or abstain).
+- Proof that data source is visible or audible, not a compiled-chart
+  shortcut, a target ordinal, or a privileged playhead time.
+- Reset and prefix-invariance behavior for different future hidden
+  actions.
+- How already-frozen Fingering 65D context can remain unchanged.
+
+## Acceptance tests before any neural or Motor change
+
+A. Re-run both original counterfactual pairs: they MUST remain
+   indistinguishable under legacy HUD263 as a regression.
+B. For a proposed real sensor, show recorded causal prefixes from
+   each world and identify the FIRST frame at which the additional
+   player-perceivable data differs. If it never differs, reject it.
+C. At that first distinguishing frame, calculate posthoc lead to
+   each distinct future target. Show whether the frozen 44ms Motor
+   preparation budget can still be met. Do not call an insufficient
+   lead a usable observation.
+D. Compare counterfactual prefixes where hidden values change but
+   player-visible/audio channels do not; new model must abstain.
+E. Preserve same single-chart fixtures (120/240/480, SetSpeed,
+   Pause, Twirl, Train first 5s) and Oracle/HUD/CenterFirst arms;
+   no Validation20 threshold selection and no changed scorer.
+F. Only after A-E are met, implement a new versioned observation
+   adapter. Do not modify frozen Timing v1.4 or the old checkpoint.
+
+## Known unresolved chart tests
+
+- SetSpeed 32-event test: Oracle 32/32, HUD Network and
+  HUD CenterFirst 29/32. The initial post-transition target5/6
+  appears with 23.145/23.387ms lead (insufficient for 44ms),
+  while many later events are exact but are affected by scorer
+  target-consumption cascades.
+- Train bool 5-second test: Oracle 9/9, HUD arms 7/9.
+  Target0 never forecast; target1 appears only 20.163ms early.
+- Frozen arm-reservation bug fix DID make 480 BPM all 48/48
+  and Pause all 32/32 in three comparison arms.
+
+## Interim behavior
+
+Do not bluff target timing. Keep status ABSTAIN or report
+insufficient_observable_lead, preserve full Hit/Miss coverage
+denominators, and maintain physical-axis reservation correctness.
+A partial success on eligible forecasts is not full-chart success.
