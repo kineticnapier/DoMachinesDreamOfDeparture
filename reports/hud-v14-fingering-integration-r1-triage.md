@@ -301,3 +301,61 @@ sufficient-lead shortage plus later event cascade), Train bool
 5s HUD 7/9 (initial target unforecast and next with only ~20.163ms
 lead). Those require visibility-boundary analysis, not reuse of the
 physical reservation fix as an explanation.
+
+
+## Post-reservation-fix comparison: remaining SetSpeed and Train cases
+
+After the above 480 BPM and Pause passes, the user reran
+the predeclared SetSpeed and Train five-second smoke with the fixed
+physical reservation code.
+
+| Case | Oracle Network | HUD Network | HUD CenterFirst | Gate |
+| --- | --- | --- | --- | --- |
+| SetSpeed speed_double | 32/32 Hit | 29/32 Hit | 29/32 Hit | FAIL |
+| Train bool first 5s | 9/9 Hit | 7/9 Hit | 7/9 Hit | FAIL |
+
+All six runs report zero TooEarly and no overload. SetSpeed
+actual Miss ordinals remain 9, 30, 31, despite near-exact HUD
+forecast due times for those three ordinals. The previous physical
+reservation arming bug is **not** a complete explanation of these
+failures. The earlier saved scorer replay identified lead insufficiency
+at SetSpeed ordinals 5 and 6; missed ordinals can shift downstream
+via ordered-scorer absorption.
+
+Train target ordinal 0 at 3.999333624s has no predicted HUD
+token and no selected physical actuation. Target 1 at
+4.020163490s first appears only 20.163ms before due, shorter
+than the frozen 44ms Motor normal lead. These are an observation
+boundary and timing-lead issue, not an indication that the newly
+fixed physical reservation predicate regressed.
+
+### Next fixed HUD observation audit (no model or Motor policy changes)
+
+The deterministic HUD v1.4 implementation intentionally blocks
+future timing extrapolation across some SetSpeed/Pause boundaries.
+The *reason* for each unforecast interval must be read from the
+actual current-HUD stream rather than assumed.
+
+New script diagnose_hud_v14_observability_boundaries_v02.py
+runs only the idle Contact HUD renderer (the deterministic Timing
+v1.4 tracker ignores all Motor features), and records each 10ms
+frame's raw v1.4 status/reason, currently displayed Tile/Real BPM,
+visible current and next floor markers, forecast due times and
+first-confirmed event lead. The simulator's target truth is read
+only AFTER completing the HUD stream for posthoc attribution.
+An optional saved-HUD-arm comparison rejects a mismatch between
+the idle-renderer first-seen times and the original run.
+
+Run from the repository root (output paths are create-only):
+
+    .venv\Scripts\python.exe -m pytest tests/test_diagnose_hud_v14_observability_boundaries_v02.py -q
+
+    .venv\Scripts\python.exe -u scripts/diagnose_hud_v14_observability_boundaries_v02.py --case special-speed_double --targets 4,5,6,7,27,28,29,30,31 --compare-report artifacts/fingering_network_v02/hud-v14-failure-crosscheck-r1/special-speed_double/hud_network.json --output artifacts/fingering_network_v02/hud-v14-speed-visibility-r1.json
+
+    .venv\Scripts\python.exe -u scripts/diagnose_hud_v14_observability_boundaries_v02.py --case train-bool-5s --targets 0,1 --compare-report artifacts/fingering_network_v02/hud-v14-failure-crosscheck-r1/train-bool-5s/hud_network.json --output artifacts/fingering_network_v02/hud-v14-train-visibility-r1.json
+
+Do NOT weaken the frozen 44ms/69ms lead or invent the hidden new
+BPM beyond a future SetSpeed boundary. First establish whether the
+information is truly absent from the HUD or merely rejected by the
+v1.4 estimator. Treat idle-to-Motor HUD parity failures as a blocker
+to making that inference.
