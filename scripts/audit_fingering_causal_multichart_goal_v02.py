@@ -54,11 +54,8 @@ def frozen_code_hashes() -> dict:
         "multichart": Path(multichart.__file__),
         "teacher": Path(teacher.__file__),
         "network": Path(network.__file__),
-        "motor": Path(causal.CoupledContactRealChartEnv.__module__.replace(".", "/")),
     }
-    # Local wrapper logic may change formatting without changing the arms;
-    # run protocol freezes the checkpointed schema instead.
-    paths.pop("motor")
+    # Script versions affecting inference/scoring are frozen for resume.
     return {name: hash_file(path.resolve()) for name, path in paths.items()}
 
 
@@ -268,7 +265,14 @@ def snapshot(report: dict, output_dir: Path, goal_seconds: float | None) -> dict
             "projected_over_target"
         ),
         "charts": rows,
-        "aggregate_completed_pairs_only": multichart.aggregate(rows),
+        # The legacy aggregator expects complete baseline+lead pairs. Hide
+        # pending partial arms from it, but KEEP them in progress.json.
+        "aggregate_completed_pairs_only": multichart.aggregate([
+            {**row, "policies": {
+                policy: pair for policy, pair in row["policies"].items()
+                if all(arm in pair for arm in ARMS)
+            }} for row in rows
+        ]),
     }
 
 
