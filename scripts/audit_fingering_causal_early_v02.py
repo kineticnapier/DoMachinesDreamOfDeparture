@@ -120,8 +120,8 @@ def pending_decision_events(events, selected: set[int], cursor: int,
 
     Network decisions always process a sorted prefix in event order.  Advancing
     cursor past selected or expired entries is therefore safe.  Construct the
-    full upcoming lookahead only when the next event is within the decision
-    horizon (preserves the original encode_context inputs and order).
+    bounded upcoming lookahead only when the next event is within the decision
+    horizon (preserves the original encode_context's first MAX_EVENTS exactly).
     """
     while cursor < len(events) and (
         events[cursor].event_index in selected
@@ -131,8 +131,16 @@ def pending_decision_events(events, selected: set[int], cursor: int,
     if (cursor == len(events)
             or events[cursor].episode_time_s > now + horizon + 1e-9):
         return (), (), cursor
+    # encode_context uses only network.MAX_EVENTS future event entries.
+    # Bound the slice to all currently due events plus that many future
+    # entries; do not construct the remainder of a long chart on each hit.
+    due_end = cursor
+    while (due_end < len(events)
+           and events[due_end].episode_time_s <= now + horizon + 1e-9):
+        due_end += 1
+    visible_end = min(len(events), due_end + network.MAX_EVENTS)
     upcoming = tuple(
-        event for event in events[cursor:]
+        event for event in events[cursor:visible_end]
         if event.event_index not in selected
         and event.episode_time_s + teacher.PREVIEW_TAIL >= now
     )
