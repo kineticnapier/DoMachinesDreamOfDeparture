@@ -95,3 +95,33 @@ def test_anticipation_skips_thumb_and_side_to_preserve_topology():
         motor, base, future, 0.0, set(), {}
     )
     assert same == base and not armed and n == 0
+
+
+def test_anticipation_does_not_start_outside_bounded_lead():
+    motor = Coupled16ContactMotor()
+    i = audit.teacher.AXES.index("right_1")
+    motor.motor.body.states[i].activation = -.2
+    base = _zero_action()
+    far = [{
+        "event_index": 20, "decision_s": .060,
+        "due_s": .100, "chosen": "right_1"
+    }]
+    same, armed, n = audit.apply_early_lead(
+        motor, base, far, 0.0, set(), {}
+    )
+    assert same == base and armed == {} and n == 0
+
+
+def test_anticipation_never_arms_two_events_on_same_axis():
+    motor = Coupled16ContactMotor()
+    i = audit.teacher.AXES.index("right_1")
+    motor.motor.body.states[i].activation = -.088
+    choices = [
+        {"event_index": 20, "decision_s": .020, "due_s": .060, "chosen": "right_1"},
+        {"event_index": 21, "decision_s": .024, "due_s": .063, "chosen": "right_1"},
+    ]
+    _, armed, n = audit.apply_early_lead(
+        motor, _zero_action(), choices, 0.0, set(), {}
+    )
+    assert n == 1
+    assert armed == {20: "right_1"}
