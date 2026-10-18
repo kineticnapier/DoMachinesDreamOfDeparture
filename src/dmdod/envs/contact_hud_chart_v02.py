@@ -13,7 +13,10 @@ this first provider leaves feedback hidden instead of inventing a mapping.
 
 from dmdod.envs.contact_chart_16k import CoupledContactRealChartEnv
 from dmdod.features.hud import hud_bpms_for_floor
-from dmdod.planning.contact_timing_hud_v01 import ContactVisibleTimingHUD
+from dmdod.planning.contact_timing_hud_v01 import (
+    ContactVisibleTimingHUD,
+    MOD_VISIBLE_BPM_CONTRACT,
+)
 
 
 class HudCoupledContactRealChartEnv(CoupledContactRealChartEnv):
@@ -29,5 +32,6 @@ class HudCoupledContactRealChartEnv(CoupledContactRealChartEnv):
         tile_bpm, real_bpm = hud_bpms_for_floor(self.segment, floor)
         return ContactVisibleTimingHUD(
             contact=contact, tile_bpm=tile_bpm, real_bpm=real_bpm,
+            bpm_observation_contract=MOD_VISIBLE_BPM_CONTRACT,
             feedback_visible=False,
         )

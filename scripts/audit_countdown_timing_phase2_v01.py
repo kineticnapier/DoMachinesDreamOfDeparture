@@ -19,7 +19,10 @@ from dmdod.features.countdown_hud_v3 import (
 )
 from dmdod.features.real_chart import DEFAULT_REAL_CHART_FEATURE_CONFIG as FLOORS
 from dmdod.motor.contact_16k import ContactAction
-from dmdod.planning.contact_timing_hud_v01 import ContactTimingHUD263Adapter
+from dmdod.planning.contact_timing_hud_v01 import (
+    ContactTimingHUD263Adapter,
+    MOD_VISIBLE_BPM_CONTRACT,
+)
 from dmdod.planning.hud_timing_composite_v20 import HUDTimingComposite
 
 
@@ -54,7 +57,9 @@ def _collect_visible_stream(segment, *, max_s: float) -> list[dict]:
         go_duration_s=60.0 / chart.initial_bpm,
     )
     sensor = CountdownVisualSensor()
-    composite = HUDTimingComposite()
+    composite = HUDTimingComposite(
+        bpm_observation_contract=MOD_VISIBLE_BPM_CONTRACT
+    )
     env = HudCoupledContactRealChartEnv(
         segment, control_dt_s=CONTROL_DT_S, physics_dt_s=.001,
         behind_floors=FLOORS.behind_floors, ahead_floors=FLOORS.ahead_floors,
@@ -128,9 +133,9 @@ def _posthoc_first_event(rows: list[dict], segment) -> dict:
                 (first[1]["due_mid_s"] - truth_s) * 1000.0, 6
             ),
             "lead_lower_ms_posthoc": round(
-                (truth_s - first[0]["observed_at_s"]
-                 - (first[1]["due_mid_s"] - first[1]["due_lower_s"]))
-                * 1000.0, 6
+                (first[1]["due_lower_s"] - first[0]["observed_at_s"])
+                * 1000.0,
+                6,
             ),
         },
     }

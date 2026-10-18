@@ -38,7 +38,10 @@ def test_12axis_motor_is_not_silently_truncated_to_8keys():
             midspin=False, is_ccw=False, num_planets=2, event_markers=(),
         ),),
     )
-    hud = adapter.ContactVisibleTimingHUD(sample, tile_bpm=5000., real_bpm=6200.)
+    hud = adapter.ContactVisibleTimingHUD(
+        sample, tile_bpm=5000., real_bpm=6200.,
+        bpm_observation_contract=adapter.MOD_VISIBLE_BPM_CONTRACT,
+    )
     result = adapter.ContactTimingHUD263Adapter.encode(0, hud)
     assert len(result.features) == 263
     assert result.features[:24] == (0.0,) * 24
@@ -63,6 +66,7 @@ def test_adapter_exactly_matches_reference_8key_hud_geometry_bpm_feedback():
     for visible in (False, True):
         exposed = adapter.ContactVisibleTimingHUD(
             contact=geometry, tile_bpm=2250., real_bpm=3000.,
+            bpm_observation_contract=adapter.MOD_VISIBLE_BPM_CONTRACT,
             feedback_visible=visible,
             last_judgement=TimingJudgement.PERFECT if visible else None,
             last_timing_error_ms=-9.75 if visible else 0.0,
@@ -103,22 +107,38 @@ def test_visible_bpm_must_be_finite_and_positive(tile, real):
     motor = Coupled16ContactMotor()
     geometry = ContactChartObservation(motor.observe(), 0., 1., ())
     with pytest.raises(ValueError, match="BPM"):
-        adapter.ContactVisibleTimingHUD(geometry, tile, real)
+        adapter.ContactVisibleTimingHUD(
+            geometry, tile, real,
+            bpm_observation_contract=adapter.MOD_VISIBLE_BPM_CONTRACT,
+        )
 
 
 def test_hidden_feedback_is_not_mistaken_for_visible_judgement():
     motor = Coupled16ContactMotor()
     geometry = ContactChartObservation(motor.observe(), 0., 1., ())
     without = adapter.ContactVisibleTimingHUD(
-        geometry, 120., 120., feedback_visible=False,
+        geometry, 120., 120., adapter.MOD_VISIBLE_BPM_CONTRACT,
+        feedback_visible=False,
         last_judgement=TimingJudgement.PERFECT, last_timing_error_ms=16.,
     )
-    plain = adapter.ContactVisibleTimingHUD(geometry, 120., 120.)
+    plain = adapter.ContactVisibleTimingHUD(
+        geometry, 120., 120., adapter.MOD_VISIBLE_BPM_CONTRACT
+    )
     assert (adapter.ContactTimingHUD263Adapter.encode(0, without).features ==
             adapter.ContactTimingHUD263Adapter.encode(0, plain).features)
     with pytest.raises(ValueError, match="visible feedback"):
         adapter.ContactVisibleTimingHUD(
-            geometry, 120., 120., feedback_visible=True
+            geometry, 120., 120., adapter.MOD_VISIBLE_BPM_CONTRACT,
+            feedback_visible=True
+        )
+
+
+def test_stock_only_contract_rejects_numeric_bpm_fields():
+    motor = Coupled16ContactMotor()
+    geometry = ContactChartObservation(motor.observe(), 0., 1., ())
+    with pytest.raises(ValueError, match="stock-only"):
+        adapter.ContactVisibleTimingHUD(
+            geometry, 120., 120., adapter.STOCK_ONLY_BPM_CONTRACT
         )
 
 
@@ -187,6 +207,7 @@ def test_real_contact_frames_match_reference_v14_geometry_and_forecast(variant):
             contact=c,
             tile_bpm=n.tile_bpm,
             real_bpm=n.real_bpm,
+            bpm_observation_contract=adapter.MOD_VISIBLE_BPM_CONTRACT,
             feedback_visible=n.feedback_visible,
             last_judgement=n.last_judgement,
             last_timing_error_ms=n.last_timing_error_ms,
@@ -208,7 +229,9 @@ def test_sequential_frame_order_and_reset():
     env = CoupledContactRealChartEnv(segment, tail_s=.04)
     c = env.reset()
     client = adapter.ContactTimingHUD263Adapter()
-    observation = adapter.ContactVisibleTimingHUD(c, 496., 496.)
+    observation = adapter.ContactVisibleTimingHUD(
+        c, 496., 496., adapter.MOD_VISIBLE_BPM_CONTRACT
+    )
     first = client.encode(0, observation)
     client.observe(first)
     with pytest.raises(ValueError, match="consecutive"):

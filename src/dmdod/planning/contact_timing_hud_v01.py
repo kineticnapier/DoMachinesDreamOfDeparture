@@ -34,6 +34,8 @@ from dmdod.planning import hud_timing_tracker_transition_v14 as v14
 
 CONTACT_TIMING_HUD_VERSION = "contact-12axis-timing-v1.4-hud263-v1"
 SUPPORTED_ESTIMATOR = "hud_timing_tracker_transition_v14"
+MOD_VISIBLE_BPM_CONTRACT = "mod-visible-tile-real-bpm-v2"
+STOCK_ONLY_BPM_CONTRACT = "stock-only-no-numeric-bpm"
 HUD_DIM = 263
 LEGACY_MOTOR_DIM = 24
 NEUTRAL_MOTOR_FIELDS = (0.0,) * LEGACY_MOTOR_DIM
@@ -45,12 +47,17 @@ class ContactVisibleTimingHUD:
 
     The public contact geometry observation has no BPM fields. Tile/Real BPM
     are therefore required rather than reconstructed from future true notes.
+    They are a Mod/JRP-style numeric HUD contract, not fields exposed by the
+    stock ADOFAI countdown screen. A stock-only observer must not construct
+    this type by copying chart settings or truth into these fields.
+
     Timing feedback is optional and must be displayed to be included.
     """
 
     contact: ContactChartObservation
     tile_bpm: float
     real_bpm: float
+    bpm_observation_contract: str
     feedback_visible: bool = False
     last_judgement: TimingJudgement | None = None
     last_timing_error_ms: float = 0.0
@@ -62,6 +69,11 @@ class ContactVisibleTimingHUD:
             value = getattr(self, name)
             if type(value) not in (float, int) or not isfinite(value) or value <= 0:
                 raise ValueError(f"{name} must be a positive finite visible BPM")
+        if self.bpm_observation_contract != MOD_VISIBLE_BPM_CONTRACT:
+            raise ValueError(
+                "numeric Tile/Real BPM requires the Mod-visible BPM contract; "
+                "stock-only countdown does not directly expose numeric BPM"
+            )
         if type(self.feedback_visible) is not bool:
             raise ValueError("feedback_visible must be bool")
         if self.last_judgement is not None and not isinstance(

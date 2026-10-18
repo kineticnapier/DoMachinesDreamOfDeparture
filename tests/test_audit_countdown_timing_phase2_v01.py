@@ -40,3 +40,25 @@ def test_policy_collection_does_not_read_target_truth() -> None:
     assert "targets" not in attributes
     assert "target_time_s" not in attributes
     assert "episode_time_s" not in attributes
+
+
+def test_posthoc_lead_lower_is_predicted_due_lower_not_truth() -> None:
+    class Target:
+        episode_time_s = 10.0
+
+    class Segment:
+        targets = (Target(),)
+
+    rows = [{
+        "step": 100,
+        "observed_at_s": 1.0,
+        "pending": [{
+            "local_id": "countdown:0",
+            "due_lower_s": 9.98,
+            "due_upper_s": 10.02,
+            "due_mid_s": 10.0,
+            "source": "countdown_first_event",
+        }],
+    }]
+    result = audit._posthoc_first_event(rows, Segment())
+    assert result["first_matching_prediction"]["lead_lower_ms_posthoc"] == 8980.0

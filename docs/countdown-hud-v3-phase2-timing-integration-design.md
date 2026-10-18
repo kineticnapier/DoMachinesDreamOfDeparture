@@ -10,6 +10,15 @@ trackerへ渡す。Fingering、Motor、checkpoint、Validation20には接続し�
 Countdown表示は周期の位相anchorであり、初回target時刻そのものではない。
 特に`Go!`から初回targetまでの固定delayは禁止する。
 
+### BPM observation contract
+
+現行263DのTile BPM / Real BPMは、JRP等のModが画面へ数値表示する場合に限る
+`mod-visible-tile-real-bpm-v2`観測契約である。stock ADOFAIのCountdown表示だけから
+数値BPMを直接観測できる、という意味ではない。CompositeとContact HUD adapterは
+この契約を明示的に要求し、`stock-only-no-numeric-bpm`入力をfail closedする。
+stock-only経路でchart設定や内部BPMを観測値に代入してはならない。凍結Timing v1.4の
+263D仕様とアルゴリズム自体は変更しない。
+
 ## Proposed interfaces
 
 新規ファイルは次の3単位に分ける。
@@ -99,13 +108,21 @@ first_due_interval = observed phase anchor interval
 
 - Countdown中の初回eventだけを新規estimatorの責務とする。
 - 通常playに入った後は凍結Timing v1.4の結果をそのまま採用する。
-- 両者が同時に候補を出した場合、due区間が重なるときだけ同一local IDへ統合する。
+- 両者が同時に候補を出した場合、単一のv1.4候補だけがdue区間と重なるときに限り
+  同一local IDへ統合する。重ならない余剰候補や複数候補は、正解時刻で選別せず
+  `source_conflict`としてすべて棄権する。
 - 矛盾時に正解時刻で選ばず`source_conflict`として棄権する。
+- Countdown中にcueが欠損・stale・invalidになったframeでは、raw v1.4 forecastは
+  診断用に保持するがplayable候補へ公開しない。
 - v1.4へ渡すのは常に`frame.legacy_hud263`のみで、278Dを誤入力しない。
 - Countdown trackerの内部状態をv1.4へ埋め込まず、両者を個別reset可能にする。
 
 local IDの対応付けは予測区間の重なりだけで行う。評価器のtarget IDは使わない。
 同一候補のframe反復を新規eventとして数えない。
+前frameからpendingに残るlocal IDは、そのframeで未確定でも`reused_ids`へ含める。
+`new_ids`と`reused_ids`はpendingを分割し、消えたIDは`canceled`または`elapsed`の
+どちらか一方に入る。新しいCountdown due区間が既存区間と重ならない場合は、同じ
+local IDを更新せず`countdown_interval_conflict`で既存IDをcancelする。
 
 ## Uncertainty, confidence, and abstention
 
