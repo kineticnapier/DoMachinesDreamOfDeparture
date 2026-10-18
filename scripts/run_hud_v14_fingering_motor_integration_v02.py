@@ -441,6 +441,23 @@ def run_fixed(segment, *, checkpoint: Path, label: str,
                       "category=", miss["category"],
                       "nearest=", miss["nearest_local_forecast"],
                       "decision=", miss["decision"], flush=True)
+            for tick in value.get("diagnostic_control_trace", ()):
+                before, after = tick["axis_before"], tick["axis_after"]
+                reservations = tick["reservation_after_command"]
+                print("  AXIS_TRACE",
+                      "t=", tick["local_clock_s"],
+                      "axis=", tick["axis"],
+                      "status=", tick["forecast_status"],
+                      "cmd=", tick["axis_command"],
+                      "reservation=", reservations,
+                      "pos=", round(before["position_m"], 6),
+                      "vel=", round(before["velocity_m_s"], 4),
+                      "act=", round(before["activation"], 4),
+                      "pressed=", before["pressed"],
+                      "after_pos=", round(after["position_m"], 6),
+                      "after_pressed=", after["pressed"],
+                      "edges=", tick["physical_edges"],
+                      flush=True)
         else:
             print("  FAILED:", value["error"], flush=True)
     return {"label": label, "arms": rows}
