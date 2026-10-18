@@ -416,3 +416,58 @@ necessarily an information limit for a richer genuinely player-visible
 countdown or numeric preview. These new pairs and tests have not
 yet been run by the user as of writing. No model/engine/policy code
 or thresholds were changed.
+
+
+## HUD263 non-identifiability: experimentally confirmed (2026-10-18)
+
+The user ran scripts/audit_hud263_nonidentifiability_v01.py on
+Windows with the two fixed counterfactual chart pairs. Both cases
+reported INDISTINGUISHABLE; the combined counterfactual status
+was PASS.
+
+| Counterfactual intervention | HUD263 maximum absolute feature difference across matched prefix | Local probe time | First future differing due-time gap |
+| --- | ---: | ---: | ---: |
+| future SetSpeed numeric BPM, same visible floor/event-marker geometry | 0.0 | 0.33s | 90.726ms |
+| countdown tick count differs by two while floor-0 angular phase repeats | 1.7484556000744134e-7 | 2.94s | 1999.667ms |
+
+At the SetSpeed probe the unchanged v1.4 forecast was
+eligible_partial; at the countdown probe it was
+countdown_before_special_arrival. The numerical
+HUD difference for the countdown pair is far below the
+predeclared 5e-5 equality threshold; note that this is
+numerical indistinguishability under the renderer's finite precision
+rather than mathematical bit identity.
+
+For these pairs, any deterministic causal Timing predictor receiving
+only the same HUD263 prefix must issue the same prediction in both
+worlds; their correct future deadlines differ. No larger model,
+optimizer update, or different fingering alone can recover which
+unseen world occurred.
+
+Scope: This proves the existence of an observational alias in
+the present HUD contract, NOT that every future SetSpeed or the user's
+specific Train chart cannot be resolved if additional genuinely visible
+signals are made available.
+
+Non-solutions: Feed hidden future numeric BPM/countdownTicks/compiled
+target times into the policy; use the Oracle comparator to rescue
+missed HUD forecasts; lower safety thresholds or move physical
+KeyDown blindly before confirming a due time; label abstained
+unobservable targets as hits.
+
+The next engineering question is observation provenance:
+- Is an actual numeric future SetSpeed indicator displayed to the
+  player before the event? The current HUD includes only current
+  Tile/Real BPM and future SetSpeed marker.
+- Is remaining initial countdown progression displayed or audibly
+  announced? Floor-0 rotating phase alone cannot distinguish
+  countdowns that differ by two revolutions.
+- Is an audio stream available to the student as a sensory observation?
+  If introduced, specify its causal latency, sample window, and whether
+  playback truly contains disambiguating beats; do not hand it
+  internal playback offset, chart time, or future note schedule.
+
+Until a player-perceivable distinguishing signal is verified, a
+calibrated ABSTAIN with explicit uncovered targets is the
+correct output; an information-impossible target is not a v1.4
+calibration bug.
