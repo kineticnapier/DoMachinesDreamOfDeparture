@@ -20,6 +20,9 @@ from datetime import datetime, timezone
 import json
 from math import floor
 from pathlib import Path
+import sys
+
+sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 from dmdod.adofai.chart import parse_adofai_text
 from dmdod.adofai.timing import compile_adofai
@@ -28,7 +31,7 @@ from dmdod.envs.contact_hud_chart_v02 import HudCoupledContactRealChartEnv
 from dmdod.motor.contact_16k import ContactAction
 from dmdod.planning.contact_timing_hud_v01 import ContactTimingHUD263Adapter
 from dmdod.planning.hud_timing_tracker_transition_v14 import forecast_visible_window
-from scripts.audit_hud_timing_tracker_transition_v14_matrix import generated
+from audit_hud_timing_tracker_transition_v14_matrix import generated
 
 
 FORMAT = "dmdod-hud263-counterfactual-observability-v0.1"
