@@ -137,8 +137,19 @@ def test_monotone_cursor_matches_old_full_event_scan(horizon):
         new_upcoming, new_due, cursor = audit.pending_decision_events(
             events, selected, cursor, now, horizon
         )
-        assert new_upcoming == old_upcoming if old_due else new_upcoming == ()
         assert new_due == old_due
+        if not old_due:
+            assert new_upcoming == ()
+        # The Network only reads the first MAX_EVENTS after each due event.
+        # Extra far-future entries may be omitted without changing inference.
+        for event in old_due:
+            original_context = tuple(x for x in old_upcoming
+                                     if x.event_index >= event.event_index)
+            optimized_context = tuple(x for x in new_upcoming
+                                      if x.event_index >= event.event_index)
+            assert optimized_context[:audit.network.MAX_EVENTS] == (
+                original_context[:audit.network.MAX_EVENTS]
+            )
         selected.update(event.event_index for event in new_due)
 
 
