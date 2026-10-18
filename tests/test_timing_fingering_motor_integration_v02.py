@@ -334,3 +334,22 @@ def test_integration_reports_full_and_supported_denominators_separately():
         supported["sufficient_lead_supported_truth_events"]
     )
     assert result["forecast_posthoc"]["true_targets"] == full["targets"]
+
+
+def test_oracle_local_ids_not_preassigned_from_hidden_event_ordinals():
+    source = oracle.OracleForecastSource((
+        oracle.OracleDue(.030),
+        oracle.OracleDue(.055),
+        oracle.OracleDue(.130),
+    ))
+    assert source._local_id_by_event == {}
+    first = source.observe(0)
+    assert first.new_ids == (0, 1)
+    assert source._local_id_by_event == {0: 0, 1: 1}
+    assert 2 not in source._local_id_by_event
+    for step in range(1, 6):
+        source.observe(step)
+    assert 2 not in source._local_id_by_event
+    for step in range(6, 7):
+        source.observe(step)
+    assert 2 in source._local_id_by_event
