@@ -47,6 +47,26 @@ solely to render CURRENT screen-observable information.
 countdown text. Not a claim about the actual stock-only screen,
 audio, pixel capture latency, OCR or additional HUD channels.
 
+## Synthetic fixture correction (2026-10-19)
+
+The first draft of the synthetic test used `angleData[1]=90`, a
+90-degree Floor-1 arc. At 480 BPM that is **62.5ms** between the
+first two targets, so the second-event 44ms preparation deadline falls
+**18.5ms after** the first target. In this Mod-HUD contract, the current
+floor BPM is then observable before the cutoff; the histories correctly
+differ, and asserting indistinguishability is invalid.
+
+The fixture has been corrected to `angleData[1]=150`, making the
+clockwise Floor-1 arc **30 degrees** and the event gap **20.833ms** at
+480 BPM. The second event's 44ms deadline now precedes the first event,
+matching the relevant Train bool timing relationship.
+
+A separate **negative control** retains the original 90-degree arc
+and requires `NOT_PROVEN` plus an actual distinguishing HUD frame.
+This preserves the distinction between a legitimately observable BPM
+change and the targeted early blind window. Neither result permits a
+conclusion about the actual Train bool until its fixed-SHA run completes.
+
 ## Windows commands, from repository root
 
 ~~~powershell
