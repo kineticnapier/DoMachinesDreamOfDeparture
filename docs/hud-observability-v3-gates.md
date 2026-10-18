@@ -143,9 +143,16 @@ Real BPM channel would show 60.01 instead of the distinct 15
 readout seen in this video. This difference may matter for
 identifying the initial countdown duration.
 
-DO NOT directly treat displayed CBPM as DMDOD's Real BPM without
-verifying its semantic definition, whether the overlay is base-game
-UI or a Mod, and the causal update time. A chart-derived
+The user confirmed that the TBPM / CBPM overlay is supplied by a **Mod**.
+Therefore the displayed numeric CBPM is **not eligible for the default
+stock-game HUD-only observation**. It can only be considered under an
+explicit Mod-equipped experimental observation contract, with verified
+semantics and update latency. The apparent stock floor-0 renderer
+mismatch is NOT evidence that DMDOD drops a stock-game display.
+
+Ready!/Go! and audio count cues remain candidate observations, but
+this recording alone does not establish their unmodified stock-game
+provenance. Verify those signals separately before adopting them. A chart-derived
 floor-0 duration is privileged unless it is demonstrably the
 exact displayed quantity at that frame.
 
