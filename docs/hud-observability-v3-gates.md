@@ -150,11 +150,13 @@ explicit Mod-equipped experimental observation contract, with verified
 semantics and update latency. The apparent stock floor-0 renderer
 mismatch is NOT evidence that DMDOD drops a stock-game display.
 
-Ready!/Go! and audio count cues remain candidate observations, but
-this recording alone does not establish their unmodified stock-game
-provenance. Verify those signals separately before adopting them. A chart-derived
-floor-0 duration is privileged unless it is demonstrably the
-exact displayed quantity at that frame.
+The user explicitly confirmed that Ready!, Go!, and the audible
+countdown cues are present in unmodified stock ADOFAI. These are
+therefore VALID STOCK observation *channels* for a new sensor
+contract. Their exact timing semantics remain unverified: seeing Go!
+in this video roughly one second before the first hit is one sample,
+not a universal prediction rule. A chart-derived floor-0 duration
+or parsed countdownTicks still counts as privileged truth.
 
 These cues are preliminary evidence that stock HUD263 *omits*
 real signals rather than proving that the full player-visible
@@ -168,3 +170,30 @@ audio pulse pattern, and top-right CBPM as a function of
 time since record/game-start. Determine whether each observable
 difference first occurs >=44ms before the shorter-world
 first target. No v1.4 or Motor changes before that check.
+
+
+## Stock Countdown channel: next controlled validation
+
+- Source: actual rendered Ready!/Go! pixels or recorded audible tick,
+  not a synthetic cue generated from hidden compiled countdownTicks.
+- Inputs: timestamped (frame-local) visible cue detections and/or
+  audio-onset detections; include observed/unknown validity bit.
+- Time origin: relative to *perceived cue arrival*, calibrated
+  against actual captured video/audio latency, never chart time.
+- Pair test: record two otherwise identical charts with countdown
+  tick counts 3 and 5; extract the first perceptible divergence
+  of their 263D-plus-cue prefixes. The legacy HUD263 prefixes
+  must remain indistinguishable as previously verified.
+- Physical gate: first distinguishing cue must leave at least
+  44ms to the *shorter-world first playable note*; otherwise
+  it is too late even if it distinguishes the worlds.
+- Timing rule: cannot assume a fixed Go-to-first-hit delay from
+  the one bool recording. Derive/validate the relationship only
+  from causally available real cues and visible geometry. Preserve
+  ABSTAIN where the cue is hidden, not yet observed, or ambiguous.
+- Do not pass an alleged 'Go' timestamp to the policy from
+  chart action metadata or audio file position.
+
+SetSpeed remains independent. The confirmed unknown future
+numeric SetSpeed counterexample cannot be resolved solely by
+adding countdown cues.
