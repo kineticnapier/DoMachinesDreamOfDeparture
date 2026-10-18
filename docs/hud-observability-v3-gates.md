@@ -40,8 +40,11 @@ command the physical Motor; otherwise the target remains uncovered.
    player's view. Do not use countdownTicks from the parsed chart.
 2. Audio samples that the player actually hears at the current frame,
    with recording/playback latency and an explicit causal sampling
-   boundary. Only actual audio distinguishes worlds; do not infer
-   unknown BPM from chart actions or future targets.
+   boundary. Audio is NOT automatically sufficient: two different
+   chart files may use identical sound recordings despite having
+   different future SetSpeed actions. Only measured audio differences
+   between the counterfactual worlds can disambiguate them. Do not
+   infer unknown BPM from chart actions or future targets.
 3. An actually displayed numerical future speed preview, if the
    game renderer exposes one. A SetSpeed event marker alone does not
    reveal its numeric speed; the current HUD's Tile/Real BPM are for
