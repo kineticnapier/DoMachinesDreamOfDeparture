@@ -105,6 +105,47 @@ def _forecast_posthoc(tokens: list[dict], segment) -> dict:
     return out
 
 
+def _supported_posthoc(first_seen: list[dict], decisions: list,
+                        env, segment) -> dict:
+    """Scorer-only attribution after actions; do not pass truth to the policy.
+
+    Success means the associated truth ordinal was scored Hit by the ordered
+    evaluator. It does NOT claim the intended physical finger caused that Hit.
+    """
+    truth = [(i, float(event.episode_time_s))
+             for i, event in enumerate(segment.targets)]
+    seen_truth: set[int] = set()
+    decided = {d.local_id: d for d in decisions}
+    eligible = []
+    for forecast in sorted(first_seen, key=lambda x: x["due_local_s"]):
+        due = forecast["due_local_s"]
+        lead = due - forecast["first_seen_s"]
+        choice = decided.get(forecast["local_id"])
+        if lead + 1e-9 < .044 or choice is None or choice.reason != "assigned":
+            continue
+        matches = sorted((abs(due - target_due), index) for index, target_due in truth
+                         if index not in seen_truth and abs(due-target_due) <= .020)
+        if not matches:
+            continue
+        _, index = matches[0]
+        seen_truth.add(index)
+        eligible.append(index)
+    hits = sum(bool(env._used[i]) for i in eligible)
+    return {
+        "sufficient_lead_supported_truth_events": len(eligible),
+        "supported_truth_hit_by_ordered_scorer": hits,
+        "supported_truth_misses": len(eligible) - hits,
+        "sufficient_lead_supported_hit_fraction": (
+            hits / len(eligible) if eligible else None
+        ),
+        "truth_matching_tolerance_ms": 20,
+        "warning": (
+            "Posthoc only; ordered scorer may assign a KeyDown from another "
+            "physical finger to this ordinal."
+        ),
+    }
+
+
 def simulate(segment, model, arm: str, *, wall_timeout_s: float = 180.0):
     source_kind = next((src for name, src, _ in ARMS if name == arm), None)
     selector = next((sel for name, _, sel in ARMS if name == arm), None)
@@ -189,6 +230,9 @@ def simulate(segment, model, arm: str, *, wall_timeout_s: float = 180.0):
     }
     # Exact target list is used ONLY posthoc, after the final Motor step.
     result["forecast_posthoc"] = _forecast_posthoc(raw_new_ids, segment)
+    result["supported_event_posthoc"] = _supported_posthoc(
+        raw_new_ids, policy.decisions, env, segment
+    )
     return result
 
 
@@ -217,6 +261,8 @@ def main():
     mode = p.add_mutually_exclusive_group(required=True)
     mode.add_argument("--fixtures", action="store_true",
                       help="only 120/240/480 BPM fixed ordinary synthetic charts")
+    mode.add_argument("--special-fixtures", action="store_true",
+                      help="deterministic SetSpeed/Twirl/Pause transition fixtures")
     mode.add_argument("--train-chart", type=Path,
                       help="explicit TRAIN chart path only; no Validation/Test")
     p.add_argument("--end-s", type=float, default=5.0,
@@ -236,6 +282,13 @@ def main():
             compile_adofai(load_adofai(args.train_chart)), end_s=args.end_s
         )
         cases = [(args.train_chart.name, segment)]
+    elif args.special_fixtures:
+        from audit_hud_timing_tracker_transition_v14_matrix import generated
+        cases = [
+            (f"special-{variant}", generated((0., 90., 180., 270.),
+                                              496., variant))
+            for variant in ("speed_double", "twirl_speed", "pause_1")
+        ]
     else:
         cases = [(f"ordinary-{int(bpm)}bpm", synthetic_segment(bpm))
                  for bpm in FIXTURE_BPMS]
@@ -257,6 +310,8 @@ def main():
             "Timing source never supplies evaluator target ordinal to policy.",
             "This smoke run is not a Validation20 generalization claim.",
             "Candidate Network context remains frozen 65D.",
+            "Supported-only scores are posthoc scorer ordinal associations, "
+            "not proof that the selected finger produced that ordinal's Hit.",
         ],
     }
     args.output_dir.mkdir(parents=True, exist_ok=False)
