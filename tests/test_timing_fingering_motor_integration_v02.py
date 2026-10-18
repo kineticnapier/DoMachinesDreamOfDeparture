@@ -391,3 +391,42 @@ def test_axis_trace_requires_full_valid_local_diagnostic_window():
             fixture, None, "hud_center_first",
             trace_axis="left_1", trace_window_s=(.3, .2),
         )
+
+
+def test_policy_does_not_drop_held_axis_at_arm_step_from_idle_spring_drift():
+    """Policy regression: a reserved axis receives +1 at its scheduled start.
+
+    A neutral-command Motor can have small positive idle velocity by then.
+    That must not be mistaken for a new unreserved press.
+    """
+    motor = Coupled16ContactMotor()
+    planner = policy.TimingFingeringMotorPolicy(
+        model=None, selector="center_first"
+    )
+
+    def timing(step):
+        return TimingFrameUpdate(
+            step=step, status=ELIGIBLE, source="held-axis-drift-fixture",
+            covered_until_s=step * .010 + .080,
+            pending=(TimingEventToken(0, .075, 1),),
+            new_ids=(0,) if step == 0 else (),
+            reused_ids=() if step == 0 else (0,),
+        )
+
+    for step in range(4):
+        planner.command(timing(step), motor)
+    held = planner.scheduler.reservation(0)
+    assert held.phase == policy.ReservationPhase.RESERVED
+    assert len(held.axes) == 1
+    name = held.axes[0]
+    index = motor.motor.observe().index(name)
+    physical = motor.motor.body.states[index]
+    physical.position_m = -.000997
+    physical.velocity_m_s = .0008
+    physical.activation = -.0177
+    result = planner.command(timing(4), motor)
+    assert result.commands[index] == 1.0
+    assert planner.scheduler.reservation(0).phase == (
+        policy.ReservationPhase.ARMED_IN_FLIGHT
+    )
+    assert planner.finger_collisions == 0
