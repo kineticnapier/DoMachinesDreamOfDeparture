@@ -122,7 +122,7 @@ class PhysicalFinger:
         if self.axis not in PHYSICAL_AXES:
             raise ValueError("unknown physical axis")
         depth = int(self.axis.rsplit("_", 1)[1])
-        allowed = (1, 2) if depth in (5, 6) else (1,)
+        allowed = (1, 2) if depth == 5 else (2,) if depth == 6 else (1,)
         if type(self.contact_count) is not int or self.contact_count not in allowed:
             raise ValueError("contact count incompatible with axis topology")
 
