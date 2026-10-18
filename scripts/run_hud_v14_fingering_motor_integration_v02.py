@@ -386,6 +386,8 @@ def main():
     p.add_argument("--checkpoint", type=Path, default=DEFAULT_CHECKPOINT)
     p.add_argument("--arm", choices=tuple(name for name, _, _ in ARMS),
                    default=None, help="rerun only one failing comparison arm")
+    p.add_argument("--case", default=None,
+                   help="run only one named fixture/case from the selected mode")
     p.add_argument("--wall-timeout-s", type=float, default=180.0)
     p.add_argument("--output-dir", type=Path, required=True)
     args = p.parse_args()
@@ -410,6 +412,11 @@ def main():
     else:
         cases = [(f"ordinary-{int(bpm)}bpm", synthetic_segment(bpm))
                  for bpm in FIXTURE_BPMS]
+    if args.case is not None:
+        cases = [(name, segment) for name, segment in cases
+                 if name == args.case]
+        if len(cases) != 1:
+            p.error("--case must exactly match a named case in this mode")
     report = {
         "format": FORMAT,
         "generated_at_utc": datetime.now(timezone.utc).isoformat(),
