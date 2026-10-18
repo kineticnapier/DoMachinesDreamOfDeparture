@@ -150,7 +150,7 @@ def pending_decision_events(events, selected: set[int], cursor: int,
 
 
 def execute(segment, model, policy: str, alpha: float, arm: str,
-            *, wall_timeout_s: float) -> dict:
+            *, wall_timeout_s: float, diagnostic_probe=None) -> dict:
     """Run a fresh policy from actual current observations at each decision."""
     if arm not in ARMS:
         raise ValueError(f"unexpected arm {arm}")
@@ -218,6 +218,14 @@ def execute(segment, model, policy: str, alpha: float, arm: str,
                 "extra_lead_ms": round(extra * 1000.0, 3),
                 "ordinals": list(event.target_ordinals),
             })
+            if diagnostic_probe is not None:
+                diagnostic_probe("decision", {
+                    "env": env,
+                    "now_s": now,
+                    "event": event,
+                    "allocation": allocation,
+                    "decision": decisions[-1],
+                })
             if selected_index is None:
                 interventions["unassigned_events"] += 1
             if extra > 0:
@@ -232,7 +240,24 @@ def execute(segment, model, policy: str, alpha: float, arm: str,
             interventions["release_coast_axis_steps"] += release_steps
         else:
             action = teacher.action_for(env.motor, tuple(committed.values()), now)
+        if diagnostic_probe is not None:
+            diagnostic_probe("before_step", {
+                "env": env,
+                "now_s": now,
+                "action": action,
+                "committed": tuple(committed.values()),
+            })
+        judgement_count = len(env.judgement_trace)
         step = env.step(action)
+        if diagnostic_probe is not None:
+            diagnostic_probe("after_step", {
+                "env": env,
+                "now_s": now,
+                "action": action,
+                "step": step,
+                "logical_events": env.last_events,
+                "judgements": tuple(env.judgement_trace[judgement_count:]),
+            })
         for event in env.last_events:
             if event.event is KeyEvent.DOWN:
                 actual_downs.append((event.time_s * 1000.0, event.key))
