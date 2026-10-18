@@ -106,6 +106,10 @@ def apply_early_lead(motor, base: ContactAction, future_rows: list,
             continue
         if axis in occupied or obs.pressed(axis):
             continue
+        # Do not arm two not-yet-decided events on one physical actuator.
+        if any(other != event_index and other_axis == axis
+               for other, other_axis in armed.items()):
+            continue
         i = teacher.AXES.index(axis)
         if event_index not in armed:
             if not teacher.eligible(motor, occupied, allocation)[0]:
