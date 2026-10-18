@@ -41,11 +41,15 @@ def _capture(segment) -> tuple[CountdownStudentObservation, ...]:
         countdown_ticks=chart.countdown_ticks,
         first_tick_s=FIRST_TICK_S,
         tick_period_s=period_s,
+        go_duration_s=60.0 / chart.initial_bpm,
     )
     sensor = CountdownVisualSensor()
     # Capture through the first post-Go frame. This duration is renderer-side
     # schedule data, not a target or playable-event time.
-    end_s = FIRST_TICK_S + chart.countdown_ticks * period_s + CONTROL_DT_S
+    end_s = (
+        FIRST_TICK_S + (chart.countdown_ticks - 1) * period_s
+        + 60.0 / chart.initial_bpm + CONTROL_DT_S
+    )
     count = int(round(end_s / CONTROL_DT_S)) + 1
     result = []
     for step in range(count):
@@ -150,6 +154,10 @@ def run() -> dict:
             "first_distinguishable_observation_a": _public(first_a),
             "first_distinguishable_observation_b": _public(first_b),
             "first_distinguishable_s": first_a.observed_at_s,
+            "first_tick_boundary_s": FIRST_TICK_S,
+            "sampling_delay_after_strict_boundary_ms": round(
+                (first_a.observed_at_s - FIRST_TICK_S) * 1000.0, 6
+            ),
             "first_target_a_s_posthoc": due_a_s,
             "first_target_b_s_posthoc": due_b_s,
             "lead_a_ms_posthoc": round(lead_a_s * 1000.0, 6),

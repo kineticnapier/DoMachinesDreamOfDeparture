@@ -13,7 +13,7 @@ valid, visible, Ready, Number, Go, and one-hot digits 0..9.
 
 from dataclasses import dataclass
 from enum import Enum
-from math import floor, isfinite
+from math import ceil, isfinite
 
 
 HUD263_DIM = 263
@@ -59,25 +59,30 @@ class RenderedCountdownFrame:
 class StockCountdownRenderer:
     """Normal-start DLL schedule reproduced on the renderer side only.
 
-    ``first_tick_s`` and ``tick_period_s`` are render-internal schedule data.
+    ``first_tick_s``, ``tick_period_s``, and ``go_duration_s`` are
+    render-internal schedule data.
     They never appear in :class:`CountdownStudentObservation`.  Fast takeoff,
     checkpoints, practice variants, and custom extra countdowns are explicitly
     unsupported in phase 1 and render as unavailable instead of being guessed.
     """
 
     def __init__(self, *, countdown_ticks: int, first_tick_s: float,
-                 tick_period_s: float, normal_start: bool = True) -> None:
+                 tick_period_s: float, go_duration_s: float,
+                 normal_start: bool = True) -> None:
         if type(countdown_ticks) is not int or countdown_ticks < 0:
             raise ValueError("countdown_ticks must be a nonnegative integer")
         if not isfinite(first_tick_s):
             raise ValueError("first_tick_s must be finite")
         if not isfinite(tick_period_s) or tick_period_s <= 0.0:
             raise ValueError("tick_period_s must be positive and finite")
+        if not isfinite(go_duration_s) or go_duration_s <= 0.0:
+            raise ValueError("go_duration_s must be positive and finite")
         if type(normal_start) is not bool:
             raise TypeError("normal_start must be bool")
         self._countdown_ticks = countdown_ticks
         self._first_tick_s = float(first_tick_s)
         self._tick_period_s = float(tick_period_s)
+        self._go_duration_s = float(go_duration_s)
         self._normal_start = normal_start
 
     def render(self, rendered_at_s: float) -> RenderedCountdownFrame:
@@ -87,15 +92,23 @@ class StockCountdownRenderer:
             return RenderedCountdownFrame(
                 rendered_at_s, None, frame_available=False
             )
-        if rendered_at_s + 1e-12 < self._first_tick_s:
+        # scrCountdown.Update uses strict ``now > GetCountdownTime(i)``.
+        # Therefore the old label remains visible at the exact boundary.
+        if rendered_at_s <= self._first_tick_s:
             return RenderedCountdownFrame(rendered_at_s, "Ready!")
         elapsed = rendered_at_s - self._first_tick_s
-        tick_index = max(0, floor(elapsed / self._tick_period_s + 1e-12))
+        tick_index = max(0, ceil(elapsed / self._tick_period_s) - 1)
         if tick_index < self._countdown_ticks - 1:
             return RenderedCountdownFrame(
                 rendered_at_s, str(self._countdown_ticks - 1 - tick_index)
             )
-        return RenderedCountdownFrame(rendered_at_s, "Go!")
+        go_onset_s = (
+            self._first_tick_s
+            + (self._countdown_ticks - 1) * self._tick_period_s
+        )
+        if rendered_at_s <= go_onset_s + self._go_duration_s:
+            return RenderedCountdownFrame(rendered_at_s, "Go!")
+        return RenderedCountdownFrame(rendered_at_s, None)
 
 
 @dataclass(frozen=True, slots=True)
@@ -139,7 +152,10 @@ class CountdownStudentObservation:
 class CountdownVisualSensor:
     """Sequential recognizer over current rendered frames only."""
 
-    def __init__(self) -> None:
+    def __init__(self, *, max_frame_age_s: float = .050) -> None:
+        if not isfinite(max_frame_age_s) or max_frame_age_s < 0.0:
+            raise ValueError("max_frame_age_s must be nonnegative and finite")
+        self._max_frame_age_s = float(max_frame_age_s)
         self.reset()
 
     def reset(self) -> None:
@@ -160,7 +176,8 @@ class CountdownVisualSensor:
             raise ValueError("sensor cannot consume a future rendered frame")
 
         text = frame.displayed_text
-        if not frame.frame_available:
+        stale = observed_at_s - frame.rendered_at_s > self._max_frame_age_s + 1e-12
+        if not frame.frame_available or stale:
             valid, kind, digit = False, CountdownCueKind.UNKNOWN, None
         elif text is None or not text.strip():
             valid, kind, digit = True, CountdownCueKind.HIDDEN, None

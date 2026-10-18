@@ -19,28 +19,39 @@ from dmdod.features.countdown_hud_v3 import (
 
 def test_dll_normal_start_ready_number_go_schedule() -> None:
     renderer = StockCountdownRenderer(
-        countdown_ticks=4, first_tick_s=1.0, tick_period_s=0.5
+        countdown_ticks=4, first_tick_s=1.0, tick_period_s=0.5,
+        go_duration_s=.75,
     )
     assert renderer.render(0.99).displayed_text == "Ready!"
-    assert renderer.render(1.00).displayed_text == "3"
-    assert renderer.render(1.50).displayed_text == "2"
-    assert renderer.render(2.00).displayed_text == "1"
-    assert renderer.render(2.50).displayed_text == "Go!"
+    assert renderer.render(1.00).displayed_text == "Ready!"
+    assert renderer.render(1.00 + 1e-9).displayed_text == "3"
+    assert renderer.render(1.50).displayed_text == "3"
+    assert renderer.render(1.50 + 1e-9).displayed_text == "2"
+    assert renderer.render(2.00 + 1e-9).displayed_text == "1"
+    assert renderer.render(2.50 + 1e-9).displayed_text == "Go!"
+    assert renderer.render(3.25).displayed_text == "Go!"
+    assert renderer.render(3.25 + 1e-9).displayed_text is None
 
 
 def test_three_and_five_ticks_first_differ_on_rendered_digit() -> None:
     three = StockCountdownRenderer(
-        countdown_ticks=3, first_tick_s=1.0, tick_period_s=1.0
+        countdown_ticks=3, first_tick_s=1.0, tick_period_s=1.0,
+        go_duration_s=1.0,
     )
     five = StockCountdownRenderer(
-        countdown_ticks=5, first_tick_s=1.0, tick_period_s=1.0
+        countdown_ticks=5, first_tick_s=1.0, tick_period_s=1.0,
+        go_duration_s=1.0,
     )
     sensor_a, sensor_b = CountdownVisualSensor(), CountdownVisualSensor()
     ready_a = sensor_a.observe(step=0, observed_at_s=.5, frame=three.render(.5))
     ready_b = sensor_b.observe(step=0, observed_at_s=.5, frame=five.render(.5))
     assert ready_a == ready_b
-    digit_a = sensor_a.observe(step=1, observed_at_s=1.0, frame=three.render(1.0))
-    digit_b = sensor_b.observe(step=1, observed_at_s=1.0, frame=five.render(1.0))
+    digit_a = sensor_a.observe(
+        step=1, observed_at_s=1.01, frame=three.render(1.01)
+    )
+    digit_b = sensor_b.observe(
+        step=1, observed_at_s=1.01, frame=five.render(1.01)
+    )
     assert (digit_a.kind, digit_a.digit) == (CountdownCueKind.NUMBER, 2)
     assert (digit_b.kind, digit_b.digit) == (CountdownCueKind.NUMBER, 4)
     legacy = (0.0,) * HUD263_DIM
@@ -61,6 +72,7 @@ def test_unknown_or_unsupported_display_is_not_imputed() -> None:
     assert unknown.digit is None
     unsupported = StockCountdownRenderer(
         countdown_ticks=4, first_tick_s=0.0, tick_period_s=1.0,
+        go_duration_s=1.0,
         normal_start=False,
     ).render(0.0)
     result = sensor.observe(step=1, observed_at_s=.01, frame=unsupported)
@@ -105,3 +117,29 @@ def test_student_contract_has_no_hidden_count_or_target_truth_fields() -> None:
         "target_ordinal", "future_tick_s", "first_tick_s", "tick_period_s",
     }
     assert public.isdisjoint(forbidden)
+
+
+def test_pitch_changes_tick_period_but_not_normal_go_tween_duration() -> None:
+    # bpm=120: crotchetAtStart=.5s; pitch=200%: tick period=.25s.
+    renderer = StockCountdownRenderer(
+        countdown_ticks=4, first_tick_s=0.0, tick_period_s=.25,
+        go_duration_s=.5,
+    )
+    assert renderer.render(.750000001).displayed_text == "Go!"
+    assert renderer.render(1.25).displayed_text == "Go!"
+    assert renderer.render(1.250000001).displayed_text is None
+
+
+def test_missing_and_stale_frames_are_invalid_not_imputed() -> None:
+    sensor = CountdownVisualSensor(max_frame_age_s=.020)
+    missing = sensor.observe(
+        step=0, observed_at_s=1.0,
+        frame=RenderedCountdownFrame(1.0, None, frame_available=False),
+    )
+    stale = sensor.observe(
+        step=1, observed_at_s=1.1,
+        frame=RenderedCountdownFrame(1.0, "2"),
+    )
+    assert (missing.valid, missing.kind) == (False, CountdownCueKind.UNKNOWN)
+    assert (stale.valid, stale.kind) == (False, CountdownCueKind.UNKNOWN)
+    assert stale.latency_s == pytest.approx(.1)

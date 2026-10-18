@@ -13,6 +13,8 @@ def test_phase1_audit_separates_legacy_ambiguity_from_v3_display() -> None:
     pair = result["countdown_3_vs_5"]
     assert pair["first_distinguishable_observation_a"]["digit"] == 2
     assert pair["first_distinguishable_observation_b"]["digit"] == 4
+    assert pair["first_distinguishable_s"] == .26
+    assert pair["sampling_delay_after_strict_boundary_ms"] == 10.0
     assert pair["required_lead_met_in_fixture"]
 
 
