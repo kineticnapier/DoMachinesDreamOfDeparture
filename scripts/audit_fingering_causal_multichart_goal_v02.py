@@ -290,9 +290,12 @@ def print_progress(progress: dict) -> None:
     target_message = ""
     if goal is not None:
         projected = progress["projected_total_s"]
-        target_message = (f"; target={goal:.1f}s; projected="
-                          f"{projected:.1f}s ({progress['goal_status']})"
-                          if projected is not None else f"; target={goal:.1f}s")
+        remaining = progress["estimated_remaining_s"]
+        target_message = (
+            f"; goal={goal:.1f}s; estimated remaining={remaining:.1f}s"
+            f"; projected total={projected:.1f}s ({progress['goal_status']})"
+            if projected is not None else f"; goal={goal:.1f}s"
+        )
     print(
         f"progress {n}/{total} arms, {progress['completed_charts']}/"
         f"{progress['total_charts']} charts; "
@@ -383,10 +386,19 @@ def main() -> None:
           f"from {manifest['selection']['selection_basis']}", flush=True)
     with exclusive_run_lock(args.output_dir):
         print_progress(publish_progress(manifest, args.output_dir, args.goal_seconds))
-        finished = run(manifest, args.output_dir,
-                       wall_timeout_s=args.wall_timeout_s,
-                       goal_seconds=args.goal_seconds,
-                       checkpoint=args.checkpoint)
+        try:
+            finished = run(manifest, args.output_dir,
+                           wall_timeout_s=args.wall_timeout_s,
+                           goal_seconds=args.goal_seconds,
+                           checkpoint=args.checkpoint)
+        except KeyboardInterrupt:
+            # Never discard already published per-arm checkpoints.
+            stopped = publish_progress(manifest, args.output_dir, args.goal_seconds)
+            print("\nStopped by Ctrl+C. Finished arms remain saved.", flush=True)
+            print_progress(stopped)
+            print("Resume: re-run with --resume and the SAME --output-dir",
+                  flush=True)
+            raise SystemExit(130) from None
         print_progress(finished)
         print("progress file:", args.output_dir / "progress.json", flush=True)
         if finished["completed_arms"] == finished["total_arms"]:
