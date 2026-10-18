@@ -270,3 +270,34 @@ and Train first-forecast deficiency (target0 absent, target1
 lead 20.163ms) are separate, **not fixed by this Motor change**.
 If the two Motor fixtures still FAIL, examine changed first-failing
 target and real KeyDown, do not loosen the fixed thresholds.
+
+
+## Confirmed post-fix Windows reproduction (2026-10-18)
+
+The user pulled the ready-to-arm-reserved fix and ran the two frozen
+three-arm physical integrations, with the following console results:
+
+| Case | Arm | Hits / Targets | Miss | TooEarly | Overload | X Accuracy | Gate |
+| --- | --- | ---: | ---: | ---: | --- | ---: | --- |
+| ordinary-480bpm | oracle_network | 48/48 | 0 | 0 | False | 100.0000% | PASS |
+| ordinary-480bpm | hud_network | 48/48 | 0 | 0 | False | 100.0000% | PASS |
+| ordinary-480bpm | hud_center_first | 48/48 | 0 | 0 | False | 100.0000% | PASS |
+| special-pause_1 | oracle_network | 32/32 | 0 | 0 | False | 100.0000% | PASS |
+| special-pause_1 | hud_network | 32/32 | 0 | 0 | False | 100.0000% | PASS |
+| special-pause_1 | hud_center_first | 32/32 | 0 | 0 | False | 100.0000% | PASS |
+
+Create-once Windows artifact folders:
+- artifacts/fingering_network_v02/hud-v14-480-armfix-r1
+- artifacts/fingering_network_v02/hud-v14-pause-armfix-r1
+
+This is direct empirical support that the specific dropped-reservation
+bug was responsible for the prior 480 and Pause Miss cascades.
+It is not a claim that SetSpeed or Train startup now pass, and it is
+not a Validation20 generalization result. No checkpoint, scorer, Motor
+physical constants, or v1.4 Timing model were modified in the fix.
+
+Unresolved from the pre-fix test: SetSpeed HUD 29/32 (initial
+sufficient-lead shortage plus later event cascade), Train bool
+5s HUD 7/9 (initial target unforecast and next with only ~20.163ms
+lead). Those require visibility-boundary analysis, not reuse of the
+physical reservation fix as an explanation.
