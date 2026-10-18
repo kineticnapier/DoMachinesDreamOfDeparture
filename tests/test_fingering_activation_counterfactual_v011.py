@@ -59,12 +59,9 @@ def test_two_identical_motor_copies_have_only_one_modified_state():
     assert modified.motor.body.states[0].activation == original.motor.body.states[0].activation
 
 
-def test_no_result_is_created_without_required_files(tmp_path):
-    import argparse
-    output = tmp_path / "previous"
-    output.mkdir()
-    # The CLI must refuse pre-existing output before touching any inputs.
-    assert output.exists()
-    assert "refusing to overwrite" in (
-        "refusing to overwrite existing directory: " + str(output)
-    )
+def test_sampler_never_selects_more_than_requested():
+    selected = audit.choose_events(_onset_report(), "free", 1)
+    assert len(selected) == 3  # one from each negative-activation reuse band
+    assert 1 not in selected  # zero-activation first use is not an intervention
+    assert 7 not in selected  # no observed <100ms physical reuse
+    assert 8 not in selected  # positive activation is not zeroed
