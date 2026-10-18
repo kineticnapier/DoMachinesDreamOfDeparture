@@ -114,6 +114,33 @@ def adaptive_action(motor, plans: tuple[teacher.PlanItem, ...],
     return action, len(extra_axes), released
 
 
+def pending_decision_events(events, selected: set[int], cursor: int,
+                            now: float, horizon: float):
+    """Equivalent pending/due sets without scanning every event on idle frames.
+
+    Network decisions always process a sorted prefix in event order.  Advancing
+    cursor past selected or expired entries is therefore safe.  Construct the
+    full upcoming lookahead only when the next event is within the decision
+    horizon (preserves the original encode_context inputs and order).
+    """
+    while cursor < len(events) and (
+        events[cursor].event_index in selected
+        or events[cursor].episode_time_s + teacher.PREVIEW_TAIL < now
+    ):
+        cursor += 1
+    if (cursor == len(events)
+            or events[cursor].episode_time_s > now + horizon + 1e-9):
+        return (), (), cursor
+    upcoming = tuple(
+        event for event in events[cursor:]
+        if event.event_index not in selected
+        and event.episode_time_s + teacher.PREVIEW_TAIL >= now
+    )
+    due = tuple(event for event in upcoming
+                if event.episode_time_s <= now + horizon + 1e-9)
+    return upcoming, due, cursor
+
+
 def execute(segment, model, policy: str, alpha: float, arm: str,
             *, wall_timeout_s: float) -> dict:
     """Run a fresh policy from actual current observations at each decision."""
@@ -126,6 +153,7 @@ def execute(segment, model, policy: str, alpha: float, arm: str,
     events = AutoplayTimingTeacher.from_segment(segment).events
     committed = {}
     selected = set()
+    next_event_cursor = 0
     decisions = []
     early_by_event: dict[int, float] = {}
     actual_downs = []
@@ -145,13 +173,9 @@ def execute(segment, model, policy: str, alpha: float, arm: str,
             if item.due_s + teacher.PREVIEW_TAIL >= now
             and not all(env._used[o] for o in events[ix].target_ordinals)
         }
-        upcoming = tuple(
-            event for event in events
-            if event.event_index not in selected
-            and event.episode_time_s + teacher.PREVIEW_TAIL >= now
+        upcoming, due, next_event_cursor = pending_decision_events(
+            events, selected, next_event_cursor, now, horizon
         )
-        due = tuple(event for event in upcoming
-                    if event.episode_time_s <= now + horizon + 1e-9)
 
         for event in due:
             if event.event_index in selected:
