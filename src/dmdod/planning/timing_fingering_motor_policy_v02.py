@@ -177,7 +177,15 @@ class TimingFingeringMotorPolicy:
                 start = reservation.due_local_s - NORMAL_LEAD_S - extra
                 if (reservation.confirmed and now + 1e-9 >= start
                         and now <= reservation.due_local_s + PREVIEW_TAIL_S):
-                    self.scheduler.arm(local_id, snapshot)
+                    try:
+                        self.scheduler.arm(local_id, snapshot)
+                    except ValueError:
+                        # A reservation may have become physically unsafe
+                        # between selection and motor arming. Refuse to press;
+                        # never override Motor's current physical readiness.
+                        self.scheduler.cancel_unarmed(local_id)
+                        self.finger_collisions += 1
+                        continue
                     reservation = self.scheduler.reservation(local_id)
             if reservation.phase is ReservationPhase.ARMED_IN_FLIGHT:
                 if now > reservation.due_local_s + PREVIEW_TAIL_S:
