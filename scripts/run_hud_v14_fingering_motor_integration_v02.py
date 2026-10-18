@@ -168,7 +168,9 @@ def simulate(segment, model, arm: str, *, wall_timeout_s: float = 180.0):
         model=model if selector == "network" else None,
         style_alpha=.5, selector=selector, early_lead=True,
     )
-    trace = []
+    physical_switch_trace = []
+    logical_switch_trace = []
+    forecast_lifecycle_trace = []
     raw_new_ids = []
     observed = Counter()
     started = time.monotonic()
@@ -190,8 +192,32 @@ def simulate(segment, model, arm: str, *, wall_timeout_s: float = 180.0):
                     "chord_size": token.chord_size,
                 })
         observed[forecast.status] += 1
+        if (forecast.new_ids or forecast.canceled_ids or forecast.elapsed_ids
+                or forecast.status != "eligible"):
+            forecast_lifecycle_trace.append({
+                "step": step,
+                "local_clock_s": forecast.local_clock_s,
+                "status": forecast.status,
+                "abstention_reason": forecast.abstention_reason,
+                "new_ids": list(forecast.new_ids),
+                "canceled_ids": list(forecast.canceled_ids),
+                "elapsed_ids": list(forecast.elapsed_ids),
+                "pending": [
+                    {"local_id": t.local_id, "due_local_s": t.due_local_s,
+                     "confirmed_now": t.confirmed_now}
+                    for t in forecast.pending
+                ],
+            })
         action = policy.command(forecast, env.motor)
         outcome = env.step(action)
+        # These are raw physical contacts, not scorer judgements.
+        transition = env.motor.motor.last_transition
+        physical_switch_trace.extend({
+            "time_s": e.time_s, "axis": e.key, "edge": e.event.value
+        } for e in transition.evaluator_events)
+        logical_switch_trace.extend({
+            "time_s": e.time_s, "key": e.key, "edge": e.event.value
+        } for e in env.last_events)
         # The shared policy reads only the physical NKeyMotor transition.
         policy.observe_physics(env.motor)
         if outcome.done:
@@ -209,6 +235,9 @@ def simulate(segment, model, arm: str, *, wall_timeout_s: float = 180.0):
         "forecast_status_counts": dict(observed),
         "forecast_new_token_count": len(raw_new_ids),
         "first_seen_predictions": raw_new_ids,
+        "forecast_lifecycle_trace": forecast_lifecycle_trace,
+        "physical_switch_trace": physical_switch_trace,
+        "logical_switch_trace": logical_switch_trace,
         "decisions": [
             {"local_id": d.local_id, "step": d.step,
              "due_local_s": d.due_local_s, "choice": d.choice,
@@ -229,6 +258,12 @@ def simulate(segment, model, arm: str, *, wall_timeout_s: float = 180.0):
         ),
     }
     # Exact target list is used ONLY posthoc, after the final Motor step.
+    # Scorer truth remains a separate posthoc record, not policy input.
+    result["target_outcomes_posthoc"] = [
+        {"ordinal": i, "due_s": float(item.episode_time_s),
+         "hit": bool(env._used[i]), "miss": bool(env._missed[i])}
+        for i, item in enumerate(segment.targets)
+    ]
     result["forecast_posthoc"] = _forecast_posthoc(raw_new_ids, segment)
     result["supported_event_posthoc"] = _supported_posthoc(
         raw_new_ids, policy.decisions, env, segment
@@ -236,10 +271,13 @@ def simulate(segment, model, arm: str, *, wall_timeout_s: float = 180.0):
     return result
 
 
-def run_fixed(segment, *, checkpoint: Path, label: str, timeout: float) -> dict:
+def run_fixed(segment, *, checkpoint: Path, label: str,
+              timeout: float, arm_filter: str | None = None) -> dict:
     model = frozen.load_model(checkpoint)
     rows = {}
     for name, _, _ in ARMS:
+        if arm_filter is not None and name != arm_filter:
+            continue
         print(f"{label} {name} starting", flush=True)
         try:
             value = simulate(segment, model, name, wall_timeout_s=timeout)
@@ -268,6 +306,8 @@ def main():
     p.add_argument("--end-s", type=float, default=5.0,
                    help="only applied to --train-chart, relative chart segment end")
     p.add_argument("--checkpoint", type=Path, default=DEFAULT_CHECKPOINT)
+    p.add_argument("--arm", choices=tuple(name for name, _, _ in ARMS),
+                   default=None, help="rerun only one failing comparison arm")
     p.add_argument("--wall-timeout-s", type=float, default=180.0)
     p.add_argument("--output-dir", type=Path, required=True)
     args = p.parse_args()
@@ -301,7 +341,8 @@ def main():
             "Contact HUD, local TimingFrameUpdate and current physical Motor"
         ),
         "cases": [run_fixed(s, checkpoint=args.checkpoint,
-                            label=name, timeout=args.wall_timeout_s)
+                            label=name, timeout=args.wall_timeout_s,
+                            arm_filter=args.arm)
                   for name, s in cases],
         "limitations": [
             "No training, no neural Timing v3; Timing v1.4 uses up to 80ms.",
