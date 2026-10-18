@@ -61,6 +61,11 @@ def select_charts(root: Path, explicit: list[Path],
     if max_charts < 1:
         raise ValueError("--max-charts must be >= 1")
     if explicit:
+        if len(explicit) > max_charts:
+            raise ValueError(
+                f"{len(explicit)} explicitly requested charts exceed --max-charts "
+                f"{max_charts}; increase --max-charts to evaluate all of them"
+            )
         ordered = [p.resolve() for p in explicit]
         basis = "explicit"
         allowed_splits = ("test", "holdout", "evaluation", "eval", "validation", "unspecified")
@@ -208,10 +213,15 @@ def aggregate(results: list[dict]) -> dict:
 
 
 def evaluate(checkpoint: Path, selected: list[dict],
-             wall_timeout_s: float) -> dict:
+             wall_timeout_s: float, expected_checkpoint_sha256: str) -> dict:
     if not checkpoint.is_file():
         raise FileNotFoundError(f"checkpoint not found: {checkpoint}")
     ck_sha = viewer.file_sha256(checkpoint)
+    if ck_sha != expected_checkpoint_sha256:
+        raise ValueError(
+            f"frozen checkpoint SHA256 mismatch: {ck_sha} != "
+            f"{expected_checkpoint_sha256}"
+        )
     model = causal.runner.load_model(checkpoint)
     output = []
     for ix, chart_info in enumerate(selected, start=1):
@@ -297,19 +307,26 @@ def render_html(report: dict) -> str:
 
 
 def run(root: Path, explicit: list[Path], max_charts: int, checkpoint: Path,
-        output_dir: Path, wall_timeout_s: float) -> dict:
+        output_dir: Path, wall_timeout_s: float, reference_replay: Path) -> dict:
     if output_dir.exists():
         raise FileExistsError(f"refusing to overwrite output directory: {output_dir}")
+    reference = json.loads(reference_replay.read_text(encoding="utf-8"))
+    if reference.get("format") != "dmdod-fingering-network-v0.1.1-human-proxy-comparison":
+        raise ValueError("unexpected reference replay format")
+    expected_checkpoint_sha256 = reference["checkpoint_sha256"]
     selected, manifest = select_charts(root, explicit, max_charts)
     print(f"selection: {manifest['selection_basis']}; "
           f"{len(selected)} of {manifest['population_n']} chart(s)", flush=True)
-    evaluated = evaluate(checkpoint, selected, wall_timeout_s)
+    evaluated = evaluate(checkpoint, selected, wall_timeout_s,
+                         expected_checkpoint_sha256)
     report = {
         "format": "dmdod-fingering-v02-frozen-causal-lead-multichart",
         "generated_at_utc": datetime.now(timezone.utc).isoformat(),
         "selection": manifest,
         "checkpoint": evaluated["checkpoint"],
         "checkpoint_sha256": evaluated["checkpoint_sha256"],
+        "original_bool_reference_replay": str(reference_replay.resolve()),
+        "original_bool_checkpoint_sha256": expected_checkpoint_sha256,
         "control_constants": {
             "decision_lookahead_ms": (causal.teacher.LEAD + causal.EXTRA_LEAD_S) * 1000,
             "baseline_lookahead_ms": causal.teacher.LEAD * 1000,
@@ -353,13 +370,16 @@ def main() -> None:
                    help="Explicit non-Train chart; repeat to test multiple charts")
     p.add_argument("--max-charts", type=int, default=3)
     p.add_argument("--checkpoint", type=Path, default=causal.CHECKPOINT)
+    p.add_argument("--reference-replay", type=Path, default=causal.SAVED_REPLAY,
+                   help="Original bool replay, used ONLY to verify frozen checkpoint identity")
     p.add_argument("--wall-timeout-s", type=float, default=600.0)
     p.add_argument("--output-dir", type=Path, required=True)
     args = p.parse_args()
     if args.wall_timeout_s <= 0.0:
         p.error("--wall-timeout-s must be > 0")
     result = run(args.chart_root, args.chart, args.max_charts,
-                 args.checkpoint, args.output_dir, args.wall_timeout_s)
+                 args.checkpoint, args.output_dir, args.wall_timeout_s,
+                 args.reference_replay)
     print("\naggregate:", json.dumps(result["aggregate"], ensure_ascii=False))
     print("report:", args.output_dir / "multichart-summary.json")
     print("viewer:", args.output_dir / "multichart-summary.html")
