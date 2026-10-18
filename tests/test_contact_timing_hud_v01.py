@@ -195,8 +195,12 @@ def test_real_contact_frames_match_reference_v14_geometry_and_forecast(variant):
         ref_hud = encode_n_key_hud_real_chart_observation(n)
         assert received.features == (0.,)*24 + ref_hud[24:]
         assert client.observe(received) == ref_tracker.observe(step, ref_hud)
-        c = contact_env.step(ContactAction((0.,)*12)).observation
-        n = reference.step(NKeyAction((0.,)*8)).observation
+        contact_step = contact_env.step(ContactAction((0.,)*12))
+        reference_step = reference.step(NKeyAction((0.,)*8))
+        c, n = contact_step.observation, reference_step.observation
+        if contact_step.done or reference_step.done:
+            assert contact_step.done == reference_step.done
+            break
 
 
 def test_sequential_frame_order_and_reset():
