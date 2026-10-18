@@ -298,3 +298,64 @@ def test_elapsed_armed_stroke_can_finish_after_predicted_due():
     assert planner.reservation(0).phase is ReservationPhase.KEYDOWN_OBSERVED
     planner.observe_physics(snap(), (("left_1", KeyEvent.UP),))
     assert planner.reservations == ()
+
+
+@pytest.mark.parametrize("axis, due, step", [
+    ("right_3", 1.93750000238, 189),  # ordinary 480: target29
+    ("left_3", .90725807341, 86),    # Pause: target11
+])
+def test_existing_reservation_arms_despite_passive_motor_spring_velocity(
+    axis, due, step,
+):
+    """Reproduce the observed 0-command cancellation at the arm boundary.
+
+    At selection the axis was strictly idle. Under subsequent zero commands
+    its spring produces a small upward velocity but negative activation;
+    it is still the SAME reserved axis, not a new competing request.
+    """
+    planner = PersistentFingeringScheduler()
+    initially_idle = snap()
+    planner.apply_forecast(
+        frame(0, pending=(token(0, due),), new=(0,)), initially_idle
+    )
+    planner.reserve(0, (PhysicalFinger(axis),), initially_idle)
+    passive = snap(**{
+        axis: {"position": -.000997, "velocity": .0008, "activation": -.0177}
+    })
+    assert not passive.ready(axis)
+    assert passive.ready_to_arm_reserved(axis)
+    assert axis not in planner.available_axes(passive)
+    planner.arm(0, passive)
+    assert planner.reservation(0).phase is ReservationPhase.ARMED_IN_FLIGHT
+    assert axis not in planner.available_axes(passive)
+
+
+@pytest.mark.parametrize("bad_state", [
+    {"pressed": True},
+    {"position": RESET + .0001},
+    {"activation": .00001},
+])
+def test_reserved_arm_guard_still_refuses_active_or_unreset_axis(bad_state):
+    planner = PersistentFingeringScheduler()
+    planner.apply_forecast(
+        frame(0, pending=(token(0, .060),), new=(0,)), snap()
+    )
+    planner.reserve(0, (PhysicalFinger("right_3"),), snap())
+    unsafe = snap(right_3=bad_state)
+    assert not unsafe.ready_to_arm_reserved("right_3")
+    with pytest.raises(ValueError, match="active/unreset stroke"):
+        planner.arm(0, unsafe)
+    assert planner.reservation(0).phase is ReservationPhase.RESERVED
+
+
+def test_passive_velocity_does_not_relax_new_reservations():
+    moving = snap(right_3={
+        "position": -.000997, "velocity": .0008, "activation": -.0177,
+    })
+    planner = PersistentFingeringScheduler()
+    planner.apply_forecast(
+        frame(0, pending=(token(0, .060),), new=(0,)), moving
+    )
+    assert "right_3" not in planner.available_axes(moving)
+    with pytest.raises(ValueError, match="reserved or not reset"):
+        planner.reserve(0, (PhysicalFinger("right_3"),), moving)
