@@ -94,6 +94,9 @@ def test_flat_thumb_and_edge_represent_two_contacts_on_one_axis():
     assert scheduler.reservation(0).axes == ("left_5",)
     with pytest.raises(ValueError, match="topology"):
         PhysicalFinger("left_1", 2)
+    with pytest.raises(ValueError, match="topology"):
+        PhysicalFinger("right_6", 1)
+    assert PhysicalFinger("right_6", 2).contact_count == 2
     with pytest.raises(ValueError, match="chord size"):
         scheduler.reserve(1, (PhysicalFinger("right_1"),), snap())
 
