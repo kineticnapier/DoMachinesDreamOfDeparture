@@ -154,14 +154,15 @@ class CausalTwirlForecastPredictor:
         self.reset()
 
     def reset(self) -> None:
-        self._previous_hud: tuple[float, ...] | None = None
+        self._previous_raw_hud: tuple[float, ...] | None = None
+        self._previous_forecast_hud: tuple[float, ...] | None = None
         self.last_twirl_normalization = TwirlNormalization(
             (), (), None, "not_observed"
         )
         self.last_recovered_midspin_floor_slots: tuple[int, ...] = ()
 
     def __call__(self, hud: tuple[float, ...]) -> WindowForecast:
-        twirl = normalize_visible_twirl_transition(hud, self._previous_hud)
+        twirl = normalize_visible_twirl_transition(hud, self._previous_raw_hud)
         normalized_hud = twirl.hud
         midspin_slots: tuple[int, ...] = ()
         if self.midspin_recovery:
@@ -171,9 +172,14 @@ class CausalTwirlForecastPredictor:
         result = forecast_visible_window(
             normalized_hud,
             horizon_s=self.horizon_s,
-            previous_hud=self._previous_hud,
+            previous_hud=self._previous_forecast_hud,
         )
-        self._previous_hud = hud
+        # Raw history establishes observed motion direction. Forecast history
+        # must use the same causal representation as the current frame or the
+        # frozen full-turn check would compare transformed angles with raw
+        # angles and report a false floor change.
+        self._previous_raw_hud = hud
+        self._previous_forecast_hud = normalized_hud
         self.last_twirl_normalization = twirl
         self.last_recovered_midspin_floor_slots = (
             midspin_slots if result.eligible else ()

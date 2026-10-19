@@ -79,6 +79,12 @@ TARGET_HASHES = {
     FIRST_TOWN: "4a71411d454d3b10a10cd98165a2e9cce99e4b14c310d1e6847836fdc68fc0e1",
     TRIPLE: "5571481d5a0eee9dee9fe70c81702b3bdf6dfd0491a6904c80d19e22610d86d3",
 }
+PHASE12_TARGETS = {
+    "02971 - ALL MY FELLAS - RetroBean.adofai": (64, 69, 74, 78),
+    "04432 - ADOFAI Regular Dan - 2nd Dan - yzuio & 5 more.adofai": (114,),
+    "03096 - Crossing Notes - 피렝.adofai": (23,),
+    FIRST_TOWN: (1, 36, 41, 46, 146, 151, 156),
+}
 
 
 def _hash(path: Path) -> str:
@@ -413,15 +419,33 @@ def run(train_dir: Path, manifest: dict, *, target_only: bool = False):
     if not target_only:
         unseen = {arm: _aggregate(unseen_cases, arm) for arm in ARMS}
         reference = {arm: _aggregate(reference_cases, arm) for arm in ARMS}
+        unseen_by_name = {case["chart"]: case for case in unseen_cases}
+        phase12_events = [
+            unseen_by_name[name]["evaluations"][CANDIDATE]["events"][index]
+            for name, indices in PHASE12_TARGETS.items()
+            for index in indices
+        ]
+        phase12_clean = sum(event["category"] == 1 for event in phase12_events)
+        phase12_motor_ready = sum(
+            event["category"] == 1
+            and event["first_forecast_lead_ms"] >= MOTOR_LEAD_S*1000-1e-6
+            for event in phase12_events
+        )
         checks.update({
-            "train16_candidate_clean_1068": unseen[CANDIDATE]["clean"] == 1068,
+            # The remaining non-clean Train16 event is the explicitly
+            # out-of-scope ヒアソビ Checkpoint event 54.
+            "train16_candidate_clean_1067": unseen[CANDIDATE]["clean"] == 1067,
             "reference5_candidate_clean_200": reference[CANDIDATE]["clean"] == 200,
+            "phase12_fixed13_clean_13": phase12_clean == 13,
+            "phase12_fixed13_motor_ready_at_least_9": phase12_motor_ready >= 9,
             "phase12_baseline_reproduced_train16": unseen[BASELINE]["clean"] == 1065,
             "phase12_baseline_reproduced_reference5": reference[BASELINE]["clean"] == 200,
         })
     else:
         unseen = None
         reference = None
+        phase12_clean = None
+        phase12_motor_ready = None
 
     verdict = (
         "TWIRL_CAUSAL_RECOVERY_PASS" if all(checks.values()) else
@@ -452,6 +476,10 @@ def run(train_dir: Path, manifest: dict, *, target_only: bool = False):
         },
         "train16": unseen,
         "reference5": reference,
+        "phase12_fixed13": {
+            "clean": phase12_clean,
+            "motor_ready_44ms": phase12_motor_ready,
+        },
         "false_positive_ids": false_positive,
         "existing_success_regressions": regressions,
         "cases": all_cases,

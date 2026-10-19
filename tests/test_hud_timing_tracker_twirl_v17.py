@@ -182,6 +182,24 @@ def test_twirl_recovery_predicts_post_twirl_event_once_with_44ms_lead():
     assert target.episode_time_s - first_seen >= .044
 
 
+def test_transformed_history_does_not_break_full_turn_before_twirl():
+    # Regression shape from ALL MY FELLAS event 48: a full-turn current floor
+    # immediately precedes a visible Twirl. Using raw prior angles in the
+    # frozen full-turn consistency check caused full_turn_changed_floor.
+    segment, rows = _capture_twirl_chart()
+    previous, hud, slot = _future_twirl_pair(rows)
+    full_turn_previous = list(previous)
+    full_turn_hud = list(hud)
+    for frame in (full_turn_previous, full_turn_hud):
+        start = SLOT_START + CURRENT_SLOT * FLOOR_DIM
+        frame[start + 4:start + 6] = frame[start + 2:start + 4]
+    tracker = TwirlRecoveryLifecycleCausalTimingTracker(horizon_s=.080)
+    tracker.observe(0, tuple(full_turn_previous))
+    update = tracker.observe(1, tuple(full_turn_hud))
+
+    assert update.status != "full_turn_changed_floor"
+
+
 def test_future_setspeed_and_pause_gates_remain_in_frozen_forecaster():
     _, rows = _capture_twirl_chart()
     previous, hud, slot = _future_twirl_pair(rows)
