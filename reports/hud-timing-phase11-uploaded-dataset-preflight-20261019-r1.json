@@ -1,0 +1,38 @@
+{
+  "format": "dmdod-phase11-uploaded-dataset-preflight-v0.1",
+  "status": "DATASET_VERIFIED_AND_SELECTION_FROZEN__HUD_AUDIT_NOT_RUN",
+  "uploaded_archive_sha256": "99852c736487017796c7ed27cc94f120f30459acdf8189b6573ecd9e5554b071",
+  "chart_count": 80,
+  "candidate_pool_count": 75,
+  "selected_count": 16,
+  "selection_manifest": "reports/hud-timing-phase11-selection-20261019-r1.json",
+  "reference_chart_sha256_match": 5,
+  "verified": {
+    "archive_chart_count": true,
+    "deterministic_selection_order": true,
+    "candidate_pool_fingerprint": true,
+    "selected_16_chart_sha256": true,
+    "reference_5_chart_sha256": true
+  },
+  "full_chart_structural_counts_not_first_12_seconds": {
+    "angles": 28508,
+    "floors": 28524,
+    "active_actions": 33805,
+    "midspin_999_angles": 529,
+    "SetSpeed": 2779,
+    "Pause": 37,
+    "Twirl": 5807,
+    "MultiPlanet": 0
+  },
+  "evaluation": {
+    "status": "NOT_RUN",
+    "reason": "The uploaded Train80 archive is accessible in the analysis container; the DMDOD repository is accessible via a GitHub connector, but the Python execution container cannot reach GitHub to install the matching source tree. No HUD278/lifecycle inference was run. No coverage score is claimed.",
+    "unseen_16_coverage": null,
+    "unseen_16_false_positive_ids": null,
+    "reference_5_recheck": null
+  },
+  "unchanged_constraints": [
+    "No Motor, checkpoint, learning, Validation20 or FINAL",
+    "No chart modifications"
+  ]
+}
