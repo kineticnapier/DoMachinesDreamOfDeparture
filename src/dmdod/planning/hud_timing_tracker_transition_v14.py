@@ -244,7 +244,8 @@ class CausalTimingTracker:
 
     def __init__(self, *, horizon_s: float = .030, control_dt_s: float = .010,
                  match_tolerance_s: float = .00075,
-                 predictor: Callable[[tuple[float, ...]], WindowForecast] | None = None):
+                 predictor: Callable[[tuple[float, ...]], WindowForecast] | None = None,
+                 elapsed_tolerance_s: float = EPS):
         if not MIN_HORIZON_S <= horizon_s <= MAX_HORIZON_S:
             raise ValueError("unsupported horizon")
         if abs(control_dt_s-.010) > 1e-12:
@@ -256,6 +257,9 @@ class CausalTimingTracker:
         self.tolerance = match_tolerance_s
         self.predict = predictor
         self._custom_predictor = predictor is not None
+        if not 0 <= elapsed_tolerance_s <= match_tolerance_s:
+            raise ValueError("invalid elapsed tolerance")
+        self.elapsed_tolerance_s = elapsed_tolerance_s
         self._previous_hud = None
         self.reset()
 
@@ -286,6 +290,9 @@ class CausalTimingTracker:
             or any(b <= a for a, b in zip(prediction.floor_offsets, prediction.floor_offsets[1:]))
         ):
             raise ValueError("malformed eligible forecast")
+        # Exact clock passage remains unchanged.  The optional wider tolerance
+        # is applied only after a new eligible HUD forecast has visibly moved
+        # past a near-boundary event; an abstention cannot expire it early.
         elapsed = [x for x in self._pending if x.due_s <= now+EPS]
         survivors = [x for x in self._pending if x.due_s > now+EPS]
         canceled: list[TrackedEvent] = []
@@ -316,6 +323,13 @@ class CausalTimingTracker:
             covered = (self.horizon_s if prediction.covered_until_s is None
                        else prediction.covered_until_s)
             window_end = now+covered+EPS
+            boundary_elapsed = [
+                p for p in available
+                if p.due_s <= now + self.elapsed_tolerance_s
+            ]
+            elapsed.extend(boundary_elapsed)
+            boundary_ids = {p.local_id for p in boundary_elapsed}
+            available = [p for p in available if p.local_id not in boundary_ids]
             canceled = [p for p in available if p.due_s <= window_end]
             pending.extend(TrackedEvent(p.local_id,p.due_s,p.confirmations,False)
                            for p in available if p.due_s > window_end)
