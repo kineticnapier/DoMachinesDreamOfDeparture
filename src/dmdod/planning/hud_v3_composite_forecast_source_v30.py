@@ -22,6 +22,9 @@ from dmdod.planning.hud_timing_composite_v20 import (
     HUDTimingComposite,
     TimingFrameUpdateV20,
 )
+from dmdod.planning.hud_timing_tracker_lifecycle_v15 import (
+    QuantizedLifecycleCausalTimingTracker,
+)
 from dmdod.planning.timing_fingering_contract_v02 import (
     ABSTAIN,
     CONTRACT_VERSION,
@@ -34,6 +37,9 @@ from dmdod.planning.timing_fingering_contract_v02 import (
 
 
 SOURCE = "hud-v3-countdown-composite-contact278"
+LIFECYCLE_V14 = "v1.4"
+LIFECYCLE_V15 = "v1.5"
+LIFECYCLE_VERSIONS = frozenset((LIFECYCLE_V14, LIFECYCLE_V15))
 ELIGIBLE_COMPOSITE_STATUSES = frozenset((
     "eligible",
     "eligible_partial",
@@ -161,12 +167,23 @@ class HUDTimingCompositeAdapter:
 class HUDV3CompositeForecastSource:
     """Build HUD278 from current visible fields and expose motor contract."""
 
-    def __init__(self, *, horizon_s: float = .080) -> None:
+    def __init__(self, *, horizon_s: float = .080,
+                 lifecycle_version: str = LIFECYCLE_V14) -> None:
+        if lifecycle_version not in LIFECYCLE_VERSIONS:
+            raise ValueError(
+                f"unsupported lifecycle version: {lifecycle_version!r}"
+            )
+        tracker = (
+            None if lifecycle_version == LIFECYCLE_V14
+            else QuantizedLifecycleCausalTimingTracker(horizon_s=horizon_s)
+        )
         self.composite = HUDTimingComposite(
             bpm_observation_contract=MOD_VISIBLE_BPM_CONTRACT,
             horizon_s=horizon_s,
+            v14_tracker=tracker,
         )
         self.adapter = HUDTimingCompositeAdapter()
+        self.lifecycle_version = lifecycle_version
 
     def reset(self) -> None:
         self.composite.reset()

@@ -19,8 +19,15 @@ from dmdod.planning.hud_timing_composite_v20 import (
 from dmdod.planning.hud_timing_tracker_transition_v14 import TimingUpdate
 from dmdod.planning.hud_v3_composite_forecast_source_v30 import (
     HUDTimingCompositeAdapter,
+    HUDV3CompositeForecastSource,
+    LIFECYCLE_V14,
+    LIFECYCLE_V15,
     SOURCE,
 )
+from dmdod.planning.hud_timing_tracker_lifecycle_v15 import (
+    QuantizedLifecycleCausalTimingTracker,
+)
+from dmdod.planning.hud_timing_tracker_transition_v14 import CausalTimingTracker
 from dmdod.planning.timing_fingering_contract_v02 import (
     ABSTAIN,
     ELIGIBLE,
@@ -196,3 +203,17 @@ def test_adapter_policy_surface_has_no_truth_fields() -> None:
         "targets", "target_time_s", "episode_time_s", "chart_time_s",
         "target_ordinal", "_used", "_missed",
     })
+
+
+def test_forecast_source_lifecycle_selection_is_explicit_and_default_stable() -> None:
+    default = HUDV3CompositeForecastSource()
+    legacy = HUDV3CompositeForecastSource(lifecycle_version=LIFECYCLE_V14)
+    improved = HUDV3CompositeForecastSource(lifecycle_version=LIFECYCLE_V15)
+    assert default.lifecycle_version == LIFECYCLE_V14
+    assert type(default.composite._v14) is CausalTimingTracker
+    assert type(legacy.composite._v14) is CausalTimingTracker
+    assert isinstance(
+        improved.composite._v14, QuantizedLifecycleCausalTimingTracker
+    )
+    with pytest.raises(ValueError, match="unsupported lifecycle version"):
+        HUDV3CompositeForecastSource(lifecycle_version="latest")
