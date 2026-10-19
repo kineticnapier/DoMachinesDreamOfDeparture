@@ -95,6 +95,22 @@ arrival_upper = episode_center + sync_uncertainty + frame_half_width + latency_m
 
 Target truthはdeadlineとの事後照合だけに使用する。Studentへ渡せる値は、実pixelから得た3状態、validity、observed timestampだけである。DLL icon enum、Floor ID、倍率、compiled speedを渡してはならない。
 
+## 撮影前の入力検証強化
+
+録画監査器のレビューで、manifest上のラベルだけで過剰な成功判定をしないよう
+以下を追加した。
+
+- 8x/1x各worldはちょうど1件（重複禁止）
+- manifestに記載した解像度とffprobeの実解像度が一致
+- 両動画の実解像度が一致
+- 同期アンカーはfirst countdown tick / episode 0に固定
+- cropは整数4値、画面内、最大1024px四方に限定
+- 比較フレームが0件、または`--no-pixel-analysis`で比較省略なら
+  `OBSERVABLE_BEFORE_DEADLINE`を出さず`UNVERIFIED`へ棄権
+
+これらは監査器の**入力信頼性**を強化するもので、実映像の観測データを
+代替するものではない。
+
 ## Frame差解析
 
 manifest完成後に実行する。
