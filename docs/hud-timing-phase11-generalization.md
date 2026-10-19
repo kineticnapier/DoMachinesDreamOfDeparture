@@ -2,7 +2,43 @@
 
 ## Implementation status
 
-**DATASET_VERIFIED_AND_SELECTION_FROZEN; HUD278_EVALUATION_NOT_RUN**
+**PHASE11 AUDIT_COMPLETED (Windows run; console aggregate received, detailed JSON pending review)**
+
+## Phase 11 measured outcome (user-run, 2026-10-19)
+
+A full three-arm HUD278 audit was run against the frozen, verified 16 Train
+charts on the user's Windows environment. The user supplied its standard-output
+aggregate reporting `AUDIT_COMPLETED`. The event-level JSON has **not yet
+been uploaded or independently inspected**; these values are recorded exactly
+as supplied, with provenance in
+`reports/hud-timing-phase11-console-summary-20261019-r1.json`.
+
+| Metric (16 unseen, 1,068 events) | A v1.4 alias OFF | B v1.5 alias OFF | C v1.5 alias ON |
+|---|---:|---:|---:|
+| Clean lifecycle | 1,039 (97.28%) | 1,052 (98.50%) | 1,052 (98.50%) |
+| Category 2: timing estimation failure | 0 | 0 | 0 |
+| Category 3: justified abstention | 14 | 14 | 14 |
+| Category 4: observability unverified | 2 | 2 | 2 |
+| Category 5: lifecycle / ID failure | 13 | 0 | 0 |
+| False-positive IDs | 0 | 0 | 0 |
+| Conditional Timing MAE | 0.020121 ms | 0.019872 ms | 0.019872 ms |
+| Mean first forecast lead | 70.7869 ms | 70.7772 ms | 70.7772 ms |
+
+The known reference five were reported as 199/200 clean (99.5%), one
+abstention, zero false-positive IDs. Lifecycle v1.5 recovered 13 events in
+previously unseen material; identity ON/OFF had identical aggregate outcomes.
+No real Motor Hit/Miss inference follows from these event classification rates.
+
+Remaining 16 events are 14 category-3 abstentions and 2 category-4
+observability-unverified cases. Their causes, chart clustering, and safety
+interpretation require the **full result JSON**. An absence of category-2
+events is a statement about the present evaluator classification only.
+
+The MAE numbers have different clean-event populations for A/B/C and must
+not be described as estimator-precision gains. No acceptance threshold was
+used to select or filter the 16 Train charts.
+
+## Earlier preparatory status (superseded by the Windows run)
 
 ## Uploaded Train80 verified (2026-10-19)
 
@@ -129,7 +165,9 @@ completed **audit implementation**, not a fabricated completed 16-chart run.
 
 ## What remains
 
-Execution requires the exact ignored Train80 directory (including the five
-historically hashed reference charts), which is not present in the assistant
-runtime or versioned repository. Until that data is available to an execution
-environment, the Phase 11 generalization result remains **NOT RUN**.
+The user completed the fixed Train80 run and provided aggregate stdout.
+To finish independent event-level diagnosis and preserve a reproducible
+artifact, collect `reports/hud-timing-phase11-generalization-local-r1.json`
+from that same run. Do not regenerate, filter, or change the frozen selection
+based on the observed scores. The full per-event result has not yet been
+committed.
