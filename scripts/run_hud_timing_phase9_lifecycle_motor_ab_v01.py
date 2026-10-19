@@ -16,7 +16,10 @@ from dmdod.planning.hud_v3_composite_forecast_source_v30 import (
     LIFECYCLE_V14,
     LIFECYCLE_V15,
 )
-from scripts import run_countdown_hud_v3_motor_phase3 as phase3
+if __package__:
+    from scripts import run_countdown_hud_v3_motor_phase3 as phase3
+else:
+    import run_countdown_hud_v3_motor_phase3 as phase3
 
 
 FORMAT = "dmdod-hud-timing-phase9-lifecycle-motor-ab-v0.1"

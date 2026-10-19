@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 from copy import deepcopy
+from pathlib import Path
+import subprocess
 
 from scripts import run_hud_timing_phase9_lifecycle_motor_ab_v01 as runner
 
@@ -61,6 +63,21 @@ def test_reservation_validator_rejects_double_booked_axis():
 
 def test_phase3_default_remains_lifecycle_v14():
     assert phase3_default() == runner.LIFECYCLE_V14
+
+
+def test_cli_help_starts_from_repository_root():
+    completed = subprocess.run(
+        [
+            str(Path(".venv/Scripts/python.exe")),
+            "scripts/run_hud_timing_phase9_lifecycle_motor_ab_v01.py",
+            "--help",
+        ],
+        check=False,
+        capture_output=True,
+        text=True,
+        timeout=30,
+    )
+    assert completed.returncode == 0, completed.stderr
 
 
 def phase3_default():
