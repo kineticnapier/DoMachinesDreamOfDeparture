@@ -2,7 +2,32 @@
 
 ## Implementation status
 
-**AUDIT_INFRASTRUCTURE_COMMITTED; TRAIN80_EVALUATION_NOT_RUN**
+**DATASET_VERIFIED_AND_SELECTION_FROZEN; HUD278_EVALUATION_NOT_RUN**
+
+## Uploaded Train80 verified (2026-10-19)
+
+The user supplied `Train.zip` directly to the assistant. Its 80 ADOFAI charts were
+read in the container, and all five previously recorded reference SHA256 hashes
+matched. There are 75 unseen candidate filenames; deterministic selection
+froze 16 entries and their SHA256 checksums without looking at inference
+results. These were committed in
+`reports/hud-timing-phase11-selection-20261019-r1.json`.
+
+The uploaded archive checksum is
+`99852c736487017796c7ed27cc94f120f30459acdf8189b6573ecd9e5554b071`.
+All 16 selected hashes, candidate-pool fingerprint and selection order passed
+independent validation. Dataset structural counts across **entire charts**
+(not 12-second prefixes) are in
+`reports/hud-timing-phase11-uploaded-dataset-preflight-20261019-r1.json`.
+
+The DMDOD implementation is available through the GitHub connector, but the
+separate Python execution container cannot access GitHub over the network.
+Thus the complete imported HUD278 pipeline cannot currently be executed in
+that container. The actual 16-chart Timing/Lifecycle measurements and project
+pytest execution remain **NOT RUN**. No accuracy, event coverage, or regression
+claim may be inferred from the structural counts.
+
+## Earlier infrastructure-only note
 
 The audit code is committed to the existing branch. The local Train80 data directory
 `data/DMDOD-v140-tuf-p11-p20/Train` is ignored by `.gitignore` via `data/*`;
