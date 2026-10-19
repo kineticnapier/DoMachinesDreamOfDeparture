@@ -147,6 +147,9 @@ def test_ffmpeg_probe_crop_alignment_and_pixel_difference(tmp_path: Path):
     path.write_text(json.dumps(manifest), encoding="utf-8")
     result = audit.audit(path)
     assert result["verdict"] == "OBSERVABLE_BEFORE_DEADLINE"
+    skipped = audit.audit(path, analyze_pixels=False)
+    assert skipped["verdict"] == "UNVERIFIED"
+    assert "disabled" in skipped["reason"]
     pixels = result["pixel_difference_analysis"]
     assert pixels["performed"]
     assert pixels["paired_frames"] > 400
