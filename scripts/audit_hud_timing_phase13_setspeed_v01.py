@@ -365,6 +365,13 @@ def _primary_case(path: Path, event_index: int, original_capture) -> tuple[dict,
         ],
         "minimal_sound_due_envelope_width_ms_posthoc": gap_s * 1000.0,
         "exact_due_truth_intersection_exists": gap_s <= 1e-9,
+        "predeadline_student_derivable_due_interval_s": None,
+        "predeadline_due_interval_reason": (
+            "The visible marker carries no numeric future speed. The finite "
+            "two-world envelope is evaluator-only; under the HUD263 contract "
+            "the unobserved positive SetSpeed value has no visible finite "
+            "upper-duration bound."
+        ),
     }
     trace_frames = []
     for row in visible_rows:

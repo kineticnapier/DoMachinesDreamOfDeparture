@@ -65,6 +65,7 @@ def test_all_four_histories_are_identical_but_due_truths_differ(audit_result):
         assert case["counterfactual_prefix"]["countdown_histories_equal"]
         assert case["due_gap_ms_posthoc"] > 44.0
         assert not case["exact_due_truth_intersection_exists"]
+        assert case["predeadline_student_derivable_due_interval_s"] is None
 
 
 def test_information_arrives_in_the_required_causal_order(audit_result):
