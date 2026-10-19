@@ -1,0 +1,11 @@
+{
+  "exit_code": 0,
+  "started_local": "2026-10-19T20:03:37.3275294+09:00",
+  "pid": 56860,
+  "stderr": "logs/hud-timing-phase9-lifecycle-motor-ab-20261019-r4.stderr.log",
+  "finished_local": "2026-10-19T20:03:46.0112614+09:00",
+  "status": "completed",
+  "stdout": "logs/hud-timing-phase9-lifecycle-motor-ab-20261019-r4.stdout.log",
+  "wall_timeout_s_per_arm": 180.0,
+  "output": "reports/hud-timing-phase9-lifecycle-motor-ab-20261019-r4.json"
+}
