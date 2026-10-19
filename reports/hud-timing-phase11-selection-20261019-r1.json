@@ -1,0 +1,81 @@
+{
+  "format": "dmdod-timing-phase11-frozen-selection-v0.1",
+  "selection_salt": "dmdod-phase11-unseen-train16-20261019-v1",
+  "selection_rule": "sort SHA256(salt + NUL + UTF-8 filename), then filename; choose first 16",
+  "candidate_pool_count": 75,
+  "candidate_pool_sha256": "e73424740ab1a101324cbb801403897d9301bfe24cc2d2999e3caeb6fd6b0ddf",
+  "excluded_reference_charts": [
+    "02334 - Time Leaper - Jipper.adofai",
+    "02521 - Triple Cross - Milkyway.adofai",
+    "04042 - bool - vo[ICE].adofai",
+    "07322 - Runaway - smy258.adofai",
+    "07827 - 24eeev0-$ - hotduck _ COMMON.adofai"
+  ],
+  "scope_seconds": 12,
+  "charts": [
+    {
+      "filename": "04173 - Beyond Your Words (feat. vally.exe) - 연석이2 _ Sprout & 2 more.adofai",
+      "sha256": "3c73cca4921893eabc3a642508af8892ea741082299666535668ebddd2595fd3"
+    },
+    {
+      "filename": "07923 - Rainbow Chaser - 树赤TreeRed _ 树赤TreeRed.adofai",
+      "sha256": "5ba7a57ce57cb5b8d2f526b275d0c141cb7923220a07d2a034793e443dfa253d"
+    },
+    {
+      "filename": "03079 - My Piano Is Escaping - 한가지.adofai",
+      "sha256": "1a5928ad5c91d21b8eaae2bc8246c5ed8bf35ff904d8497f2ee9895b781708b2"
+    },
+    {
+      "filename": "04913 - Ciforance MEGAMIX - Ciforance _ 白zhi12 & 4 more.adofai",
+      "sha256": "5bb8736e96430fa327871248908f47c38d885c065920dadc9ee59955393813c1"
+    },
+    {
+      "filename": "09853 - Rocky Buinne [Featured ver.] - 2seehyun.adofai",
+      "sha256": "3fc3ebfaa773b50e3ed607e2bf0ee7efd865fd8f809a5bb18ee6303b59ddc61e"
+    },
+    {
+      "filename": "01200 - Who's Not In Paris - Irin.adofai",
+      "sha256": "0138eab24e2d5354a6078f46501a075a4ad067b5069c3a28ab950dfafc2bba9c"
+    },
+    {
+      "filename": "09981 - Chronosynchronism - 토끼로봇 & 1 more _ RinkiRin & 2 more.adofai",
+      "sha256": "4990095ea658a259d12d5ee78084a80d0bda8eb66e5957c39a32a53ab8400b34"
+    },
+    {
+      "filename": "03810 - Parallel Universe Shifter - Eraser.adofai",
+      "sha256": "71d90e02647c91a749154697ae6f337b5faca337bfb75d234873fe652480f2d2"
+    },
+    {
+      "filename": "02971 - ALL MY FELLAS - RetroBean.adofai",
+      "sha256": "e142af91b1784dc20c76fbde5a7320de234dbaebf9822f75e733d0b2db1924d5"
+    },
+    {
+      "filename": "04432 - ADOFAI Regular Dan - 2nd Dan - yzuio & 5 more.adofai",
+      "sha256": "2ada1d0a06b5bd4ed259b9b6a480b15a7e964fa2e8ca25e5f0bc50db306b34c0"
+    },
+    {
+      "filename": "11663 - Nameless Garden - oSKYo _ oSKYo.adofai",
+      "sha256": "2117f03d532c3019749653afce90500426b121d9f09ed9286268c168e54de0f8"
+    },
+    {
+      "filename": "10359 - Entanglement - HanB _ RinkiRin.adofai",
+      "sha256": "937f4ebdab68fba0ee9a2571fe7117832685848218fda14a37d1ea52b1784e97"
+    },
+    {
+      "filename": "03096 - Crossing Notes - 피렝.adofai",
+      "sha256": "3847e47e00162a3794991eb6c37009d15673b290c2261ffa43a1f476b877aa64"
+    },
+    {
+      "filename": "01645 - First town of this Journey remix - Irin.adofai",
+      "sha256": "4a71411d454d3b10a10cd98165a2e9cce99e4b14c310d1e6847836fdc68fc0e1"
+    },
+    {
+      "filename": "01760 - C†hulhu - Kiyoshi.adofai",
+      "sha256": "3ef5aa91ba343cd10c2f9388d60b39a74c0373eadf1961bde2877c90efc0ae4d"
+    },
+    {
+      "filename": "04349 - ヒアソビ (feat. 初音ミク) - Zedwards.adofai",
+      "sha256": "baaf6bff3cd012d8b0e4f123f58868c1cd4f262a35394e32eb2ebcba898caab9"
+    }
+  ]
+}
