@@ -1,0 +1,333 @@
+{
+  "format": "dmdod-hud-timing-phase13-setspeed-counterfactual-v0.1",
+  "generated_utc": "2026-10-19T23:08:01.728641+00:00",
+  "verdict": "FUTURE_SETSPEED_PREDEADLINE_NONIDENTIFIABLE",
+  "primary_classification_counts": {
+    "PREDEADLINE_NONIDENTIFIABLE": 4
+  },
+  "primary_cases": [
+    {
+      "chart": "02971 - ALL MY FELLAS - RetroBean.adofai",
+      "chart_sha256": "e142af91b1784dc20c76fbde5a7320de234dbaebf9822f75e733d0b2db1924d5",
+      "event_index_posthoc": 64,
+      "target_floor_posthoc": 66,
+      "setspeed_floor_posthoc": 64,
+      "midspin_floor_posthoc": 65,
+      "classification": "PREDEADLINE_NONIDENTIFIABLE",
+      "intervention_evaluator_only": {
+        "action_source_index": 17,
+        "action_sequence_index": 17,
+        "action_floor_posthoc": 64,
+        "modified_field": "bpmMultiplier",
+        "original_value_posthoc": 0.8333335,
+        "counterfactual_value_posthoc": 0.1041666875,
+        "factor_predeclared": 0.125,
+        "visible_marker_preserved": true,
+        "only_one_action_changed": true
+      },
+      "target_due_original_s_posthoc": 9.574999595587554,
+      "target_due_counterfactual_s_posthoc": 9.662499603799983,
+      "due_gap_ms_posthoc": 87.50000821242843,
+      "deadline_44ms_s_posthoc": 9.530999595587554,
+      "information_arrival": {
+        "future_setspeed_marker_first_visible_s": 8.44,
+        "postchange_numeric_bpm_first_distinguishable_s": 9.57,
+        "midspin_pair_first_safely_visible_s": 8.63,
+        "first_safe_due_forecast": {
+          "observed_at_s": 9.57,
+          "due_s": 9.574999591821312,
+          "due_lower_s": 9.574999591821312,
+          "due_upper_s": 9.574999591821312,
+          "uncertainty_s": 0.0,
+          "local_id": 64,
+          "status": "eligible_partial"
+        },
+        "numeric_bpm_arrival_minus_deadline_ms": 39.00040441244634,
+        "due_forecast_arrival_minus_deadline_ms": 39.00040441244634
+      },
+      "counterfactual_prefix": {
+        "last_compared_step": 953,
+        "last_compared_observation_s": 9.53,
+        "frames_compared": 954,
+        "max_absolute_hud263_difference": 0.0,
+        "countdown_histories_equal": true,
+        "first_distinguishable_frame_before_deadline": null,
+        "indistinguishable_through_deadline": true
+      },
+      "first_full_hud_difference": {
+        "step": 957,
+        "observed_at_s": 9.57,
+        "hud263_differing_dimensions": [
+          24,
+          25,
+          251,
+          252
+        ],
+        "tile_bpm_differs": true,
+        "real_bpm_differs": true,
+        "countdown_differs": false
+      },
+      "minimal_sound_due_envelope_s_posthoc": [
+        9.574999595587554,
+        9.662499603799983
+      ],
+      "minimal_sound_due_envelope_width_ms_posthoc": 87.50000821242843,
+      "exact_due_truth_intersection_exists": false,
+      "predeadline_student_derivable_due_interval_s": null,
+      "predeadline_due_interval_reason": "The visible marker carries no numeric future speed. The finite two-world envelope is evaluator-only; under the HUD263 contract the unobserved positive SetSpeed value has no visible finite upper-duration bound."
+    },
+    {
+      "chart": "01645 - First town of this Journey remix - Irin.adofai",
+      "chart_sha256": "4a71411d454d3b10a10cd98165a2e9cce99e4b14c310d1e6847836fdc68fc0e1",
+      "event_index_posthoc": 1,
+      "target_floor_posthoc": 3,
+      "setspeed_floor_posthoc": 1,
+      "midspin_floor_posthoc": 2,
+      "classification": "PREDEADLINE_NONIDENTIFIABLE",
+      "intervention_evaluator_only": {
+        "action_source_index": 8,
+        "action_sequence_index": 8,
+        "action_floor_posthoc": 1,
+        "modified_field": "bpmMultiplier",
+        "original_value_posthoc": 2.0,
+        "counterfactual_value_posthoc": 0.25,
+        "factor_predeclared": 0.125,
+        "visible_marker_preserved": true,
+        "only_one_action_changed": true
+      },
+      "target_due_original_s_posthoc": 0.7205882546153192,
+      "target_due_counterfactual_s_posthoc": 0.8235294493960035,
+      "due_gap_ms_posthoc": 102.94119478068431,
+      "deadline_44ms_s_posthoc": 0.6765882546153191,
+      "information_arrival": {
+        "future_setspeed_marker_first_visible_s": 0.0,
+        "postchange_numeric_bpm_first_distinguishable_s": 0.71,
+        "midspin_pair_first_safely_visible_s": 0.0,
+        "first_safe_due_forecast": {
+          "observed_at_s": 0.71,
+          "due_s": 0.7205882518850071,
+          "due_lower_s": 0.7205882518850071,
+          "due_upper_s": 0.7205882518850071,
+          "uncertainty_s": 0.0,
+          "local_id": 1,
+          "status": "eligible_partial"
+        },
+        "numeric_bpm_arrival_minus_deadline_ms": 33.411745384680835,
+        "due_forecast_arrival_minus_deadline_ms": 33.411745384680835
+      },
+      "counterfactual_prefix": {
+        "last_compared_step": 67,
+        "last_compared_observation_s": 0.67,
+        "frames_compared": 68,
+        "max_absolute_hud263_difference": 0.0,
+        "countdown_histories_equal": true,
+        "first_distinguishable_frame_before_deadline": null,
+        "indistinguishable_through_deadline": true
+      },
+      "first_full_hud_difference": {
+        "step": 71,
+        "observed_at_s": 0.71,
+        "hud263_differing_dimensions": [
+          24,
+          25,
+          251,
+          252
+        ],
+        "tile_bpm_differs": true,
+        "real_bpm_differs": true,
+        "countdown_differs": false
+      },
+      "minimal_sound_due_envelope_s_posthoc": [
+        0.7205882546153192,
+        0.8235294493960035
+      ],
+      "minimal_sound_due_envelope_width_ms_posthoc": 102.94119478068431,
+      "exact_due_truth_intersection_exists": false,
+      "predeadline_student_derivable_due_interval_s": null,
+      "predeadline_due_interval_reason": "The visible marker carries no numeric future speed. The finite two-world envelope is evaluator-only; under the HUD263 contract the unobserved positive SetSpeed value has no visible finite upper-duration bound."
+    },
+    {
+      "chart": "01645 - First town of this Journey remix - Irin.adofai",
+      "chart_sha256": "4a71411d454d3b10a10cd98165a2e9cce99e4b14c310d1e6847836fdc68fc0e1",
+      "event_index_posthoc": 36,
+      "target_floor_posthoc": 39,
+      "setspeed_floor_posthoc": 37,
+      "midspin_floor_posthoc": 38,
+      "classification": "PREDEADLINE_NONIDENTIFIABLE",
+      "intervention_evaluator_only": {
+        "action_source_index": 55,
+        "action_sequence_index": 55,
+        "action_floor_posthoc": 37,
+        "modified_field": "bpmMultiplier",
+        "original_value_posthoc": 2.0,
+        "counterfactual_value_posthoc": 0.25,
+        "factor_predeclared": 0.125,
+        "visible_marker_preserved": true,
+        "only_one_action_changed": true
+      },
+      "target_due_original_s_posthoc": 3.183823567304636,
+      "target_due_counterfactual_s_posthoc": 3.235294164694978,
+      "due_gap_ms_posthoc": 51.470597390342206,
+      "deadline_44ms_s_posthoc": 3.139823567304636,
+      "information_arrival": {
+        "future_setspeed_marker_first_visible_s": 2.31,
+        "postchange_numeric_bpm_first_distinguishable_s": 3.18,
+        "midspin_pair_first_safely_visible_s": 2.48,
+        "first_safe_due_forecast": {
+          "observed_at_s": 3.18,
+          "due_s": 3.1838235658987974,
+          "due_lower_s": 3.1838235658987974,
+          "due_upper_s": 3.1838235658987974,
+          "uncertainty_s": 0.0,
+          "local_id": 36,
+          "status": "eligible_partial"
+        },
+        "numeric_bpm_arrival_minus_deadline_ms": 40.1764326953642,
+        "due_forecast_arrival_minus_deadline_ms": 40.1764326953642
+      },
+      "counterfactual_prefix": {
+        "last_compared_step": 313,
+        "last_compared_observation_s": 3.13,
+        "frames_compared": 314,
+        "max_absolute_hud263_difference": 0.0,
+        "countdown_histories_equal": true,
+        "first_distinguishable_frame_before_deadline": null,
+        "indistinguishable_through_deadline": true
+      },
+      "first_full_hud_difference": {
+        "step": 318,
+        "observed_at_s": 3.18,
+        "hud263_differing_dimensions": [
+          24,
+          25,
+          251,
+          252
+        ],
+        "tile_bpm_differs": true,
+        "real_bpm_differs": true,
+        "countdown_differs": false
+      },
+      "minimal_sound_due_envelope_s_posthoc": [
+        3.183823567304636,
+        3.235294164694978
+      ],
+      "minimal_sound_due_envelope_width_ms_posthoc": 51.470597390342206,
+      "exact_due_truth_intersection_exists": false,
+      "predeadline_student_derivable_due_interval_s": null,
+      "predeadline_due_interval_reason": "The visible marker carries no numeric future speed. The finite two-world envelope is evaluator-only; under the HUD263 contract the unobserved positive SetSpeed value has no visible finite upper-duration bound."
+    },
+    {
+      "chart": "01645 - First town of this Journey remix - Irin.adofai",
+      "chart_sha256": "4a71411d454d3b10a10cd98165a2e9cce99e4b14c310d1e6847836fdc68fc0e1",
+      "event_index_posthoc": 146,
+      "target_floor_posthoc": 152,
+      "setspeed_floor_posthoc": 150,
+      "midspin_floor_posthoc": 151,
+      "classification": "PREDEADLINE_NONIDENTIFIABLE",
+      "intervention_evaluator_only": {
+        "action_source_index": 132,
+        "action_sequence_index": 132,
+        "action_floor_posthoc": 150,
+        "modified_field": "bpmMultiplier",
+        "original_value_posthoc": 2.0,
+        "counterfactual_value_posthoc": 0.25,
+        "factor_predeclared": 0.125,
+        "visible_marker_preserved": true,
+        "only_one_action_changed": true
+      },
+      "target_due_original_s_posthoc": 8.830882431639385,
+      "target_due_counterfactual_s_posthoc": 8.882353029029726,
+      "due_gap_ms_posthoc": 51.470597390341766,
+      "deadline_44ms_s_posthoc": 8.786882431639384,
+      "information_arrival": {
+        "future_setspeed_marker_first_visible_s": 7.96,
+        "postchange_numeric_bpm_first_distinguishable_s": 8.83,
+        "midspin_pair_first_safely_visible_s": 8.120000000000001,
+        "first_safe_due_forecast": {
+          "observed_at_s": 8.83,
+          "due_s": 8.830882430150917,
+          "due_lower_s": 8.830882430150917,
+          "due_upper_s": 8.830882430150917,
+          "uncertainty_s": 0.0,
+          "local_id": 146,
+          "status": "eligible_partial"
+        },
+        "numeric_bpm_arrival_minus_deadline_ms": 43.11756836061598,
+        "due_forecast_arrival_minus_deadline_ms": 43.11756836061598
+      },
+      "counterfactual_prefix": {
+        "last_compared_step": 878,
+        "last_compared_observation_s": 8.78,
+        "frames_compared": 879,
+        "max_absolute_hud263_difference": 0.0,
+        "countdown_histories_equal": true,
+        "first_distinguishable_frame_before_deadline": null,
+        "indistinguishable_through_deadline": true
+      },
+      "first_full_hud_difference": {
+        "step": 883,
+        "observed_at_s": 8.83,
+        "hud263_differing_dimensions": [
+          24,
+          25,
+          251,
+          252
+        ],
+        "tile_bpm_differs": true,
+        "real_bpm_differs": true,
+        "countdown_differs": false
+      },
+      "minimal_sound_due_envelope_s_posthoc": [
+        8.830882431639385,
+        8.882353029029726
+      ],
+      "minimal_sound_due_envelope_width_ms_posthoc": 51.470597390341766,
+      "exact_due_truth_intersection_exists": false,
+      "predeadline_student_derivable_due_interval_s": null,
+      "predeadline_due_interval_reason": "The visible marker carries no numeric future speed. The finite two-world envelope is evaluator-only; under the HUD263 contract the unobserved positive SetSpeed value has no visible finite upper-duration bound."
+    }
+  ],
+  "reference_case": {
+    "chart": "02521 - Triple Cross - Milkyway.adofai",
+    "chart_sha256": "5571481d5a0eee9dee9fe70c81702b3bdf6dfd0491a6904c80d19e22610d86d3",
+    "event_index_posthoc": 23,
+    "role": "reference_only_not_setspeed",
+    "classification": "OBSERVABILITY_UNVERIFIED",
+    "reason": "The preceding special floor is Twirl, not SetSpeed. Its marker is visible before the deadline, but a causal Twirl-through-floor estimator is outside this fixed SetSpeed counterfactual audit.",
+    "target_due_s_posthoc": 5.125000147642703,
+    "deadline_44ms_s_posthoc": 5.081000147642704,
+    "information_arrival": {
+      "future_twirl_marker_first_visible_s": 3.0100000000000002,
+      "midspin_pair_first_safely_visible_s": 3.31,
+      "first_safe_due_forecast": {
+        "observed_at_s": 5.11,
+        "due_s": 5.125000137581568,
+        "due_lower_s": 5.125000137581568,
+        "due_upper_s": 5.125000137581568,
+        "uncertainty_s": 0.0,
+        "local_id": 23,
+        "status": "eligible_partial"
+      }
+    }
+  },
+  "safety_constraints": {
+    "phase12_recovered_13_of_13": true,
+    "phase12_motor_ready_9_of_13": true,
+    "phase12_false_positive_zero": true,
+    "phase12_success_regressions_zero": true,
+    "predictor_change_made": false
+  },
+  "phase4_phase5_reuse": {
+    "intervention_factor": 0.125,
+    "phase4_bool_result": "INDISTINGUISHABLE_BEFORE_44MS_DEADLINE",
+    "phase5_stock_icon": "UNVERIFIED",
+    "phase5_jrp_numeric_update": "AFTER_DEADLINE",
+    "difference_here": "The same numeric-only intervention is applied to the four Phase-12 late Midspin events and evaluated per event."
+  },
+  "student_boundary": {
+    "allowed": "current/past HUD263 and visible countdown observations",
+    "forbidden": "SetSpeed values, compiled BPM, target due, floor ordinals, and evaluator associations",
+    "truth_use": "posthoc association and counterfactual evaluation only"
+  },
+  "implementation_decision": "DO_NOT_RELAX_SETSPEED_GATE: all four primary histories are non-identifiable before their 44ms deadlines."
+}
