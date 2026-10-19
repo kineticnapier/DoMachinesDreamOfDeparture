@@ -1,0 +1,69 @@
+{
+  "format": "dmdod-stock-setspeed-icon-capture-manifest-v0.1",
+  "deadline_episode_s": 3.9761634902576737,
+  "crop_xywh": null,
+  "allowed_states": [
+    "DOUBLE_RABBIT_VISIBLE",
+    "TILE_VISIBLE_NO_SPEED_ICON",
+    "UNKNOWN_OR_OCCLUDED"
+  ],
+  "captures": [
+    {
+      "world": "original-8x",
+      "video_path": null,
+      "recording": {
+        "recording_utc": null,
+        "game_build": null,
+        "capture_software": null,
+        "capture_mode": null,
+        "reported_fps": null,
+        "resolution": null,
+        "mods_enabled": [],
+        "camera_and_display_conditions": null
+      },
+      "sync": {
+        "anchor_kind": "first_countdown_tick",
+        "anchor_video_s": null,
+        "anchor_episode_s": 0.0,
+        "uncertainty_s": null
+      },
+      "capture_latency": {
+        "min_s": null,
+        "max_s": null,
+        "basis": null
+      },
+      "annotations": []
+    },
+    {
+      "world": "counterfactual-1x",
+      "video_path": null,
+      "recording": {
+        "recording_utc": null,
+        "game_build": null,
+        "capture_software": null,
+        "capture_mode": null,
+        "reported_fps": null,
+        "resolution": null,
+        "mods_enabled": [],
+        "camera_and_display_conditions": null
+      },
+      "sync": {
+        "anchor_kind": "first_countdown_tick",
+        "anchor_video_s": null,
+        "anchor_episode_s": 0.0,
+        "uncertainty_s": null
+      },
+      "capture_latency": {
+        "min_s": null,
+        "max_s": null,
+        "basis": null
+      },
+      "annotations": []
+    }
+  ],
+  "notes": [
+    "Paths are relative to this manifest unless absolute.",
+    "Do not label no-icon unless the tile and expected icon site are both visible.",
+    "Do not enter multiplier or compiled icon enum as a sensor observation."
+  ]
+}

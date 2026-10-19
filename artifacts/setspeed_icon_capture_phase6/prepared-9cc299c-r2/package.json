@@ -1,0 +1,26 @@
+{
+  "format": "dmdod-stock-setspeed-icon-capture-package-v0.1",
+  "generated_utc": "2026-10-19T02:37:56.115239+00:00",
+  "source_chart": "data\\DMDOD-v140-tuf-p11-p20\\Train\\04042 - bool - vo[ICE].adofai",
+  "source_chart_sha256": "04981e92f74288b8aac7286e83420b933036d2caead9c157bc33b706779ad1b1",
+  "semantic_difference": "actions[Floor 1 SetSpeed].bpmMultiplier only: 8 -> 1",
+  "worlds": {
+    "original-8x": {
+      "multiplier_evaluator_only": 8,
+      "chart": "original-8x\\Train bool stock icon capture 8x.adofai",
+      "chart_sha256": "04981e92f74288b8aac7286e83420b933036d2caead9c157bc33b706779ad1b1",
+      "audio": "original-8x\\bool.ogg",
+      "audio_copied": false,
+      "audio_sha256": null
+    },
+    "counterfactual-1x": {
+      "multiplier_evaluator_only": 1,
+      "chart": "counterfactual-1x\\Train bool stock icon capture 1x.adofai",
+      "chart_sha256": "0864c36782c352bc739e8ae1577041536f7ab61b029922e5370579c4b55bd9c5",
+      "audio": "counterfactual-1x\\bool.ogg",
+      "audio_copied": false,
+      "audio_sha256": null
+    }
+  },
+  "capture_manifest": "capture-manifest.template.json"
+}

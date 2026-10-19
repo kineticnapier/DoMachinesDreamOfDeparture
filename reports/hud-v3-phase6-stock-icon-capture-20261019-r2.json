@@ -1,0 +1,27 @@
+{
+  "format": "dmdod-stock-setspeed-icon-capture-audit-v0.1",
+  "generated_utc": "2026-10-19T02:37:56.341366+00:00",
+  "manifest": "artifacts\\setspeed_icon_capture_phase6\\prepared-9cc299c-r2\\capture-manifest.template.json",
+  "deadline_episode_s": 3.9761634902576737,
+  "verdict": "UNVERIFIED",
+  "reason": "capture evidence or metadata is incomplete",
+  "missing_or_invalid_evidence": [
+    "counterfactual-1x: video_path",
+    "original-8x: video_path"
+  ],
+  "video_probes": {},
+  "first_valid_observation_intervals": {},
+  "pixel_difference_analysis": {
+    "performed": false,
+    "reason": "videos or crop unavailable"
+  },
+  "policy_boundary": {
+    "allowed_states": [
+      "DOUBLE_RABBIT_VISIBLE",
+      "TILE_VISIBLE_NO_SPEED_ICON",
+      "UNKNOWN_OR_OCCLUDED"
+    ],
+    "no_icon_rule": "valid only when tile and expected icon site are visible",
+    "forbidden": "icon enum, multiplier, compiled speed, target time, or evaluator labels as Student input"
+  }
+}
