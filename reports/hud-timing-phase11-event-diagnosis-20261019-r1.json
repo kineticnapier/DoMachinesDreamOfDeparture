@@ -244,5 +244,47 @@
     "Category 3 indicates a contract-relative abstention, not universal unobservability.",
     "Category 4 has not established causal impossibility.",
     "Cross-check compiled chart floors is posthoc evaluator-only; no forecasts retuned."
-  ]
+  ],
+  "code_correlated_failure_mechanisms": {
+    "midspin_gate": {
+      "events": 13,
+      "source": "src/dmdod/planning/hud_timing_tracker_transition_v14.py",
+      "rule": "next_floor[6] Midspin triggers special_future_floor",
+      "interpretation": "Conservative implementation rule, not a proof of inherent unobservability."
+    },
+    "checkpoint_gate": {
+      "events": 1,
+      "chart": "04349 - ヒアソビ (feat. 初音ミク) - Zedwards.adofai",
+      "source": "src/dmdod/planning/hud_timing_tracker_transition_v14.py",
+      "rule": "next_floor[12] Checkpoint triggers special_future_floor; SetSpeed[9] alone is not the direct gate",
+      "interpretation": "Requires separate verification before considering any relaxation."
+    },
+    "twirl_short_gap": {
+      "events": 2,
+      "chart": "01645 - First town of this Journey remix - Irin.adofai",
+      "source": "source replay of fixed HUD-only forecast",
+      "observation": "previous 10ms step holds Twirl event only; next 10ms step arrives after 7.352941ms next target",
+      "frames": [
+        {
+          "idx": 174,
+          "prior_frame_step": 988,
+          "prior_frame_time_s": 9.88,
+          "pending_due_s": 9.882353,
+          "next_frame_step": 989,
+          "next_frame_time_s": 9.89,
+          "missed_truth_s": 9.889706
+        },
+        {
+          "idx": 201,
+          "prior_frame_step": 1094,
+          "prior_frame_time_s": 10.94,
+          "pending_due_s": 10.941177,
+          "next_frame_step": 1095,
+          "next_frame_time_s": 10.95,
+          "missed_truth_s": 10.948529
+        }
+      ],
+      "interpretation": "Observe future Twirl marker earlier or handle short event intervals causally; global impossibility not established."
+    }
+  }
 }
