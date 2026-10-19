@@ -75,6 +75,15 @@ def test_unknown_or_occluded_and_invisible_tile_cannot_prove_one_x():
     assert audit.judge(rows)[0] == "UNVERIFIED"
 
 
+def test_duplicate_world_entry_is_rejected(tmp_path: Path):
+    manifest = prepare.capture_manifest_template(tmp_path)
+    manifest["captures"].append(dict(manifest["captures"][0]))
+    path = tmp_path / "capture.json"
+    path.write_text(json.dumps(manifest), encoding="utf-8")
+    with pytest.raises(ValueError, match="exactly one entry"):
+        audit.audit(path)
+
+
 def test_frame_interval_includes_sync_latency_and_half_frame():
     capture = {
         "sync": {"anchor_video_s": 10.0, "anchor_episode_s": 0.0, "uncertainty_s": .002},
@@ -142,3 +151,27 @@ def test_ffmpeg_probe_crop_alignment_and_pixel_difference(tmp_path: Path):
     assert pixels["performed"]
     assert pixels["paired_frames"] > 400
     assert pixels["top_differences"][0]["mean_absolute_rgb_difference"] > 200
+
+    # A malformed crop or inaccurate video metadata must never produce
+    # OBSERVABLE_BEFORE_DEADLINE, even with valid-looking annotations.
+    manifest["crop_xywh"] = [0, 0, 65, 64]
+    path.write_text(json.dumps(manifest), encoding="utf-8")
+    bad_crop = audit.audit(path)
+    assert bad_crop["verdict"] == "UNVERIFIED"
+    assert any("crop_xywh" in x for x in bad_crop["missing_or_invalid_evidence"])
+
+    manifest["crop_xywh"] = [0, 0, 64, 64]
+    manifest["captures"][0]["recording"]["resolution"] = [32, 64]
+    path.write_text(json.dumps(manifest), encoding="utf-8")
+    wrong_resolution = audit.audit(path)
+    assert wrong_resolution["verdict"] == "UNVERIFIED"
+    assert any("declared resolution" in x
+               for x in wrong_resolution["missing_or_invalid_evidence"])
+
+    manifest["captures"][0]["recording"]["resolution"] = [64, 64]
+    manifest["captures"][0]["sync"]["anchor_episode_s"] = 1.0
+    path.write_text(json.dumps(manifest), encoding="utf-8")
+    wrong_anchor = audit.audit(path)
+    assert wrong_anchor["verdict"] == "UNVERIFIED"
+    assert any("episode 0" in x
+               for x in wrong_anchor["missing_or_invalid_evidence"])
