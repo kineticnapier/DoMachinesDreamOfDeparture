@@ -23,6 +23,7 @@ from dmdod.motor.keyboard import KeyEvent
 from dmdod.planning.hud_v14_forecast_source_v02 import HUDV14ForecastSource
 from dmdod.planning.hud_v3_composite_forecast_source_v30 import (
     HUDV3CompositeForecastSource,
+    LIFECYCLE_V14,
 )
 from dmdod.planning.timing_fingering_motor_policy_v02 import (
     TimingFingeringMotorPolicy,
@@ -109,7 +110,8 @@ def _target_outcomes(segment, env) -> list[dict]:
     } for ordinal, target in enumerate(segment.targets)]
 
 
-def simulate(segment, model, arm: str, *, wall_timeout_s: float) -> dict:
+def simulate(segment, model, arm: str, *, wall_timeout_s: float,
+             lifecycle_version: str = LIFECYCLE_V14) -> dict:
     if arm not in ARMS:
         raise ValueError("unknown fixed comparison arm")
     env = HudCoupledContactRealChartEnv(
@@ -126,7 +128,13 @@ def simulate(segment, model, arm: str, *, wall_timeout_s: float) -> dict:
         early_lead=True,
     )
     v14 = HUDV14ForecastSource(horizon_s=.080) if arm == "hud_v14" else None
-    v3 = HUDV3CompositeForecastSource(horizon_s=.080) if arm == "hud_v3_composite" else None
+    v3 = (
+        HUDV3CompositeForecastSource(
+            horizon_s=.080,
+            lifecycle_version=lifecycle_version,
+        )
+        if arm == "hud_v3_composite" else None
+    )
     renderer = sensor = None
     if v3 is not None:
         renderer = StockCountdownRenderer(
@@ -229,6 +237,9 @@ def simulate(segment, model, arm: str, *, wall_timeout_s: float) -> dict:
 
     result = {
         "arm": arm,
+        "lifecycle_version": (
+            lifecycle_version if arm == "hud_v3_composite" else None
+        ),
         "stats": _stats(env),
         "frames": frames,
         "frame_count": len(frames),
