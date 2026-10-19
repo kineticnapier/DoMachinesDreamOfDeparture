@@ -202,7 +202,27 @@ def capture(path: Path, end_s: float) -> tuple[dict[str, list[dict]], list[dict]
         visible_rows.append(visible)
         for arm, source in sources.items():
             public, raw = source.observe(step, observation, cue)
-            rows[arm].append(_serialize(public, raw))
+            serialized = _serialize(public, raw)
+            serialized.update({
+                "abstention_reason": raw.abstention_reason,
+                "countdown_phase_status": raw.countdown_phase.status,
+                "countdown_estimate_status": raw.countdown_estimate.status,
+                "v14_status": raw.v14_update.status,
+                "v14_pending": [{
+                    "id": f"v14:{item.local_id}",
+                    "due_s": item.due_s,
+                    "confirmed_now": item.confirmed_now,
+                } for item in raw.v14_update.pending],
+                "v14_new": list(raw.v14_update.new_ids),
+                "v14_reused": list(raw.v14_update.reused_ids),
+                "v14_canceled": [
+                    item.local_id for item in raw.v14_update.canceled
+                ],
+                "v14_elapsed": [
+                    item.local_id for item in raw.v14_update.elapsed
+                ],
+            })
+            rows[arm].append(serialized)
         transition = env.step(idle)
         observation = transition.observation
         if transition.done:
