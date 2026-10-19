@@ -25,6 +25,9 @@ from dmdod.planning.hud_timing_composite_v20 import (
 from dmdod.planning.hud_timing_tracker_lifecycle_v15 import (
     QuantizedLifecycleCausalTimingTracker,
 )
+from dmdod.planning.hud_timing_tracker_midspin_v16 import (
+    MidspinRecoveryLifecycleCausalTimingTracker,
+)
 from dmdod.planning.timing_fingering_contract_v02 import (
     ABSTAIN,
     CONTRACT_VERSION,
@@ -169,14 +172,23 @@ class HUDV3CompositeForecastSource:
 
     def __init__(self, *, horizon_s: float = .080,
                  lifecycle_version: str = LIFECYCLE_V14,
-                 reconcile_countdown_v14_identity: bool = True) -> None:
+                 reconcile_countdown_v14_identity: bool = True,
+                 midspin_recovery: bool = False) -> None:
         if lifecycle_version not in LIFECYCLE_VERSIONS:
             raise ValueError(
                 f"unsupported lifecycle version: {lifecycle_version!r}"
             )
+        if type(midspin_recovery) is not bool:
+            raise TypeError("midspin_recovery must be bool")
+        if midspin_recovery and lifecycle_version != LIFECYCLE_V15:
+            raise ValueError(
+                "opt-in Midspin recovery requires lifecycle v1.5"
+            )
         tracker = (
-            None if lifecycle_version == LIFECYCLE_V14
-            else QuantizedLifecycleCausalTimingTracker(horizon_s=horizon_s)
+            None if lifecycle_version == LIFECYCLE_V14 else
+            MidspinRecoveryLifecycleCausalTimingTracker(horizon_s=horizon_s)
+            if midspin_recovery else
+            QuantizedLifecycleCausalTimingTracker(horizon_s=horizon_s)
         )
         self.composite = HUDTimingComposite(
             bpm_observation_contract=MOD_VISIBLE_BPM_CONTRACT,
@@ -188,6 +200,7 @@ class HUDV3CompositeForecastSource:
         )
         self.adapter = HUDTimingCompositeAdapter()
         self.lifecycle_version = lifecycle_version
+        self.midspin_recovery = midspin_recovery
 
     def reset(self) -> None:
         self.composite.reset()
