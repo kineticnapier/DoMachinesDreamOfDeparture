@@ -28,6 +28,9 @@ from dmdod.planning.hud_timing_tracker_lifecycle_v15 import (
 from dmdod.planning.hud_timing_tracker_midspin_v16 import (
     MidspinRecoveryLifecycleCausalTimingTracker,
 )
+from dmdod.planning.hud_timing_tracker_twirl_v17 import (
+    TwirlRecoveryLifecycleCausalTimingTracker,
+)
 from dmdod.planning.timing_fingering_contract_v02 import (
     ABSTAIN,
     CONTRACT_VERSION,
@@ -173,19 +176,26 @@ class HUDV3CompositeForecastSource:
     def __init__(self, *, horizon_s: float = .080,
                  lifecycle_version: str = LIFECYCLE_V14,
                  reconcile_countdown_v14_identity: bool = True,
-                 midspin_recovery: bool = False) -> None:
+                 midspin_recovery: bool = False,
+                 twirl_recovery: bool = False) -> None:
         if lifecycle_version not in LIFECYCLE_VERSIONS:
             raise ValueError(
                 f"unsupported lifecycle version: {lifecycle_version!r}"
             )
         if type(midspin_recovery) is not bool:
             raise TypeError("midspin_recovery must be bool")
-        if midspin_recovery and lifecycle_version != LIFECYCLE_V15:
+        if type(twirl_recovery) is not bool:
+            raise TypeError("twirl_recovery must be bool")
+        if (midspin_recovery or twirl_recovery) and lifecycle_version != LIFECYCLE_V15:
             raise ValueError(
-                "opt-in Midspin recovery requires lifecycle v1.5"
+                "opt-in special-event recovery requires lifecycle v1.5"
             )
         tracker = (
             None if lifecycle_version == LIFECYCLE_V14 else
+            TwirlRecoveryLifecycleCausalTimingTracker(
+                horizon_s=horizon_s,
+                midspin_recovery=midspin_recovery,
+            ) if twirl_recovery else
             MidspinRecoveryLifecycleCausalTimingTracker(horizon_s=horizon_s)
             if midspin_recovery else
             QuantizedLifecycleCausalTimingTracker(horizon_s=horizon_s)
@@ -201,6 +211,7 @@ class HUDV3CompositeForecastSource:
         self.adapter = HUDTimingCompositeAdapter()
         self.lifecycle_version = lifecycle_version
         self.midspin_recovery = midspin_recovery
+        self.twirl_recovery = twirl_recovery
 
     def reset(self) -> None:
         self.composite.reset()
