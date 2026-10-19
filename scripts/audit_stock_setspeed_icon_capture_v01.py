@@ -282,6 +282,15 @@ def audit(manifest_path: Path, *, analyze_pixels: bool = True) -> dict:
     verdict, reason = judge(intervals, deadline)
     if missing:
         verdict, reason = "UNVERIFIED", "capture evidence or metadata is incomplete"
+    elif not analyze_pixels and verdict != "UNVERIFIED":
+        # Manual annotations alone cannot certify this paired pixel-capture gate
+        # when frame comparison was explicitly disabled.
+        verdict, reason = "UNVERIFIED", "pixel analysis was disabled"
+    elif analyze_pixels and (
+        not pixel_analysis["performed"]
+        or pixel_analysis.get("paired_frames", 0) == 0
+    ):
+        verdict, reason = "UNVERIFIED", "no synchronized paired video frames were compared"
     return {
         "format": FORMAT,
         "generated_utc": datetime.now(timezone.utc).isoformat(),
