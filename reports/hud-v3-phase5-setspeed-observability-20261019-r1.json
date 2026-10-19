@@ -1,0 +1,118 @@
+{
+  "format": "dmdod-setspeed-observability-phase5-v0.1",
+  "generated_utc": "2026-10-19T02:25:45.820481+00:00",
+  "chart": "04042 - bool - vo[ICE].adofai",
+  "chart_sha256": "04981e92f74288b8aac7286e83420b933036d2caead9c157bc33b706779ad1b1",
+  "dll_sha256": "0d1524dabf0f8c67aa58ba1992d6ed858522b9094490ebbb00e5e8aeff7f40cd",
+  "intervention_evaluator_only": {
+    "action_source_index": 2,
+    "action_floor": 1,
+    "modified_field": "bpmMultiplier",
+    "original_value_evaluator_only": 8.0,
+    "counterfactual_value_evaluator_only": 1.0,
+    "factor_predeclared": 0.125,
+    "visible_marker_preserved": true
+  },
+  "first_due_s_posthoc": 3.999333624280351,
+  "second_due_original_s_posthoc": 4.020163490257674,
+  "second_due_counterfactual_s_posthoc": 4.16597255209893,
+  "deadline_44ms_s_posthoc": 3.9761634902576737,
+  "candidates": {
+    "stock_current_motion_and_hud278": {
+      "verdict": "INDISTINGUISHABLE",
+      "first_distinguishable_s": null,
+      "evidence": "Phase 4 compared 398 10ms frames through 3.970s with maximum HUD278 difference 0.0."
+    },
+    "stock_setspeed_speed_icon": {
+      "renderer_semantics_original": "DoubleRabbit",
+      "renderer_semantics_counterfactual": null,
+      "renderer_semantics_distinguish_pair": true,
+      "actual_pixel_capture_available": false,
+      "first_observed_s": null,
+      "capture_latency_s": null,
+      "verdict": "UNVERIFIED",
+      "reason": "The DLL predicts distinct sprites, but no paired Train-bool capture proves Floor 1 is visible before the deadline."
+    },
+    "jrp_tbpm_cbpm_kps": {
+      "normal": {
+        "on_show_floor0_original": [
+          "60.01",
+          "15",
+          "0.25"
+        ],
+        "on_show_floor0_counterfactual": [
+          "60.01",
+          "15",
+          "0.25"
+        ],
+        "on_show_equal": true,
+        "first_on_hit_floor1_original": [
+          "480.08",
+          "2880.48",
+          "48.01"
+        ],
+        "first_on_hit_floor1_counterfactual": [
+          "60.01",
+          "360.06",
+          "6"
+        ],
+        "first_on_hit_differs": true,
+        "earliest_possible_update_s_posthoc": 3.999333624280351,
+        "deadline_s_posthoc": 3.9761634902576737,
+        "lead_at_earliest_possible_update_ms_posthoc": -23.170134,
+        "verdict": "INDISTINGUISHABLE",
+        "reason": "The startup text is equal; the first differing hit-driven refresh is after the 44ms deadline."
+      },
+      "jongyeol": {
+        "on_show_floor0_original": [
+          "60.01",
+          "15",
+          "0.25"
+        ],
+        "on_show_floor0_counterfactual": [
+          "60.01",
+          "15",
+          "0.25"
+        ],
+        "on_show_equal": true,
+        "first_on_hit_floor1_original": [
+          "480.08",
+          "240.04",
+          "8"
+        ],
+        "first_on_hit_floor1_counterfactual": [
+          "60.01",
+          "360.06",
+          "6"
+        ],
+        "first_on_hit_differs": true,
+        "earliest_possible_update_s_posthoc": 3.999333624280351,
+        "deadline_s_posthoc": 3.9761634902576737,
+        "lead_at_earliest_possible_update_ms_posthoc": -23.170134,
+        "verdict": "INDISTINGUISHABLE",
+        "reason": "The startup text is equal; the first differing hit-driven refresh is after the 44ms deadline."
+      }
+    },
+    "audio": {
+      "song_filename_both_worlds": "bool.ogg",
+      "audio_asset_present_in_train80": false,
+      "paired_counterfactual_capture_available": false,
+      "first_observed_s": null,
+      "verdict": "UNVERIFIED",
+      "reason": "The intervention preserves the audio filename and countdown, but the asset and paired real captures are absent."
+    },
+    "other_bpm_mods": {
+      "verdict": "UNVERIFIED",
+      "reason": "No inspected source or real capture established a pre-hit preview of the future numeric SetSpeed value."
+    }
+  },
+  "overall": {
+    "verdict": "NO_CONFIRMED_OBSERVATION_SOURCE_BEFORE_DEADLINE",
+    "phase6_action": "Capture the stock speed icon in both worlds with timestamps before implementing a sensor.",
+    "motor_connection_allowed": false
+  },
+  "student_boundary": {
+    "allowed": "timestamped pixels/audio and their causal detection history",
+    "forbidden": "compiled speeds, SetSpeed parameters, future BPM, floor IDs, target times, and renderer diagnostics"
+  }
+}
