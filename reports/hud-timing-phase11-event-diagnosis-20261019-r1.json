@@ -1,0 +1,248 @@
+{
+  "format": "dmdod-hud-timing-phase11-event-diagnosis-v0.1",
+  "source": "uploaded hud-timing-phase11-generalization-local-r1.json",
+  "source_sha256": "e9e7788797671146571bc734ece294d096478aef86d6e232c1419366bbc79350",
+  "source_report_generated_utc": "2026-10-19T14:23:50.020446+00:00",
+  "verification": {
+    "reported_verdict": "AUDIT_COMPLETED",
+    "structural_checks_all_true": true,
+    "unseen_charts": 16,
+    "unseen_events": 1068,
+    "clean_C": 1052,
+    "failed_C": 16,
+    "reference_events": 200,
+    "reference_clean_C": 199,
+    "reference_abstention": 1,
+    "false_positive_ids_C": 0,
+    "success_regression_A_to_C": 0,
+    "success_regression_B_to_C": 0,
+    "eleven_unseen_charts_perfect": true
+  },
+  "failure_categories": {
+    "2": 0,
+    "3": 14,
+    "4": 2,
+    "5": 0
+  },
+  "structural_posthoc_classification": {
+    "after_midspin": 13,
+    "setspeed_checkpoint_own_floor": 1,
+    "immediately_after_twirl_not_midspin": 2
+  },
+  "failure_charts": [
+    {
+      "chart": "02971 - ALL MY FELLAS - RetroBean.adofai",
+      "clean": 88,
+      "events": 92,
+      "failures": [
+        {
+          "idx": 64,
+          "t": 9.575,
+          "floor": 66,
+          "category": 3,
+          "gap_ms": 12.5,
+          "preceded_by": "Midspin"
+        },
+        {
+          "idx": 69,
+          "t": 9.95,
+          "floor": 72,
+          "category": 3,
+          "gap_ms": 12.5,
+          "preceded_by": "Midspin"
+        },
+        {
+          "idx": 74,
+          "t": 10.324999,
+          "floor": 78,
+          "category": 3,
+          "gap_ms": 12.5,
+          "preceded_by": "Midspin"
+        },
+        {
+          "idx": 78,
+          "t": 10.606249,
+          "floor": 83,
+          "category": 3,
+          "gap_ms": 12.5,
+          "preceded_by": "Midspin"
+        }
+      ]
+    },
+    {
+      "chart": "04432 - ADOFAI Regular Dan - 2nd Dan - yzuio & 5 more.adofai",
+      "clean": 117,
+      "events": 118,
+      "failures": [
+        {
+          "idx": 114,
+          "t": 11.117647,
+          "floor": 116,
+          "category": 3,
+          "gap_ms": 529.412,
+          "preceded_by": "Midspin"
+        }
+      ]
+    },
+    {
+      "chart": "03096 - Crossing Notes - 피렝.adofai",
+      "clean": 34,
+      "events": 35,
+      "failures": [
+        {
+          "idx": 23,
+          "t": 9,
+          "floor": 25,
+          "category": 3,
+          "gap_ms": 187.5,
+          "preceded_by": "Midspin"
+        }
+      ]
+    },
+    {
+      "chart": "01645 - First town of this Journey remix - Irin.adofai",
+      "clean": 211,
+      "events": 220,
+      "failures": [
+        {
+          "idx": 1,
+          "t": 0.720588,
+          "floor": 3,
+          "category": 3,
+          "gap_ms": 14.706,
+          "preceded_by": "Midspin"
+        },
+        {
+          "idx": 36,
+          "t": 3.183824,
+          "floor": 39,
+          "category": 3,
+          "gap_ms": 7.353,
+          "preceded_by": "Midspin"
+        },
+        {
+          "idx": 41,
+          "t": 3.360294,
+          "floor": 45,
+          "category": 3,
+          "gap_ms": 7.353,
+          "preceded_by": "Midspin"
+        },
+        {
+          "idx": 46,
+          "t": 3.536765,
+          "floor": 51,
+          "category": 3,
+          "gap_ms": 7.353,
+          "preceded_by": "Midspin"
+        },
+        {
+          "idx": 146,
+          "t": 8.830882,
+          "floor": 152,
+          "category": 3,
+          "gap_ms": 7.353,
+          "preceded_by": "Midspin"
+        },
+        {
+          "idx": 151,
+          "t": 9.007353,
+          "floor": 158,
+          "category": 3,
+          "gap_ms": 7.353,
+          "preceded_by": "Midspin"
+        },
+        {
+          "idx": 156,
+          "t": 9.183824,
+          "floor": 164,
+          "category": 3,
+          "gap_ms": 7.353,
+          "preceded_by": "Midspin"
+        },
+        {
+          "idx": 174,
+          "t": 9.889706,
+          "floor": 182,
+          "category": 4,
+          "gap_ms": 7.353,
+          "preceded_by": "Twirl",
+          "bpm": 1360
+        },
+        {
+          "idx": 201,
+          "t": 10.948529,
+          "floor": 209,
+          "category": 4,
+          "gap_ms": 7.353,
+          "preceded_by": "Twirl",
+          "bpm": 1360
+        }
+      ]
+    },
+    {
+      "chart": "04349 - ヒアソビ (feat. 初音ミク) - Zedwards.adofai",
+      "clean": 54,
+      "events": 55,
+      "failures": [
+        {
+          "idx": 54,
+          "t": 11.641791,
+          "floor": 55,
+          "category": 3,
+          "gap_ms": 83.955,
+          "own_floor_events": [
+            "SetSpeed",
+            "Checkpoint"
+          ],
+          "bpm": 134
+        }
+      ]
+    }
+  ],
+  "recovered_from_A_to_C": {
+    "count": 13,
+    "chart": "03810 - Parallel Universe Shifter - Eraser.adofai",
+    "event_indices": [
+      30,
+      31,
+      32,
+      33,
+      34,
+      35,
+      37,
+      38,
+      39,
+      41,
+      42,
+      43,
+      44
+    ],
+    "category_change": "5 -> 1",
+    "canceled_A": 15,
+    "canceled_C": 1,
+    "elapsed_A": 32,
+    "elapsed_C": 46,
+    "first_forecast_due_estimate_change_on_shared_clean_events": false
+  },
+  "estimators": {
+    "shared_clean_events": 1039,
+    "shared_clean_mae_ms_A_B_C": 0.020120684311838305,
+    "clean_C_conditional_mae_ms": 0.019872183460076045,
+    "interpretation": "Different clean-event populations explain aggregate MAE change. Not proven timing estimator improvement."
+  },
+  "identity_on_off": {
+    "category_counts_equal": true,
+    "due_differences_frames": 56,
+    "countdown_interval_differences_frames": 56,
+    "charts_with_due_differences": 8,
+    "identity_or_lifecycle_regression": 0,
+    "notes": "B/C aggregate equality does not imply framewise identical due intervals; 7 countdown-associated frames in each of 8 charts differ."
+  },
+  "limits": [
+    "Event classification is not actual Motor Hit rate.",
+    "Category 3 indicates a contract-relative abstention, not universal unobservability.",
+    "Category 4 has not established causal impossibility.",
+    "Cross-check compiled chart floors is posthoc evaluator-only; no forecasts retuned."
+  ]
+}
