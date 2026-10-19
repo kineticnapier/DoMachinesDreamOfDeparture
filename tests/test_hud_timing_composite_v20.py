@@ -212,6 +212,84 @@ def test_established_alias_does_not_merge_a_neighboring_v14_event() -> None:
     assert [item.local_id for item in conflict.canceled] == ["countdown:0"]
 
 
+def _replacement_id_overlap_system():
+    state = {"calls": 0}
+
+    def predictor(_hud):
+        state["calls"] += 1
+        calls = state["calls"]
+        if calls < 4:
+            return WindowForecast((), (), "insufficient_lookahead")
+        if calls == 4:
+            return WindowForecast((1,), (.05,), "eligible")
+        if calls == 5:
+            return WindowForecast((), (), "eligible")
+        return WindowForecast((1,), (.03,), "eligible")
+
+    return (
+        composite(v14_tracker=CausalTimingTracker(
+            horizon_s=.080, predictor=predictor
+        )),
+        state,
+    )
+
+
+def _observe_replacement_id(system):
+    results = []
+    for step, (kind, digit) in enumerate([
+        (CountdownCueKind.READY, None),
+        (CountdownCueKind.NUMBER, 2),
+        (CountdownCueKind.NUMBER, 1),
+        (CountdownCueKind.GO, None),
+        (CountdownCueKind.HIDDEN, None),
+        (CountdownCueKind.HIDDEN, None),
+    ]):
+        results.append(composite_step(
+            system, step, kind, digit,
+            hud=legacy(step=step, arc=pi * .1),
+        ))
+    return results
+
+
+def _observe_initial_alias_only(system):
+    results = []
+    for step, (kind, digit) in enumerate([
+        (CountdownCueKind.READY, None),
+        (CountdownCueKind.NUMBER, 2),
+        (CountdownCueKind.NUMBER, 1),
+        (CountdownCueKind.GO, None),
+    ]):
+        results.append(composite_step(
+            system, step, kind, digit,
+            hud=legacy(step=step, arc=pi * .1),
+        ))
+    return results
+
+
+def test_established_alias_cannot_rebind_after_missing_frame() -> None:
+    system, _state = _replacement_id_overlap_system()
+    created, missing, replacement = _observe_replacement_id(system)[3:]
+    assert created.pending[0].local_id == "countdown:0"
+    assert created.v14_update.pending[0].local_id == 0
+    assert created.pending[0].source.endswith("+timing_v1.4")
+    assert missing.status != "source_conflict"
+    assert replacement.v14_update.pending[0].local_id == 1
+    assert replacement.status == "source_conflict"
+    assert replacement.pending == ()
+    assert [item.local_id for item in replacement.canceled] == ["countdown:0"]
+    assert system._countdown_v14_alias is None
+
+
+def test_reset_allows_a_fresh_initial_alias() -> None:
+    system, state = _replacement_id_overlap_system()
+    _observe_replacement_id(system)
+    system.reset()
+    state["calls"] = 0
+    created = _observe_initial_alias_only(system)[3]
+    assert created.pending[0].local_id == "countdown:0"
+    assert system._countdown_v14_alias == "v14:0"
+
+
 def test_nonoverlapping_sources_cancel_existing_token_and_abstain() -> None:
     calls = 0
     def predictor(_hud):

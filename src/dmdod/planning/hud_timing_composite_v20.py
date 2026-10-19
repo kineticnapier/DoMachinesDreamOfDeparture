@@ -287,7 +287,8 @@ class HUDTimingComposite:
                     conflict = True
                     nonoverlaps = []
             if (
-                not aliased
+                self._countdown_v14_alias is None
+                and not aliased
                 and len(overlaps) == 1
                 and not nonoverlaps
             ):
