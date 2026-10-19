@@ -381,7 +381,12 @@ def run(train_dir: Path, manifest: dict) -> tuple[dict, dict]:
             and reference[BASELINE]["events"] == 200
         ),
         "candidate_unseen_expected_clean": unseen[CANDIDATE]["clean"] == 1065,
-        "candidate_reference_unchanged": reference[CANDIDATE]["clean"] == 199,
+        # Phase 12 is allowed to recover a causally licensed Midspin in the
+        # reference set.  Safety means no previously-clean event regresses;
+        # freezing the aggregate at 199 would incorrectly reject a recovery.
+        "candidate_reference_not_regressed": (
+            reference[CANDIDATE]["clean"] >= reference[BASELINE]["clean"]
+        ),
     }
     verdict = (
         "MIDSPIN_CAUSAL_RECOVERY_PASS"
@@ -411,6 +416,15 @@ def run(train_dir: Path, manifest: dict) -> tuple[dict, dict]:
         "unseen_16": unseen,
         "reference_5": reference,
         "existing_success_regressions": regressions,
+        "additional_reference_recoveries": [{
+            "chart": case["chart"],
+            "event_index": index,
+            "candidate": candidate,
+        } for case in reference_cases for index, (baseline, candidate) in enumerate(zip(
+            case["evaluations"][BASELINE]["events"],
+            case["evaluations"][CANDIDATE]["events"],
+            strict=True,
+        )) if baseline["category"] != 1 and candidate["category"] == 1],
         "cases": unseen_cases,
         "reference_cases": reference_cases,
         "causality": {
