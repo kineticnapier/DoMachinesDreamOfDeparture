@@ -1,0 +1,112 @@
+{
+  "format": "dmdod-hud-timing-phase11-console-aggregate-v0.1",
+  "evidence": "user-provided stdout after running scripts/audit_hud_timing_phase11_generalization_v01.py audit",
+  "evidence_level": "console_aggregate_only; raw event-level result JSON not yet received or independently checked",
+  "reported_verdict": "AUDIT_COMPLETED",
+  "selection_manifest": "reports/hud-timing-phase11-selection-20261019-r1.json",
+  "unseen": {
+    "A-v14-identity-off": {
+      "charts": 16,
+      "events": 1068,
+      "clean_events": 1039,
+      "clean_coverage": 0.9728464419475655,
+      "per_chart_mean_clean_coverage": 0.9732184960192514,
+      "category_counts": {
+        "1": 1039,
+        "2": 0,
+        "3": 14,
+        "4": 2,
+        "5": 13
+      },
+      "false_positive_ids": 0,
+      "timing_mae_ms_conditional_on_clean": 0.020120684311838305,
+      "mean_forecast_lead_ms_conditional_on_clean": 70.78689970837344,
+      "lifecycle_counts": {
+        "new": 1061,
+        "reused": 7752,
+        "canceled": 15,
+        "elapsed": 1040
+      }
+    },
+    "B-v15-identity-off": {
+      "charts": 16,
+      "events": 1068,
+      "clean_events": 1052,
+      "clean_coverage": 0.9850187265917603,
+      "per_chart_mean_clean_coverage": 0.991274051574807,
+      "category_counts": {
+        "1": 1052,
+        "2": 0,
+        "3": 14,
+        "4": 2,
+        "5": 0
+      },
+      "false_positive_ids": 0,
+      "timing_mae_ms_conditional_on_clean": 0.019872183460076045,
+      "mean_forecast_lead_ms_conditional_on_clean": 70.77717777281369,
+      "lifecycle_counts": {
+        "new": 1061,
+        "reused": 7752,
+        "canceled": 1,
+        "elapsed": 1054
+      }
+    },
+    "C-v15-identity-on": {
+      "charts": 16,
+      "events": 1068,
+      "clean_events": 1052,
+      "clean_coverage": 0.9850187265917603,
+      "per_chart_mean_clean_coverage": 0.991274051574807,
+      "category_counts": {
+        "1": 1052,
+        "2": 0,
+        "3": 14,
+        "4": 2,
+        "5": 0
+      },
+      "false_positive_ids": 0,
+      "timing_mae_ms_conditional_on_clean": 0.019872183460076045,
+      "mean_forecast_lead_ms_conditional_on_clean": 70.77717777281369,
+      "lifecycle_counts": {
+        "new": 1061,
+        "reused": 7752,
+        "canceled": 1,
+        "elapsed": 1054
+      }
+    }
+  },
+  "reference_C": {
+    "charts": 5,
+    "events": 200,
+    "clean_events": 199,
+    "clean_coverage": 0.995,
+    "per_chart_mean_clean_coverage": 0.9969230769230769,
+    "category_counts": {
+      "1": 199,
+      "2": 0,
+      "3": 1,
+      "4": 0,
+      "5": 0
+    },
+    "false_positive_ids": 0,
+    "timing_mae_ms_conditional_on_clean": 0.09081827638190955,
+    "mean_forecast_lead_ms_conditional_on_clean": 65.72232002010051,
+    "lifecycle_counts": {
+      "new": 200,
+      "reused": 1525,
+      "canceled": 1,
+      "elapsed": 198
+    }
+  },
+  "interpretation": {
+    "new_clean_events_B_minus_A": 13,
+    "category5_B_minus_A": -13,
+    "new_clean_events_C_minus_B": 0,
+    "remaining_C_unsuccessful_events": 16,
+    "remaining_C_category3": 14,
+    "remaining_C_category4": 2,
+    "raw_json_needed_for": "per-event failure diagnosis, chart distribution, structural checks and regression validation",
+    "note": "MAE is conditioned on the clean-event set; A vs B change is not proof of improved timing estimation. 199/200 and 1052/1068 refer to lifecycle event classification, not Motor Hit rate."
+  },
+  "execution": "run externally on user's Windows Train80; no separate replay here"
+}
