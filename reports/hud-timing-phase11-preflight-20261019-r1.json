@@ -26,7 +26,7 @@
     "note": "prior recorded Windows result; not reverified here"
   },
   "metric_values": null,
-  "selector": "SHA256(filename + fixed salt), deterministic first 16 excluding 5 references; verified at audit-time",
+  "selector": "Sort by SHA256(fixed salt + NUL + UTF-8 filename), then filename; select first 16 after excluding 5 reference names",
   "required_data": "Exact Train80 directory, SHA256-matching 5 historical reference charts",
   "claim": "No Phase11 generalization metric or pass verdict without running the 16-chart audit"
 }
