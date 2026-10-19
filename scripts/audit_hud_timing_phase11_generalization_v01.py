@@ -11,6 +11,7 @@ import argparse
 from collections import Counter
 from datetime import datetime, timezone
 from hashlib import sha256
+from math import pi
 import json
 from pathlib import Path
 
@@ -190,6 +191,10 @@ def _constructs(segment, end_s: float) -> dict:
         "pause": sum("Pause" in f.event_markers for f in floors),
         "twirl": sum("Twirl" in f.event_markers for f in floors),
         "midspin": sum(f.midspin for f in floors),
+        "full_turn_non_midspin": sum(
+            not f.midspin and f.angle_moved_rad >= 2 * pi - 1e-5 for f in floors
+        ),
+        "multiplanet": sum(f.num_planets > 2 for f in floors),
     }
 
 
@@ -333,7 +338,7 @@ def run(manifest: dict, train_dir: Path) -> dict:
         "causality": {
             "policy": "current/past HUD263 and visible countdown cues only",
             "truth": "evaluated only after all arm streams per chart are captured",
-            "no_training_or_motor_execution": True,
+            "no_learning_checkpoint_update_or_motor_policy_run": True,
             "abstention_not_global_impossibility_proof": True,
         },
     }
