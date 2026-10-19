@@ -1,0 +1,32 @@
+{
+  "format": "dmdod-hud-timing-phase11-preflight-v0.1",
+  "status": "BLOCKED_LOCAL_TRAIN80_UNAVAILABLE",
+  "completed": [
+    "GitHub branch code inspection",
+    "Phase11 16-chart deterministic selection implementation",
+    "Frozen manifest verification implementation",
+    "Three-arm HUD278 lifecycle comparison implementation",
+    "Five-reference regression recheck implementation",
+    "Regression/unit tests authored"
+  ],
+  "not_executed": [
+    "Train80 preselection manifest creation",
+    "Actual 16-chart HUD inference",
+    "Five-reference rerun in assistant runtime",
+    "Phase11 project pytest suite"
+  ],
+  "reason": {
+    "repository": "data/* is ignored in .gitignore",
+    "github": "Train80 raw chart files are not committed",
+    "assistant_runtime": "exact data/DMDOD-v140-tuf-p11-p20/Train dataset is absent; earlier uploaded DMDOD-charts.zip contains a different eight-chart Train collection"
+  },
+  "baseline_provenance": {
+    "commit": "818613f7efea17885ddfa9038f6e39deb989b85d",
+    "known_fixed_five_clean": "199/200",
+    "note": "prior recorded Windows result; not reverified here"
+  },
+  "metric_values": null,
+  "selector": "SHA256(filename + fixed salt), deterministic first 16 excluding 5 references; verified at audit-time",
+  "required_data": "Exact Train80 directory, SHA256-matching 5 historical reference charts",
+  "claim": "No Phase11 generalization metric or pass verdict without running the 16-chart audit"
+}
