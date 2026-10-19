@@ -2,15 +2,14 @@
 
 ## Implementation status
 
-**PHASE11 AUDIT_COMPLETED (Windows run; console aggregate received, detailed JSON pending review)**
+**PHASE11 AUDIT_COMPLETED / FULL EVENT-LEVEL DIAGNOSIS COMPLETE**
 
 ## Phase 11 measured outcome (user-run, 2026-10-19)
 
 A full three-arm HUD278 audit was run against the frozen, verified 16 Train
 charts on the user's Windows environment. The user supplied its standard-output
-aggregate reporting `AUDIT_COMPLETED`. The event-level JSON has **not yet
-been uploaded or independently inspected**; these values are recorded exactly
-as supplied, with provenance in
+aggregate reporting `AUDIT_COMPLETED`. The event-level JSON was subsequently uploaded and independently inspected;
+console aggregate provenance remains in
 `reports/hud-timing-phase11-console-summary-20261019-r1.json`.
 
 | Metric (16 unseen, 1,068 events) | A v1.4 alias OFF | B v1.5 alias OFF | C v1.5 alias ON |
@@ -37,6 +36,26 @@ events is a statement about the present evaluator classification only.
 The MAE numbers have different clean-event populations for A/B/C and must
 not be described as estimator-precision gains. No acceptance threshold was
 used to select or filter the 16 Train charts.
+
+## Phase 11 full event-level diagnosis completed
+
+The full 2.2 MB user-run result JSON was uploaded to the analysis chat and
+verified (SHA256 `e9e7788797671146571bc734ece294d096478aef86d6e232c1419366bbc79350`).
+**All 16 unsuccessful events were classified and checked against compiled
+chart-floor structure**. See
+[`docs/hud-timing-phase11-event-diagnostics.md`](hud-timing-phase11-event-diagnostics.md)
+and `reports/hud-timing-phase11-event-diagnosis-20261019-r1.json`.
+
+Findings: 11 of 16 unseen charts are completely clean. Of the 16 remaining
+events, 13 follow Midspin (conservative `special_future_floor` gate),
+one is on a SetSpeed+Checkpoint floor (Checkpoint flag is the direct
+gate), and two occur 7.353ms after Twirl in a 10ms control loop and remain
+observability-unverified. All 13 v1.4 category-5 lifecycle failures recovered
+by v1.5 are on Parallel Universe Shifter. No learner, physical Motor, or
+estimators were changed.
+
+The raw 2.2MB event JSON was not duplicated into Git history; the exact
+source checksum, compact failure cases, and review are committed.
 
 ## Earlier preparatory status (superseded by the Windows run)
 
@@ -165,9 +184,12 @@ completed **audit implementation**, not a fabricated completed 16-chart run.
 
 ## What remains
 
-The user completed the fixed Train80 run and provided aggregate stdout.
-To finish independent event-level diagnosis and preserve a reproducible
-artifact, collect `reports/hud-timing-phase11-generalization-local-r1.json`
-from that same run. Do not regenerate, filter, or change the frozen selection
-based on the observed scores. The full per-event result has not yet been
-committed.
+The existing HUD-only timing estimator has **not** been modified or revalidated
+on new observations. Follow-up is a narrow observability study, not a request
+to rerun the 16-chart audit: Midspin-to-next-playable-floor, a short
+Twirl-to-next-target gap, and the Checkpoint conservative blocker should be
+investigated separately before any policy relaxation.
+
+The full event-level JSON is preserved in the original user upload; its
+SHA256 is recorded above, and an event-level subset is in the compact
+GitHub report.
