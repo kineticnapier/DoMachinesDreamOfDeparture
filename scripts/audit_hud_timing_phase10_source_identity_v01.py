@@ -219,6 +219,13 @@ def _aggregate(cases: list[dict], arm: str) -> dict:
     }
 
 
+def _lifecycle_counts(rows: list[dict]) -> dict:
+    return {
+        name: sum(len(row[name]) for row in rows)
+        for name in ("new", "reused", "canceled", "elapsed")
+    }
+
+
 def _forecast_differences(before: list[dict], after: list[dict]) -> dict:
     outside_alias_due = []
     outside_alias_uncertainty = []
@@ -388,6 +395,9 @@ def run(train_dir: Path = TRAIN_DIR) -> dict:
             "end_s": end_s,
             "frames": len(rows["legacy_conflict"]),
             **evaluations,
+            "lifecycle_counts": {
+                arm: _lifecycle_counts(rows[arm]) for arm in rows
+            },
             "forecast_differences": differences,
             "successful_event_regressions": case_regressions,
             "first_two_events": {
@@ -412,6 +422,13 @@ def run(train_dir: Path = TRAIN_DIR) -> dict:
             triple_before[0]["category"] == 5
             and triple_after[0]["category"] == 1
             and triple_after[0]["matching_ids"] == [0]
+        ),
+        "triple_cross_duplicate_id_generation_eliminated": (
+            triple["identity_reconciled"]["metrics"][
+                "event_id_continuity_failures"
+            ] == 0
+            and triple["lifecycle_counts"]["identity_reconciled"]["new"]
+            < triple["lifecycle_counts"]["legacy_conflict"]["new"]
         ),
         "false_positive_ids_not_increased": (
             aggregate["identity_reconciled"]["false_positive_ids"]
