@@ -83,6 +83,31 @@ B（v1.5、reconciliation OFF）とC（ON）は
 Countdown due差がある。これはsource identityの再交差処理の
 微小な数値差であり、今回の分類を変えていない。
 
+## 推定器の実装・再生時系列と照合した追加診断
+
+`hud_timing_tracker_transition_v14.py`の`_direction`では、次floorの
+可視フラグ`Midspin (slot[6])`や`Checkpoint (slot[12])`が立つ場合に
+`special_future_floor`で棄権する。よって上記13件のMidspin直後の欠測は
+**実装された保守的な打切り規則と対応**している。
+ヒアソビはSetSpeedとCheckpointが同じfloorにあり、
+この分岐で直接打切り条件になるのは**Checkpoint (slot[12])**。
+SetSpeed (slot[9])単独は同じ規則の直接原因ではない。
+したがって、ヒアソビを単に「SetSpeedの未来数値が未知」とみなさない。
+
+First townのcategory 4をHUD-only sourceで12秒だけ診断再生すると:
+
+| target | 前のTwirlイベント | 事前frame | 次のframe |
+|---|---:|---|---|
+| 174, due 9.889706 | 9.882353 | step 988 (9.88s) : `eligible_partial`、pendingは前イベント9.882353のみ | step 989 (9.89s) : 9.889706は既に過去、次イベント9.926471のみ |
+| 201, due 10.948529 | 10.941177 | step 1094 (10.94s) : `eligible_partial`、pendingは前イベント10.941177のみ | step 1095 (10.95s) : 10.948529は既に過去、次イベント10.985294のみ |
+
+つまり、**可視Twirlを含む将来floorの先を予測しない保守的規則**と
+**10ms制御刻みに対して短い7.353ms間隔**の組合せによって、
+次のframeを待つ間に対象が通過している。
+根本的な観測不能性の証明ではなく、
+「観測済みのTwirlフラグから事前にイベント時刻を導出できるか」
+という因果的な未解決問題である。
+
 ## 今後の優先順位
 
 1. **Midspin→次の打鍵の因果的な到達時刻・Event ID導出**
