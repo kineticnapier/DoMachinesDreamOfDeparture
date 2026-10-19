@@ -3,8 +3,6 @@ from __future__ import annotations
 """Causal Countdown/v1.4 source-identity audit on the fixed Train set."""
 
 import argparse
-from collections import Counter
-from dataclasses import asdict
 from datetime import datetime, timezone
 from hashlib import sha256
 import json
@@ -299,6 +297,20 @@ def _triple_diagnostic(rows: dict[str, list[dict]], first_truth: float) -> dict:
         item for item in legacy[first_conflict["step"] - 1]["raw_pending"]
         if item["id"] == "countdown:0"
     )
+    current_estimate = first_conflict["countdown"]["estimate"][
+        "due_interval_s"
+    ]
+    pre_reconciliation_lower = max(
+        prior_countdown["due_lower_s"], current_estimate[0]
+    )
+    pre_reconciliation_upper = min(
+        prior_countdown["due_upper_s"], current_estimate[1]
+    )
+    if pre_reconciliation_lower > pre_reconciliation_upper:
+        midpoint = (
+            pre_reconciliation_lower + pre_reconciliation_upper
+        ) * .5
+        pre_reconciliation_lower = pre_reconciliation_upper = midpoint
     return {
         "first_countdown_id_frame": first_countdown["step"],
         "first_v14_id_frame": first_v14["step"],
@@ -310,9 +322,12 @@ def _triple_diagnostic(rows: dict[str, list[dict]], first_truth: float) -> dict:
         "pre_conflict_countdown_interval_s": [
             prior_countdown["due_lower_s"], prior_countdown["due_upper_s"]
         ],
+        "conflict_frame_countdown_interval_before_source_reconciliation_s": [
+            pre_reconciliation_lower, pre_reconciliation_upper
+        ],
         "conflict_v14_due_s": conflict_v14["due_s"],
         "point_gap_at_conflict_s": abs(
-            prior_countdown["due_lower_s"] - conflict_v14["due_s"]
+            pre_reconciliation_lower - conflict_v14["due_s"]
         ),
         "cause": (
             "A unique overlap already joined v14:17 to countdown:0. "
