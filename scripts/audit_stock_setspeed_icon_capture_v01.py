@@ -144,8 +144,13 @@ def audit(manifest_path: Path, *, analyze_pixels: bool = True) -> dict:
     if abs(deadline - DEADLINE_S) > 1e-9:
         raise ValueError("deadline differs from the fixed Phase-4 value")
     captures = manifest.get("captures", [])
-    if {row.get("world") for row in captures} != set(EXPECTED):
-        raise ValueError("manifest must contain exactly the 8x and 1x worlds")
+    if (
+        not isinstance(captures, list)
+        or len(captures) != len(EXPECTED)
+        or any(not isinstance(row, dict) for row in captures)
+        or {row.get("world") for row in captures} != set(EXPECTED)
+    ):
+        raise ValueError("manifest must contain exactly one entry for each world")
 
     missing = []
     probes = {}
@@ -176,6 +181,18 @@ def audit(manifest_path: Path, *, analyze_pixels: bool = True) -> dict:
         probes[world] = {"path": str(video), **probe}
         if not probe["constant_rate_reported"]:
             missing.append(f"{world}: constant frame rate")
+        declared_resolution = capture.get("recording", {}).get("resolution")
+        if (
+            type(declared_resolution) is not list
+            or len(declared_resolution) != 2
+            or declared_resolution != [probe["width"], probe["height"]]
+        ):
+            missing.append(f"{world}: declared resolution differs from ffprobe")
+        sync = capture.get("sync", {})
+        if sync.get("anchor_kind") != "first_countdown_tick":
+            missing.append(f"{world}: unsupported sync anchor")
+        if sync.get("anchor_episode_s") != 0.0:
+            missing.append(f"{world}: first countdown tick must anchor episode 0")
         reported_fps = capture.get("recording", {}).get("reported_fps")
         if reported_fps is not None and abs(float(reported_fps) - probe["average_fps"]) > 0.01:
             missing.append(f"{world}: reported_fps does not match ffprobe")
@@ -192,6 +209,12 @@ def audit(manifest_path: Path, *, analyze_pixels: bool = True) -> dict:
             missing.append(f"{world}: annotation {expected}")
 
     if len(probes) == 2:
+        left_probe = probes["original-8x"]
+        right_probe = probes["counterfactual-1x"]
+        if (left_probe["width"], left_probe["height"]) != (
+            right_probe["width"], right_probe["height"]
+        ):
+            missing.append("paired actual video resolution mismatch")
         recording_keys = (
             "game_build", "capture_software", "capture_mode", "reported_fps",
             "resolution", "mods_enabled", "camera_and_display_conditions",
@@ -204,8 +227,23 @@ def audit(manifest_path: Path, *, analyze_pixels: bool = True) -> dict:
 
     pixel_analysis = {"performed": False, "reason": "videos or crop unavailable"}
     crop_value = manifest.get("crop_xywh")
-    if analyze_pixels and not missing and isinstance(crop_value, list) and len(crop_value) == 4:
-        crop = tuple(int(x) for x in crop_value)
+    valid_crop = (
+        isinstance(crop_value, list)
+        and len(crop_value) == 4
+        and all(type(value) is int for value in crop_value)
+        and crop_value[0] >= 0 and crop_value[1] >= 0
+        and 1 <= crop_value[2] <= 1024 and 1 <= crop_value[3] <= 1024
+        and all(
+            crop_value[0] + crop_value[2] <= probe["width"]
+            and crop_value[1] + crop_value[3] <= probe["height"]
+            for probe in probes.values()
+        )
+        and len(probes) == 2
+    )
+    if analyze_pixels and not valid_crop:
+        missing.append("crop_xywh: missing, malformed or outside video frame")
+    if analyze_pixels and not missing and valid_crop:
+        crop = tuple(crop_value)
         starts = {}
         decoded = {}
         for world, capture in capture_by_world.items():
@@ -240,8 +278,6 @@ def audit(manifest_path: Path, *, analyze_pixels: bool = True) -> dict:
             "top_differences": top,
             "decision_use": "diagnostic only; pixel threshold does not determine the verdict",
         }
-    elif analyze_pixels and crop_value is None:
-        missing.append("crop_xywh")
 
     verdict, reason = judge(intervals, deadline)
     if missing:
