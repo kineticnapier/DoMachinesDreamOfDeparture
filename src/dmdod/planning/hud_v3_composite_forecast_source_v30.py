@@ -168,7 +168,8 @@ class HUDV3CompositeForecastSource:
     """Build HUD278 from current visible fields and expose motor contract."""
 
     def __init__(self, *, horizon_s: float = .080,
-                 lifecycle_version: str = LIFECYCLE_V14) -> None:
+                 lifecycle_version: str = LIFECYCLE_V14,
+                 reconcile_countdown_v14_identity: bool = True) -> None:
         if lifecycle_version not in LIFECYCLE_VERSIONS:
             raise ValueError(
                 f"unsupported lifecycle version: {lifecycle_version!r}"
@@ -181,6 +182,9 @@ class HUDV3CompositeForecastSource:
             bpm_observation_contract=MOD_VISIBLE_BPM_CONTRACT,
             horizon_s=horizon_s,
             v14_tracker=tracker,
+            reconcile_countdown_v14_identity=(
+                reconcile_countdown_v14_identity
+            ),
         )
         self.adapter = HUDTimingCompositeAdapter()
         self.lifecycle_version = lifecycle_version

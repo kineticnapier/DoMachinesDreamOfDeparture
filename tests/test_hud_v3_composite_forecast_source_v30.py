@@ -217,3 +217,12 @@ def test_forecast_source_lifecycle_selection_is_explicit_and_default_stable() ->
     )
     with pytest.raises(ValueError, match="unsupported lifecycle version"):
         HUDV3CompositeForecastSource(lifecycle_version="latest")
+
+
+def test_source_identity_reconciliation_selection_is_forwarded() -> None:
+    enabled = HUDV3CompositeForecastSource()
+    disabled = HUDV3CompositeForecastSource(
+        reconcile_countdown_v14_identity=False
+    )
+    assert enabled.composite._reconcile_countdown_v14_identity is True
+    assert disabled.composite._reconcile_countdown_v14_identity is False

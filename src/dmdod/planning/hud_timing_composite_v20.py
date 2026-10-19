@@ -74,7 +74,8 @@ class HUDTimingComposite:
 
     def __init__(self, *, bpm_observation_contract: str,
                  horizon_s: float = .080,
-                 v14_tracker: CausalTimingTracker | None = None) -> None:
+                 v14_tracker: CausalTimingTracker | None = None,
+                 reconcile_countdown_v14_identity: bool = True) -> None:
         if bpm_observation_contract != MOD_VISIBLE_BPM_CONTRACT:
             raise ValueError(
                 "HUDTimingComposite requires numeric Tile/Real BPM actually "
@@ -85,7 +86,12 @@ class HUDTimingComposite:
             v14_tracker, CausalTimingTracker
         ):
             raise TypeError("v14_tracker must be CausalTimingTracker")
+        if type(reconcile_countdown_v14_identity) is not bool:
+            raise TypeError("reconcile_countdown_v14_identity must be bool")
         self._v14 = v14_tracker or CausalTimingTracker(horizon_s=horizon_s)
+        self._reconcile_countdown_v14_identity = (
+            reconcile_countdown_v14_identity
+        )
         self._phase = CountdownPhaseTracker()
         self._countdown = CountdownFirstEventEstimator()
         self.reset()
@@ -96,6 +102,7 @@ class HUDTimingComposite:
         self._countdown.reset()
         self._next_step = 0
         self._countdown_token: TimingEventToken | None = None
+        self._countdown_v14_alias: str | None = None
         self._countdown_closed = False
         self._countdown_context_seen = False
         self._previous_pending: dict[str, TimingEventToken] = {}
@@ -216,6 +223,7 @@ class HUDTimingComposite:
         ):
             elapsed.append(self._countdown_token)
             self._countdown_token = None
+            self._countdown_v14_alias = None
             self._countdown_closed = True
             self._countdown_context_seen = False
 
@@ -234,13 +242,55 @@ class HUDTimingComposite:
         conflict = countdown_conflict is not None
         countdown_token = self._countdown_token
         if countdown_token is not None:
-            overlaps = [
+            aliased = [
                 item for item in v14_tokens
-                if self._overlaps(countdown_token.due_interval_s,
-                                  item.due_interval_s)
+                if item.local_id == self._countdown_v14_alias
             ]
-            nonoverlaps = [item for item in v14_tokens if item not in overlaps]
-            if len(overlaps) == 1 and not nonoverlaps:
+            nonaliased = [
+                item for item in v14_tokens if item not in aliased
+            ]
+            if (
+                self._reconcile_countdown_v14_identity
+                and self._countdown_v14_alias is not None
+                and len(aliased) == 1
+                and not nonaliased
+            ):
+                # Identity was established on an earlier frame by one unique
+                # interval overlap. The frozen v1.4 tracker guarantees that a
+                # reused local ID denotes that same observed event. Preserve
+                # the already published Countdown interval: point-estimate
+                # drift is not evidence for shrinking or retiming it.
+                countdown_token = replace(
+                    countdown_token,
+                    source="countdown_first_event+timing_v1.4",
+                    confirmations=(
+                        countdown_token.confirmations
+                        + aliased[0].confirmations
+                    ),
+                    confirmed_now=True,
+                )
+                self._countdown_token = countdown_token
+                nonoverlaps = []
+            else:
+                overlaps = [
+                    item for item in v14_tokens
+                    if self._overlaps(countdown_token.due_interval_s,
+                                      item.due_interval_s)
+                ]
+                nonoverlaps = [
+                    item for item in v14_tokens if item not in overlaps
+                ]
+                if aliased:
+                    # A second visible v1.4 candidate appeared while the
+                    # established alias was live. Keep the conservative
+                    # ambiguity response; do not infer event order here.
+                    conflict = True
+                    nonoverlaps = []
+            if (
+                not aliased
+                and len(overlaps) == 1
+                and not nonoverlaps
+            ):
                 lower = max(
                     [countdown_token.due_interval_s.lower_s]
                     + [item.due_interval_s.lower_s for item in overlaps]
@@ -264,8 +314,11 @@ class HUDTimingComposite:
                     confirmed_now=True,
                 )
                 self._countdown_token = countdown_token
+                if self._reconcile_countdown_v14_identity:
+                    self._countdown_v14_alias = overlaps[0].local_id
             elif v14_tokens:
-                conflict = True
+                if not aliased:
+                    conflict = True
             if not conflict:
                 pending.append(countdown_token)
                 pending.extend(nonoverlaps)
@@ -293,6 +346,7 @@ class HUDTimingComposite:
             )
             pending = []
             self._countdown_token = None
+            self._countdown_v14_alias = None
             self._countdown_closed = True
             self._countdown_context_seen = False
         elif countdown_active:

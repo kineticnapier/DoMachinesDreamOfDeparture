@@ -94,10 +94,12 @@ def _capture(path: Path, end_s: float) -> tuple[list[dict], list[dict], object]:
     sensor = CountdownVisualSensor()
     sources = {
         LIFECYCLE_V14: HUDV3CompositeForecastSource(
-            horizon_s=0.080, lifecycle_version=LIFECYCLE_V14
+            horizon_s=0.080, lifecycle_version=LIFECYCLE_V14,
+            reconcile_countdown_v14_identity=False,
         ),
         LIFECYCLE_V15: HUDV3CompositeForecastSource(
-            horizon_s=0.080, lifecycle_version=LIFECYCLE_V15
+            horizon_s=0.080, lifecycle_version=LIFECYCLE_V15,
+            reconcile_countdown_v14_identity=False,
         ),
     }
     env = HudCoupledContactRealChartEnv(

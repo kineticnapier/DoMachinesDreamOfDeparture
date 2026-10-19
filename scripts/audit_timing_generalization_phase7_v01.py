@@ -59,11 +59,13 @@ def _capture_policy_stream(path: Path) -> tuple[list[dict], object]:
     composite = HUDTimingComposite(
         bpm_observation_contract=MOD_VISIBLE_BPM_CONTRACT,
         horizon_s=0.080,
+        reconcile_countdown_v14_identity=False,
     )
     improved = HUDTimingComposite(
         bpm_observation_contract=MOD_VISIBLE_BPM_CONTRACT,
         horizon_s=0.080,
         v14_tracker=QuantizedLifecycleCausalTimingTracker(horizon_s=0.080),
+        reconcile_countdown_v14_identity=False,
     )
     env = HudCoupledContactRealChartEnv(
         segment,

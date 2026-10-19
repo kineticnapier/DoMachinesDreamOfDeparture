@@ -146,6 +146,72 @@ def test_overlapping_sources_reuse_single_countdown_local_id() -> None:
     assert result.pending[0].source.endswith("+timing_v1.4")
 
 
+def _drifting_overlap_system(*, reconcile=True, add_neighbor=False):
+    calls = 0
+
+    def predictor(_hud):
+        nonlocal calls
+        calls += 1
+        if calls < 4:
+            return WindowForecast((), (), "insufficient_lookahead")
+        if calls == 4:
+            return WindowForecast((1,), (.05,), "eligible")
+        if add_neighbor:
+            return WindowForecast((1, 2), (.040002, .06083), "eligible")
+        return WindowForecast((1,), (.040002,), "eligible")
+
+    return composite(
+        v14_tracker=CausalTimingTracker(
+            horizon_s=.080, predictor=predictor
+        ),
+        reconcile_countdown_v14_identity=reconcile,
+    )
+
+
+def _observe_initial_overlap(system):
+    results = []
+    for step, (kind, digit) in enumerate([
+        (CountdownCueKind.READY, None),
+        (CountdownCueKind.NUMBER, 2),
+        (CountdownCueKind.NUMBER, 1),
+        (CountdownCueKind.GO, None),
+        (CountdownCueKind.HIDDEN, None),
+    ]):
+        results.append(composite_step(
+            system, step, kind, digit,
+            hud=legacy(step=step, arc=pi * .1),
+        ))
+    return results
+
+
+def test_unique_overlap_alias_survives_same_v14_id_point_drift() -> None:
+    created, drifted = _observe_initial_overlap(
+        _drifting_overlap_system()
+    )[3:]
+    assert created.pending[0].local_id == "countdown:0"
+    assert drifted.status != "source_conflict"
+    assert drifted.reused_ids == ("countdown:0",)
+    assert drifted.canceled == ()
+    assert drifted.pending[0].due_interval_s == created.pending[0].due_interval_s
+
+
+def test_legacy_reconciliation_reproduces_point_drift_conflict() -> None:
+    drifted = _observe_initial_overlap(
+        _drifting_overlap_system(reconcile=False)
+    )[-1]
+    assert drifted.status == "source_conflict"
+    assert [item.local_id for item in drifted.canceled] == ["countdown:0"]
+
+
+def test_established_alias_does_not_merge_a_neighboring_v14_event() -> None:
+    conflict = _observe_initial_overlap(
+        _drifting_overlap_system(add_neighbor=True)
+    )[-1]
+    assert conflict.status == "source_conflict"
+    assert conflict.pending == ()
+    assert [item.local_id for item in conflict.canceled] == ["countdown:0"]
+
+
 def test_nonoverlapping_sources_cancel_existing_token_and_abstain() -> None:
     calls = 0
     def predictor(_hud):
