@@ -2,7 +2,7 @@
 
 ## Status
 
-**CHECKPOINT_LOCAL_GEOMETRY_PROBE_PASS / LIFECYCLE_FULL_AUDIT_PENDING**
+**CHECKPOINT_CAUSAL_RECOVERY_PASS (full fixed audit, user-run stdout verified as supplied)**
 
 HUD263 / HUD278 and the frozen Timing v1.4 geometry are unchanged. No image
 recognition, Hold mesh sensor, Fingering, Motor, Scorer, checkpoint or
@@ -12,6 +12,46 @@ The only non-clean event in Phase 14 fixed Train16 is ヒアソビ Event 54
 (Floor 55; chart SHA256
 `baaf6bff3cd012d8b0e4f123f58868c1cd4f262a35394e32eb2ebcba898caab9`).
 That floor has **SetSpeed ×0.5 + Checkpoint tileOffset -1**.
+
+## Phase 15 full Train16 + reference5 audit (reported user run)
+
+**Final reported verdict: `CHECKPOINT_CAUSAL_RECOVERY_PASS`**
+
+The fixed full audit was run in the user's Windows environment and its stdout
+aggregate was supplied to the project chat. The source stdout has been
+preserved as a structured, provenance-labelled report in
+`reports/hud-timing-phase15-checkpoint-user-run-summary-20261020-r1.json`.
+The full per-event audit JSON was **not** supplied, so these run-level values
+are attributed to the user-run stdout, not an independent local replay.
+
+| Fixed set | Baseline (Checkpoint OFF) | Candidate (Checkpoint ON) |
+|---|---:|---:|
+| Train16 first 12 seconds | **1067/1068** (99.906%) | **1068/1068** (100%) |
+| Reference5 | **200/200** | **200/200** |
+| Train16 category 2/3/4/5 | 0/1/0/0 | **0/0/0/0** |
+| False-positive event IDs | 0 | **0** |
+| Existing Clean event regressions | — | **0** |
+| Train16 conditional MAE | 0.019592905ms | 0.019574570ms |
+
+On ヒアソビ Event 54, baseline category 3
+(`special_future_floor`) changed to candidate category 1 with a unique
+matching event ID `54` and `eligible_partial` status. The first forecast
+lead is **71.79107ms** (44ms Motor readiness threshold met), first forecast
+error **0.000011ms**, wrong candidate count **0**.
+
+The report's ten checks are true, including preservation of Phase 12 fixed
+13 events. All reference5 metrics, including conditional MAE, are unchanged.
+Train16 mean MAE changed over a **different clean event population**:
+this is not an estimator-accuracy improvement on a shared cohort.
+
+The fixed audit is **Timing/Lifecycle**, not physical Motor A/B, and is not a
+validation of full-chart Hold behavior or a general 100% success guarantee.
+The special recoveries are still opt-in; the frozen future SetSpeed safety
+gate remains in force.
+
+Test caveat: the stdout contains the full audit verdict and checks but does
+not include a separate pytest command/result for the merged Phase15 suite.
+No test-suite PASS beyond earlier isolated tests is inferred here.
 
 ## Stock Checkpoint control-flow evidence
 
@@ -42,8 +82,7 @@ floor while retaining its visible SetSpeed marker.
 - Candidate returned `eligible_partial`, no post-SetSpeed event.
 - Unmodified v1.4 returned `special_future_floor` for these eight frames.
 
-This does **not** yet establish recovered Lifecycle IDs, 1068/1068 coverage,
-zero false-positive IDs, or no regression across all fixed charts.
+This isolated local probe alone did not establish Lifecycle coverage, but the later user-run full fixed audit reported 1068/1068 clean, no false-positive IDs and no existing success regressions (see summary above).
 
 ## Opt-in code
 
@@ -75,10 +114,11 @@ Files:
 `tests/test_audit_hud_timing_phase15_checkpoint_v01.py`.
 
 Isolated Checkpoint normalization tests: 11 passed locally against the
-previous uploaded source ZIP. Full post-merge Lifecycle/Composite tests and
-the fixed full audit have **not yet run**.
+previous uploaded source ZIP. The full fixed audit was subsequently run on the
+user's Windows system (aggregate stdout supplied); separate post-merge pytest
+suite results have not been provided.
 
-## Required tests / acceptance gate
+## Reproduction commands and accepted checks
 
 First (local Windows project root):
 
@@ -101,15 +141,15 @@ Target-only audit:
   --target-only
 ```
 
-If both pass, run the fixed Train16 + reference5 audit **without**
-`--target-only` and with a new output file. Do not run training,
+The full fixed Train16 + reference5 audit was subsequently completed by the
+user **without** `--target-only`; use a new output file for any independent rerun. Do not run training,
 Validation20, FINAL, or real Motor. Outputs are exclusive-create, never
 overwrite existing evidence.
 
-**Acceptance criteria before declaring Phase 15 success**: Train16
+**Acceptance criteria checked against the supplied stdout**: Train16
 1067/1068→1068/1068, reference5 200/200 unchanged, original 1067 success
 events without regression, False Positive ID 0, Phase12 fixed13 maintained
-13/13 and 9/13 Motor-ready, and target Event 54 lead ≥44ms. If any fail,
-disable `checkpoint_recovery` and report `CHECKPOINT_INTEGRATION_BLOCKED`.
+13/13 and 9/13 Motor-ready, and target Event 54 lead ≥44ms. All criteria passed in the supplied aggregate. If a later independent run
+fails, disable `checkpoint_recovery` and investigate the discrepancy.
 
 Do not equate any Timing/Lifecycle success with physical Motor Hit rate.
