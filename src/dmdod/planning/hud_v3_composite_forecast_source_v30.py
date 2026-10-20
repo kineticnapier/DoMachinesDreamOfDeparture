@@ -177,7 +177,8 @@ class HUDV3CompositeForecastSource:
                  lifecycle_version: str = LIFECYCLE_V14,
                  reconcile_countdown_v14_identity: bool = True,
                  midspin_recovery: bool = False,
-                 twirl_recovery: bool = False) -> None:
+                 twirl_recovery: bool = False,
+                 checkpoint_recovery: bool = False) -> None:
         if lifecycle_version not in LIFECYCLE_VERSIONS:
             raise ValueError(
                 f"unsupported lifecycle version: {lifecycle_version!r}"
@@ -186,7 +187,9 @@ class HUDV3CompositeForecastSource:
             raise TypeError("midspin_recovery must be bool")
         if type(twirl_recovery) is not bool:
             raise TypeError("twirl_recovery must be bool")
-        if (midspin_recovery or twirl_recovery) and lifecycle_version != LIFECYCLE_V15:
+        if type(checkpoint_recovery) is not bool:
+            raise TypeError("checkpoint_recovery must be bool")
+        if (midspin_recovery or twirl_recovery or checkpoint_recovery) and lifecycle_version != LIFECYCLE_V15:
             raise ValueError(
                 "opt-in special-event recovery requires lifecycle v1.5"
             )
@@ -195,7 +198,9 @@ class HUDV3CompositeForecastSource:
             TwirlRecoveryLifecycleCausalTimingTracker(
                 horizon_s=horizon_s,
                 midspin_recovery=midspin_recovery,
-            ) if twirl_recovery else
+                enable_twirl_recovery=twirl_recovery,
+                checkpoint_recovery=checkpoint_recovery,
+            ) if (twirl_recovery or checkpoint_recovery) else
             MidspinRecoveryLifecycleCausalTimingTracker(horizon_s=horizon_s)
             if midspin_recovery else
             QuantizedLifecycleCausalTimingTracker(horizon_s=horizon_s)
@@ -212,6 +217,7 @@ class HUDV3CompositeForecastSource:
         self.lifecycle_version = lifecycle_version
         self.midspin_recovery = midspin_recovery
         self.twirl_recovery = twirl_recovery
+        self.checkpoint_recovery = checkpoint_recovery
 
     def reset(self) -> None:
         self.composite.reset()
