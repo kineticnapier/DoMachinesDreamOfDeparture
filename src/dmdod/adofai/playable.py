@@ -23,12 +23,27 @@ class PlayableChartTarget:
 
 
 @dataclass(frozen=True, slots=True)
+class PlayableHoldInterval:
+    """Evaluator-side Hold interval, separate from ordinary press targets."""
+
+    ordinal: int
+    start_floor_index: int
+    end_floor_index: int
+    chart_start_s: float
+    chart_end_s: float
+    episode_start_s: float
+    episode_end_s: float
+    duration_loops: int
+
+
+@dataclass(frozen=True, slots=True)
 class PlayableChartSegment:
     chart: CompiledAdoFaiChart
     start_chart_s: float
     end_chart_s: float
     pitch_ratio: float
     targets: tuple[PlayableChartTarget, ...]
+    holds: tuple[PlayableHoldInterval, ...] = ()
 
     @property
     def duration_s(self) -> float:
@@ -83,10 +98,29 @@ def build_playable_segment(
         )
         for ordinal, floor in enumerate(selected)
     )
+    selected_holds = [
+        floor for floor in chart.floors[:-1]
+        if floor.hold is not None
+        and start_s <= floor.hold.start_time_s <= end_s
+    ]
+    holds = tuple(
+        PlayableHoldInterval(
+            ordinal=ordinal,
+            start_floor_index=floor.index,
+            end_floor_index=floor.index + 1,
+            chart_start_s=floor.hold.start_time_s,
+            chart_end_s=floor.hold.end_time_s,
+            episode_start_s=(floor.hold.start_time_s - start_s) / pitch_ratio,
+            episode_end_s=(floor.hold.end_time_s - start_s) / pitch_ratio,
+            duration_loops=floor.hold.duration_loops,
+        )
+        for ordinal, floor in enumerate(selected_holds)
+    )
     return PlayableChartSegment(
         chart=chart,
         start_chart_s=start_s,
         end_chart_s=end_s,
         pitch_ratio=pitch_ratio,
         targets=targets,
+        holds=holds,
     )

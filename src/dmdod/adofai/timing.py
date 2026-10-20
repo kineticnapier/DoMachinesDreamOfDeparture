@@ -34,6 +34,10 @@ class AdoFaiFloorTiming:
     pause_s: float = 0.0
     orbit_start_angle_rad: float = 0.0
     orbit_end_angle_rad: float = 0.0
+    hold_duration_loops: int | None = None
+    hold_additional_angle_rad: float = 0.0
+    hold_additional_time_s: float = 0.0
+    hold_source_action_index: int = -1
 
     @property
     def duration_s(self) -> float:
@@ -56,6 +60,18 @@ class VisibleChartFloor:
 
 
 @dataclass(frozen=True, slots=True)
+class CompiledHoldTiming:
+    """Privileged stock Hold interval; never a Student-visible feature."""
+
+    duration_loops: int
+    start_time_s: float
+    end_time_s: float
+    additional_angle_rad: float
+    additional_time_s: float
+    source_action_index: int
+
+
+@dataclass(frozen=True, slots=True)
 class CompiledChartFloor:
     index: int
     x: float
@@ -74,6 +90,7 @@ class CompiledChartFloor:
     previous_midspin: bool
     orbit_start_angle_rad: float
     orbit_end_angle_rad: float
+    hold: CompiledHoldTiming | None = None
 
     def visible(self) -> VisibleChartFloor:
         return VisibleChartFloor(
@@ -145,6 +162,8 @@ class _StockFloorState:
     midspin: bool = False
     previous_midspin: bool = False
     pause_s: float = 0.0
+    hold_duration_loops: int | None = None
+    hold_source_action_index: int = -1
 
 
 def load_compiled_adofai(path: str) -> CompiledAdoFaiChart:
@@ -186,6 +205,17 @@ def _compile_floor(
         for action in actions
         if action.active and action.event_type in VISIBLE_EVENT_TYPES
     )
+    hold = (
+        CompiledHoldTiming(
+            duration_loops=timing.hold_duration_loops,
+            start_time_s=timing.entry_time_s,
+            end_time_s=timing.exit_time_s,
+            additional_angle_rad=timing.hold_additional_angle_rad,
+            additional_time_s=timing.hold_additional_time_s,
+            source_action_index=timing.hold_source_action_index,
+        )
+        if timing.hold_duration_loops is not None else None
+    )
     return CompiledChartFloor(
         index=timing.index,
         x=geometry.x,
@@ -204,6 +234,7 @@ def _compile_floor(
         previous_midspin=timing.previous_midspin,
         orbit_start_angle_rad=timing.orbit_start_angle_rad,
         orbit_end_angle_rad=timing.orbit_end_angle_rad,
+        hold=hold,
     )
 
 
@@ -267,6 +298,11 @@ def build_stock_timing(chart: AdoFaiChart) -> tuple[AdoFaiFloorTiming, ...]:
         current.is_ccw = is_ccw
         current.num_planets = num_planets
         current.pause_s = _pause_seconds(actions, base_bpm, old_speed)
+        hold = _stock_hold_action(actions, floor=floor,
+                                  has_next=floor + 1 < chart.floor_count)
+        if hold is not None:
+            current.hold_duration_loops = hold[0]
+            current.hold_source_action_index = hold[1]
 
         if pending is not None:
             timing, time_s = _finalize_floor(
@@ -392,13 +428,42 @@ def _pause_seconds(actions: list[AdoFaiAction], base_bpm: float, speed_before: f
     return total
 
 
+def _stock_hold_action(
+    actions: list[AdoFaiAction], *, floor: int, has_next: bool,
+) -> tuple[int, int] | None:
+    """Return the last active Hold assignment using stock integer semantics.
+
+    The decompiled loader casts ``duration`` to int and later disables Hold on
+    a floor without ``nextfloor``. We reject missing/fractional/non-finite data
+    instead of silently inventing a duration.
+    """
+
+    result: tuple[int, int] | None = None
+    for action in actions:
+        if not action.active or action.event_type != "Hold":
+            continue
+        value = action.duration
+        if value is None:
+            raise ValueError(f"Hold duration is required at floor {floor}")
+        if not math.isfinite(value) or value != math.trunc(value):
+            raise ValueError(
+                f"Hold duration must be an integer at floor {floor}: {value!r}"
+            )
+        duration = int(value)
+        result = (
+            (duration, action.source_index)
+            if duration >= 0 and has_next else None
+        )
+    return result
+
+
 def _finalize_floor(
     floor: _StockFloorState,
     entry_time_s: float,
     base_bpm: float,
     countdown_ticks: int,
 ) -> tuple[AdoFaiFloorTiming, float]:
-    rotation_seconds, angle_moved, orbit_start, orbit_end = _floor_rotation_seconds(
+    rotation_seconds, angle_moved, orbit_start, orbit_end, hold_angle, hold_time = _floor_rotation_seconds(
         floor, base_bpm, countdown_ticks
     )
     exit_time = entry_time_s + floor.pause_s + rotation_seconds
@@ -417,6 +482,10 @@ def _finalize_floor(
         pause_s=floor.pause_s,
         orbit_start_angle_rad=orbit_start,
         orbit_end_angle_rad=orbit_end,
+        hold_duration_loops=floor.hold_duration_loops,
+        hold_additional_angle_rad=hold_angle,
+        hold_additional_time_s=hold_time,
+        hold_source_action_index=floor.hold_source_action_index,
     )
     return timing, exit_time
 
@@ -425,14 +494,14 @@ def _floor_rotation_seconds(
     floor: _StockFloorState,
     base_bpm: float,
     countdown_ticks: int,
-) -> tuple[float, float, float, float]:
+) -> tuple[float, float, float, float, float, float]:
     if floor.floor == 0:
         moved = _get_angle_moved(floor.entry_angle, floor.exit_angle, not floor.is_ccw)
         countdown_extra = max(0, countdown_ticks - 1)
         first_crotchet = float(_f32(60.0 / base_bpm))
         seconds = countdown_extra * first_crotchet + moved / PI_STOCK * (60.0 / base_bpm / floor.speed)
         sign = 1.0 if not floor.is_ccw else -1.0
-        return seconds, moved, floor.entry_angle, floor.entry_angle + sign * moved
+        return seconds, moved, floor.entry_angle, floor.entry_angle + sign * moved, 0.0, 0.0
 
     inverse = _inverse_angle_per_beat_multiplanet(floor.num_planets)
     offset = inverse * (-1.0 if floor.is_ccw else 1.0)
@@ -456,8 +525,17 @@ def _floor_rotation_seconds(
         else:
             moved = float(_f32(6.2831855))
             seconds = 2.0 * (PI_STOCK / PI_STOCK * (60.0 / base_bpm / floor.speed))
+    hold_angle = 0.0
+    hold_time = 0.0
+    if floor.hold_duration_loops is not None and floor.hold_duration_loops > 0:
+        hold_angle = float(floor.hold_duration_loops * 2) * PI_STOCK
+        hold_time = hold_angle / PI_STOCK * (
+            60.0 / base_bpm / floor.speed
+        )
+        moved += hold_angle
+        seconds += hold_time
     sign = 1.0 if not floor.is_ccw else -1.0
-    return seconds, moved, orbit_start, orbit_start + sign * moved
+    return seconds, moved, orbit_start, orbit_start + sign * moved, hold_angle, hold_time
 
 
 def _parse_planets(planets: str | None, fallback: int) -> int:
