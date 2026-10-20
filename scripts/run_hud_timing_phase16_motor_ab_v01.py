@@ -107,6 +107,9 @@ def _difference(old: dict, new: dict) -> dict:
         "no_hit_regression": not lost_hit,
         "too_early_not_increased": b["too_early"] <= a["too_early"],
         "overload_not_increased": int(b["overloaded"]) <= int(a["overloaded"]),
+        "overload_counter_not_increased": (
+            b["overload_counter"] <= a["overload_counter"]
+        ),
         "reservation_collisions_not_increased": (
             new["scheduling"]["reservation_collisions"]
             <= old["scheduling"]["reservation_collisions"]
