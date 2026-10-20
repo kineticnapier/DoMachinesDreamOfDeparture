@@ -1,0 +1,42 @@
+{
+  "format": "dmdod-hud-timing-phase15-checkpoint-probe-v0.1",
+  "evidence_level": "local frozen Train80 replay of legacy v1.4 geometry plus Checkpoint-only normalization; lifecycle-v1.5 regression NOT yet run",
+  "source_chart": "04349 - ヒアソビ (feat. 初音ミク) - Zedwards.adofai",
+  "source_sha256": "baaf6bff3cd012d8b0e4f123f58868c1cd4f262a35394e32eb2ebcba898caab9",
+  "event_index_posthoc": 54,
+  "floor_index_posthoc": 55,
+  "target_due_s_posthoc": 11.641791069972934,
+  "floor_markers": [
+    "SetSpeed",
+    "Checkpoint"
+  ],
+  "previous_floor_bpm": 268,
+  "target_floor_resolved_bpm": 134,
+  "stock_source_evidence": "ffxCheckpoint.StartEffect hit-triggered checkpointNum/revival/visual state update; scnGame attaches ffxCheckpoint to floor; no timeline mutation observed",
+  "checkpoint_tile_offset": -1,
+  "control_period_s": 0.01,
+  "horizon_s": 0.08,
+  "first_blocked_frame_step": 1157,
+  "first_blocked_frame_s": 11.57,
+  "first_candidate_due_s": 11.64179108058633,
+  "first_candidate_forecast_lead_ms": 71.791069972934,
+  "first_candidate_error_ms": 0.000010613396,
+  "recovered_frame_steps": [
+    1157,
+    1158,
+    1159,
+    1160,
+    1161,
+    1162,
+    1163,
+    1164
+  ],
+  "candidate_window_status": "eligible_partial",
+  "candidate_first_window_offsets": [
+    1
+  ],
+  "checkpoint_marker_modified_in_calculation_copy_only": true,
+  "future_setspeed_marker_preserved": true,
+  "stops_before_post_setspeed_unknown_speed": true,
+  "note": "Prediction experiment not a full Lifecycle audit, no motor run, no end-to-end claim; requires candidate-vs-baseline Train16+reference5 audit."
+}
