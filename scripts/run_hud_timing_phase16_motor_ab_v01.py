@@ -11,6 +11,7 @@ No image recognition, Hold release oracle, training, Validation20 or FINAL.
 import argparse
 from datetime import datetime, timezone
 from hashlib import sha256
+from math import isfinite
 import json
 from pathlib import Path
 
@@ -71,9 +72,10 @@ def _fixed_paths(train_dir: Path, manifest: dict, *, chart_name: str | None,
     return ((matches[0], UNSEEN_END_S),)
 
 
-def _compact(arm: dict) -> dict:
-    """Do not persist 1ms/10ms frame streams, only diagnostics and outcomes."""
-    return {
+def _compact(arm: dict, *,
+             diagnostic_window_s: tuple[float, float] | None = None) -> dict:
+    """Persist ordinary summaries; opt-in scorer/frame traces for diagnosis."""
+    compact = {
         "stats": arm["stats"],
         "scheduling": arm["scheduling"],
         "target_outcomes_posthoc": arm["target_outcomes_posthoc"],
@@ -92,6 +94,41 @@ def _compact(arm: dict) -> dict:
             _reservation_violations(arm["frames"])
         ),
     }
+    if diagnostic_window_s is not None:
+        start_s, end_s = diagnostic_window_s
+        # The trace is evaluator truth, accessed only after the replay.
+        # Do not align Motor reservations to target IDs by assuming that a
+        # physical KeyDown necessarily scores its intended event.
+        scorer_trace = arm["judgement_trace_posthoc"]
+        compact["diagnostic_window_posthoc"] = {
+            "start_s": start_s,
+            "end_s": end_s,
+            "frames": [
+                row for row in arm["frames"]
+                if start_s <= row["local_clock_s"] <= end_s
+            ],
+            "judgement_trace": [
+                row for row in scorer_trace
+                if start_s <= row["time_s"] <= end_s
+            ],
+            "target_outcomes": [
+                row for row in arm["target_outcomes_posthoc"]
+                if start_s <= row["due_s"] <= end_s
+            ],
+            "decisions": [
+                row for row in arm["decisions"]
+                if start_s <= row["due_local_s"] <= end_s
+            ],
+            "physical_keydowns": [
+                row for row in arm["physical_keydowns"]
+                if start_s <= row["time_s"] <= end_s
+            ],
+            "logical_keydowns": [
+                row for row in arm["logical_keydowns"]
+                if start_s <= row["time_s"] <= end_s
+            ],
+        }
+    return compact
 
 
 def _difference(old: dict, new: dict) -> dict:
@@ -148,11 +185,23 @@ def _difference(old: dict, new: dict) -> dict:
 
 def run(train_dir: Path, checkpoint: Path, manifest: dict, *,
         chart_name: str | None = None, all_unseen: bool = False,
-        per_arm_timeout_s: float = 180.0) -> dict:
+        per_arm_timeout_s: float = 180.0,
+        diagnostic_center_s: float | None = None,
+        diagnostic_radius_s: float = .25) -> dict:
     if not checkpoint.is_file() or _sha256(checkpoint) != FIXED_FINGERING_SHA256:
         raise ValueError("frozen Fingering checkpoint missing or changed")
     if per_arm_timeout_s <= 0:
         raise ValueError("per-arm timeout must be positive")
+    if not isfinite(diagnostic_radius_s) or diagnostic_radius_s <= 0:
+        raise ValueError("diagnostic radius must be finite and positive")
+    if diagnostic_center_s is not None and not isfinite(diagnostic_center_s):
+        raise ValueError("diagnostic center must be finite")
+    diagnostic_window_s = (
+        None if diagnostic_center_s is None else (
+            max(0.0, diagnostic_center_s - diagnostic_radius_s),
+            diagnostic_center_s + diagnostic_radius_s,
+        )
+    )
     selections = _fixed_paths(train_dir, manifest, chart_name=chart_name,
                               all_unseen=all_unseen)
     model = phase3.frozen.load_model(checkpoint)
@@ -164,6 +213,7 @@ def run(train_dir: Path, checkpoint: Path, manifest: dict, *,
         old = phase3.simulate(
             segment, model, "hud_v3_composite",
             wall_timeout_s=per_arm_timeout_s, lifecycle_version="v1.5",
+            capture_judgement_trace=diagnostic_window_s is not None,
         )
         new = phase3.simulate(
             segment, model, "hud_v3_composite",
@@ -171,12 +221,13 @@ def run(train_dir: Path, checkpoint: Path, manifest: dict, *,
             midspin_recovery=True,
             twirl_recovery=True,
             checkpoint_recovery=True,
+            capture_judgement_trace=diagnostic_window_s is not None,
         )
         # Contract summaries are derived from the raw frame streams.
         # Compare the same compact representation that is persisted in JSON;
         # raw simulate() arms do not contain these derived summary keys.
-        baseline_compact = _compact(old)
-        candidate_compact = _compact(new)
+        baseline_compact = _compact(old, diagnostic_window_s=diagnostic_window_s)
+        candidate_compact = _compact(new, diagnostic_window_s=diagnostic_window_s)
         cases.append({
             "chart": path.name,
             "chart_sha256": _sha256(path),
@@ -208,6 +259,7 @@ def run(train_dir: Path, checkpoint: Path, manifest: dict, *,
         "scope": "fixed-unseen16" if all_unseen else "single-frozen-Train-chart",
         "evaluated_charts": len(cases),
         "physics_dt_s": phase3.PHYSICS_DT_S,
+        "diagnostic_window_s": diagnostic_window_s,
         "control_dt_s": phase3.CONTROL_DT_S,
         "checkpoint_sha256": _sha256(checkpoint),
         "frozen_selection_source": str(DEFAULT_MANIFEST),
@@ -237,6 +289,9 @@ def main() -> None:
     scope.add_argument("--chart-name")
     scope.add_argument("--all-unseen", action="store_true")
     parser.add_argument("--per-arm-timeout-s", type=float, default=180.0)
+    parser.add_argument("--diagnostic-center-s", type=float,
+                        help="Opt-in posthoc scorer and frame trace near this time")
+    parser.add_argument("--diagnostic-radius-s", type=float, default=.25)
     parser.add_argument("--output", type=Path, required=True)
     args = parser.parse_args()
     manifest = json.loads(args.manifest.read_text(encoding="utf-8"))
@@ -244,6 +299,8 @@ def main() -> None:
         args.train_dir, args.checkpoint, manifest,
         chart_name=args.chart_name, all_unseen=args.all_unseen,
         per_arm_timeout_s=args.per_arm_timeout_s,
+        diagnostic_center_s=args.diagnostic_center_s,
+        diagnostic_radius_s=args.diagnostic_radius_s,
     )
     _write_new(args.output, result)
     print("verdict:", result["verdict"])
