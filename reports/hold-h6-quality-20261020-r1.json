@@ -1,0 +1,59 @@
+{
+  "format": "dmdod-hold-h6-quality-audit-v0.1",
+  "generated_utc": "2026-10-20T10:25:49.031673+00:00",
+  "verdict": "HOLD_PARTIAL_INTEGRATION",
+  "checks": {
+    "h5_code_parity_pass": true,
+    "h5_all_checks_pass": true,
+    "deterministic_double_compile": true,
+    "fixed_chart_hashes_present": true,
+    "hud_student_contract_has_no_truth_fields": true,
+    "phase14_pass": true,
+    "phase14_all_checks_pass": true,
+    "phase14_false_positive_zero": true,
+    "phase14_success_regressions_zero": true,
+    "bounded_compile_time": true,
+    "bounded_peak_memory": true
+  },
+  "determinism": {
+    "first": {
+      "04349 - ヒアソビ (feat. 初音ミク) - Zedwards.adofai": {
+        "sha256": "5b1a4f496b4136f6feb02a12b03e482beacfd4ad87f4f0600709c35688842ee7",
+        "targets": 1065,
+        "holds": 2
+      },
+      "10907 - Remote Access Trojan - 0mni & Trippy.adofai": {
+        "sha256": "79d95b0cac29ab9fab7b1af394e1429e129acd519b1e233ae1749ecec8faee05",
+        "targets": 889,
+        "holds": 22
+      },
+      "13131 - 『계획 이상 有!』 (feat. 重音テト) - Team Name.adofai": {
+        "sha256": "f4f037f744bad2e5a2550657f80a1fba82376a2aab1edcf4cc34c2e4d6c1b696",
+        "targets": 1742,
+        "holds": 1
+      }
+    },
+    "second_identical": true
+  },
+  "bounded_smoke": {
+    "scope": "fixed Train-only 3 Hold charts compiled twice",
+    "elapsed_s": 11.669403300154954,
+    "limit_s": 60.0,
+    "peak_bytes": 17758616,
+    "limit_bytes": 268435456,
+    "historical_performance_baseline_available": false
+  },
+  "component_status": {
+    "stock_timing": "CODE_PARITY_PASS_LIVE_GAME_UNVERIFIED",
+    "judgement": "DETERMINISTIC_CODE_PARITY_LIVE_MARGINS_UNVERIFIED",
+    "hud_recognition": "ICON_CLASSES_CAUSAL_EXACT_DURATION_BLOCKED",
+    "motor": "DETERMINISTIC_OVERLAY_PASS_FULL_CHART_HUD_ONLY_BLOCKED",
+    "ordinary_timing_regression": "PASS"
+  },
+  "why_not_full_pass": "verified icon-only HUD cannot distinguish positive Hold durations; live stock timing/judgement capture and full-chart HUD-only release control have not been demonstrated",
+  "sources": {
+    "h5": "reports\\hold-h5-train-audit-20261020-r1.json",
+    "phase14_regression": "reports\\hold-h5-phase14-regression-20261020-r1.json",
+    "test_results": "reports/hold-h6-test-results-20261020-r1.json"
+  }
+}

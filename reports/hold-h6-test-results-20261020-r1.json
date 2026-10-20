@@ -1,0 +1,43 @@
+{
+  "format": "dmdod-hold-h6-test-results-v0.1",
+  "date": "2026-10-20",
+  "focused_contract_suite": {
+    "result": "PASS",
+    "passed": 245,
+    "failed": 0,
+    "duration_s": 49.54,
+    "basetemp": "artifacts/pytest-hold-h6-contracts-r1"
+  },
+  "repository_full_suite": {
+    "result": "PREEXISTING_UNRELATED_FAILURES",
+    "passed": 1878,
+    "failed": 9,
+    "errors": 0,
+    "warnings": 1,
+    "duration_s": 161.41,
+    "basetemp": "artifacts/pytest-hold-h6-full-r1",
+    "failure_groups": [
+      {
+        "count": 7,
+        "file": "tests/test_prestige1_autoplay_halfturn_countdown_audit.py",
+        "cause": "test-side NameError: cos is not imported"
+      },
+      {
+        "count": 1,
+        "file": "tests/test_prestige1_failure_diagnostics.py",
+        "cause": "older monkeypatch lambda does not accept existing legacy_bpm_encoding keyword"
+      },
+      {
+        "count": 1,
+        "file": "tests/test_prestige1_autoplay_distance_and_ablation.py",
+        "cause": "older overwrite-guard fixture supplies SimpleNamespace without output_dir"
+      }
+    ],
+    "hold_program_files_in_failure_tracebacks": false
+  },
+  "discarded_environment_only_attempt": {
+    "reason": "default sandbox Temp could not create pytest numbered directory",
+    "setup_errors": 183,
+    "resolution": "rerun with writable workspace --basetemp"
+  }
+}
