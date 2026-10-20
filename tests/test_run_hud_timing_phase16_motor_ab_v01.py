@@ -11,6 +11,7 @@ def _arm(*, hits=1, too_early=0, overloaded=False, collisions=0):
         "stats": {
             "targets": 1, "hits": hits, "misses": 1 - hits,
             "too_early": too_early, "overloaded": overloaded,
+            "overload_counter": 0.0,
             "physical_keydowns": hits, "timing_mae_ms": 0.0,
             "x_accuracy_percent": float(hits * 100),
         },
@@ -145,3 +146,11 @@ def test_policy_flags_forwarded_only_to_candidate(monkeypatch, tmp_path):
     assert calls[1]["twirl_recovery"] is True
     assert calls[1]["checkpoint_recovery"] is True
     assert report["cases"][0]["arms"][p16.BASELINE]["stats"]["hits"] == 1
+
+
+def test_non_v3_arm_rejects_recovery_flags():
+    with pytest.raises(ValueError, match="require hud_v3_composite"):
+        p16.phase3.simulate(
+            None, None, "hud_v14", wall_timeout_s=1.0,
+            checkpoint_recovery=True,
+        )
