@@ -1,0 +1,491 @@
+{
+  "format": "dmdod-stock-hold-h0-audit-v0.1",
+  "generated_utc": "2026-10-20T10:04:43.080657+00:00",
+  "scope": "Train80 only; no Validation20/Reserve20/FINAL",
+  "train_dir": "data\\DMDOD-v140-tuf-p11-p20\\Train",
+  "evidence_dir": "F:\\adofai-code",
+  "evidence_version_caveat": "decompiled source has AssemblyVersion 0.0.0.0; hashes identify the audited snapshot but do not prove parity with another install",
+  "evidence_files": [
+    {
+      "filename": "scrPlayer.cs",
+      "exists": true,
+      "sha256": "21326189390db431a4bbe2ea9e608d67048509aa2138526e5ad5179da08efc47",
+      "last_write_time": "2026-09-15T10:54:25.317588+00:00"
+    },
+    {
+      "filename": "scrController.cs",
+      "exists": true,
+      "sha256": "7917d47f0b714a8c56f048789aa3e9a48c7b4735d0296fc96b009f951715ed23",
+      "last_write_time": "2026-09-15T10:54:26.439206+00:00"
+    },
+    {
+      "filename": "scrConductor.cs",
+      "exists": true,
+      "sha256": "bd3348ab71bfc5acc998e3497a95b426f50b30a449028705fb52ba36da34efdc",
+      "last_write_time": "2026-09-15T10:54:25.582800+00:00"
+    },
+    {
+      "filename": "scrLevelMaker.cs",
+      "exists": true,
+      "sha256": "d9ea389805276e9b8916a6d1a0a5ed564f94a023ac9018e800de4750167a486d",
+      "last_write_time": "2026-09-15T10:54:27.139610+00:00"
+    },
+    {
+      "filename": "scnGame.cs",
+      "exists": true,
+      "sha256": "de28c1e224cac5bc81e480bf20c3597a297b582e801b25a79e9c461b972ab25a",
+      "last_write_time": "2026-09-15T10:54:25.954794+00:00"
+    },
+    {
+      "filename": "scrPlanet.cs",
+      "exists": true,
+      "sha256": "2250feb39218f386233227e1bd2007bd1a9360c62c12749ebe0b8efc07618c0e",
+      "last_write_time": "2026-09-15T10:54:26.329248+00:00"
+    },
+    {
+      "filename": "scrHoldRenderer.cs",
+      "exists": true,
+      "sha256": "b6c19c740a21aa04a8191de952990345b0034042a9f9f413284f2ce5ced8ad80",
+      "last_write_time": "2026-09-15T10:54:28.060286+00:00"
+    },
+    {
+      "filename": "HoldBehavior.cs",
+      "exists": true,
+      "sha256": "71038c2493021faa2c28854c1321857cc86495e3b00611dd66dae00b13086fe8",
+      "last_write_time": "2026-09-15T10:54:25.804622+00:00"
+    }
+  ],
+  "hold_chart_count": 3,
+  "hold_action_count": 25,
+  "duration_values": [
+    0,
+    1,
+    2,
+    3
+  ],
+  "charts": [
+    {
+      "filename": "04349 - ヒアソビ (feat. 初音ミク) - Zedwards.adofai",
+      "sha256": "baaf6bff3cd012d8b0e4f123f58868c1cd4f262a35394e32eb2ebcba898caab9",
+      "initial_bpm": 268,
+      "pitch_percent": 100,
+      "angle_count": 1065,
+      "holds": [
+        {
+          "floor": 118,
+          "duration_raw": 2,
+          "distance_multiplier_raw": 100,
+          "landing_animation_raw": "Disabled",
+          "same_floor_actions": [
+            "Hold",
+            "SetFilter",
+            "SetFilter",
+            "MoveCamera",
+            "MoveDecorations",
+            "MoveDecorations"
+          ]
+        },
+        {
+          "floor": 502,
+          "duration_raw": 2,
+          "distance_multiplier_raw": 100,
+          "landing_animation_raw": "Disabled",
+          "same_floor_actions": [
+            "Hold",
+            "SetFilter",
+            "SetFilter",
+            "MoveCamera",
+            "MoveDecorations",
+            "MoveDecorations"
+          ]
+        }
+      ]
+    },
+    {
+      "filename": "10907 - Remote Access Trojan - 0mni & Trippy.adofai",
+      "sha256": "d7e5a1cb5abc8ea1104116ac154f5f1e0b9fd889fdf2650ed1fe1d27510f4b82",
+      "initial_bpm": 120,
+      "pitch_percent": 100,
+      "angle_count": 893,
+      "holds": [
+        {
+          "floor": 508,
+          "duration_raw": 1,
+          "distance_multiplier_raw": 100,
+          "landing_animation_raw": false,
+          "same_floor_actions": [
+            "Hold",
+            "MoveDecorations",
+            "MoveDecorations",
+            "MoveCamera",
+            "MoveDecorations",
+            "MoveDecorations"
+          ]
+        },
+        {
+          "floor": 510,
+          "duration_raw": 2,
+          "distance_multiplier_raw": 100,
+          "landing_animation_raw": false,
+          "same_floor_actions": [
+            "Hold",
+            "MoveDecorations",
+            "MoveDecorations",
+            "MoveCamera",
+            "MoveCamera",
+            "MoveDecorations"
+          ]
+        },
+        {
+          "floor": 516,
+          "duration_raw": 2,
+          "distance_multiplier_raw": 100,
+          "landing_animation_raw": false,
+          "same_floor_actions": [
+            "Hold",
+            "MoveDecorations",
+            "MoveDecorations",
+            "MoveCamera",
+            "MoveDecorations"
+          ]
+        },
+        {
+          "floor": 519,
+          "duration_raw": 2,
+          "distance_multiplier_raw": 100,
+          "landing_animation_raw": false,
+          "same_floor_actions": [
+            "Hold",
+            "MoveDecorations",
+            "MoveDecorations",
+            "MoveCamera",
+            "MoveDecorations"
+          ]
+        },
+        {
+          "floor": 528,
+          "duration_raw": 0,
+          "distance_multiplier_raw": 100,
+          "landing_animation_raw": false,
+          "same_floor_actions": [
+            "Hold",
+            "MoveDecorations",
+            "MoveDecorations",
+            "MoveCamera",
+            "MoveDecorations"
+          ]
+        },
+        {
+          "floor": 530,
+          "duration_raw": 0,
+          "distance_multiplier_raw": 100,
+          "landing_animation_raw": false,
+          "same_floor_actions": [
+            "Hold",
+            "MoveDecorations",
+            "MoveDecorations",
+            "MoveCamera",
+            "MoveDecorations"
+          ]
+        },
+        {
+          "floor": 532,
+          "duration_raw": 1,
+          "distance_multiplier_raw": 100,
+          "landing_animation_raw": false,
+          "same_floor_actions": [
+            "Hold",
+            "MoveDecorations",
+            "MoveDecorations",
+            "MoveCamera",
+            "MoveDecorations"
+          ]
+        },
+        {
+          "floor": 534,
+          "duration_raw": 1,
+          "distance_multiplier_raw": 100,
+          "landing_animation_raw": false,
+          "same_floor_actions": [
+            "Hold",
+            "MoveDecorations",
+            "MoveDecorations",
+            "MoveCamera",
+            "MoveDecorations"
+          ]
+        },
+        {
+          "floor": 539,
+          "duration_raw": 1,
+          "distance_multiplier_raw": 100,
+          "landing_animation_raw": false,
+          "same_floor_actions": [
+            "Hold",
+            "MoveDecorations",
+            "MoveDecorations",
+            "MoveCamera",
+            "MoveDecorations"
+          ]
+        },
+        {
+          "floor": 541,
+          "duration_raw": 3,
+          "distance_multiplier_raw": 100,
+          "landing_animation_raw": false,
+          "same_floor_actions": [
+            "Hold",
+            "MoveDecorations",
+            "MoveDecorations",
+            "MoveDecorations",
+            "MoveCamera",
+            "MoveDecorations"
+          ]
+        },
+        {
+          "floor": 543,
+          "duration_raw": 3,
+          "distance_multiplier_raw": 100,
+          "landing_animation_raw": false,
+          "same_floor_actions": [
+            "Hold",
+            "MoveDecorations",
+            "MoveDecorations",
+            "MoveCamera",
+            "Flash",
+            "MoveDecorations"
+          ]
+        },
+        {
+          "floor": 591,
+          "duration_raw": 1,
+          "distance_multiplier_raw": 100,
+          "landing_animation_raw": false,
+          "same_floor_actions": [
+            "Hold",
+            "MoveDecorations",
+            "MoveDecorations",
+            "Flash",
+            "MoveCamera",
+            "CustomBackground",
+            "MoveDecorations",
+            "MoveDecorations",
+            "RepeatEvents",
+            "MoveDecorations",
+            "MoveDecorations",
+            "MoveDecorations",
+            "MoveDecorations",
+            "MoveDecorations",
+            "MoveDecorations",
+            "MoveDecorations",
+            "MoveDecorations",
+            "SetFilter",
+            "SetFilter"
+          ]
+        },
+        {
+          "floor": 637,
+          "duration_raw": 3,
+          "distance_multiplier_raw": 100,
+          "landing_animation_raw": false,
+          "same_floor_actions": [
+            "Hold",
+            "MoveDecorations",
+            "MoveDecorations",
+            "MoveDecorations",
+            "MoveDecorations",
+            "MoveDecorations",
+            "MoveDecorations",
+            "MoveDecorations",
+            "MoveDecorations",
+            "MoveDecorations"
+          ]
+        },
+        {
+          "floor": 639,
+          "duration_raw": 2,
+          "distance_multiplier_raw": 100,
+          "landing_animation_raw": false,
+          "same_floor_actions": [
+            "Hold",
+            "MoveDecorations",
+            "MoveDecorations",
+            "MoveDecorations"
+          ]
+        },
+        {
+          "floor": 664,
+          "duration_raw": 1,
+          "distance_multiplier_raw": 100,
+          "landing_animation_raw": false,
+          "same_floor_actions": [
+            "Hold",
+            "MoveDecorations",
+            "MoveDecorations",
+            "MoveDecorations",
+            "MoveDecorations",
+            "MoveDecorations",
+            "RepeatEvents",
+            "MoveDecorations",
+            "MoveDecorations",
+            "MoveDecorations",
+            "MoveDecorations"
+          ]
+        },
+        {
+          "floor": 781,
+          "duration_raw": 0,
+          "distance_multiplier_raw": 100,
+          "landing_animation_raw": false,
+          "same_floor_actions": [
+            "Hold",
+            "MoveDecorations",
+            "MoveDecorations",
+            "MoveDecorations",
+            "MoveDecorations",
+            "MoveDecorations"
+          ]
+        },
+        {
+          "floor": 783,
+          "duration_raw": 0,
+          "distance_multiplier_raw": 100,
+          "landing_animation_raw": false,
+          "same_floor_actions": [
+            "Hold",
+            "MoveDecorations",
+            "MoveDecorations",
+            "MoveDecorations",
+            "MoveDecorations"
+          ]
+        },
+        {
+          "floor": 827,
+          "duration_raw": 0,
+          "distance_multiplier_raw": 100,
+          "landing_animation_raw": false,
+          "same_floor_actions": [
+            "Hold",
+            "MoveDecorations",
+            "MoveDecorations",
+            "MoveDecorations",
+            "MoveDecorations",
+            "MoveDecorations",
+            "MoveDecorations",
+            "MoveDecorations"
+          ]
+        },
+        {
+          "floor": 829,
+          "duration_raw": 0,
+          "distance_multiplier_raw": 100,
+          "landing_animation_raw": false,
+          "same_floor_actions": [
+            "Hold",
+            "MoveDecorations",
+            "MoveDecorations",
+            "MoveDecorations",
+            "MoveDecorations",
+            "MoveDecorations",
+            "MoveDecorations"
+          ]
+        },
+        {
+          "floor": 831,
+          "duration_raw": 0,
+          "distance_multiplier_raw": 100,
+          "landing_animation_raw": false,
+          "same_floor_actions": [
+            "Hold",
+            "MoveDecorations",
+            "MoveDecorations",
+            "MoveDecorations",
+            "MoveDecorations",
+            "MoveDecorations",
+            "MoveDecorations"
+          ]
+        },
+        {
+          "floor": 855,
+          "duration_raw": 1,
+          "distance_multiplier_raw": 100,
+          "landing_animation_raw": false,
+          "same_floor_actions": [
+            "Hold",
+            "MoveDecorations",
+            "MoveDecorations",
+            "MoveDecorations",
+            "MoveDecorations",
+            "MoveDecorations",
+            "MoveDecorations",
+            "MoveDecorations",
+            "MoveDecorations",
+            "MoveDecorations",
+            "MoveDecorations",
+            "MoveDecorations",
+            "SetConditionalEvents",
+            "MoveDecorations",
+            "MoveDecorations",
+            "MoveDecorations",
+            "MoveDecorations",
+            "MoveDecorations",
+            "MoveDecorations",
+            "MoveDecorations",
+            "MoveDecorations",
+            "RepeatEvents",
+            "MoveDecorations",
+            "MoveDecorations",
+            "MoveDecorations",
+            "MoveDecorations",
+            "MoveDecorations",
+            "MoveDecorations",
+            "SetHitsound",
+            "Bloom",
+            "MoveDecorations",
+            "MoveDecorations",
+            "MoveDecorations",
+            "MoveDecorations",
+            "MoveDecorations"
+          ]
+        },
+        {
+          "floor": 857,
+          "duration_raw": 1,
+          "distance_multiplier_raw": 100,
+          "landing_animation_raw": false,
+          "same_floor_actions": [
+            "Hold",
+            "MoveDecorations",
+            "MoveDecorations",
+            "MoveDecorations",
+            "MoveDecorations",
+            "MoveDecorations",
+            "MoveDecorations",
+            "MoveDecorations",
+            "MoveDecorations"
+          ]
+        }
+      ]
+    },
+    {
+      "filename": "13131 - 『계획 이상 有!』 (feat. 重音テト) - Team Name.adofai",
+      "sha256": "167e781dca406fcec3a0ee754a173d40a50b23f1714ee93758ca3eaf53564d64",
+      "initial_bpm": 162,
+      "pitch_percent": 100,
+      "angle_count": 1742,
+      "holds": [
+        {
+          "floor": 1110,
+          "duration_raw": 0,
+          "distance_multiplier_raw": 100,
+          "landing_animation_raw": false,
+          "same_floor_actions": [
+            "Hold",
+            "Twirl",
+            "MoveDecorations",
+            "MoveTrack"
+          ]
+        }
+      ]
+    }
+  ]
+}
