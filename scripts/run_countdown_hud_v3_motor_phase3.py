@@ -114,7 +114,8 @@ def simulate(segment, model, arm: str, *, wall_timeout_s: float,
              lifecycle_version: str = LIFECYCLE_V14,
              midspin_recovery: bool = False,
              twirl_recovery: bool = False,
-             checkpoint_recovery: bool = False) -> dict:
+             checkpoint_recovery: bool = False,
+             capture_judgement_trace: bool = False) -> dict:
     if arm not in ARMS:
         raise ValueError("unknown fixed comparison arm")
     if arm != "hud_v3_composite" and (
@@ -282,6 +283,12 @@ def simulate(segment, model, arm: str, *, wall_timeout_s: float,
     }
     # Evaluator truth is joined only after the final action and physical step.
     result["target_outcomes_posthoc"] = _target_outcomes(segment, env)
+    if capture_judgement_trace:
+        # Evaluator-owned target indices are only exposed AFTER the complete
+        # physical replay. Never feed these rows into Timing or Motor.
+        result["judgement_trace_posthoc"] = [
+            dict(row) for row in env.judgement_trace
+        ]
     result["source_conflict_count"] = sum(
         row["composite_status"] in (
             "source_conflict", "countdown_interval_conflict"
