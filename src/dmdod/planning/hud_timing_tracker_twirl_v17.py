@@ -28,6 +28,10 @@ from dmdod.planning.hud_timing_tracker_lifecycle_v15 import (
 from dmdod.planning.hud_timing_tracker_midspin_v16 import (
     normalize_visible_midspin_transition,
 )
+from dmdod.planning.hud_timing_tracker_checkpoint_v18 import (
+    normalize_visible_checkpoint_transition,
+    stop_after_checkpoint,
+)
 from dmdod.planning.hud_timing_tracker_transition_v14 import (
     CURRENT_SLOT,
     FLOOR_DIM,
@@ -148,9 +152,13 @@ class CausalTwirlForecastPredictor:
     """Stateful v1.4 front-end using current/past HUD263 only."""
 
     def __init__(self, *, horizon_s: float = .080,
-                 midspin_recovery: bool = False) -> None:
+                 midspin_recovery: bool = False,
+                 enable_twirl_recovery: bool = True,
+                 checkpoint_recovery: bool = False) -> None:
         self.horizon_s = horizon_s
         self.midspin_recovery = midspin_recovery
+        self.enable_twirl_recovery = enable_twirl_recovery
+        self.checkpoint_recovery = checkpoint_recovery
         self.reset()
 
     def reset(self) -> None:
@@ -160,20 +168,32 @@ class CausalTwirlForecastPredictor:
             (), (), None, "not_observed"
         )
         self.last_recovered_midspin_floor_slots: tuple[int, ...] = ()
+        self.last_recovered_checkpoint_floor_slots: tuple[int, ...] = ()
 
     def __call__(self, hud: tuple[float, ...]) -> WindowForecast:
-        twirl = normalize_visible_twirl_transition(hud, self._previous_raw_hud)
+        twirl = (
+            normalize_visible_twirl_transition(hud, self._previous_raw_hud)
+            if self.enable_twirl_recovery
+            else TwirlNormalization(hud, (), None, "twirl_disabled")
+        )
         normalized_hud = twirl.hud
         midspin_slots: tuple[int, ...] = ()
         if self.midspin_recovery:
             midspin = normalize_visible_midspin_transition(normalized_hud)
             normalized_hud = midspin.hud
             midspin_slots = midspin.recovered_floor_slots
+        checkpoint_slots: tuple[int, ...] = ()
+        if self.checkpoint_recovery:
+            checkpoint = normalize_visible_checkpoint_transition(normalized_hud)
+            normalized_hud = checkpoint.hud
+            checkpoint_slots = checkpoint.recovered_floor_slots
         result = forecast_visible_window(
             normalized_hud,
             horizon_s=self.horizon_s,
             previous_hud=self._previous_forecast_hud,
         )
+        if self.checkpoint_recovery:
+            result = stop_after_checkpoint(result, checkpoint_slots)
         # Raw history establishes observed motion direction. Forecast history
         # must use the same causal representation as the current frame or the
         # frozen full-turn check would compare transformed angles with raw
@@ -183,6 +203,9 @@ class CausalTwirlForecastPredictor:
         self.last_twirl_normalization = twirl
         self.last_recovered_midspin_floor_slots = (
             midspin_slots if result.eligible else ()
+        )
+        self.last_recovered_checkpoint_floor_slots = (
+            checkpoint_slots if result.eligible else ()
         )
         return result
 
@@ -195,10 +218,14 @@ class TwirlRecoveryLifecycleCausalTimingTracker(
     def __init__(self, *, horizon_s: float = .080,
                  control_dt_s: float = .010,
                  match_tolerance_s: float = .00075,
-                 midspin_recovery: bool = False) -> None:
+                 midspin_recovery: bool = False,
+                 enable_twirl_recovery: bool = True,
+                 checkpoint_recovery: bool = False) -> None:
         self.twirl_predictor = CausalTwirlForecastPredictor(
             horizon_s=horizon_s,
             midspin_recovery=midspin_recovery,
+            enable_twirl_recovery=enable_twirl_recovery,
+            checkpoint_recovery=checkpoint_recovery,
         )
         super().__init__(
             horizon_s=horizon_s,
