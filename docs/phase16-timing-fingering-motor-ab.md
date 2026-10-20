@@ -2,7 +2,7 @@
 
 ## Status
 
-**RUNNER_COMMITTED / PHASE16_LATEST_SOURCE_MOTOR_AUDIT_PENDING**
+**FIRST_TOWN_12S_MOTOR_AB_REGRESSION / EVENT89_POSTHOC_DIAGNOSTIC_READY**
 
 This is the next ordinary-press physical-integration stage after fixed
 Phase 15 Timing/Lifecycle coverage reached 1068/1068 on frozen Train16.
@@ -140,3 +140,54 @@ and do not enable the candidate by default.
 No production Fingering or Motor implementation was changed.
 **Merged newest-source test runs remain pending.** The older-source local
 execution cannot establish candidate readiness.
+
+
+## October 20 First town physical A/B / Event 89 follow-up
+
+Measured First town 0–12s (220 targets): baseline 162 Hit / 58 Miss;
+candidate 207 Hit / 13 Miss. New Hit: 46; lost baseline Hit: **ordinal 89**;
+net +45. TooEarly and overload stayed zero. The nonregression gate correctly
+failed. This is a physical Motor A/B, not Timing coverage.
+
+Observed around the lost ordinal, using the existing compact report:
+
+- Ordinal 88 due 5.205882s; candidate 5.253s right_3 was credited to 88.
+- Ordinal 89 due 5.250000s; candidate's Fingering decision local ID 89
+  selected right_3 and Motor produced that 5.253s down, yet 89 was Miss.
+- The candidate 5.205s right_2 input was credited to ordinal 87.
+- Baseline had late 5.292s right_2 scored on 89, with 88 credited at 5.253s.
+
+The scorer's existing `_next_target_index` consumes the oldest unresolved
+target; it does not select the closest note. The saved report supports a
+head-of-line attribution explanation, but it cannot show the full scorer
+cursor or physical reservation state at each step.
+
+The optional **posthoc trace** below adds exact scorer input-to-ordinal
+association and a bounded record of prior forecast/physical reservations.
+It is diagnostic only: target truth is never exposed to the policy, and the
+scorer, Finger model, Motor, and acceptance gate are not changed.
+
+After fetching the existing branch and protecting any dirty local changes,
+run focused tests and one scoped diagnostic replay in Windows:
+
+```powershell
+uv run python -m pytest -q `
+  tests/test_run_hud_timing_phase16_motor_ab_v01.py `
+  tests/test_run_countdown_hud_v3_motor_phase3.py `
+  --basetemp artifacts/pytest-phase16-event89-r1
+
+uv run python -u scripts/run_hud_timing_phase16_motor_ab_v01.py `
+  --chart-name "01645 - First town of this Journey remix - Irin.adofai" `
+  --diagnostic-center-s 5.25 `
+  --diagnostic-radius-s 0.25 `
+  --output reports/phase16-firsttown12-event89-causal-20261021-r1.json
+```
+
+The report includes `diagnostic_window_posthoc` per arm, containing:
+`judgement_trace` with actual `target_index`, `frames` with pending
+Timing IDs and reservations, `decisions`, and exact physical/logical
+KeyDown alongside target outcomes, all restricted to 5.0–5.5s.
+Normal runs omit the detail. Outputs are created exclusively, never replaced.
+
+Only run the fixed Train16 physical A/B after separately reviewing this
+evidence. No Validation20 or FINAL.
