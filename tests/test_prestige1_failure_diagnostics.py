@@ -132,7 +132,9 @@ def test_trace_stays_synchronized_and_counts_unjudged(monkeypatch):
 
     monkeypatch.setattr(diag, "DiagnosticHudNKeyRealChartMotorEnv", FakeEnv)
     monkeypatch.setattr(
-        diag, "encode_n_key_hud_real_chart_observation", lambda observation: (0.,)*263)
+        diag, "encode_n_key_hud_real_chart_observation",
+        lambda observation, **kwargs: (0.,)*263,
+    )
     segment = SimpleNamespace(
         duration_s=1., chart_time_from_episode=lambda t:t,
         targets=[SimpleNamespace(episode_time_s=.1,floor_index=0)])

@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import replace
-from math import atan2, pi, sin
+from math import atan2, cos, pi, sin
 
 import pytest
 import torch
@@ -175,7 +175,11 @@ def test_input_guards_and_original_special_event_guard_unchanged():
     nan=tuple(float("nan") if i==0 else x for i,x in enumerate(visible[2]))
     with pytest.raises(ValueError,match="Nonfinite"):
         audit.causal_halfturn_candidates((visible[0],visible[1],nan))
-    special_frames=(visible[0],visible[1],frame(2.1+2*STEP+pi,special=True))
+    special_frames=(
+        visible[0],
+        frame(2.1 + STEP, special=True),
+        frame(2.1 + 2 * STEP + pi, special=True),
+    )
     opts,reasons=audit.causal_halfturn_candidates(special_frames)
     assert reasons[2]=="special_event"
     for name in audit.CANDIDATES:

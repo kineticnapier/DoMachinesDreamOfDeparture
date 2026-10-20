@@ -149,7 +149,7 @@ def test_existing_output_is_never_overwritten(tmp_path):
     output = tmp_path / "distance.json"
     output.write_text("immutable")
     with pytest.raises(FileExistsError):
-        diag.prepare(SimpleNamespace(), output_paths=(output,))
+        diag.prepare(SimpleNamespace(output_dir=tmp_path), output_paths=(output,))
     assert output.read_text() == "immutable"
 
 
