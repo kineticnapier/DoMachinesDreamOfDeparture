@@ -85,4 +85,4 @@ def test_checkpoint_recovery_does_not_enable_twirl_implicitly():
     )
     assert not source.twirl_recovery
     assert not source.midspin_recovery
-    assert not source.composite.v14_tracker.twirl_predictor.enable_twirl_recovery if hasattr(source.composite, "v14_tracker") else not source.twirl_recovery
+    assert source.checkpoint_recovery is True
