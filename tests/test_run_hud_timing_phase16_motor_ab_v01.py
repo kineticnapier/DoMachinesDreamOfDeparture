@@ -135,6 +135,10 @@ def test_policy_flags_forwarded_only_to_candidate(monkeypatch, tmp_path):
             "twirl": kwargs.get("twirl_recovery", False),
             "checkpoint": kwargs.get("checkpoint_recovery", False),
         }
+        # Match real phase3.simulate: contract summaries are NOT returned.
+        # The Phase16 caller must compact and derive them before comparison.
+        del result["lifecycle_contract_violations"]
+        del result["reservation_contract_violations"]
         return result
 
     monkeypatch.setattr(p16.phase3, "simulate", simulate)
@@ -146,6 +150,12 @@ def test_policy_flags_forwarded_only_to_candidate(monkeypatch, tmp_path):
     assert calls[1]["twirl_recovery"] is True
     assert calls[1]["checkpoint_recovery"] is True
     assert report["cases"][0]["arms"][p16.BASELINE]["stats"]["hits"] == 1
+    for arm in (p16.BASELINE, p16.CANDIDATE):
+        compact = report["cases"][0]["arms"][arm]
+        assert compact["lifecycle_contract_violations"] == []
+        assert compact["reservation_contract_violations"] == []
+    assert report["cases"][0]["difference"]["checks"]["lifecycle_contract_valid"]
+    assert report["cases"][0]["difference"]["checks"]["reservation_contract_valid"]
 
 
 def test_non_v3_arm_rejects_recovery_flags():
