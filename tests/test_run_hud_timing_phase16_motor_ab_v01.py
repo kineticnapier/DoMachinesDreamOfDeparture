@@ -164,3 +164,62 @@ def test_non_v3_arm_rejects_recovery_flags():
             None, None, "hud_v14", wall_timeout_s=1.0,
             checkpoint_recovery=True,
         )
+
+
+def test_diagnostic_window_is_posthoc_bounded_and_opt_in():
+    arm = _arm()
+    arm["frames"] = [
+        {"local_clock_s": 4.90, "step": 490},
+        {"local_clock_s": 5.25, "step": 525},
+        {"local_clock_s": 5.60, "step": 560},
+    ]
+    arm["judgement_trace_posthoc"] = [
+        {"time_s": 4.90, "key": "left_1",
+         "target_index": 87, "margin": "perfect"},
+        {"time_s": 5.253, "key": "right_3",
+         "target_index": 88, "margin": "very_late"},
+        {"time_s": 5.60, "key": "right_1",
+         "target_index": 90, "margin": "perfect"},
+    ]
+    arm["physical_keydowns"] = [
+        {"time_s": 5.253, "axis": "right_3", "edge": "down"},
+    ]
+    arm["logical_keydowns"] = [
+        {"time_s": 5.253, "contact": "right_3", "edge": "down"},
+    ]
+    arm["decisions"] = [
+        {"local_id": 89, "due_local_s": 5.25, "choice": "right_3"},
+    ]
+    arm["target_outcomes_posthoc"] = [
+        {"ordinal": 88, "due_s": 5.205882, "hit": True,
+         "keydown_s": 5.253, "contact": "right_3"},
+        {"ordinal": 89, "due_s": 5.25, "hit": False,
+         "keydown_s": None, "contact": None},
+    ]
+    ordinary = p16._compact(arm)
+    assert "diagnostic_window_posthoc" not in ordinary
+    detail = p16._compact(arm, diagnostic_window_s=(5.0, 5.5))
+    rows = detail["diagnostic_window_posthoc"]
+    assert [row["step"] for row in rows["frames"]] == [525]
+    assert rows["judgement_trace"] == [
+        {"time_s": 5.253, "key": "right_3",
+         "target_index": 88, "margin": "very_late"}
+    ]
+    assert rows["decisions"][0]["local_id"] == 89
+    assert rows["target_outcomes"][1]["ordinal"] == 89
+    assert rows["target_outcomes"][1]["hit"] is False
+    assert len(rows["physical_keydowns"]) == 1
+    assert len(rows["logical_keydowns"]) == 1
+
+
+def test_diagnostic_window_missing_real_scorer_trace_fails_closed():
+    arm = _arm()
+    with pytest.raises(KeyError, match="judgement_trace_posthoc"):
+        p16._compact(arm, diagnostic_window_s=(5.0, 5.5))
+
+
+def test_diagnostic_radius_must_be_valid_even_without_replay(tmp_path):
+    with pytest.raises(ValueError, match="diagnostic radius"):
+        p16.run(tmp_path, tmp_path / "no-model.pt", {},
+                diagnostic_center_s=5.25, diagnostic_radius_s=0.0)
+
