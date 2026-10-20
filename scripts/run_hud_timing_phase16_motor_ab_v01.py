@@ -17,10 +17,16 @@ from pathlib import Path
 from dmdod.adofai.chart import load_adofai
 from dmdod.adofai.playable import build_playable_segment
 from dmdod.adofai.timing import compile_adofai
-from scripts import run_countdown_hud_v3_motor_phase3 as phase3
-from scripts.audit_hud_timing_phase11_generalization_v01 import (
-    REFERENCE, TRAIN_DIR, UNSEEN_END_S, verify_selection,
-)
+if __package__:
+    from scripts import run_countdown_hud_v3_motor_phase3 as phase3
+    from scripts.audit_hud_timing_phase11_generalization_v01 import (
+        REFERENCE, TRAIN_DIR, UNSEEN_END_S, verify_selection,
+    )
+else:
+    import run_countdown_hud_v3_motor_phase3 as phase3
+    from audit_hud_timing_phase11_generalization_v01 import (
+        REFERENCE, TRAIN_DIR, UNSEEN_END_S, verify_selection,
+    )
 
 
 FORMAT = "dmdod-phase16-frozen-motor-ab-v0.1"
