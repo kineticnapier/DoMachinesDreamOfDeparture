@@ -111,9 +111,16 @@ def _target_outcomes(segment, env) -> list[dict]:
 
 
 def simulate(segment, model, arm: str, *, wall_timeout_s: float,
-             lifecycle_version: str = LIFECYCLE_V14) -> dict:
+             lifecycle_version: str = LIFECYCLE_V14,
+             midspin_recovery: bool = False,
+             twirl_recovery: bool = False,
+             checkpoint_recovery: bool = False) -> dict:
     if arm not in ARMS:
         raise ValueError("unknown fixed comparison arm")
+    if arm != "hud_v3_composite" and (
+        midspin_recovery or twirl_recovery or checkpoint_recovery
+    ):
+        raise ValueError("recovery flags require hud_v3_composite arm")
     env = HudCoupledContactRealChartEnv(
         segment,
         control_dt_s=CONTROL_DT_S,
@@ -132,6 +139,9 @@ def simulate(segment, model, arm: str, *, wall_timeout_s: float,
         HUDV3CompositeForecastSource(
             horizon_s=.080,
             lifecycle_version=lifecycle_version,
+            midspin_recovery=midspin_recovery,
+            twirl_recovery=twirl_recovery,
+            checkpoint_recovery=checkpoint_recovery,
         )
         if arm == "hud_v3_composite" else None
     )
@@ -237,6 +247,11 @@ def simulate(segment, model, arm: str, *, wall_timeout_s: float,
 
     result = {
         "arm": arm,
+        "recovery_flags": {
+            "midspin": midspin_recovery,
+            "twirl": twirl_recovery,
+            "checkpoint": checkpoint_recovery,
+        },
         "lifecycle_version": (
             lifecycle_version if arm == "hud_v3_composite" else None
         ),
