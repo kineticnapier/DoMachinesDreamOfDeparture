@@ -172,13 +172,21 @@ def run(train_dir: Path, checkpoint: Path, manifest: dict, *,
             twirl_recovery=True,
             checkpoint_recovery=True,
         )
+        # Contract summaries are derived from the raw frame streams.
+        # Compare the same compact representation that is persisted in JSON;
+        # raw simulate() arms do not contain these derived summary keys.
+        baseline_compact = _compact(old)
+        candidate_compact = _compact(new)
         cases.append({
             "chart": path.name,
             "chart_sha256": _sha256(path),
             "scope_s": end_s,
             "target_count": len(segment.targets),
-            "arms": {BASELINE: _compact(old), CANDIDATE: _compact(new)},
-            "difference": _difference(old, new),
+            "arms": {
+                BASELINE: baseline_compact,
+                CANDIDATE: candidate_compact,
+            },
+            "difference": _difference(baseline_compact, candidate_compact),
         })
     checks = [
         value for case in cases
