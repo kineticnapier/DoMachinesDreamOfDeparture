@@ -1,0 +1,465 @@
+{
+  "format": "dmdod-phase16-event89-causal-audit-v0.1",
+  "generated_utc": "2026-10-20T22:59:50.561645+00:00",
+  "verdict": "CAUSE_CONFIRMED_SAFE_FIX_BLOCKED",
+  "source": {
+    "path": "reports\\phase16-firsttown12-event89-causal-20261021-r2.json",
+    "sha256": "90d8c974e4583007880f68f80d170dfe8b2cf74294a451ea4c1587c82faee88e",
+    "chart": "01645 - First town of this Journey remix - Irin.adofai",
+    "chart_sha256": "4a71411d454d3b10a10cd98165a2e9cce99e4b14c310d1e6847836fdc68fc0e1",
+    "truth_scope": "posthoc_evaluator_only"
+  },
+  "checks": {
+    "source_ab_still_has_only_lost_hit_89": true,
+    "first_mismatch_is_id38_to_event37": true,
+    "event37_was_insufficient_lead": true,
+    "id38_arrived_after_36_expired_before_37_expired": true,
+    "id89_was_fifo_consumed_by_event88": true,
+    "id90_arrived_after_event89_expired_and_resynced": true,
+    "physical_logical_keydown_parity": true,
+    "lifecycle_contract_violations_zero": true,
+    "reservation_contract_violations_zero": true
+  },
+  "first_attribution_mismatch": {
+    "time_s": 3.260999999999752,
+    "contact": "right_2",
+    "local_id": 38,
+    "intended_ordinal_posthoc": 38,
+    "judged_ordinal_posthoc": 37,
+    "ordinal_delta": 1,
+    "due_local_s": 3.2647059197959036,
+    "judgement": "very_late"
+  },
+  "causal_predecessor": {
+    "local_id": 37,
+    "step": 319,
+    "decision_s": 3.19,
+    "due_local_s": 3.220588273015354,
+    "choice": null,
+    "reason": "insufficient_observable_lead",
+    "extra_lead_s": 0.0,
+    "forecast_lead_s": 0.03058827301535416,
+    "required_motor_lead_s": 0.044
+  },
+  "mismatch_span": {
+    "first": {
+      "time_s": 3.260999999999752,
+      "contact": "right_2",
+      "local_id": 38,
+      "intended_ordinal_posthoc": 38,
+      "judged_ordinal_posthoc": 37,
+      "ordinal_delta": 1,
+      "due_local_s": 3.2647059197959036,
+      "judgement": "very_late"
+    },
+    "last": {
+      "time_s": 5.253000000000089,
+      "contact": "right_3",
+      "local_id": 89,
+      "intended_ordinal_posthoc": 89,
+      "judged_ordinal_posthoc": 88,
+      "ordinal_delta": 1,
+      "due_local_s": 5.250000043646398,
+      "judgement": "very_late"
+    },
+    "resynchronized": {
+      "time_s": 5.319000000000111,
+      "contact": "left_2",
+      "local_id": 90,
+      "intended_ordinal_posthoc": 90,
+      "judged_ordinal_posthoc": 90,
+      "ordinal_delta": 0,
+      "due_local_s": 5.2941176908197916,
+      "judgement": "perfect"
+    },
+    "mismatched_keydown_count": 50
+  },
+  "scorer_windows_posthoc": {
+    "36": {
+      "ordinal": 36,
+      "due_s": 3.183823567304636,
+      "late_pass_s": 0.065,
+      "expires_s": 3.248823567304636
+    },
+    "37": {
+      "ordinal": 37,
+      "due_s": 3.2205882724022707,
+      "late_pass_s": 0.065,
+      "expires_s": 3.2855882724022707
+    },
+    "38": {
+      "ordinal": 38,
+      "due_s": 3.264705919461094,
+      "late_pass_s": 0.065,
+      "expires_s": 3.329705919461094
+    },
+    "88": {
+      "ordinal": 88,
+      "due_s": 5.205882397373359,
+      "late_pass_s": 0.065,
+      "expires_s": 5.270882397373359
+    },
+    "89": {
+      "ordinal": 89,
+      "due_s": 5.250000044432182,
+      "late_pass_s": 0.065,
+      "expires_s": 5.315000044432183
+    },
+    "90": {
+      "ordinal": 90,
+      "due_s": 5.294117691491006,
+      "late_pass_s": 0.065,
+      "expires_s": 5.359117691491006
+    }
+  },
+  "event_80_95_candidate": [
+    {
+      "ordinal": 80,
+      "due_s": 4.897058866392159,
+      "hit": true,
+      "miss": false,
+      "keydown_s": 4.944999999999986,
+      "timing_error_ms": 47.941134,
+      "judgement": "very_late",
+      "contact": "left_2"
+    },
+    {
+      "ordinal": 81,
+      "due_s": 4.941176513450983,
+      "hit": true,
+      "miss": false,
+      "keydown_s": 4.990000000000001,
+      "timing_error_ms": 48.823487,
+      "judgement": "very_late",
+      "contact": "right_2"
+    },
+    {
+      "ordinal": 82,
+      "due_s": 4.985294160509806,
+      "hit": true,
+      "miss": false,
+      "keydown_s": 5.0270000000000135,
+      "timing_error_ms": 41.705839,
+      "judgement": "very_late",
+      "contact": "left_1"
+    },
+    {
+      "ordinal": 83,
+      "due_s": 5.029411807568629,
+      "hit": true,
+      "miss": false,
+      "keydown_s": 5.083000000000032,
+      "timing_error_ms": 53.588192,
+      "judgement": "very_late",
+      "contact": "right_3"
+    },
+    {
+      "ordinal": 84,
+      "due_s": 5.073529454627453,
+      "hit": true,
+      "miss": false,
+      "keydown_s": 5.125000000000046,
+      "timing_error_ms": 51.470545,
+      "judgement": "very_late",
+      "contact": "left_2"
+    },
+    {
+      "ordinal": 85,
+      "due_s": 5.117647101686276,
+      "hit": true,
+      "miss": false,
+      "keydown_s": 5.146000000000053,
+      "timing_error_ms": 28.352898,
+      "judgement": "late_perfect",
+      "contact": "right_1"
+    },
+    {
+      "ordinal": 86,
+      "due_s": 5.12500004417061,
+      "hit": true,
+      "miss": false,
+      "keydown_s": 5.16700000000006,
+      "timing_error_ms": 41.999956,
+      "judgement": "very_late",
+      "contact": "left_4"
+    },
+    {
+      "ordinal": 87,
+      "due_s": 5.161764750314536,
+      "hit": true,
+      "miss": false,
+      "keydown_s": 5.205000000000073,
+      "timing_error_ms": 43.23525,
+      "judgement": "very_late",
+      "contact": "right_2"
+    },
+    {
+      "ordinal": 88,
+      "due_s": 5.205882397373359,
+      "hit": true,
+      "miss": false,
+      "keydown_s": 5.253000000000089,
+      "timing_error_ms": 47.117603,
+      "judgement": "very_late",
+      "contact": "right_3"
+    },
+    {
+      "ordinal": 89,
+      "due_s": 5.250000044432182,
+      "hit": false,
+      "miss": true,
+      "keydown_s": null,
+      "timing_error_ms": null,
+      "judgement": "miss",
+      "contact": null
+    },
+    {
+      "ordinal": 90,
+      "due_s": 5.294117691491006,
+      "hit": true,
+      "miss": false,
+      "keydown_s": 5.319000000000111,
+      "timing_error_ms": 24.882309,
+      "judgement": "perfect",
+      "contact": "left_2"
+    },
+    {
+      "ordinal": 91,
+      "due_s": 5.30147063397534,
+      "hit": true,
+      "miss": false,
+      "keydown_s": 5.34500000000012,
+      "timing_error_ms": 43.529366,
+      "judgement": "very_late",
+      "contact": "right_1"
+    },
+    {
+      "ordinal": 92,
+      "due_s": 5.338235340119265,
+      "hit": true,
+      "miss": false,
+      "keydown_s": 5.34500000000012,
+      "timing_error_ms": 6.76466,
+      "judgement": "perfect",
+      "contact": "right_4"
+    },
+    {
+      "ordinal": 93,
+      "due_s": 5.382352987178089,
+      "hit": true,
+      "miss": false,
+      "keydown_s": 5.385000000000133,
+      "timing_error_ms": 2.647013,
+      "judgement": "perfect",
+      "contact": "right_2"
+    },
+    {
+      "ordinal": 94,
+      "due_s": 5.426470634236912,
+      "hit": true,
+      "miss": false,
+      "keydown_s": 5.425000000000146,
+      "timing_error_ms": -1.470634,
+      "judgement": "perfect",
+      "contact": "right_3"
+    },
+    {
+      "ordinal": 95,
+      "due_s": 5.470588281295735,
+      "hit": true,
+      "miss": false,
+      "keydown_s": 5.480000000000165,
+      "timing_error_ms": 9.411719,
+      "judgement": "perfect",
+      "contact": "left_2"
+    }
+  ],
+  "event_80_95_attribution": [
+    {
+      "time_s": 4.89699999999997,
+      "contact": "right_1",
+      "local_id": 80,
+      "intended_ordinal_posthoc": 80,
+      "judged_ordinal_posthoc": 79,
+      "ordinal_delta": 1,
+      "due_local_s": 4.897058865802924,
+      "judgement": "very_late"
+    },
+    {
+      "time_s": 4.944999999999986,
+      "contact": "left_2",
+      "local_id": 81,
+      "intended_ordinal_posthoc": 81,
+      "judged_ordinal_posthoc": 80,
+      "ordinal_delta": 1,
+      "due_local_s": 4.941176512698039,
+      "judgement": "very_late"
+    },
+    {
+      "time_s": 4.990000000000001,
+      "contact": "right_2",
+      "local_id": 82,
+      "intended_ordinal_posthoc": 82,
+      "judged_ordinal_posthoc": 81,
+      "ordinal_delta": 1,
+      "due_local_s": 4.985294159871433,
+      "judgement": "very_late"
+    },
+    {
+      "time_s": 5.0270000000000135,
+      "contact": "left_1",
+      "local_id": 83,
+      "intended_ordinal_posthoc": 83,
+      "judged_ordinal_posthoc": 82,
+      "ordinal_delta": 1,
+      "due_local_s": 5.029411806766548,
+      "judgement": "very_late"
+    },
+    {
+      "time_s": 5.083000000000032,
+      "contact": "right_3",
+      "local_id": 84,
+      "intended_ordinal_posthoc": 84,
+      "judged_ordinal_posthoc": 83,
+      "ordinal_delta": 1,
+      "due_local_s": 5.073529453939942,
+      "judgement": "very_late"
+    },
+    {
+      "time_s": 5.125000000000046,
+      "contact": "left_2",
+      "local_id": 85,
+      "intended_ordinal_posthoc": 85,
+      "judged_ordinal_posthoc": 84,
+      "ordinal_delta": 1,
+      "due_local_s": 5.117647101113336,
+      "judgement": "very_late"
+    },
+    {
+      "time_s": 5.146000000000053,
+      "contact": "right_1",
+      "local_id": 86,
+      "intended_ordinal_posthoc": 86,
+      "judged_ordinal_posthoc": 85,
+      "ordinal_delta": 1,
+      "due_local_s": 5.125000042011529,
+      "judgement": "late_perfect"
+    },
+    {
+      "time_s": 5.16700000000006,
+      "contact": "left_4",
+      "local_id": 87,
+      "intended_ordinal_posthoc": 87,
+      "judged_ordinal_posthoc": 86,
+      "ordinal_delta": 1,
+      "due_local_s": 5.161764748008452,
+      "judgement": "very_late"
+    },
+    {
+      "time_s": 5.205000000000073,
+      "contact": "right_2",
+      "local_id": 88,
+      "intended_ordinal_posthoc": 88,
+      "judged_ordinal_posthoc": 87,
+      "ordinal_delta": 1,
+      "due_local_s": 5.2058823966943235,
+      "judgement": "very_late"
+    },
+    {
+      "time_s": 5.253000000000089,
+      "contact": "right_3",
+      "local_id": 89,
+      "intended_ordinal_posthoc": 89,
+      "judged_ordinal_posthoc": 88,
+      "ordinal_delta": 1,
+      "due_local_s": 5.250000043646398,
+      "judgement": "very_late"
+    },
+    {
+      "time_s": 5.319000000000111,
+      "contact": "left_2",
+      "local_id": 90,
+      "intended_ordinal_posthoc": 90,
+      "judged_ordinal_posthoc": 90,
+      "ordinal_delta": 0,
+      "due_local_s": 5.2941176908197916,
+      "judgement": "perfect"
+    },
+    {
+      "time_s": 5.34500000000012,
+      "contact": "right_1",
+      "local_id": 91,
+      "intended_ordinal_posthoc": 91,
+      "judged_ordinal_posthoc": 91,
+      "ordinal_delta": 0,
+      "due_local_s": 5.301470631717984,
+      "judgement": "very_late"
+    },
+    {
+      "time_s": 5.34500000000012,
+      "contact": "right_4",
+      "local_id": 92,
+      "intended_ordinal_posthoc": 92,
+      "judged_ordinal_posthoc": 92,
+      "ordinal_delta": 0,
+      "due_local_s": 5.3382353379931855,
+      "judgement": "perfect"
+    },
+    {
+      "time_s": 5.385000000000133,
+      "contact": "right_2",
+      "local_id": 93,
+      "intended_ordinal_posthoc": 93,
+      "judged_ordinal_posthoc": 93,
+      "ordinal_delta": 0,
+      "due_local_s": 5.382352986400779,
+      "judgement": "perfect"
+    },
+    {
+      "time_s": 5.425000000000146,
+      "contact": "right_3",
+      "local_id": 94,
+      "intended_ordinal_posthoc": 94,
+      "judged_ordinal_posthoc": 94,
+      "ordinal_delta": 0,
+      "due_local_s": 5.426470633631131,
+      "judgement": "perfect"
+    },
+    {
+      "time_s": 5.480000000000165,
+      "contact": "left_2",
+      "local_id": 95,
+      "intended_ordinal_posthoc": 95,
+      "judged_ordinal_posthoc": 95,
+      "ordinal_delta": 0,
+      "due_local_s": 5.470588280526246,
+      "judgement": "perfect"
+    }
+  ],
+  "responsibility": {
+    "timing": {
+      "status": "CONFIRMED_CAUSAL_LIMITATION_NOT_WRONG_DUE_OR_ID",
+      "evidence": "ID37 due was accurate but first actionable lead was 30.588ms, below frozen 44ms"
+    },
+    "fingering": {
+      "status": "NEGATED_AS_DIRECT_CAUSE",
+      "evidence": "assigned IDs had one stable choice; ID37 was never passed as assignable"
+    },
+    "motor": {
+      "status": "NEGATED_AS_DIRECT_CAUSE",
+      "evidence": "physical/logical edges agree and reservation violations are zero"
+    },
+    "scorer": {
+      "status": "CONFIRMED_ATTRIBUTION_MECHANISM_STOCK_PARITY_UNVERIFIED",
+      "evidence": "repository scorer expires old targets then consumes the oldest still-unresolved target"
+    },
+    "combined": {
+      "status": "CONFIRMED",
+      "evidence": "late-observed ID37 abstention plus FIFO late window creates a one-event backlog through ID89"
+    }
+  },
+  "implementation": {
+    "production_change": false,
+    "reason": "Recovery would require a late best-effort input, scorer-aware delay, or scorer reassignment. The first changes the frozen 44ms safety contract; the second requires verified Stock late-window semantics; the third would alter evaluation. None is currently justified."
+  }
+}
