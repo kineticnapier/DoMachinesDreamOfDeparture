@@ -68,7 +68,7 @@ frame count, and Timing status counts for each arm.
 The gate `MOTOR_AB_NONREGRESSION_PASS` requires:
 - target population unchanged;
 - **no previously Hit event lost**;
-- no increase in TooEarly, Overload, reservation collisions, or in-flight
+- no increase in TooEarly, Overload state/counter, reservation collisions, or in-flight
   cancellations;
 - zero source conflicts;
 - zero lifecycle ID contract violations or physical reservation violations.
