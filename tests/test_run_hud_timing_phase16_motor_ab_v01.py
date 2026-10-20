@@ -166,7 +166,9 @@ def test_non_v3_arm_rejects_recovery_flags():
         )
 
 
-def test_diagnostic_window_is_posthoc_bounded_and_opt_in():
+def test_diagnostic_window_is_posthoc_bounded_and_opt_in(monkeypatch):
+    monkeypatch.setattr(p16, "_lifecycle_contract_violations", lambda _: [])
+    monkeypatch.setattr(p16, "_reservation_violations", lambda _: [])
     arm = _arm()
     arm["frames"] = [
         {"local_clock_s": 4.90, "step": 490},
@@ -218,8 +220,11 @@ def test_diagnostic_window_missing_real_scorer_trace_fails_closed():
         p16._compact(arm, diagnostic_window_s=(5.0, 5.5))
 
 
-def test_diagnostic_radius_must_be_valid_even_without_replay(tmp_path):
+def test_diagnostic_radius_must_be_valid_even_without_replay(tmp_path, monkeypatch):
+    checkpoint = tmp_path / "frozen.pt"
+    checkpoint.write_bytes(b"frozen model stub")
+    monkeypatch.setattr(p16, "_sha256", lambda _: p16.FIXED_FINGERING_SHA256)
     with pytest.raises(ValueError, match="diagnostic radius"):
-        p16.run(tmp_path, tmp_path / "no-model.pt", {},
+        p16.run(tmp_path, checkpoint, {},
                 diagnostic_center_s=5.25, diagnostic_radius_s=0.0)
 
