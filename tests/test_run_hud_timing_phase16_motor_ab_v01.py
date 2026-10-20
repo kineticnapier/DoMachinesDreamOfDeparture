@@ -135,6 +135,8 @@ def test_policy_flags_forwarded_only_to_candidate(monkeypatch, tmp_path):
             "twirl": kwargs.get("twirl_recovery", False),
             "checkpoint": kwargs.get("checkpoint_recovery", False),
         }
+        if kwargs.get("capture_judgement_trace", False):
+            result["judgement_trace_posthoc"] = []
         # Match real phase3.simulate: contract summaries are NOT returned.
         # The Phase16 caller must compact and derive them before comparison.
         del result["lifecycle_contract_violations"]
@@ -156,6 +158,20 @@ def test_policy_flags_forwarded_only_to_candidate(monkeypatch, tmp_path):
         assert compact["reservation_contract_violations"] == []
     assert report["cases"][0]["difference"]["checks"]["lifecycle_contract_valid"]
     assert report["cases"][0]["difference"]["checks"]["reservation_contract_valid"]
+
+    # Diagnostic capture is strictly opt-in and must reach BOTH physical arms.
+    diagnosed = p16.run(
+        tmp_path, checkpoint, {}, per_arm_timeout_s=10.0,
+        diagnostic_center_s=5.25, diagnostic_radius_s=.25,
+    )
+    assert len(calls) == 4
+    assert calls[0]["capture_judgement_trace"] is False
+    assert calls[1]["capture_judgement_trace"] is False
+    assert calls[2]["capture_judgement_trace"] is True
+    assert calls[3]["capture_judgement_trace"] is True
+    assert diagnosed["diagnostic_window_s"] == (5.0, 5.5)
+    for arm in (p16.BASELINE, p16.CANDIDATE):
+        assert "diagnostic_window_posthoc" in diagnosed["cases"][0]["arms"][arm]
 
 
 def test_non_v3_arm_rejects_recovery_flags():
