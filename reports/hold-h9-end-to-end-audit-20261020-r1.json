@@ -1,0 +1,75 @@
+{
+  "format": "dmdod-hold-h9-end-to-end-audit-v0.1",
+  "generated_utc": "2026-10-20T11:54:12.852087+00:00",
+  "verdict": "HOLD_LIVE_VALIDATION_REQUIRED",
+  "checks": {
+    "synthetic_start_hold_release_completed": true,
+    "other_axis_operated_while_held": true,
+    "normal_input_resumed": true,
+    "fixed_train25_preserved": true,
+    "fixed_train25_not_oracle_completed": true,
+    "consecutive_hold_boundary_fail_closed": true,
+    "setspeed_gate_not_relaxed": true,
+    "h1_timing_parity_25_of_25": true,
+    "phase14_train16_1067_of_1068": true,
+    "phase14_reference5_200_of_200": true,
+    "phase14_false_positive_zero": true,
+    "phase14_success_regressions_zero": true
+  },
+  "deterministic_simulation": {
+    "evidence_scope": "synthetic_sensor_contract_only",
+    "release_forecast_status": "motor_ready",
+    "release_due_s": [
+      0.5,
+      0.5
+    ],
+    "release_command_s": [
+      0.35,
+      0.35
+    ],
+    "judge_state": "completed",
+    "judge_failure": null,
+    "hold_completion_credit": 1,
+    "held_during_unrelated_keydown": true,
+    "overlay_completed_ids": [
+      7
+    ],
+    "logical_edges": [
+      {
+        "time_s": 0.03900000000000003,
+        "key": "left_1",
+        "event": "down"
+      },
+      {
+        "time_s": 0.1450000000000001,
+        "key": "right_1",
+        "event": "down"
+      },
+      {
+        "time_s": 0.21700000000000016,
+        "key": "right_1",
+        "event": "up"
+      },
+      {
+        "time_s": 0.5220000000000004,
+        "key": "left_1",
+        "event": "up"
+      }
+    ],
+    "normal_input_resumed": true
+  },
+  "fixed_train25": {
+    "hold_count": 25,
+    "live_stock_visual_evidence": 0,
+    "production_end_to_end_completed": 0,
+    "abstained": 25,
+    "timing_parity_is_not_visual_observability": true
+  },
+  "student_received_hold_length": false,
+  "student_received_target_time": false,
+  "live_game_parity_claimed": false,
+  "regression_sources": {
+    "h1_h5": "reports\\hold-h9-h5-regression-20261020-r1.json",
+    "phase14": "reports\\hold-h9-phase14-regression-20261020-r1.json"
+  }
+}
