@@ -1,0 +1,34 @@
+{
+  "format": "dmdod-hold-h8-release-audit-v0.1",
+  "generated_utc": "2026-10-20T11:49:41.766513+00:00",
+  "verdict": "HOLD_LIVE_VALIDATION_REQUIRED",
+  "checks": {
+    "h5_25_holds_preserved": true,
+    "h7_live_sensor_unverified": true,
+    "proxy_math_not_motor_ready": true,
+    "proxy_status_diagnostic_only": true,
+    "setspeed_gate_not_relaxed": true,
+    "legacy_hud_dimensions_unchanged": true
+  },
+  "fixed_train25": {
+    "hold_count": 25,
+    "stock_pixel_verified": 0,
+    "production_release_forecasts": 0,
+    "abstentions": 25,
+    "reason": "no independent live Stock mesh pixels"
+  },
+  "diagnostic_proxy_fixture": {
+    "status": "diagnostic_only",
+    "release_due_s": [
+      3.5,
+      3.5
+    ],
+    "release_command_s": [
+      3.48,
+      3.48
+    ],
+    "motor_ready": false
+  },
+  "student_received_train_duration_truth": false,
+  "do_not_relax_setspeed_gate": true
+}
