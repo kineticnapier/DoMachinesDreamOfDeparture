@@ -22,10 +22,16 @@ if __package__:
     from scripts.audit_hud_timing_phase11_generalization_v01 import (
         REFERENCE, TRAIN_DIR, UNSEEN_END_S, verify_selection,
     )
+    from scripts.run_hud_timing_phase9_lifecycle_motor_ab_v01 import (
+        _lifecycle_contract_violations, _reservation_violations,
+    )
 else:
     import run_countdown_hud_v3_motor_phase3 as phase3
     from audit_hud_timing_phase11_generalization_v01 import (
         REFERENCE, TRAIN_DIR, UNSEEN_END_S, verify_selection,
+    )
+    from run_hud_timing_phase9_lifecycle_motor_ab_v01 import (
+        _lifecycle_contract_violations, _reservation_violations,
     )
 
 
@@ -79,6 +85,12 @@ def _compact(arm: dict) -> dict:
         "timing_status_counts": arm["timing_status_counts"],
         "frame_count": arm["frame_count"],
         "run_wall_s": arm["run_wall_s"],
+        "lifecycle_contract_violations": (
+            _lifecycle_contract_violations(arm["frames"])
+        ),
+        "reservation_contract_violations": (
+            _reservation_violations(arm["frames"])
+        ),
     }
 
 
@@ -106,13 +118,22 @@ def _difference(old: dict, new: dict) -> dict:
         "source_conflicts_zero": (
             old["source_conflict_count"] == new["source_conflict_count"] == 0
         ),
+        "lifecycle_contract_valid": (
+            not old["lifecycle_contract_violations"]
+            and not new["lifecycle_contract_violations"]
+        ),
+        "reservation_contract_valid": (
+            not old["reservation_contract_violations"]
+            and not new["reservation_contract_violations"]
+        ),
     }
     return {
         "valid": True, "checks": checks,
         "newly_hit_ordinals_posthoc": newly_hit,
         "lost_hit_ordinals_posthoc": lost_hit,
         "delta": {
-            field: b[field] - a[field]
+            field: (None if a[field] is None or b[field] is None
+                    else b[field] - a[field])
             for field in ("hits", "misses", "too_early", "physical_keydowns",
                           "timing_mae_ms", "x_accuracy_percent")
         },
@@ -164,11 +185,13 @@ def run(train_dir: Path, checkpoint: Path, manifest: dict, *,
         len(case["difference"].get("lost_hit_ordinals_posthoc", []))
         for case in cases
     )
+    comparisons_valid = all(case["difference"].get("valid") for case in cases)
+    safety_pass = comparisons_valid and bool(checks) and all(checks)
     return {
         "format": FORMAT,
         "generated_utc": datetime.now(timezone.utc).isoformat(),
         "verdict": (
-            "MOTOR_AB_NONREGRESSION_PASS" if checks and all(checks) else
+            "MOTOR_AB_NONREGRESSION_PASS" if safety_pass else
             "MOTOR_AB_REGRESSION_OR_INCOMPLETE"
         ),
         "scope": "fixed-unseen16" if all_unseen else "single-frozen-Train-chart",
@@ -179,7 +202,7 @@ def run(train_dir: Path, checkpoint: Path, manifest: dict, *,
         "frozen_selection_source": str(DEFAULT_MANIFEST),
         "cases": cases,
         "total_hit_regressions": regressions,
-        "safety_checks_all_pass": bool(checks) and all(checks),
+        "safety_checks_all_pass": safety_pass,
         "interpretation": (
             "Physical Motor A/B with independent replays, not Timing "
             "coverage. No automatic policy acceptance from isolated hits."
