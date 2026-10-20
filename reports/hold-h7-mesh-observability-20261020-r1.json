@@ -1,0 +1,316 @@
+{
+  "format": "dmdod-hold-h7-mesh-observability-v0.1",
+  "generated_utc": "2026-10-20T11:46:32.725128+00:00",
+  "verdict": "HOLD_LIVE_VALIDATION_REQUIRED",
+  "checks": {
+    "buffer_identifies_0_to_3": true,
+    "opaque_positive_duration_ambiguous": true,
+    "proxy_unique_all_scenes": true
+  },
+  "mesh_buffer_diagnostic": [
+    {
+      "true_duration_evaluator_only": 0,
+      "segments": 50,
+      "vertices": 102,
+      "candidates_from_buffer": [
+        0
+      ]
+    },
+    {
+      "true_duration_evaluator_only": 1,
+      "segments": 150,
+      "vertices": 302,
+      "candidates_from_buffer": [
+        1
+      ]
+    },
+    {
+      "true_duration_evaluator_only": 2,
+      "segments": 250,
+      "vertices": 502,
+      "candidates_from_buffer": [
+        2
+      ]
+    },
+    {
+      "true_duration_evaluator_only": 3,
+      "segments": 350,
+      "vertices": 702,
+      "candidates_from_buffer": [
+        3
+      ]
+    }
+  ],
+  "pixel_counterfactuals": [
+    {
+      "model": "opaque_constant_radius",
+      "scenes": [
+        {
+          "zoom": 1.0,
+          "rotation_rad": 0.0,
+          "observations": [
+            {
+              "true_duration_evaluator_only": 0,
+              "candidates": [
+                0
+              ],
+              "valid": true,
+              "reason": "unique_pixel_template"
+            },
+            {
+              "true_duration_evaluator_only": 1,
+              "candidates": [
+                1,
+                2,
+                3
+              ],
+              "valid": true,
+              "reason": "ambiguous_pixel_templates"
+            },
+            {
+              "true_duration_evaluator_only": 2,
+              "candidates": [
+                1,
+                2,
+                3
+              ],
+              "valid": true,
+              "reason": "ambiguous_pixel_templates"
+            },
+            {
+              "true_duration_evaluator_only": 3,
+              "candidates": [
+                1,
+                2,
+                3
+              ],
+              "valid": true,
+              "reason": "ambiguous_pixel_templates"
+            }
+          ]
+        },
+        {
+          "zoom": 0.7,
+          "rotation_rad": 0.4,
+          "observations": [
+            {
+              "true_duration_evaluator_only": 0,
+              "candidates": [
+                0
+              ],
+              "valid": true,
+              "reason": "unique_pixel_template"
+            },
+            {
+              "true_duration_evaluator_only": 1,
+              "candidates": [
+                1,
+                2,
+                3
+              ],
+              "valid": true,
+              "reason": "ambiguous_pixel_templates"
+            },
+            {
+              "true_duration_evaluator_only": 2,
+              "candidates": [
+                1,
+                2,
+                3
+              ],
+              "valid": true,
+              "reason": "ambiguous_pixel_templates"
+            },
+            {
+              "true_duration_evaluator_only": 3,
+              "candidates": [
+                1,
+                2,
+                3
+              ],
+              "valid": true,
+              "reason": "ambiguous_pixel_templates"
+            }
+          ]
+        },
+        {
+          "zoom": 1.4,
+          "rotation_rad": -0.8,
+          "observations": [
+            {
+              "true_duration_evaluator_only": 0,
+              "candidates": [
+                0
+              ],
+              "valid": true,
+              "reason": "unique_pixel_template"
+            },
+            {
+              "true_duration_evaluator_only": 1,
+              "candidates": [
+                1,
+                2,
+                3
+              ],
+              "valid": true,
+              "reason": "ambiguous_pixel_templates"
+            },
+            {
+              "true_duration_evaluator_only": 2,
+              "candidates": [
+                1,
+                2,
+                3
+              ],
+              "valid": true,
+              "reason": "ambiguous_pixel_templates"
+            },
+            {
+              "true_duration_evaluator_only": 3,
+              "candidates": [
+                1,
+                2,
+                3
+              ],
+              "valid": true,
+              "reason": "ambiguous_pixel_templates"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "model": "proxy_radial_drift",
+      "scenes": [
+        {
+          "zoom": 1.0,
+          "rotation_rad": 0.0,
+          "observations": [
+            {
+              "true_duration_evaluator_only": 0,
+              "candidates": [
+                0
+              ],
+              "valid": true,
+              "reason": "unique_pixel_template"
+            },
+            {
+              "true_duration_evaluator_only": 1,
+              "candidates": [
+                1
+              ],
+              "valid": true,
+              "reason": "unique_pixel_template"
+            },
+            {
+              "true_duration_evaluator_only": 2,
+              "candidates": [
+                2
+              ],
+              "valid": true,
+              "reason": "unique_pixel_template"
+            },
+            {
+              "true_duration_evaluator_only": 3,
+              "candidates": [
+                3
+              ],
+              "valid": true,
+              "reason": "unique_pixel_template"
+            }
+          ]
+        },
+        {
+          "zoom": 0.7,
+          "rotation_rad": 0.4,
+          "observations": [
+            {
+              "true_duration_evaluator_only": 0,
+              "candidates": [
+                0
+              ],
+              "valid": true,
+              "reason": "unique_pixel_template"
+            },
+            {
+              "true_duration_evaluator_only": 1,
+              "candidates": [
+                1
+              ],
+              "valid": true,
+              "reason": "unique_pixel_template"
+            },
+            {
+              "true_duration_evaluator_only": 2,
+              "candidates": [
+                2
+              ],
+              "valid": true,
+              "reason": "unique_pixel_template"
+            },
+            {
+              "true_duration_evaluator_only": 3,
+              "candidates": [
+                3
+              ],
+              "valid": true,
+              "reason": "unique_pixel_template"
+            }
+          ]
+        },
+        {
+          "zoom": 1.4,
+          "rotation_rad": -0.8,
+          "observations": [
+            {
+              "true_duration_evaluator_only": 0,
+              "candidates": [
+                0
+              ],
+              "valid": true,
+              "reason": "unique_pixel_template"
+            },
+            {
+              "true_duration_evaluator_only": 1,
+              "candidates": [
+                1
+              ],
+              "valid": true,
+              "reason": "unique_pixel_template"
+            },
+            {
+              "true_duration_evaluator_only": 2,
+              "candidates": [
+                2
+              ],
+              "valid": true,
+              "reason": "unique_pixel_template"
+            },
+            {
+              "true_duration_evaluator_only": 3,
+              "candidates": [
+                3
+              ],
+              "valid": true,
+              "reason": "unique_pixel_template"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "causality": {
+    "student_pixel_fields": "frame dimensions, lit pixels, render/observe timestamps",
+    "student_receives_hold_length": false,
+    "student_receives_vertex_count": false,
+    "student_receives_target_or_release_truth": false,
+    "truth_used_for_posthoc_rows_only": true
+  },
+  "unverified": {
+    "stock_vertex_shader_formula": true,
+    "live_pixel_capture": true,
+    "first_visible_time": true,
+    "capture_latency": true,
+    "unique_duration_before_44ms_deadline": true
+  }
+}
