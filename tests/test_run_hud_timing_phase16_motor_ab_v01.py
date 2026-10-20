@@ -1,0 +1,144 @@
+from __future__ import annotations
+
+from pathlib import Path
+import pytest
+
+from scripts import run_hud_timing_phase16_motor_ab_v01 as p16
+
+
+def _arm(*, hits=1, too_early=0, overloaded=False, collisions=0):
+    return {
+        "stats": {
+            "targets": 1, "hits": hits, "misses": 1 - hits,
+            "too_early": too_early, "overloaded": overloaded,
+            "physical_keydowns": hits, "timing_mae_ms": 0.0,
+            "x_accuracy_percent": float(hits * 100),
+        },
+        "scheduling": {
+            "insufficient_lead": 0, "unassigned": 0,
+            "reservation_collisions": collisions,
+            "inflight_cancellations": 0,
+        },
+        "target_outcomes_posthoc": [
+            {"ordinal": 0, "due_s": 4.0, "hit": bool(hits),
+             "miss": not hits, "keydown_s": 4.0 if hits else None}
+        ],
+        "physical_keydowns": [] if not hits else [
+            {"time_s": 4.0, "axis": "left_1", "edge": "down"}
+        ],
+        "logical_keydowns": [], "decisions": [],
+        "recovery_flags": {"midspin": False, "twirl": False,
+                           "checkpoint": False},
+        "source_conflict_count": 0,
+        "timing_status_counts": {"eligible": 1},
+        "frame_count": 500, "run_wall_s": .1,
+    }
+
+
+def test_regression_checks_detect_lost_physical_hit():
+    baseline = _arm(hits=1)
+    candidate = _arm(hits=0)
+    comparison = p16._difference(baseline, candidate)
+    assert comparison["valid"]
+    assert comparison["lost_hit_ordinals_posthoc"] == [0]
+    assert not comparison["checks"]["no_hit_regression"]
+    assert comparison["delta"]["hits"] == -1
+
+
+def test_new_physical_hit_is_distinct_from_timing_coverage():
+    baseline, candidate = _arm(hits=0), _arm(hits=1)
+    comparison = p16._difference(baseline, candidate)
+    assert comparison["newly_hit_ordinals_posthoc"] == [0]
+    assert comparison["delta"]["hits"] == 1
+    assert all(comparison["checks"].values())
+
+
+def test_too_early_and_reservation_collision_are_separate_failures():
+    before = _arm()
+    after = _arm(too_early=1, collisions=1)
+    checks = p16._difference(before, after)["checks"]
+    assert not checks["too_early_not_increased"]
+    assert not checks["reservation_collisions_not_increased"]
+    assert checks["no_hit_regression"]
+
+
+def test_no_mixed_target_population_allowed():
+    before, after = _arm(), _arm()
+    after["stats"]["targets"] = 2
+    assert not p16._difference(before, after)["valid"]
+
+
+def test_frozen_bool_sha_mismatch_is_rejected(tmp_path):
+    (tmp_path / p16.BOOL_CHART).write_text("not the frozen chart", encoding="utf-8")
+    with pytest.raises(ValueError, match="missing or changed"):
+        p16._fixed_paths(tmp_path, {}, chart_name=None, all_unseen=False)
+
+
+def test_unlisted_chart_rejected(monkeypatch, tmp_path):
+    monkeypatch.setattr(p16, "verify_selection", lambda _m, _d: (
+        tmp_path / "one.adofai", tmp_path / "two.adofai",
+    ))
+    with pytest.raises(ValueError, match="must be an entry"):
+        p16._fixed_paths(tmp_path, {}, chart_name="third.adofai", all_unseen=False)
+
+
+def test_full_selection_keeps_manifest_order(monkeypatch, tmp_path):
+    expected = (tmp_path / "one.adofai", tmp_path / "two.adofai")
+    monkeypatch.setattr(p16, "verify_selection", lambda _m, _d: expected)
+    observed = p16._fixed_paths(tmp_path, {}, chart_name=None, all_unseen=True)
+    assert observed == tuple((path, p16.UNSEEN_END_S) for path in expected)
+
+
+def test_mutually_exclusive_selection_rejected(tmp_path):
+    with pytest.raises(ValueError, match="either one chart"):
+        p16._fixed_paths(tmp_path, {}, chart_name="a", all_unseen=True)
+
+
+def test_output_is_exclusive_create(tmp_path):
+    out = tmp_path / "report.json"
+    p16._write_new(out, {"a": 1})
+    with pytest.raises(FileExistsError):
+        p16._write_new(out, {"a": 2})
+
+
+def test_policy_flags_forwarded_only_to_candidate(monkeypatch, tmp_path):
+    chart = tmp_path / p16.BOOL_CHART
+    chart.write_text("frozen chart stub", encoding="utf-8")
+    checkpoint = tmp_path / "frozen.pt"
+    checkpoint.write_bytes(b"frozen model stub")
+    original_hash = p16._sha256
+    monkeypatch.setattr(
+        p16, "_sha256",
+        lambda path: (
+            p16.FIXED_FINGERING_SHA256 if path == checkpoint
+            else p16.BOOL_SHA256 if path == chart else original_hash(path)
+        ),
+    )
+    monkeypatch.setattr(p16.phase3.frozen, "load_model", lambda _: object())
+    monkeypatch.setattr(p16, "load_adofai", lambda _: object())
+    monkeypatch.setattr(p16, "compile_adofai", lambda _: object())
+    monkeypatch.setattr(
+        p16, "build_playable_segment",
+        lambda chart_data, end_s: type("Segment", (), {"targets": (object(),)})(),
+    )
+    calls = []
+
+    def simulate(segment, model, arm, **kwargs):
+        calls.append(kwargs)
+        result = _arm()
+        result["recovery_flags"] = {
+            "midspin": kwargs.get("midspin_recovery", False),
+            "twirl": kwargs.get("twirl_recovery", False),
+            "checkpoint": kwargs.get("checkpoint_recovery", False),
+        }
+        return result
+
+    monkeypatch.setattr(p16.phase3, "simulate", simulate)
+    report = p16.run(tmp_path, checkpoint, {}, per_arm_timeout_s=10.0)
+    assert report["verdict"] == "MOTOR_AB_NONREGRESSION_PASS"
+    assert len(calls) == 2
+    assert calls[0].get("checkpoint_recovery") is None
+    assert calls[1]["midspin_recovery"] is True
+    assert calls[1]["twirl_recovery"] is True
+    assert calls[1]["checkpoint_recovery"] is True
+    assert report["cases"][0]["arms"][p16.BASELINE]["stats"]["hits"] == 1
