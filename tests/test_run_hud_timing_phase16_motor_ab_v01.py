@@ -32,6 +32,9 @@ def _arm(*, hits=1, too_early=0, overloaded=False, collisions=0):
         "source_conflict_count": 0,
         "timing_status_counts": {"eligible": 1},
         "frame_count": 500, "run_wall_s": .1,
+        "frames": [],
+        "lifecycle_contract_violations": [],
+        "reservation_contract_violations": [],
     }
 
 
