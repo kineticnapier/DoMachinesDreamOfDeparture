@@ -134,3 +134,44 @@ def test_reset_restores_initial_state_after_fail() -> None:
     assert machine.current_floor == 0
     assert machine.next_index == 0
     assert machine.trace == []
+
+
+def test_phase16_shape_differs_by_explicit_fail_mode() -> None:
+    targets = (
+        StockFloorTarget(36, 39, 3.183823567304636, 1360.0),
+        StockFloorTarget(37, 40, 3.2205882724022707, 1360.0),
+    )
+    no_fail = StockFloorStateMachine(targets, run_mode=StockRunMode.NO_FAIL)
+    fail = StockFloorStateMachine(targets, run_mode=StockRunMode.FAIL)
+
+    no_fail_rows = no_fail.key_down(3.260999999999752)
+    fail_rows = fail.key_down(3.260999999999752)
+
+    assert [(row.kind, row.target_ordinal) for row in no_fail_rows] == [
+        (StockTransitionKind.AUTO_MISS_ADVANCE, 36),
+        (StockTransitionKind.HIT_ADVANCE, 37),
+    ]
+    assert no_fail_rows[-1].judgement is StockHitMargin.VERY_LATE
+    assert [(row.kind, row.target_ordinal) for row in fail_rows] == [
+        (StockTransitionKind.INVALID_INPUT, 36)
+    ]
+    assert fail_rows[-1].judgement is StockHitMargin.TOO_LATE
+
+
+def test_fail_mode_dies_on_post_floor_check_before_later_input() -> None:
+    machine = StockFloorStateMachine(
+        (StockFloorTarget(36, 39, 3.183823567304636, 1360.0),),
+        run_mode=StockRunMode.FAIL,
+        initial_floor=37,
+    )
+    machine.key_down(3.260999999999752)
+    machine.key_down(3.3109999999997464)
+
+    rows = machine.key_down(3.3549999999997415)
+
+    assert [row.kind for row in rows] == [
+        StockTransitionKind.AUTO_MISS_FAIL,
+        StockTransitionKind.IGNORED_AFTER_FAIL,
+    ]
+    assert rows[0].target_ordinal == 36
+    assert rows[0].dll_flow == ("CheckPostHoldFail", "Die")
