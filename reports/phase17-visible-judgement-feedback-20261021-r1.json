@@ -1,0 +1,90 @@
+{
+  "format": "dmdod-phase17-visible-judgement-audit-v0.1",
+  "generated_utc": "2026-10-21T11:14:31.722151+00:00",
+  "verdict": "CATEGORY_ANOMALY_OBSERVABLE_IDENTITY_NONIDENTIFIABLE",
+  "source": {
+    "path": "reports\\phase16-firsttown12-event89-causal-20261021-r2.json",
+    "sha256": "90d8c974e4583007880f68f80d170dfe8b2cf74294a451ea4c1587c82faee88e",
+    "scope": "posthoc_renderer_and_evaluator_only"
+  },
+  "visible_schema": {
+    "labels": [
+      "late_perfect",
+      "perfect",
+      "very_late"
+    ],
+    "claim": "repository Phase16 KeyDown-margin fixture; not verified Stock HUD layout",
+    "miss_counter_behavior": "not represented by the exported KeyDown trace; Stock behavior unverified"
+  },
+  "capture_model": {
+    "control_dt_s": 0.01,
+    "extra_capture_latency_s": 0.0,
+    "live_latency_verified": false
+  },
+  "visible_observations": [
+    {
+      "status": "baseline",
+      "observed_at_s": 3.25,
+      "displayed_at_s": 3.25,
+      "event_interval_s": null,
+      "deltas": {},
+      "total_increment": 0,
+      "within_interval_order_known": false
+    },
+    {
+      "status": "unchanged",
+      "observed_at_s": 3.2600000000000002,
+      "displayed_at_s": 3.2600000000000002,
+      "event_interval_s": [
+        3.25,
+        3.2600000000000002
+      ],
+      "deltas": {
+        "late_perfect": 0,
+        "perfect": 0,
+        "very_late": 0
+      },
+      "total_increment": 0,
+      "within_interval_order_known": false
+    },
+    {
+      "status": "delta",
+      "observed_at_s": 3.27,
+      "displayed_at_s": 3.27,
+      "event_interval_s": [
+        3.2600000000000002,
+        3.27
+      ],
+      "deltas": {
+        "late_perfect": 0,
+        "perfect": 0,
+        "very_late": 1
+      },
+      "total_increment": 1,
+      "within_interval_order_known": false
+    }
+  ],
+  "id38_posthoc_evaluator": {
+    "physical_keydown_s": 3.260999999999752,
+    "actual_fifo_target_index": 37,
+    "actual_visible_margin": "very_late",
+    "intended_timing_id": 38,
+    "intended_due_s": 3.2647059197959036,
+    "intended_error_ms": -3.7059197961517576,
+    "expected_margin_if_scored_against_intended_due": "perfect",
+    "first_ideal_observation_s": 3.27,
+    "availability_delay_ms": 9.000000000248143
+  },
+  "identifiability": {
+    "category_anomaly": "observable with an independent causal expected-margin model",
+    "fifo_backlog_identity": "nonidentifiable from cumulative deltas alone",
+    "reason": "The same very_late:+1 vector can arise from a correctly matched but late press. Counters expose neither target identity nor within-frame order.",
+    "safe_control_correction": "not established and not implemented"
+  },
+  "checks": {
+    "observer_input_contains_only_visible_counter_fields": true,
+    "id38_press_produces_visible_margin_increment": true,
+    "ideal_next_10ms_capture_detects_category_difference": true,
+    "observer_output_has_no_target_identity": true
+  }
+}
