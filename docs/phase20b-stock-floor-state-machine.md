@@ -175,3 +175,14 @@ Event 37〜89の継続バックログを比較できない。
 ```
 
 監査JSONは既存ファイルを上書きしないよう`open("x")`で生成する。
+
+## 実行済みテスト
+
+- Phase 20A + Phase 20B unit/Audit: **24 passed** (1.02 s)
+- 全repository回帰: **1996 passed, 1 warning** (187.28 s)
+- 全回帰の初回はsandboxのWindows Tempにpytest basetempを作れず、
+  1805 passed / 191 setup errorsとなった。同一suiteを新規workspace内
+  `artifacts/pytest-phase20b-full-r1`を`--basetemp`に指定して再実行し、
+  1996件すべてがPASSした。初回191件はapplication/test failureではない。
+- warningは既存`tests/test_onset_ablation.py:255`のPyTorch tensor-to-scalar
+  warning 1件で、Phase 20B変更に起因するfailureは0件。
