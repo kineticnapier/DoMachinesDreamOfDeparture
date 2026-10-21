@@ -1,0 +1,747 @@
+{
+  "format": "dmdod-phase18-judgement-state-audit-v0.1",
+  "generated_utc": "2026-10-21T12:42:44.685940+00:00",
+  "verdict": "SIMULATOR_MODEL_IDENTIFIES_BACKLOG_STOCK_IDENTITY_UNVERIFIED",
+  "source": {
+    "path": "reports\\phase16-firsttown12-event89-causal-20261021-r2.json",
+    "sha256": "90d8c974e4583007880f68f80d170dfe8b2cf74294a451ea4c1587c82faee88e",
+    "truth_scope": "posthoc_evaluator_only"
+  },
+  "online_contract": {
+    "timing": "local ID, predicted due interval, causal status/reason",
+    "motor": "self-observed KeyDown and reservation intended local ID",
+    "judgement": "Phase17 cumulative-counter delta and display interval",
+    "forbidden": [
+      "target_index",
+      "scorer cursor",
+      "_used",
+      "_missed",
+      "truth due"
+    ]
+  },
+  "model_scope": {
+    "name": "repository symmetric windows",
+    "perfect_s": 0.025,
+    "early_late_perfect_s": 0.03,
+    "pass_s": 0.065,
+    "stock_parity_verified": false,
+    "miss_counter_visible_behavior_verified": false
+  },
+  "id37_abstention": {
+    "decision_s": 3.19,
+    "forecast_lead_ms": 30.588,
+    "online_conclusion": "No input is reserved for local ID37. Before later visible feedback, both auto-resolution and remaining-unresolved hypotheses are possible."
+  },
+  "id38_update": {
+    "status": "model_identified",
+    "observed_at_s": 3.27,
+    "identifiable_under_repository_model": true,
+    "stock_identity_verified": false,
+    "aligned_state_possible": false,
+    "possible_unresolved_local_ids": [
+      "38"
+    ],
+    "reason": "one attribution remains under the explicit simulator-specific window model; Stock identity remains unverified",
+    "hypotheses": [
+      {
+        "attributions": [
+          [
+            "3.261000000:right_2",
+            "38",
+            "37",
+            "very_late"
+          ]
+        ],
+        "supporting_evidence": [
+          "very_late is compatible with KeyDown 3.261000000s and Timing 37 due interval"
+        ],
+        "contradicting_evidence": [
+          "intended Timing 38 category is incompatible"
+        ],
+        "within_interval_order_known": false
+      }
+    ],
+    "visible_delta": {
+      "late_perfect": 0,
+      "perfect": 0,
+      "very_late": 1
+    },
+    "visible_event_interval_s": [
+      3.2600000000000002,
+      3.27
+    ]
+  },
+  "id89_preexpiry_risk": {
+    "status": "model_identified",
+    "observed_at_s": 5.26,
+    "identifiable_under_repository_model": true,
+    "stock_identity_verified": false,
+    "aligned_state_possible": false,
+    "possible_unresolved_local_ids": [
+      "89"
+    ],
+    "reason": "one attribution remains under the explicit simulator-specific window model; Stock identity remains unverified",
+    "hypotheses": [
+      {
+        "attributions": [
+          [
+            "5.253000000:right_3",
+            "89",
+            "88",
+            "very_late"
+          ]
+        ],
+        "supporting_evidence": [
+          "very_late is compatible with KeyDown 5.253000000s and Timing 88 due interval"
+        ],
+        "contradicting_evidence": [
+          "intended Timing 89 category is incompatible"
+        ],
+        "within_interval_order_known": false
+      }
+    ],
+    "visible_delta": {
+      "late_perfect": 0,
+      "perfect": 0,
+      "very_late": 1
+    },
+    "visible_event_interval_s": [
+      5.25,
+      5.26
+    ],
+    "repository_model_possible_miss_deadline_s": 5.315000043646398,
+    "risk_lead_ms": 55.00004364639821,
+    "claim": "local ID89 is possibly unresolved, not a certain future Miss"
+  },
+  "id90_update": {
+    "status": "model_identified",
+    "observed_at_s": 5.32,
+    "identifiable_under_repository_model": true,
+    "stock_identity_verified": false,
+    "aligned_state_possible": true,
+    "possible_unresolved_local_ids": [],
+    "reason": "one attribution remains under the explicit simulator-specific window model; Stock identity remains unverified",
+    "hypotheses": [
+      {
+        "attributions": [
+          [
+            "5.319000000:left_2",
+            "90",
+            "90",
+            "perfect"
+          ]
+        ],
+        "supporting_evidence": [
+          "perfect is compatible with KeyDown 5.319000000s and Timing 90 due interval"
+        ],
+        "contradicting_evidence": [],
+        "within_interval_order_known": false
+      }
+    ],
+    "visible_delta": {
+      "late_perfect": 0,
+      "perfect": 1,
+      "very_late": 0
+    },
+    "visible_event_interval_s": [
+      5.3100000000000005,
+      5.32
+    ]
+  },
+  "online_summary": {
+    "outputs": 52,
+    "oracle_evaluated_inputs_37_90": 51,
+    "oracle_target_in_model_hypotheses": 51
+  },
+  "oracle_evaluation": [
+    {
+      "input_id": "3.261000000:right_2",
+      "intended_local_id": 38,
+      "actual_target_index_posthoc": 37,
+      "actual_margin_posthoc": "very_late",
+      "estimate_status": "model_identified",
+      "estimated_judged_ids": [
+        37
+      ],
+      "truth_used_online": false
+    },
+    {
+      "input_id": "3.311000000:right_3",
+      "intended_local_id": 39,
+      "actual_target_index_posthoc": 38,
+      "actual_margin_posthoc": "very_late",
+      "estimate_status": "model_identified",
+      "estimated_judged_ids": [
+        38
+      ],
+      "truth_used_online": false
+    },
+    {
+      "input_id": "3.355000000:right_1",
+      "intended_local_id": 40,
+      "actual_target_index_posthoc": 39,
+      "actual_margin_posthoc": "very_late",
+      "estimate_status": "model_identified",
+      "estimated_judged_ids": [
+        39
+      ],
+      "truth_used_online": false
+    },
+    {
+      "input_id": "3.372000000:left_5",
+      "intended_local_id": 41,
+      "actual_target_index_posthoc": 40,
+      "actual_margin_posthoc": "perfect",
+      "estimate_status": "ambiguous",
+      "estimated_judged_ids": [
+        40,
+        41
+      ],
+      "truth_used_online": false
+    },
+    {
+      "input_id": "3.447000000:right_2",
+      "intended_local_id": 43,
+      "actual_target_index_posthoc": 42,
+      "actual_margin_posthoc": "very_late",
+      "estimate_status": "model_identified",
+      "estimated_judged_ids": [
+        42
+      ],
+      "truth_used_online": false
+    },
+    {
+      "input_id": "3.488000000:right_1",
+      "intended_local_id": 44,
+      "actual_target_index_posthoc": 43,
+      "actual_margin_posthoc": "very_late",
+      "estimate_status": "model_identified",
+      "estimated_judged_ids": [
+        43
+      ],
+      "truth_used_online": false
+    },
+    {
+      "input_id": "3.537000000:left_2",
+      "intended_local_id": 45,
+      "actual_target_index_posthoc": 44,
+      "actual_margin_posthoc": "very_late",
+      "estimate_status": "model_identified",
+      "estimated_judged_ids": [
+        44
+      ],
+      "truth_used_online": false
+    },
+    {
+      "input_id": "3.544000000:left_1",
+      "intended_local_id": 46,
+      "actual_target_index_posthoc": 45,
+      "actual_margin_posthoc": "perfect",
+      "estimate_status": "ambiguous",
+      "estimated_judged_ids": [
+        45,
+        46
+      ],
+      "truth_used_online": false
+    },
+    {
+      "input_id": "3.621000000:right_1",
+      "intended_local_id": 48,
+      "actual_target_index_posthoc": 47,
+      "actual_margin_posthoc": "very_late",
+      "estimate_status": "model_identified",
+      "estimated_judged_ids": [
+        47
+      ],
+      "truth_used_online": false
+    },
+    {
+      "input_id": "3.660000000:right_2",
+      "intended_local_id": 49,
+      "actual_target_index_posthoc": 48,
+      "actual_margin_posthoc": "very_late",
+      "estimate_status": "model_identified",
+      "estimated_judged_ids": [
+        48
+      ],
+      "truth_used_online": false
+    },
+    {
+      "input_id": "3.711000000:right_3",
+      "intended_local_id": 50,
+      "actual_target_index_posthoc": 49,
+      "actual_margin_posthoc": "very_late",
+      "estimate_status": "model_identified",
+      "estimated_judged_ids": [
+        49
+      ],
+      "truth_used_online": false
+    },
+    {
+      "input_id": "3.753000000:left_2",
+      "intended_local_id": 51,
+      "actual_target_index_posthoc": 50,
+      "actual_margin_posthoc": "very_late",
+      "estimate_status": "model_identified",
+      "estimated_judged_ids": [
+        50
+      ],
+      "truth_used_online": false
+    },
+    {
+      "input_id": "3.795000000:left_1",
+      "intended_local_id": 52,
+      "actual_target_index_posthoc": 51,
+      "actual_margin_posthoc": "very_late",
+      "estimate_status": "model_identified",
+      "estimated_judged_ids": [
+        51
+      ],
+      "truth_used_online": false
+    },
+    {
+      "input_id": "3.842000000:right_1",
+      "intended_local_id": 53,
+      "actual_target_index_posthoc": 52,
+      "actual_margin_posthoc": "very_late",
+      "estimate_status": "model_identified",
+      "estimated_judged_ids": [
+        52
+      ],
+      "truth_used_online": false
+    },
+    {
+      "input_id": "3.884000000:left_3",
+      "intended_local_id": 54,
+      "actual_target_index_posthoc": 53,
+      "actual_margin_posthoc": "very_late",
+      "estimate_status": "model_identified",
+      "estimated_judged_ids": [
+        53
+      ],
+      "truth_used_online": false
+    },
+    {
+      "input_id": "3.932000000:right_2",
+      "intended_local_id": 55,
+      "actual_target_index_posthoc": 54,
+      "actual_margin_posthoc": "very_late",
+      "estimate_status": "model_identified",
+      "estimated_judged_ids": [
+        54
+      ],
+      "truth_used_online": false
+    },
+    {
+      "input_id": "3.972000000:right_3",
+      "intended_local_id": 56,
+      "actual_target_index_posthoc": 55,
+      "actual_margin_posthoc": "very_late",
+      "estimate_status": "model_identified",
+      "estimated_judged_ids": [
+        55
+      ],
+      "truth_used_online": false
+    },
+    {
+      "input_id": "4.021000000:left_2",
+      "intended_local_id": 57,
+      "actual_target_index_posthoc": 56,
+      "actual_margin_posthoc": "very_late",
+      "estimate_status": "model_identified",
+      "estimated_judged_ids": [
+        56
+      ],
+      "truth_used_online": false
+    },
+    {
+      "input_id": "4.065000000:left_3",
+      "intended_local_id": 58,
+      "actual_target_index_posthoc": 57,
+      "actual_margin_posthoc": "very_late",
+      "estimate_status": "ambiguous",
+      "estimated_judged_ids": [
+        57,
+        58
+      ],
+      "truth_used_online": false
+    },
+    {
+      "input_id": "4.070000000:right_1",
+      "intended_local_id": 59,
+      "actual_target_index_posthoc": 58,
+      "actual_margin_posthoc": "perfect",
+      "estimate_status": "ambiguous",
+      "estimated_judged_ids": [
+        57,
+        58,
+        59
+      ],
+      "truth_used_online": false
+    },
+    {
+      "input_id": "4.101000000:left_1",
+      "intended_local_id": 60,
+      "actual_target_index_posthoc": 59,
+      "actual_margin_posthoc": "very_late",
+      "estimate_status": "ambiguous",
+      "estimated_judged_ids": [
+        58,
+        59
+      ],
+      "truth_used_online": false
+    },
+    {
+      "input_id": "4.158000000:right_3",
+      "intended_local_id": 61,
+      "actual_target_index_posthoc": 60,
+      "actual_margin_posthoc": "very_late",
+      "estimate_status": "model_identified",
+      "estimated_judged_ids": [
+        60
+      ],
+      "truth_used_online": false
+    },
+    {
+      "input_id": "4.192000000:left_2",
+      "intended_local_id": 62,
+      "actual_target_index_posthoc": 61,
+      "actual_margin_posthoc": "very_late",
+      "estimate_status": "model_identified",
+      "estimated_judged_ids": [
+        61
+      ],
+      "truth_used_online": false
+    },
+    {
+      "input_id": "4.238000000:right_1",
+      "intended_local_id": 63,
+      "actual_target_index_posthoc": 62,
+      "actual_margin_posthoc": "very_late",
+      "estimate_status": "model_identified",
+      "estimated_judged_ids": [
+        62
+      ],
+      "truth_used_online": false
+    },
+    {
+      "input_id": "4.264000000:right_2",
+      "intended_local_id": 64,
+      "actual_target_index_posthoc": 63,
+      "actual_margin_posthoc": "late_perfect",
+      "estimate_status": "model_identified",
+      "estimated_judged_ids": [
+        63
+      ],
+      "truth_used_online": false
+    },
+    {
+      "input_id": "4.282000000:left_1",
+      "intended_local_id": 65,
+      "actual_target_index_posthoc": 64,
+      "actual_margin_posthoc": "very_late",
+      "estimate_status": "ambiguous",
+      "estimated_judged_ids": [
+        63,
+        64
+      ],
+      "truth_used_online": false
+    },
+    {
+      "input_id": "4.327000000:right_3",
+      "intended_local_id": 66,
+      "actual_target_index_posthoc": 65,
+      "actual_margin_posthoc": "very_late",
+      "estimate_status": "model_identified",
+      "estimated_judged_ids": [
+        65
+      ],
+      "truth_used_online": false
+    },
+    {
+      "input_id": "4.374000000:left_2",
+      "intended_local_id": 67,
+      "actual_target_index_posthoc": 66,
+      "actual_margin_posthoc": "very_late",
+      "estimate_status": "model_identified",
+      "estimated_judged_ids": [
+        66
+      ],
+      "truth_used_online": false
+    },
+    {
+      "input_id": "4.417000000:right_1",
+      "intended_local_id": 68,
+      "actual_target_index_posthoc": 67,
+      "actual_margin_posthoc": "very_late",
+      "estimate_status": "model_identified",
+      "estimated_judged_ids": [
+        67
+      ],
+      "truth_used_online": false
+    },
+    {
+      "input_id": "4.454000000:left_1",
+      "intended_local_id": 69,
+      "actual_target_index_posthoc": 68,
+      "actual_margin_posthoc": "very_late",
+      "estimate_status": "model_identified",
+      "estimated_judged_ids": [
+        68
+      ],
+      "truth_used_online": false
+    },
+    {
+      "input_id": "4.504000000:right_2",
+      "intended_local_id": 70,
+      "actual_target_index_posthoc": 69,
+      "actual_margin_posthoc": "very_late",
+      "estimate_status": "model_identified",
+      "estimated_judged_ids": [
+        69
+      ],
+      "truth_used_online": false
+    },
+    {
+      "input_id": "4.546000000:left_2",
+      "intended_local_id": 71,
+      "actual_target_index_posthoc": 70,
+      "actual_margin_posthoc": "very_late",
+      "estimate_status": "model_identified",
+      "estimated_judged_ids": [
+        70
+      ],
+      "truth_used_online": false
+    },
+    {
+      "input_id": "4.585000000:right_1",
+      "intended_local_id": 72,
+      "actual_target_index_posthoc": 71,
+      "actual_margin_posthoc": "very_late",
+      "estimate_status": "model_identified",
+      "estimated_judged_ids": [
+        71
+      ],
+      "truth_used_online": false
+    },
+    {
+      "input_id": "4.619000000:right_3",
+      "intended_local_id": 73,
+      "actual_target_index_posthoc": 72,
+      "actual_margin_posthoc": "very_late",
+      "estimate_status": "model_identified",
+      "estimated_judged_ids": [
+        72
+      ],
+      "truth_used_online": false
+    },
+    {
+      "input_id": "4.636000000:left_1",
+      "intended_local_id": 74,
+      "actual_target_index_posthoc": 73,
+      "actual_margin_posthoc": "very_late",
+      "estimate_status": "ambiguous",
+      "estimated_judged_ids": [
+        72,
+        73
+      ],
+      "truth_used_online": false
+    },
+    {
+      "input_id": "4.676000000:right_2",
+      "intended_local_id": 75,
+      "actual_target_index_posthoc": 74,
+      "actual_margin_posthoc": "very_late",
+      "estimate_status": "model_identified",
+      "estimated_judged_ids": [
+        74
+      ],
+      "truth_used_online": false
+    },
+    {
+      "input_id": "4.726000000:left_2",
+      "intended_local_id": 76,
+      "actual_target_index_posthoc": 75,
+      "actual_margin_posthoc": "very_late",
+      "estimate_status": "model_identified",
+      "estimated_judged_ids": [
+        75
+      ],
+      "truth_used_online": false
+    },
+    {
+      "input_id": "4.767000000:right_1",
+      "intended_local_id": 77,
+      "actual_target_index_posthoc": 76,
+      "actual_margin_posthoc": "very_late",
+      "estimate_status": "model_identified",
+      "estimated_judged_ids": [
+        76
+      ],
+      "truth_used_online": false
+    },
+    {
+      "input_id": "4.815000000:right_3",
+      "intended_local_id": 78,
+      "actual_target_index_posthoc": 77,
+      "actual_margin_posthoc": "very_late",
+      "estimate_status": "model_identified",
+      "estimated_judged_ids": [
+        77
+      ],
+      "truth_used_online": false
+    },
+    {
+      "input_id": "4.854000000:right_2",
+      "intended_local_id": 79,
+      "actual_target_index_posthoc": 78,
+      "actual_margin_posthoc": "very_late",
+      "estimate_status": "model_identified",
+      "estimated_judged_ids": [
+        78
+      ],
+      "truth_used_online": false
+    },
+    {
+      "input_id": "4.897000000:right_1",
+      "intended_local_id": 80,
+      "actual_target_index_posthoc": 79,
+      "actual_margin_posthoc": "very_late",
+      "estimate_status": "model_identified",
+      "estimated_judged_ids": [
+        79
+      ],
+      "truth_used_online": false
+    },
+    {
+      "input_id": "4.945000000:left_2",
+      "intended_local_id": 81,
+      "actual_target_index_posthoc": 80,
+      "actual_margin_posthoc": "very_late",
+      "estimate_status": "model_identified",
+      "estimated_judged_ids": [
+        80
+      ],
+      "truth_used_online": false
+    },
+    {
+      "input_id": "4.990000000:right_2",
+      "intended_local_id": 82,
+      "actual_target_index_posthoc": 81,
+      "actual_margin_posthoc": "very_late",
+      "estimate_status": "model_identified",
+      "estimated_judged_ids": [
+        81
+      ],
+      "truth_used_online": false
+    },
+    {
+      "input_id": "5.027000000:left_1",
+      "intended_local_id": 83,
+      "actual_target_index_posthoc": 82,
+      "actual_margin_posthoc": "very_late",
+      "estimate_status": "model_identified",
+      "estimated_judged_ids": [
+        82
+      ],
+      "truth_used_online": false
+    },
+    {
+      "input_id": "5.083000000:right_3",
+      "intended_local_id": 84,
+      "actual_target_index_posthoc": 83,
+      "actual_margin_posthoc": "very_late",
+      "estimate_status": "model_identified",
+      "estimated_judged_ids": [
+        83
+      ],
+      "truth_used_online": false
+    },
+    {
+      "input_id": "5.125000000:left_2",
+      "intended_local_id": 85,
+      "actual_target_index_posthoc": 84,
+      "actual_margin_posthoc": "very_late",
+      "estimate_status": "model_identified",
+      "estimated_judged_ids": [
+        84
+      ],
+      "truth_used_online": false
+    },
+    {
+      "input_id": "5.146000000:right_1",
+      "intended_local_id": 86,
+      "actual_target_index_posthoc": 85,
+      "actual_margin_posthoc": "late_perfect",
+      "estimate_status": "model_identified",
+      "estimated_judged_ids": [
+        85
+      ],
+      "truth_used_online": false
+    },
+    {
+      "input_id": "5.167000000:left_4",
+      "intended_local_id": 87,
+      "actual_target_index_posthoc": 86,
+      "actual_margin_posthoc": "very_late",
+      "estimate_status": "ambiguous",
+      "estimated_judged_ids": [
+        85,
+        86
+      ],
+      "truth_used_online": false
+    },
+    {
+      "input_id": "5.205000000:right_2",
+      "intended_local_id": 88,
+      "actual_target_index_posthoc": 87,
+      "actual_margin_posthoc": "very_late",
+      "estimate_status": "model_identified",
+      "estimated_judged_ids": [
+        87
+      ],
+      "truth_used_online": false
+    },
+    {
+      "input_id": "5.253000000:right_3",
+      "intended_local_id": 89,
+      "actual_target_index_posthoc": 88,
+      "actual_margin_posthoc": "very_late",
+      "estimate_status": "model_identified",
+      "estimated_judged_ids": [
+        88
+      ],
+      "truth_used_online": false
+    },
+    {
+      "input_id": "5.319000000:left_2",
+      "intended_local_id": 90,
+      "actual_target_index_posthoc": 90,
+      "actual_margin_posthoc": "perfect",
+      "estimate_status": "model_identified",
+      "estimated_judged_ids": [
+        90
+      ],
+      "truth_used_online": false
+    }
+  ],
+  "nonidentifiability": {
+    "stock_identity": "UNVERIFIED",
+    "counterexamples": [
+      "normal VeryLate and FIFO VeryLate share a visible delta without timing/motor context",
+      "overlapping due intervals can keep aligned and predecessor hypotheses simultaneously",
+      "multiple KeyDowns and multiple deltas in one 10ms interval lose ordering",
+      "reset, missing, or delayed counter frames create an attribution gap",
+      "unknown Stock non-KeyDown Miss display prevents proving cursor advancement"
+    ]
+  },
+  "checks": {
+    "id38_excludes_aligned_under_repository_model": true,
+    "id38_first_visible_update_is_3270ms": true,
+    "id89_is_flagged_unresolved_before_expiry": true,
+    "id90_supports_model_resynchronization": true,
+    "online_records_exclude_oracle_target_index": true,
+    "oracle_truth_never_used_online": true
+  },
+  "production_control_connected": false
+}
