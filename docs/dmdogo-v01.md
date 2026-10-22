@@ -14,13 +14,7 @@ PowerShellでリポジトリのルートから実行します。
 ```powershell
 uv run python scripts/run_full_chart_fingering_replay_v02.py `
   --chart "data/DMDOD-v140-tuf-p11-p20/Train/03640 - 東 - prisMKa _ Sprout.adofai" `
-  --checkpoint checkpoints/fingering/fingering_network_v01-4fa2ae1.pt `
-  --output-dir artifacts/dmdogo/smoke-01 `
-  --status-file artifacts/dmdogo/smoke-01.status.json `
-  --stop-after-s 2 `
-  --wall-timeout-s 60
-
-start .\artifacts\dmdogo\smoke-01\full-chart-replay.html
+  --stop-after-s 2
 ```
 
 上記の `--chart` を任意の `.adofai` パスに置き換えられます。
@@ -29,7 +23,22 @@ SHA256の固定譜面制限はありません。元譜面のSHA256は結果に�
 ファイル名から難易度を推定しません。
 
 `--stop-after-s` を省略すれば譜面全体を処理します（初回は短い区間を推奨）。
-出力先とstatusファイルは既存パスを上書きしないため、再実行時は新しい名前にしてください。
+`--checkpoint` は既存の `checkpoints/fingering/fingering_network_v01-4fa2ae1.pt` が既定値です。
+`--output-dir` と `--status-file` は省略可能で、それぞれ
+`artifacts/dmdogo/<譜面ファイル名>` と `<出力フォルダ>.status.json` が既定値です。
+
+**再実行で出力パスが重複すると、自動で `-002`、`-003`……と両方に付けて保存します。**
+既存ファイルを消したり上書きしたりしません。明示指定した出力・statusパスが
+存在する場合も同様に連番を付けます。実際に使用した出力パスとHTMLパスは
+コンソールに表示されます。
+
+例：`vo[ICE] - bool` の全譜面を実行する場合（64秒の手前で切らないよう
+`--stop-after-s` を省略）：
+
+```powershell
+uv run python scripts/run_full_chart_fingering_replay_v02.py `
+  --chart "C:\Users\Kinetic Napier\Downloads\bool - vo[ICE]\bool\bool.adofai"
+```
 
 ## 保存されるもの
 
