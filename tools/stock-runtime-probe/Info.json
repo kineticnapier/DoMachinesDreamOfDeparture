@@ -1,0 +1,9 @@
+{
+  "Id": "DmdodStockRuntimeProbe",
+  "DisplayName": "DMDOD Stock Runtime Probe",
+  "Author": "DMDOD research",
+  "Version": "0.1.0",
+  "ManagerVersion": "0.22.14.0",
+  "AssemblyName": "DmdodStockRuntimeProbe.dll",
+  "EntryMethod": "Dmdod.StockRuntimeProbe.Main.Load"
+}

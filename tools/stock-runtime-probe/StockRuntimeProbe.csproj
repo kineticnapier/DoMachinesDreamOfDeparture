@@ -1,0 +1,19 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net48</TargetFramework>
+    <LangVersion>latest</LangVersion>
+    <Nullable>disable</Nullable>
+    <AssemblyName>DmdodStockRuntimeProbe</AssemblyName>
+    <RootNamespace>Dmdod.StockRuntimeProbe</RootNamespace>
+    <GenerateAssemblyInfo>true</GenerateAssemblyInfo>
+    <GameManagedDir Condition="'$(GameManagedDir)' == ''">C:\Program Files (x86)\Steam\steamapps\common\A Dance of Fire and Ice\A Dance of Fire and Ice_Data\Managed</GameManagedDir>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="Assembly-CSharp" HintPath="$(GameManagedDir)\Assembly-CSharp.dll" Private="false" />
+    <Reference Include="0Harmony" HintPath="$(GameManagedDir)\UnityModManager\0Harmony.dll" Private="false" />
+    <Reference Include="UnityModManager" HintPath="$(GameManagedDir)\UnityModManager\UnityModManager.dll" Private="false" />
+    <Reference Include="UnityEngine.CoreModule" HintPath="$(GameManagedDir)\UnityEngine.CoreModule.dll" Private="false" />
+    <Reference Include="Newtonsoft.Json" HintPath="$(GameManagedDir)\Newtonsoft.Json.dll" Private="false" />
+    <Reference Include="RDTools" HintPath="$(GameManagedDir)\RDTools.dll" Private="false" />
+  </ItemGroup>
+</Project>

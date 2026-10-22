@@ -1,0 +1,26 @@
+{
+  "format": "dmdod-phase31-probe-build-audit-v0.1",
+  "generated_local_date": "2026-10-22",
+  "verdicts": [
+    "RUNTIME_TRACE_MOD_BUILT",
+    "RUNTIME_TRACE_MOD_UNVERIFIED"
+  ],
+  "target_framework": "net48",
+  "build": {
+    "success": true,
+    "warnings": 0,
+    "errors": 0,
+    "artifact": "artifacts/phase31-stock-runtime-probe-build-r3/DmdodStockRuntimeProbe.dll",
+    "dll_sha256": "DB4BF9881434648917587EB9F9276E561998D29E55C77C80E7218850BB8EDD57"
+  },
+  "runtime_loaded": false,
+  "harmony_hooks_observed": false,
+  "production_changed": false,
+  "student_visible_fields": [],
+  "notes": [
+    "r1 detected that installed UMM/Harmony target .NET Framework 4.8",
+    "r2 detected the Assembly-CSharp dependency on RDTools",
+    "r3 built successfully without warnings",
+    "build success is not runtime hook verification"
+  ]
+}

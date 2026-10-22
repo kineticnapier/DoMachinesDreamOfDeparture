@@ -1,0 +1,6 @@
+F:\dev\DoMachinesDreamOfDeparture\tools\stock-runtime-probe\obj\Release\net472\StockRuntimeProbe.csproj.AssemblyReference.cache
+F:\dev\DoMachinesDreamOfDeparture\tools\stock-runtime-probe\obj\Release\net472\StockRuntimeProbe.GeneratedMSBuildEditorConfig.editorconfig
+F:\dev\DoMachinesDreamOfDeparture\tools\stock-runtime-probe\obj\Release\net472\StockRuntimeProbe.AssemblyInfoInputs.cache
+F:\dev\DoMachinesDreamOfDeparture\tools\stock-runtime-probe\obj\Release\net472\StockRuntimeProbe.AssemblyInfo.cs
+F:\dev\DoMachinesDreamOfDeparture\tools\stock-runtime-probe\obj\Release\net472\StockRuntimeProbe.csproj.CoreCompileInputs.cache
+F:\dev\DoMachinesDreamOfDeparture\tools\stock-runtime-probe\obj\Release\net472\StockRuntimeProbe.sourcelink.json

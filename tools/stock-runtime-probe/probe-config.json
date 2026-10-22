@@ -1,0 +1,7 @@
+{
+  "enabled": true,
+  "minimumFloorInclusive": 34,
+  "maximumFloorInclusive": 40,
+  "maximumQueuedLines": 8192,
+  "flushIntervalMs": 100
+}
