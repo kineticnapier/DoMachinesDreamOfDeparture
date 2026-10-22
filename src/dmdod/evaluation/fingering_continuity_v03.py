@@ -126,10 +126,46 @@ def common_fast_metrics(
     indices = _fast_event_indices(event_times, threshold_ms)
     selected = set(indices)
     policies = {}
+    ordered_events = sorted(event_times.items(), key=lambda item: (item[1], item[0]))
+    fixed_windows = [
+        tuple(index for index, _ in ordered_events[start:start + 4])
+        for start in range(max(0, len(ordered_events) - 3))
+        if all(
+            1000.0 * (ordered_events[offset + 1][1] - ordered_events[offset][1])
+            <= threshold_ms + 1e-9
+            for offset in range(start, start + 3)
+        )
+    ]
     for name, decisions in decisions_by_policy.items():
         rows = [dict(row) for row in decisions if int(row["event_index"]) in selected]
-        policies[name] = continuity_metrics(rows)
-    return {"threshold_ms": threshold_ms, "event_indices": indices, "policies": policies}
+        metrics = continuity_metrics(rows)
+        by_index = {int(row["event_index"]): row for row in decisions}
+        stable = 0
+        for window in fixed_windows:
+            axes = [tuple(str(axis) for axis in by_index[index].get("axes", ()))
+                    for index in window]
+            if any(len(value) != 1 for value in axes):
+                continue
+            parts = [axis.split("_") for (axis,) in axes]
+            if len({part[0] for part in parts}) != 1:
+                continue
+            depths = [int(part[1]) for part in parts]
+            if any(depth > 4 for depth in depths):
+                continue
+            steps = [(right - left) % 4 for left, right in zip(depths, depths[1:])]
+            stable += int(steps[-1] in steps[:-1])
+        metrics["fixed_window_stability"] = (
+            stable / len(fixed_windows) if fixed_windows else None
+        )
+        metrics["fixed_window_stable"] = stable
+        metrics["fixed_window_comparisons"] = len(fixed_windows)
+        policies[name] = metrics
+    return {
+        "threshold_ms": threshold_ms,
+        "event_indices": indices,
+        "fixed_windows": [list(window) for window in fixed_windows],
+        "policies": policies,
+    }
 
 
 def _decision_rows(payload: dict, policy: str, association: dict) -> list[dict]:

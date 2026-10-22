@@ -75,6 +75,40 @@ This rule:
 The fixed top-two rule was selected from the causal diagnosis before the v0.3
 full-chart run. No weight or threshold sweep is performed.
 
+## Fixed bool full-chart result
+
+All three arms were rerun as independent Motor episodes on chart SHA256
+`04981e92f74288b8aac7286e83420b933036d2caead9c157bc33b706779ad1b1`.
+
+| policy | Hit | Miss / TooEarly | Overload | X Accuracy | Timing MAE | signed error | L/R switches | thumb | side |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|
+| Free | 1,122 | 0 / 0 | no | 94.060% | 16.699 ms | +16.670 ms | 526 | 228 | 0 |
+| continuity v0.2 | 1,122 | 0 / 0 | no | 91.671% | 17.256 ms | +17.227 ms | 405 | 64 | 0 |
+| continuity v0.3 | 1,122 | 0 / 0 | no | 93.324% | 16.739 ms | +16.699 ms | 413 | 161 | 0 |
+
+v0.3 recovers 1.653 X-Accuracy points and 0.517 ms MAE relative to
+v0.2 while retaining almost all of its left/right-switch reduction. It does
+not fully recover Free accuracy, and its thumb count regresses substantially
+from 64 to 161.
+
+The legacy fast-pattern score has a policy-dependent denominator (Free
+8/13, v0.2 35/41, v0.3 4/9). To prevent that denominator from obscuring the
+comparison, v0.3 also evaluates the same 381 time-defined four-event windows
+for every policy. The fixed-window stable counts are Free 8/381, v0.2 35/381,
+and v0.3 4/381. Thus v0.3's precision recovery did **not** preserve v0.2's
+rolling-pattern improvement. This is a negative result, not a metric defect
+to tune away after seeing the full chart.
+
+The success gate is therefore mixed: the mandatory physical outcome and the
+accuracy-improvement gate pass, but continuity preservation fails for thumb
+use and fixed-population rolling stability. `continuity` v0.2 remains the
+recommended naturalness-oriented policy; `continuity_v03` is retained as an
+explicit precision-oriented experiment and is not made the default.
+
+The full result JSON and self-contained three-policy Viewer are under
+`artifacts/dmdogo-continuity/bool-v03-r2/`. Generated artifacts are not used
+as source inputs and the runner refuses to overwrite them.
+
 ## Reproduction
 
 Cause audit:
@@ -91,9 +125,16 @@ Three independent Motor episodes and Viewer v0.3:
 .\.venv\Scripts\python.exe scripts\run_fingering_continuity_comparison_v03.py `
   --chart "data\DMDOD-v140-tuf-p11-p20\Train\04042 - bool - vo[ICE].adofai" `
   --checkpoint checkpoints\fingering\fingering_network_v01-4fa2ae1.pt `
-  --output-dir artifacts\dmdogo-continuity\bool-v03-r1 `
-  --status-file logs\dmdogo-continuity-bool-v03-r1.status.json `
+  --output-dir artifacts\dmdogo-continuity\bool-v03-r2 `
+  --status-file logs\dmdogo-continuity-bool-v03-r2.status.json `
   --wall-timeout-s 900
 ```
 
 Both tools refuse to overwrite existing results.
+
+## Verification
+
+- Focused selector, analysis, runner and Viewer regression: `43 passed`.
+- Full repository regression: `2,123 passed, 1 warning` in 200.40 s.
+- The warning is the pre-existing tensor-to-scalar warning in
+  `tests/test_onset_ablation.py`; there were no test failures.

@@ -1,0 +1,66 @@
+{
+  "format": "dmdogo-fingering-continuity-v03-final-summary",
+  "chart": "04042 - bool - vo[ICE].adofai",
+  "chart_sha256": "04981e92f74288b8aac7286e83420b933036d2caead9c157bc33b706779ad1b1",
+  "source_artifact": "artifacts/dmdogo-continuity/bool-v03-r2/comparison-v03.json",
+  "viewer": "artifacts/dmdogo-continuity/bool-v03-r2/replay-v03.html",
+  "policies": {
+    "free": {
+      "hits": 1122,
+      "misses": 0,
+      "too_early": 0,
+      "overload": false,
+      "x_accuracy_percent": 94.0597147950089,
+      "timing_mae_ms": 16.6992320671693,
+      "signed_timing_error_ms": 16.6700699435652,
+      "left_right_switches": 526,
+      "thumb_uses": 228,
+      "side_uses": 0,
+      "legacy_fast_pattern_stability": 0.615384615384615,
+      "fixed_fast_window_stability": 0.020997375328084
+    },
+    "continuity": {
+      "hits": 1122,
+      "misses": 0,
+      "too_early": 0,
+      "overload": false,
+      "x_accuracy_percent": 91.6711229946524,
+      "timing_mae_ms": 17.2555053734681,
+      "signed_timing_error_ms": 17.2271109417815,
+      "left_right_switches": 405,
+      "thumb_uses": 64,
+      "side_uses": 0,
+      "legacy_fast_pattern_stability": 0.853658536585366,
+      "fixed_fast_window_stability": 0.0918635170603675
+    },
+    "continuity_v03": {
+      "hits": 1122,
+      "misses": 0,
+      "too_early": 0,
+      "overload": false,
+      "x_accuracy_percent": 93.3244206773618,
+      "timing_mae_ms": 16.7388424604081,
+      "signed_timing_error_ms": 16.6985904426734,
+      "left_right_switches": 413,
+      "thumb_uses": 161,
+      "side_uses": 0,
+      "legacy_fast_pattern_stability": 0.444444444444444,
+      "fixed_fast_window_stability": 0.010498687664042,
+      "changed_from_free_rate": 0.185383244206774,
+      "fast_network_guard_count": 577
+    }
+  },
+  "fixed_fast_window_comparisons_per_policy": 381,
+  "gates": {
+    "all_1122_hit": true,
+    "no_miss_too_early_or_overload": true,
+    "x_accuracy_improves_over_v02": true,
+    "timing_mae_not_worse_than_v02": true,
+    "continuity_preserved": false
+  },
+  "recommendation": "Keep continuity v0.2 as the naturalness-oriented recommendation. continuity_v03 is a precision-oriented experimental option, not the default.",
+  "artifact_sha256": {
+    "comparison_v03_json": "7C63B210D4116D7853AE5FD07C690EAB09FD01F68691CB1E063CA3D475F5B3A7",
+    "replay_v03_html": "BD67B44F334775B49DE109369AB51EEC2E328EF2FC728D1E3BF52C7E39C277EB"
+  }
+}

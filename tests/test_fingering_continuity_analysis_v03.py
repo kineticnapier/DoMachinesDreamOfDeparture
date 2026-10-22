@@ -70,17 +70,22 @@ def test_error_summary_keeps_signed_and_absolute_error_separate():
 
 
 def test_common_fast_metrics_use_the_same_event_population_for_all_policies():
-    event_times = {0: 1.0, 1: 1.02, 2: 1.04, 3: 1.20}
+    event_times = {0: 1.0, 1: 1.02, 2: 1.04, 3: 1.06}
     free = [
         {"event_index": i, "due_ms": t * 1000, "axes": [f"left_{i % 4 + 1}"]}
         for i, t in event_times.items()
     ]
     continuity = [
-        {"event_index": i, "due_ms": t * 1000, "axes": [f"right_{i % 4 + 1}"]}
+        {"event_index": i, "due_ms": t * 1000,
+         "axes": [f"{'left' if i % 2 == 0 else 'right'}_{i % 4 + 1}"]}
         for i, t in event_times.items()
     ]
     result = common_fast_metrics(
         {"free": free, "continuity": continuity}, event_times, threshold_ms=35.0)
-    assert result["event_indices"] == [0, 1, 2]
-    assert result["policies"]["free"]["decision_count"] == 3
-    assert result["policies"]["continuity"]["decision_count"] == 3
+    assert result["event_indices"] == [0, 1, 2, 3]
+    assert result["policies"]["free"]["decision_count"] == 4
+    assert result["policies"]["continuity"]["decision_count"] == 4
+    assert result["policies"]["free"]["fixed_window_comparisons"] == 1
+    assert result["policies"]["continuity"]["fixed_window_comparisons"] == 1
+    assert result["policies"]["free"]["fixed_window_stability"] == 1.0
+    assert result["policies"]["continuity"]["fixed_window_stability"] == 0.0
