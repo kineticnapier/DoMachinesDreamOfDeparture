@@ -340,6 +340,20 @@ class StockFloorStateMachine:
         """Process one queued KeyDown after the frame's automatic-Miss check."""
 
         emitted = list(self.advance(time_s))
+        emitted.extend(self.key_down_after_update(time_s))
+        return tuple(emitted)
+
+    def key_down_after_update(self, time_s: float) -> tuple[StockStateTransition, ...]:
+        """Process a queued KeyDown after an explicit frame update.
+
+        ``StockFrameStateMachine`` owns the preceding ``CheckPostHoldFail``
+        call.  The legacy :meth:`key_down` method remains a convenient atomic
+        wrapper for Phase 20B and existing unit tests.
+        """
+
+        if not math.isfinite(time_s):
+            raise ValueError("input time must be finite")
+        emitted: list[StockStateTransition] = []
         if self.failed:
             emitted.append(
                 self._append(
