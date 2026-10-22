@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-"""Run Fingering Network v0.1 on one full Train chart and export replay data.
+"""Run Fingering Network v0.1 on a selected ADOFAI chart and export replay data.
 
 AutoPlay supplies event times only.  Network selection never calls the v0.2
 Teacher counterfactual rollout/ranker.  Outputs are create-once artifacts.
@@ -31,7 +31,6 @@ from dmdod.training.prestige1_autoplay_timing import AutoplayTimingTeacher
 
 
 FORMAT = "dmdod-full-chart-fingering-replay-v0.2"
-SELECTED_SHA256 = "e23c48c66e956a6e820fff2a5ed352718efb7f5e861094207cc49f6dcabdd622"
 
 
 def _write_once(path: Path, value: str) -> None:
@@ -241,7 +240,7 @@ def build_payload(chart_path: Path, difficulty: str, checkpoint: Path,
         "rendering_limitations": [
             "Gameplay floor geometry/timing only; decorations and camera events are not rendered.",
             "Planet travel is diagnostic interpolation, not Unity rendering.",
-            "This chart has no Pause action; Pause rendering remains unit-tested but is not empirically exercised here.",
+            "Pause and special-event presentation is diagnostic, not Unity-identical.",
             "Physical metrics are saved from the run and are not recomputed by HTML.",
         ],
     }
@@ -266,8 +265,9 @@ def summarize_choices(decisions: list[dict]) -> dict:
 
 def run(chart_path: Path, difficulty: str, checkpoint: Path, output_dir: Path,
         *, stop_after_s: float | None = None, wall_timeout_s: float | None = None) -> dict:
-    if viewer.file_sha256(chart_path) != SELECTED_SHA256:
-        raise RuntimeError("selected chart SHA256 mismatch")
+    if chart_path.suffix.lower() != ".adofai":
+        raise ValueError("chart must be a .adofai file")
+    chart_sha256 = viewer.file_sha256(chart_path)
     compiled = compile_adofai(load_adofai(chart_path))
     segment = build_playable_segment(compiled)
     model = load_model(checkpoint)
@@ -278,7 +278,7 @@ def run(chart_path: Path, difficulty: str, checkpoint: Path, output_dir: Path,
     payload = build_payload(chart_path, difficulty, checkpoint, compiled, segment, result)
     summary = {
         "format": FORMAT, "generated_at_utc": datetime.now(timezone.utc).isoformat(),
-        "chart": chart_path.name, "chart_sha256": SELECTED_SHA256,
+        "chart": chart_path.name, "chart_sha256": chart_sha256,
         "difficulty": difficulty, "full_chart_duration_s": segment.duration_s,
         "total_events": len(AutoplayTimingTeacher.from_segment(segment).events),
         "replay_end_s": result["replay_end_s"], "termination_reason": result["termination_reason"],
@@ -299,7 +299,8 @@ def run(chart_path: Path, difficulty: str, checkpoint: Path, output_dir: Path,
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--chart", type=Path, required=True)
-    parser.add_argument("--difficulty", default="P16")
+    parser.add_argument("--difficulty", default="unrated",
+                        help="Optional descriptive label, not an inferred difficulty rating")
     parser.add_argument("--checkpoint", type=Path, required=True)
     parser.add_argument("--output-dir", type=Path, required=True)
     parser.add_argument("--status-file", type=Path, required=True)
