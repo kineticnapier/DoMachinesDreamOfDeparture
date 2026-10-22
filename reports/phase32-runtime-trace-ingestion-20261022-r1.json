@@ -1,0 +1,85 @@
+{
+  "format": "dmdod-phase32-runtime-trace-ingestion-v0.2",
+  "session_count": 2,
+  "live_runtime_present": false,
+  "all_sessions_complete": false,
+  "sessions": [
+    {
+      "session_id": "nofail-synthetic",
+      "evidence_kind": "synthetic_fixture",
+      "event_count": 13,
+      "issues": [],
+      "no_fail_values": [
+        true
+      ],
+      "missing_hooks": [],
+      "hook_coverage": [
+        "AddHit",
+        "CheckPostHoldFail",
+        "Die",
+        "HitInputEvent",
+        "ProcessKeyInputs",
+        "ShowHitText",
+        "Simulated_PlayerControl_Update",
+        "SwitchChosen"
+      ],
+      "auto_transitions": [
+        {
+          "sequence": 3,
+          "frame": 325,
+          "realtime_s": 3.2501,
+          "next_judgement_sequence": 6
+        }
+      ],
+      "keydown_judgement_pairs": [
+        {
+          "keydown_sequence": 8,
+          "keydown_frame": 326,
+          "judgement_sequence": 9,
+          "judgement": "VeryLate",
+          "target_floor_evaluator_only": 37
+        }
+      ],
+      "hit_text_signal_delays": [
+        {
+          "add_hit_sequence": 4,
+          "visible_sequence": 5,
+          "delay_s": 0.00010000000000021103,
+          "signal_kind": "visible_judgement_signal"
+        }
+      ],
+      "visible_cumulative_counter_delay": "UNKNOWN_NOT_HOOKED"
+    },
+    {
+      "session_id": "fail-synthetic",
+      "evidence_kind": "synthetic_fixture",
+      "event_count": 5,
+      "issues": [],
+      "no_fail_values": [
+        false
+      ],
+      "missing_hooks": [
+        "AddHit",
+        "HitInputEvent",
+        "ProcessKeyInputs",
+        "ShowHitText",
+        "SwitchChosen"
+      ],
+      "hook_coverage": [
+        "CheckPostHoldFail",
+        "Die",
+        "OnPlayerDied",
+        "Simulated_PlayerControl_Update"
+      ],
+      "auto_transitions": [],
+      "keydown_judgement_pairs": [],
+      "hit_text_signal_delays": [],
+      "visible_cumulative_counter_delay": "UNKNOWN_NOT_HOOKED"
+    }
+  ],
+  "student_visible_fields": [],
+  "evaluator_only": true,
+  "runtime_parity": "RUNTIME_PARITY_UNVERIFIED",
+  "generated_utc": "2026-10-22T13:12:32.727241+00:00",
+  "input": "tests\\fixtures\\phase32-stock-runtime-multisession-synthetic.jsonl"
+}
