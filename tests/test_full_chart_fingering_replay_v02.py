@@ -104,7 +104,16 @@ def test_run_accepts_two_distinct_chart_files_and_records_actual_hashes(tmp_path
         assert summary["timing_source"] == "AutoPlay Oracle exact event times"
         assert summary["training_performed"] is False
         assert summary["teacher_shadow_rollout_used"] is False
-        assert (output_dir / "full-chart-replay.html").is_file()
+        viewer_html = (output_dir / "full-chart-replay.html").read_text(encoding="utf-8")
+        assert "16 Contact KeyDown Counter" in viewer_html
+        assert "KEY_FLASH_SECONDS" in viewer_html
+        assert (output_dir / "full-chart-replay-v02.html").is_file()
+        assert (output_dir / "full-chart-replay-v03.json").is_file()
+        enhanced = json.loads((output_dir / "full-chart-replay-v03.json").read_text(encoding="utf-8"))
+        assert enhanced["format"] == full.viewer_v03.FORMAT
+        assert enhanced["policies"]["network"]["saved_metrics"] == payload["policies"]["network"]["saved_metrics"]
+        assert len(enhanced["key_overlay"]["mapping"]) == 16
+        assert len(enhanced["events"]) == len(payload["events"])
         assert all("has no Pause" not in item for item in payload["rendering_limitations"])
         checksums.append(summary["chart_sha256"])
 
