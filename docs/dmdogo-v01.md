@@ -43,9 +43,16 @@ uv run python scripts/run_full_chart_fingering_replay_v02.py `
 ## 保存されるもの
 
 - `summary.json`：譜面ハッシュ、Hit/Miss、TooEarly、Overload、X精度、Timing MAE、指使用統計
-- `full-chart-replay.json`：各イベントの予定時刻、Network運指、物理KeyDown列、Motor trace
-- `full-chart-replay.html`：ブラウザで開けるオフラインリプレイ
+- `full-chart-replay.json`：各イベントの予定時刻、Network運指、物理KeyDown列、Motor trace（v0.2保存形式）
+- **`full-chart-replay.html`：標準ビューア v0.3**。16キー表示、KeyDown発光、KPS、打鍵数、物理Motor、惑星軌道、シーク
+- `full-chart-replay-v03.json`：v0.3用に描画情報とキーマッピングを追加したJSON
+- `full-chart-replay-v02.html`：以前の簡易ビューア（比較用、削除しない）
 - `*.status.json`（`--status-file`で指定）：正常終了・例外の状態
+
+v0.3は保存済みReplayを**描画変換するだけ**であり、追加推論、Motorの再実行、学習は行いません。
+従来のv0.2リプレイJSON、統計値、判定の記録はそのまま保持します。
+過去に作成済みのディレクトリは自動更新しません。必要なら
+`scripts/build_fingering_replay_viewer_v03.py` で保存済みJSONを変換してください。
 
 `full-chart-replay.json` の `events[].network` が選ばれた運指を、
 `policies.network.keydowns` が実際のシミュレータ上の物理KeyDownを示します。
