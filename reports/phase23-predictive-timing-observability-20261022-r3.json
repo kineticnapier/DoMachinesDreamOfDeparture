@@ -1,0 +1,834 @@
+{
+  "format": "dmdod-phase23-predictive-timing-observability-v0.1",
+  "generated_utc": "2026-10-22T10:27:03.797899+00:00",
+  "verdicts": [
+    "EARLY_DUE_NONIDENTIFIABLE",
+    "LEAD_44MS_INFEASIBLE",
+    "ORACLE_ONLY_INTERVENTION",
+    "INSUFFICIENT_EVIDENCE"
+  ],
+  "scope": {
+    "chart": "01645 - First town of this Journey remix - Irin.adofai",
+    "chart_sha256": "4a71411d454d3b10a10cd98165a2e9cce99e4b14c310d1e6847836fdc68fc0e1",
+    "event_ordinal_posthoc": 37,
+    "production_changed": false
+  },
+  "timeline": [
+    {
+      "time_s": 2.31,
+      "item": "future SetSpeed marker first visible (numeric multiplier absent)",
+      "provenance": "HUD263 capture"
+    },
+    {
+      "time_s": 2.48,
+      "item": "Midspin pair first safely visible",
+      "provenance": "HUD263 visible geometry"
+    },
+    {
+      "time_s": 3.1765882724022707,
+      "item": "last 44ms reservation deadline",
+      "provenance": "evaluator calculation from true due; not Student input"
+    },
+    {
+      "time_s": 3.18,
+      "item": "first counterfactual HUD distinction / numeric BPM arrival",
+      "provenance": "HUD263 capture comparison"
+    },
+    {
+      "time_s": 3.19,
+      "item": "Timing local ID37 first generated and point due emitted",
+      "provenance": "HUD Timing lifecycle"
+    },
+    {
+      "time_s": 3.19,
+      "item": "Fingering decision abstains; earliest reservation if lead rule were ignored",
+      "provenance": "policy decision history"
+    },
+    {
+      "time_s": 3.2205882724022707,
+      "item": "Event37 true due",
+      "provenance": "evaluator_oracle_only"
+    },
+    {
+      "time_s": 3.25,
+      "item": "Event36 NoFail automatic transition",
+      "provenance": "audited Stock reference virtual frame"
+    },
+    {
+      "time_s": 3.260999999999752,
+      "item": "ID38 physical KeyDown",
+      "provenance": "Motor history"
+    },
+    {
+      "time_s": 3.27,
+      "item": "ID38 processed against Event37 as VeryLate",
+      "provenance": "Stock reference; evaluator checked"
+    }
+  ],
+  "observability": {
+    "future_setspeed_marker_first_visible_s": 2.31,
+    "midspin_pair_first_safely_visible_s": 2.48,
+    "first_information_complete_lower_bound_s": 3.18,
+    "first_existing_timing_identification_s": 3.19,
+    "exact_due_reconstruction_at_first_information_frame": "unverified_and_not_needed_for_predeadline_nonidentifiability",
+    "counterfactual": {
+      "intervention": {
+        "action_source_index": 55,
+        "action_sequence_index": 55,
+        "action_floor_posthoc": 37,
+        "modified_field": "bpmMultiplier",
+        "original_value_posthoc": 2.0,
+        "counterfactual_value_posthoc": 0.25,
+        "factor_predeclared": 0.125,
+        "visible_marker_preserved": true,
+        "only_one_action_changed": true
+      },
+      "original_due_s_posthoc": 3.2205882724022707,
+      "alternate_due_s_posthoc": 3.5294118054760544,
+      "due_gap_ms_posthoc": 308.8235330737836,
+      "deadline_44ms_s_posthoc": 3.1765882724022707,
+      "compared_frames": 318,
+      "last_compared_at_s": 3.17,
+      "maximum_hud_difference": 0.0,
+      "countdown_equal": true,
+      "first_difference_at_s": 3.18,
+      "status": "early_due_nonidentifiable"
+    }
+  },
+  "lead": {
+    "required_s": 0.044,
+    "existing_timing_lead_ms": 30.58827301535416,
+    "original_stock_counted_window_s": [
+      3.155588272402271,
+      3.2855882724022707
+    ],
+    "alternate_stock_counted_window_s": [
+      3.411764746652525,
+      3.647058864299584
+    ],
+    "predeadline_shared_assessment": {
+      "status": "lead_44ms_infeasible",
+      "reason": "compatible worlds have no common Motor-reachable hit time",
+      "shared_window": null
+    },
+    "current_timing_assessment": {
+      "status": "lead_44ms_infeasible",
+      "reason": "observation arrived after the earliest compatible due's reservation deadline",
+      "shared_window": null
+    },
+    "too_early_or_wrong_world_risk": "the two Stock counted windows are disjoint; one precommitted strike cannot be valid in both visible-prefix-equivalent worlds"
+  },
+  "reference_interventions": {
+    "baseline": {
+      "no_fail": {
+        "failed": false,
+        "last_frame_s": 5.3500000000000005,
+        "base_input_mismatch_count": 50,
+        "event36": [
+          {
+            "frame_time_s": 3.25,
+            "input_id": null,
+            "kind": "auto_miss_advance",
+            "target_ordinal": 36,
+            "judgement": "fail_miss",
+            "automatic_miss": true,
+            "failed": false
+          }
+        ],
+        "event37": [
+          {
+            "frame_time_s": 3.27,
+            "input_id": "local:38",
+            "kind": "hit_advance",
+            "target_ordinal": 37,
+            "judgement": "very_late",
+            "automatic_miss": false,
+            "failed": false
+          }
+        ],
+        "event89": [
+          {
+            "frame_time_s": 5.32,
+            "input_id": null,
+            "kind": "auto_miss_advance",
+            "target_ordinal": 89,
+            "judgement": "fail_miss",
+            "automatic_miss": true,
+            "failed": false
+          }
+        ],
+        "event89_input_hit": false,
+        "selected_intervention_rows": []
+      },
+      "normal_fail_anchored_after_event35": {
+        "failed": true,
+        "last_frame_s": 3.3200000000000003,
+        "base_input_mismatch_count": 2,
+        "event36": [
+          {
+            "frame_time_s": 3.27,
+            "input_id": "local:38",
+            "kind": "invalid_input",
+            "target_ordinal": 36,
+            "judgement": "too_late",
+            "automatic_miss": false,
+            "failed": false
+          },
+          {
+            "frame_time_s": 3.3200000000000003,
+            "input_id": null,
+            "kind": "auto_miss_fail",
+            "target_ordinal": 36,
+            "judgement": "fail_miss",
+            "automatic_miss": true,
+            "failed": true
+          },
+          {
+            "frame_time_s": 3.3200000000000003,
+            "input_id": "local:39",
+            "kind": "ignored_after_fail",
+            "target_ordinal": 36,
+            "judgement": null,
+            "automatic_miss": false,
+            "failed": true
+          }
+        ],
+        "event37": [],
+        "event89": [],
+        "event89_input_hit": false,
+        "selected_intervention_rows": []
+      }
+    },
+    "oracle_event37_due_only": {
+      "no_fail": {
+        "failed": false,
+        "last_frame_s": 5.3500000000000005,
+        "base_input_mismatch_count": 50,
+        "event36": [
+          {
+            "frame_time_s": 3.23,
+            "input_id": "oracle:event37",
+            "kind": "hit_advance",
+            "target_ordinal": 36,
+            "judgement": "very_late",
+            "automatic_miss": false,
+            "failed": false
+          }
+        ],
+        "event37": [
+          {
+            "frame_time_s": 3.27,
+            "input_id": "local:38",
+            "kind": "hit_advance",
+            "target_ordinal": 37,
+            "judgement": "very_late",
+            "automatic_miss": false,
+            "failed": false
+          }
+        ],
+        "event89": [
+          {
+            "frame_time_s": 5.32,
+            "input_id": null,
+            "kind": "auto_miss_advance",
+            "target_ordinal": 89,
+            "judgement": "fail_miss",
+            "automatic_miss": true,
+            "failed": false
+          }
+        ],
+        "event89_input_hit": false,
+        "selected_intervention_rows": [
+          {
+            "frame_time_s": 3.23,
+            "input_id": "oracle:event37",
+            "kind": "hit_advance",
+            "target_ordinal": 36,
+            "judgement": "very_late",
+            "automatic_miss": false,
+            "failed": false
+          }
+        ]
+      },
+      "normal_fail_anchored_after_event35": {
+        "failed": true,
+        "last_frame_s": 3.5,
+        "base_input_mismatch_count": 6,
+        "event36": [
+          {
+            "frame_time_s": 3.23,
+            "input_id": "oracle:event37",
+            "kind": "hit_advance",
+            "target_ordinal": 36,
+            "judgement": "very_late",
+            "automatic_miss": false,
+            "failed": false
+          }
+        ],
+        "event37": [
+          {
+            "frame_time_s": 3.27,
+            "input_id": "local:38",
+            "kind": "hit_advance",
+            "target_ordinal": 37,
+            "judgement": "very_late",
+            "automatic_miss": false,
+            "failed": false
+          }
+        ],
+        "event89": [],
+        "event89_input_hit": false,
+        "selected_intervention_rows": [
+          {
+            "frame_time_s": 3.23,
+            "input_id": "oracle:event37",
+            "kind": "hit_advance",
+            "target_ordinal": 36,
+            "judgement": "very_late",
+            "automatic_miss": false,
+            "failed": false
+          }
+        ]
+      }
+    },
+    "oracle_event36_and37_due": {
+      "no_fail": {
+        "failed": false,
+        "last_frame_s": 5.3500000000000005,
+        "base_input_mismatch_count": 46,
+        "event36": [
+          {
+            "frame_time_s": 3.19,
+            "input_id": "oracle:event36",
+            "kind": "hit_advance",
+            "target_ordinal": 36,
+            "judgement": "perfect",
+            "automatic_miss": false,
+            "failed": false
+          }
+        ],
+        "event37": [
+          {
+            "frame_time_s": 3.23,
+            "input_id": "oracle:event37",
+            "kind": "hit_advance",
+            "target_ordinal": 37,
+            "judgement": "perfect",
+            "automatic_miss": false,
+            "failed": false
+          }
+        ],
+        "event89": [
+          {
+            "frame_time_s": 5.32,
+            "input_id": null,
+            "kind": "auto_miss_advance",
+            "target_ordinal": 89,
+            "judgement": "fail_miss",
+            "automatic_miss": true,
+            "failed": false
+          }
+        ],
+        "event89_input_hit": false,
+        "selected_intervention_rows": [
+          {
+            "frame_time_s": 3.19,
+            "input_id": "oracle:event36",
+            "kind": "hit_advance",
+            "target_ordinal": 36,
+            "judgement": "perfect",
+            "automatic_miss": false,
+            "failed": false
+          },
+          {
+            "frame_time_s": 3.23,
+            "input_id": "oracle:event37",
+            "kind": "hit_advance",
+            "target_ordinal": 37,
+            "judgement": "perfect",
+            "automatic_miss": false,
+            "failed": false
+          }
+        ]
+      },
+      "normal_fail_anchored_after_event35": {
+        "failed": true,
+        "last_frame_s": 3.67,
+        "base_input_mismatch_count": 6,
+        "event36": [
+          {
+            "frame_time_s": 3.19,
+            "input_id": "oracle:event36",
+            "kind": "hit_advance",
+            "target_ordinal": 36,
+            "judgement": "perfect",
+            "automatic_miss": false,
+            "failed": false
+          }
+        ],
+        "event37": [
+          {
+            "frame_time_s": 3.23,
+            "input_id": "oracle:event37",
+            "kind": "hit_advance",
+            "target_ordinal": 37,
+            "judgement": "perfect",
+            "automatic_miss": false,
+            "failed": false
+          }
+        ],
+        "event89": [],
+        "event89_input_hit": false,
+        "selected_intervention_rows": [
+          {
+            "frame_time_s": 3.19,
+            "input_id": "oracle:event36",
+            "kind": "hit_advance",
+            "target_ordinal": 36,
+            "judgement": "perfect",
+            "automatic_miss": false,
+            "failed": false
+          },
+          {
+            "frame_time_s": 3.23,
+            "input_id": "oracle:event37",
+            "kind": "hit_advance",
+            "target_ordinal": 37,
+            "judgement": "perfect",
+            "automatic_miss": false,
+            "failed": false
+          }
+        ]
+      }
+    },
+    "oracle_all_pre89_lead_abstentions": {
+      "no_fail": {
+        "failed": false,
+        "last_frame_s": 5.3500000000000005,
+        "base_input_mismatch_count": 0,
+        "event36": [
+          {
+            "frame_time_s": 3.19,
+            "input_id": "oracle:event36",
+            "kind": "hit_advance",
+            "target_ordinal": 36,
+            "judgement": "perfect",
+            "automatic_miss": false,
+            "failed": false
+          }
+        ],
+        "event37": [
+          {
+            "frame_time_s": 3.23,
+            "input_id": "oracle:event37",
+            "kind": "hit_advance",
+            "target_ordinal": 37,
+            "judgement": "perfect",
+            "automatic_miss": false,
+            "failed": false
+          }
+        ],
+        "event89": [
+          {
+            "frame_time_s": 5.26,
+            "input_id": "local:89",
+            "kind": "hit_advance",
+            "target_ordinal": 89,
+            "judgement": "perfect",
+            "automatic_miss": false,
+            "failed": false
+          }
+        ],
+        "event89_input_hit": true,
+        "selected_intervention_rows": [
+          {
+            "frame_time_s": 3.19,
+            "input_id": "oracle:event36",
+            "kind": "hit_advance",
+            "target_ordinal": 36,
+            "judgement": "perfect",
+            "automatic_miss": false,
+            "failed": false
+          },
+          {
+            "frame_time_s": 3.23,
+            "input_id": "oracle:event37",
+            "kind": "hit_advance",
+            "target_ordinal": 37,
+            "judgement": "perfect",
+            "automatic_miss": false,
+            "failed": false
+          },
+          {
+            "frame_time_s": 3.4,
+            "input_id": "oracle:event42",
+            "kind": "hit_advance",
+            "target_ordinal": 42,
+            "judgement": "perfect",
+            "automatic_miss": false,
+            "failed": false
+          },
+          {
+            "frame_time_s": 3.58,
+            "input_id": "oracle:event47",
+            "kind": "hit_advance",
+            "target_ordinal": 47,
+            "judgement": "perfect",
+            "automatic_miss": false,
+            "failed": false
+          }
+        ]
+      },
+      "normal_fail_anchored_after_event35": {
+        "failed": false,
+        "last_frame_s": 5.3500000000000005,
+        "base_input_mismatch_count": 0,
+        "event36": [
+          {
+            "frame_time_s": 3.19,
+            "input_id": "oracle:event36",
+            "kind": "hit_advance",
+            "target_ordinal": 36,
+            "judgement": "perfect",
+            "automatic_miss": false,
+            "failed": false
+          }
+        ],
+        "event37": [
+          {
+            "frame_time_s": 3.23,
+            "input_id": "oracle:event37",
+            "kind": "hit_advance",
+            "target_ordinal": 37,
+            "judgement": "perfect",
+            "automatic_miss": false,
+            "failed": false
+          }
+        ],
+        "event89": [
+          {
+            "frame_time_s": 5.26,
+            "input_id": "local:89",
+            "kind": "hit_advance",
+            "target_ordinal": 89,
+            "judgement": "perfect",
+            "automatic_miss": false,
+            "failed": false
+          }
+        ],
+        "event89_input_hit": true,
+        "selected_intervention_rows": [
+          {
+            "frame_time_s": 3.19,
+            "input_id": "oracle:event36",
+            "kind": "hit_advance",
+            "target_ordinal": 36,
+            "judgement": "perfect",
+            "automatic_miss": false,
+            "failed": false
+          },
+          {
+            "frame_time_s": 3.23,
+            "input_id": "oracle:event37",
+            "kind": "hit_advance",
+            "target_ordinal": 37,
+            "judgement": "perfect",
+            "automatic_miss": false,
+            "failed": false
+          },
+          {
+            "frame_time_s": 3.4,
+            "input_id": "oracle:event42",
+            "kind": "hit_advance",
+            "target_ordinal": 42,
+            "judgement": "perfect",
+            "automatic_miss": false,
+            "failed": false
+          },
+          {
+            "frame_time_s": 3.58,
+            "input_id": "oracle:event47",
+            "kind": "hit_advance",
+            "target_ordinal": 47,
+            "judgement": "perfect",
+            "automatic_miss": false,
+            "failed": false
+          }
+        ]
+      }
+    },
+    "hud_candidate_after_virtual_nofail_auto": {
+      "no_fail": {
+        "failed": false,
+        "last_frame_s": 5.3500000000000005,
+        "base_input_mismatch_count": 46,
+        "event36": [
+          {
+            "frame_time_s": 3.25,
+            "input_id": null,
+            "kind": "auto_miss_advance",
+            "target_ordinal": 36,
+            "judgement": "fail_miss",
+            "automatic_miss": true,
+            "failed": false
+          }
+        ],
+        "event37": [
+          {
+            "frame_time_s": 3.2600000000000002,
+            "input_id": "hud_candidate:event37",
+            "kind": "hit_advance",
+            "target_ordinal": 37,
+            "judgement": "very_late",
+            "automatic_miss": false,
+            "failed": false
+          }
+        ],
+        "event89": [
+          {
+            "frame_time_s": 5.32,
+            "input_id": null,
+            "kind": "auto_miss_advance",
+            "target_ordinal": 89,
+            "judgement": "fail_miss",
+            "automatic_miss": true,
+            "failed": false
+          }
+        ],
+        "event89_input_hit": false,
+        "selected_intervention_rows": [
+          {
+            "frame_time_s": 3.2600000000000002,
+            "input_id": "hud_candidate:event37",
+            "kind": "hit_advance",
+            "target_ordinal": 37,
+            "judgement": "very_late",
+            "automatic_miss": false,
+            "failed": false
+          }
+        ]
+      },
+      "normal_fail_anchored_after_event35": {
+        "failed": true,
+        "last_frame_s": 3.3200000000000003,
+        "base_input_mismatch_count": 2,
+        "event36": [
+          {
+            "frame_time_s": 3.2600000000000002,
+            "input_id": "hud_candidate:event37",
+            "kind": "invalid_input",
+            "target_ordinal": 36,
+            "judgement": "too_late",
+            "automatic_miss": false,
+            "failed": false
+          },
+          {
+            "frame_time_s": 3.27,
+            "input_id": "local:38",
+            "kind": "invalid_input",
+            "target_ordinal": 36,
+            "judgement": "too_late",
+            "automatic_miss": false,
+            "failed": false
+          },
+          {
+            "frame_time_s": 3.3200000000000003,
+            "input_id": null,
+            "kind": "auto_miss_fail",
+            "target_ordinal": 36,
+            "judgement": "fail_miss",
+            "automatic_miss": true,
+            "failed": true
+          },
+          {
+            "frame_time_s": 3.3200000000000003,
+            "input_id": "local:39",
+            "kind": "ignored_after_fail",
+            "target_ordinal": 36,
+            "judgement": null,
+            "automatic_miss": false,
+            "failed": true
+          }
+        ],
+        "event37": [],
+        "event89": [],
+        "event89_input_hit": false,
+        "selected_intervention_rows": [
+          {
+            "frame_time_s": 3.2600000000000002,
+            "input_id": "hud_candidate:event37",
+            "kind": "invalid_input",
+            "target_ordinal": 36,
+            "judgement": "too_late",
+            "automatic_miss": false,
+            "failed": false
+          }
+        ]
+      }
+    }
+  },
+  "intervention_boundary": {
+    "oracle_rows_are_evaluator_only": true,
+    "hud_candidate_inputs": [
+      "ID37 point forecast at 3.190s",
+      "declared NoFail mode",
+      "virtual Event36 auto-transition predicted at 3.250s"
+    ],
+    "hud_candidate_reservation_lead_ms": 61.0,
+    "why_not_safe_control": [
+      "live Unity frame phase is unverified",
+      "automatic FailMiss visibility is unverified",
+      "normal-fail mode does not advance Event36 at 3.250s",
+      "no physical Motor replay was authorized"
+    ]
+  },
+  "generalization": {
+    "source_reports": [
+      "reports\\phase16-firsttown12-motor-ab-20261020-r1.json",
+      "reports\\phase16-bool5-motor-ab-20261020-r1.json"
+    ],
+    "sample_count": 14,
+    "classification_counts": {
+      "future_setspeed_neighborhood": 10,
+      "midspin_neighborhood": 4
+    },
+    "lead_ms": {
+      "minimum": 0.8824301509164911,
+      "maximum": 42.353029504651474,
+      "all_below_44ms": true
+    },
+    "events": [
+      {
+        "chart": "01645 - First town of this Journey remix - Irin.adofai",
+        "local_id": 1,
+        "decision_s": 0.71,
+        "predicted_due_s": 0.7205882518850071,
+        "observable_lead_ms": 10.588251885007116,
+        "late_vs_44ms_ms": 33.41174811499288,
+        "posthoc_neighborhood": "future_setspeed_neighborhood"
+      },
+      {
+        "chart": "01645 - First town of this Journey remix - Irin.adofai",
+        "local_id": 36,
+        "decision_s": 3.18,
+        "predicted_due_s": 3.1838235658987974,
+        "observable_lead_ms": 3.8235658987972876,
+        "late_vs_44ms_ms": 40.176434101202716,
+        "posthoc_neighborhood": "future_setspeed_neighborhood"
+      },
+      {
+        "chart": "01645 - First town of this Journey remix - Irin.adofai",
+        "local_id": 37,
+        "decision_s": 3.19,
+        "predicted_due_s": 3.220588273015354,
+        "observable_lead_ms": 30.58827301535416,
+        "late_vs_44ms_ms": 13.411726984645838,
+        "posthoc_neighborhood": "future_setspeed_neighborhood"
+      },
+      {
+        "chart": "01645 - First town of this Journey remix - Irin.adofai",
+        "local_id": 42,
+        "decision_s": 3.37,
+        "predicted_due_s": 3.397058861675599,
+        "observable_lead_ms": 27.058861675598678,
+        "late_vs_44ms_ms": 16.941138324401322,
+        "posthoc_neighborhood": "midspin_neighborhood"
+      },
+      {
+        "chart": "01645 - First town of this Journey remix - Irin.adofai",
+        "local_id": 47,
+        "decision_s": 3.54,
+        "predicted_due_s": 3.5735294506141178,
+        "observable_lead_ms": 33.52945061411772,
+        "late_vs_44ms_ms": 10.47054938588228,
+        "posthoc_neighborhood": "midspin_neighborhood"
+      },
+      {
+        "chart": "01645 - First town of this Journey remix - Irin.adofai",
+        "local_id": 100,
+        "decision_s": 5.65,
+        "predicted_due_s": 5.691176516507787,
+        "observable_lead_ms": 41.176516507786864,
+        "late_vs_44ms_ms": 2.8234834922131355,
+        "posthoc_neighborhood": "future_setspeed_neighborhood"
+      },
+      {
+        "chart": "01645 - First town of this Journey remix - Irin.adofai",
+        "local_id": 101,
+        "decision_s": 5.7,
+        "predicted_due_s": 5.735294164972339,
+        "observable_lead_ms": 35.29416497233839,
+        "late_vs_44ms_ms": 8.705835027661607,
+        "posthoc_neighborhood": "future_setspeed_neighborhood"
+      },
+      {
+        "chart": "01645 - First town of this Journey remix - Irin.adofai",
+        "local_id": 146,
+        "decision_s": 8.83,
+        "predicted_due_s": 8.830882430150917,
+        "observable_lead_ms": 0.8824301509164911,
+        "late_vs_44ms_ms": 43.11756984908351,
+        "posthoc_neighborhood": "future_setspeed_neighborhood"
+      },
+      {
+        "chart": "01645 - First town of this Journey remix - Irin.adofai",
+        "local_id": 147,
+        "decision_s": 8.84,
+        "predicted_due_s": 8.867647137267477,
+        "observable_lead_ms": 27.647137267477362,
+        "late_vs_44ms_ms": 16.352862732522638,
+        "posthoc_neighborhood": "future_setspeed_neighborhood"
+      },
+      {
+        "chart": "01645 - First town of this Journey remix - Irin.adofai",
+        "local_id": 152,
+        "decision_s": 9.01,
+        "predicted_due_s": 9.044117726206077,
+        "observable_lead_ms": 34.11772620607678,
+        "late_vs_44ms_ms": 9.882273793923218,
+        "posthoc_neighborhood": "midspin_neighborhood"
+      },
+      {
+        "chart": "01645 - First town of this Journey remix - Irin.adofai",
+        "local_id": 157,
+        "decision_s": 9.19,
+        "predicted_due_s": 9.220588314866403,
+        "observable_lead_ms": 30.58831486640301,
+        "late_vs_44ms_ms": 13.41168513359699,
+        "posthoc_neighborhood": "midspin_neighborhood"
+      },
+      {
+        "chart": "01645 - First town of this Journey remix - Irin.adofai",
+        "local_id": 210,
+        "decision_s": 11.3,
+        "predicted_due_s": 11.338235380761786,
+        "observable_lead_ms": 38.23538076178501,
+        "late_vs_44ms_ms": 5.764619238214991,
+        "posthoc_neighborhood": "future_setspeed_neighborhood"
+      },
+      {
+        "chart": "01645 - First town of this Journey remix - Irin.adofai",
+        "local_id": 211,
+        "decision_s": 11.34,
+        "predicted_due_s": 11.382353029504651,
+        "observable_lead_ms": 42.353029504651474,
+        "late_vs_44ms_ms": 1.6469704953485262,
+        "posthoc_neighborhood": "future_setspeed_neighborhood"
+      },
+      {
+        "chart": "04042 - bool - vo[ICE].adofai",
+        "local_id": 1,
+        "decision_s": 4.0,
+        "predicted_due_s": 4.020163486534462,
+        "observable_lead_ms": 20.16348653446176,
+        "late_vs_44ms_ms": 23.83651346553824,
+        "posthoc_neighborhood": "future_setspeed_neighborhood"
+      }
+    ],
+    "claim_limit": "saved two-chart diagnostics only; neighborhood labels use evaluator chart structure after replay and are not Student inputs"
+  },
+  "student_boundary": {
+    "oracle_use": "counterfactual truth and target ordinals used only after prefix capture",
+    "production_modules_modified": []
+  }
+}
