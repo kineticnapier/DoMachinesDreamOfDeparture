@@ -78,6 +78,40 @@ def test_roll_can_change_when_expected_finger_is_not_eligible():
     assert allocations[decision.selected_index][0].axis == "right_1"
 
 
+def test_v03_fast_guard_keeps_continuity_inside_network_top_two():
+    allocations = _single("left_1", "left_2", "left_3", "right_4", "left_4")
+    v02 = ContinuitySelector(mode="continuity")
+    v03 = ContinuitySelector(mode="continuity_v03")
+    history_scores = (
+        (0.0, 1.0, 2.0, 3.0, 4.0),
+        (2.0, 0.0, 1.0, 3.0, 4.0),
+    )
+    for event_index, scores in enumerate(history_scores):
+        for selector in (v02, v03):
+            selector.select(scores, allocations, (True,) * 5,
+                            event_index, 1.0 + event_index * .02)
+
+    # left_3 is the established rolling continuation, but is only Network rank 3.
+    scores = (4.0, 0.0, 2.0, 3.0, 1.0)
+    old = v02.select(scores, allocations, (True,) * 5, 2, 1.04)
+    guarded = v03.select(scores, allocations, (True,) * 5, 2, 1.04)
+    assert old.selected_index == 2
+    assert guarded.selected_index in {1, 4}
+    assert guarded.fast_network_guard_applied is True
+    assert guarded.network_guard_indices == (1, 4)
+
+
+def test_v03_reset_removes_causal_history():
+    selector = ContinuitySelector(mode="continuity_v03")
+    allocations = _single("left_1", "left_2", "left_3")
+    selector.select((0.0, 1.0, 2.0), allocations, (True,) * 3, 0, 1.0)
+    assert selector.history
+    selector.reset()
+    assert selector.history == ()
+    decision = selector.select((2.0, 1.0, 0.0), allocations, (True,) * 3, 1, 1.02)
+    assert decision.fast_network_guard_applied is False
+
+
 def test_simultaneous_input_remains_atomic_and_eligible():
     allocations = (
         (Finger("left_1"), Finger("right_1")),

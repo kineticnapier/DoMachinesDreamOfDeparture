@@ -67,12 +67,17 @@ def _trace_frame(env: CoupledContactRealChartEnv) -> list:
 
 def _summarize(env: CoupledContactRealChartEnv) -> dict:
     stats = env.stats
+    signed_timing_error_ms = (
+        1000.0 * sum(env._errors_s) / len(env._errors_s)
+        if env._errors_s else None
+    )
     return {
         "targets": stats.targets, "hits": stats.hits, "misses": stats.misses,
         "too_early": stats.too_early_presses, "overloaded": bool(stats.overloaded),
         "overload_counter": stats.overload_counter,
         "x_accuracy_percent": stats.x_accuracy_percent,
         "timing_mae_ms": stats.mean_abs_error_ms,
+        "signed_timing_error_ms": signed_timing_error_ms,
         "physical_keydowns": env.physical_keydowns,
     }
 
@@ -83,9 +88,9 @@ def run_network(segment, model: network.FingeringRanker, *, stop_after_s: float 
                 selector_mode: str = "free") -> dict:
     """Execute the causal Network policy; no Teacher rollout exists here."""
 
-    if selector_mode not in {"free", "continuity"}:
-        raise ValueError("selector mode must be free or continuity")
-    if selector_mode == "continuity" and style_alpha != 0.0:
+    if selector_mode not in {"free", "continuity", "continuity_v03"}:
+        raise ValueError("selector mode must be free, continuity, or continuity_v03")
+    if selector_mode in {"continuity", "continuity_v03"} and style_alpha != 0.0:
         raise ValueError("continuity selector cannot be combined with Human-Proxy style alpha")
 
     env = CoupledContactRealChartEnv(segment, control_dt_s=teacher.CTRL, physics_dt_s=teacher.PHYS)
@@ -122,7 +127,7 @@ def run_network(segment, model: network.FingeringRanker, *, stop_after_s: float 
             eligible = tuple(teacher.eligible(env.motor, occupied, value)[0]
                              for value in allocations)
             context = network.encode_context(env.motor, look, now, occupied)
-            if selector_mode == "continuity":
+            if selector_mode in {"continuity", "continuity_v03"}:
                 _, scores = network.choose_candidate(model, context, allocations, eligible)
                 selection = continuity_selector.select(
                     scores, allocations, eligible, event.event_index, event.episode_time_s)
@@ -131,6 +136,8 @@ def run_network(segment, model: network.FingeringRanker, *, stop_after_s: float 
                 blended = selection.combined_rank_scores
                 continuity_costs = selection.continuity_costs
                 selection_reason = selection.reason
+                fast_network_guard_applied = selection.fast_network_guard_applied
+                network_guard_indices = selection.network_guard_indices
             else:
                 selected_index, scores, blended = network.choose_candidate_styled(
                     model, context, allocations, eligible, alpha=style_alpha)
@@ -139,6 +146,8 @@ def run_network(segment, model: network.FingeringRanker, *, stop_after_s: float 
                 continuity_costs = tuple(None for _ in allocations)
                 selection_reason = ("free_network_argmin" if style_alpha == 0.0
                                     else "human_proxy_style_blend")
+                fast_network_guard_applied = False
+                network_guard_indices = ()
             allocation = allocations[selected_index] if selected_index is not None else ()
             item = teacher.PlanItem(event.event_index, event.episode_time_s, allocation)
             selected.add(event.event_index)
@@ -161,6 +170,8 @@ def run_network(segment, model: network.FingeringRanker, *, stop_after_s: float 
                 "selector_mode": selector_mode,
                 "selected_candidate_index": selected_index,
                 "selection_reason": selection_reason,
+                "fast_network_guard_applied": fast_network_guard_applied,
+                "network_guard_indices": list(network_guard_indices),
                 "free_chosen": (teacher.PlanItem(event.event_index, event.episode_time_s,
                                                   allocations[free_index]).label
                                 if free_index is not None else None),
@@ -375,7 +386,8 @@ def main() -> None:
                         help="Default: <output-dir>.status.json; auto-numbered if occupied")
     parser.add_argument("--stop-after-s", type=float)
     parser.add_argument("--wall-timeout-s", type=float, default=300.0)
-    parser.add_argument("--selector", choices=("free", "continuity"), default="free",
+    parser.add_argument("--selector", choices=("free", "continuity", "continuity_v03"),
+                        default="free",
                         help="Candidate selector; default preserves Fingering Network v0.1")
     args = parser.parse_args()
     output_dir, status_file = choose_output_paths(args.chart, args.output_dir, args.status_file)

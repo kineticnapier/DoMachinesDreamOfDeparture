@@ -36,6 +36,8 @@ class SelectionDecision:
     combined_rank_scores: tuple[float | None, ...]
     changed_from_free: bool
     reason: str
+    fast_network_guard_applied: bool
+    network_guard_indices: tuple[int, ...]
 
 
 def _axis_parts(axis: str) -> tuple[str, int]:
@@ -68,8 +70,8 @@ class ContinuitySelector:
     """
 
     def __init__(self, *, mode: str = "free") -> None:
-        if mode not in {"free", "continuity"}:
-            raise ValueError("mode must be 'free' or 'continuity'")
+        if mode not in {"free", "continuity", "continuity_v03"}:
+            raise ValueError("mode must be 'free', 'continuity', or 'continuity_v03'")
         self.mode = mode
         self._history: list[SelectionHistory] = []
 
@@ -142,13 +144,25 @@ class ContinuitySelector:
             raise ValueError("network score, allocation, and eligibility length mismatch")
         if not allocations:
             raise ValueError("empty candidate set")
-        valid = [index for index, allowed in enumerate(eligible) if allowed]
-        for index in valid:
+        eligible_indices = [index for index, allowed in enumerate(eligible) if allowed]
+        for index in eligible_indices:
             if network_scores[index] is None:
                 raise ValueError("eligible candidate is missing a network score")
         free_index = min(
-            valid, key=lambda index: (float(network_scores[index]), index)
-        ) if valid else None
+            eligible_indices, key=lambda index: (float(network_scores[index]), index)
+        ) if eligible_indices else None
+
+        valid = list(eligible_indices)
+        guard_applied = False
+        guard_indices: tuple[int, ...] = ()
+        if (self.mode == "continuity_v03" and self._history
+                and due_s - self._history[-1].due_s <= FAST_SEQUENCE_S + 1e-12
+                and len(valid) > 2):
+            valid = sorted(
+                valid, key=lambda index: (float(network_scores[index]), index)
+            )[:2]
+            guard_applied = True
+            guard_indices = tuple(valid)
 
         continuity_values: tuple[float | None, ...] = tuple(None for _ in allocations)
         combined: tuple[float | None, ...] = tuple(None for _ in allocations)
@@ -174,7 +188,8 @@ class ContinuitySelector:
                 valid,
                 key=lambda index: (combined_values[index], network_rank[index], index),
             )
-            reason = "scale_free_network_continuity_rank"
+            reason = ("fast_network_top2_then_continuity_rank" if guard_applied
+                      else "scale_free_network_continuity_rank")
 
         if selected is not None:
             self._history.append(SelectionHistory(
@@ -191,6 +206,8 @@ class ContinuitySelector:
             combined_rank_scores=combined,
             changed_from_free=selected != free_index,
             reason=reason,
+            fast_network_guard_applied=guard_applied,
+            network_guard_indices=guard_indices,
         )
 
 

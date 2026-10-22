@@ -76,6 +76,20 @@ def test_unknown_selector_mode_is_rejected():
                          selector_mode="teacher_magic")
 
 
+def test_v03_selector_integrates_without_teacher_or_ineligible_choice():
+    model = network.FingeringRanker()
+    model.eval()
+    result = full.run_network(_segment(), model, stop_after_s=.60,
+                              selector_mode="continuity_v03",
+                              policy_name="continuity_v03")
+    assert result["selector_mode"] == "continuity_v03"
+    assert result["teacher_shadow_rollout_used"] is False
+    for row in result["decisions"]:
+        selected = row["selected_candidate_index"]
+        if selected is not None:
+            assert row["eligible"][selected] is True
+
+
 def test_choice_summary_counts_thumb_side_and_fast_disjoint_switch():
     rows = [
         {"event_index": 1, "due_ms": 10, "chosen": "left_5/tip", "axes": ["left_5"]},
