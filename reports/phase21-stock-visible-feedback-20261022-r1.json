@@ -1,0 +1,1430 @@
+{
+  "format": "dmdod-phase21-stock-visible-feedback-v0.1",
+  "generated_utc": "2026-10-22T09:28:40.178182+00:00",
+  "verdicts": [
+    "STOCK_VISIBLE_FEEDBACK_PARTIAL"
+  ],
+  "source": "reports\\phase20c-frame-stock-state-20261022-r1.json",
+  "evidence_boundary": {
+    "dll_verified": [
+      "scrMarginTracker.AddHit mutates internal counts synchronously",
+      "ShowHitText is invoked by judgement paths",
+      "reset and checkpoint rollback mutate internal counts"
+    ],
+    "user_confirmed_live": [
+      "judgement-specific cumulative counters are visible",
+      "a corresponding counter changes when judgement is shown"
+    ],
+    "unverified": [
+      "exact visible label schema",
+      "automatic no-KeyDown FailMiss visibility",
+      "render-to-capture latency",
+      "same-frame ordering on the visible surface"
+    ]
+  },
+  "fixture_all_categories": {
+    "observations": [
+      {
+        "displayed_at_s": 3.24,
+        "observed_at_s": 3.25,
+        "status": "baseline",
+        "deltas": {}
+      },
+      {
+        "displayed_at_s": 3.25,
+        "observed_at_s": 3.26,
+        "event_interval_s": [
+          3.24,
+          3.25
+        ],
+        "status": "delta",
+        "deltas": {
+          "fail_miss": 1
+        },
+        "within_interval_order_known": false
+      },
+      {
+        "displayed_at_s": 3.27,
+        "observed_at_s": 3.28,
+        "event_interval_s": [
+          3.25,
+          3.27
+        ],
+        "status": "delta",
+        "deltas": {
+          "very_late": 1
+        },
+        "within_interval_order_known": false
+      },
+      {
+        "displayed_at_s": 3.3200000000000003,
+        "observed_at_s": 3.33,
+        "event_interval_s": [
+          3.27,
+          3.3200000000000003
+        ],
+        "status": "delta",
+        "deltas": {
+          "very_late": 1
+        },
+        "within_interval_order_known": false
+      },
+      {
+        "displayed_at_s": 3.36,
+        "observed_at_s": 3.3699999999999997,
+        "event_interval_s": [
+          3.3200000000000003,
+          3.36
+        ],
+        "status": "delta",
+        "deltas": {
+          "very_late": 1
+        },
+        "within_interval_order_known": false
+      },
+      {
+        "displayed_at_s": 3.38,
+        "observed_at_s": 3.3899999999999997,
+        "event_interval_s": [
+          3.36,
+          3.38
+        ],
+        "status": "delta",
+        "deltas": {
+          "perfect": 1
+        },
+        "within_interval_order_known": false
+      },
+      {
+        "displayed_at_s": 3.43,
+        "observed_at_s": 3.44,
+        "event_interval_s": [
+          3.38,
+          3.43
+        ],
+        "status": "delta",
+        "deltas": {
+          "fail_miss": 1
+        },
+        "within_interval_order_known": false
+      },
+      {
+        "displayed_at_s": 3.45,
+        "observed_at_s": 3.46,
+        "event_interval_s": [
+          3.43,
+          3.45
+        ],
+        "status": "delta",
+        "deltas": {
+          "very_late": 1
+        },
+        "within_interval_order_known": false
+      },
+      {
+        "displayed_at_s": 3.49,
+        "observed_at_s": 3.5,
+        "event_interval_s": [
+          3.45,
+          3.49
+        ],
+        "status": "delta",
+        "deltas": {
+          "very_late": 1
+        },
+        "within_interval_order_known": false
+      },
+      {
+        "displayed_at_s": 3.54,
+        "observed_at_s": 3.55,
+        "event_interval_s": [
+          3.49,
+          3.54
+        ],
+        "status": "delta",
+        "deltas": {
+          "very_late": 1
+        },
+        "within_interval_order_known": false
+      },
+      {
+        "displayed_at_s": 3.5500000000000003,
+        "observed_at_s": 3.56,
+        "event_interval_s": [
+          3.54,
+          3.5500000000000003
+        ],
+        "status": "delta",
+        "deltas": {
+          "perfect": 1
+        },
+        "within_interval_order_known": false
+      },
+      {
+        "displayed_at_s": 3.61,
+        "observed_at_s": 3.6199999999999997,
+        "event_interval_s": [
+          3.5500000000000003,
+          3.61
+        ],
+        "status": "delta",
+        "deltas": {
+          "fail_miss": 1
+        },
+        "within_interval_order_known": false
+      },
+      {
+        "displayed_at_s": 3.63,
+        "observed_at_s": 3.6399999999999997,
+        "event_interval_s": [
+          3.61,
+          3.63
+        ],
+        "status": "delta",
+        "deltas": {
+          "very_late": 1
+        },
+        "within_interval_order_known": false
+      },
+      {
+        "displayed_at_s": 3.66,
+        "observed_at_s": 3.67,
+        "event_interval_s": [
+          3.63,
+          3.66
+        ],
+        "status": "delta",
+        "deltas": {
+          "very_late": 1
+        },
+        "within_interval_order_known": false
+      },
+      {
+        "displayed_at_s": 3.72,
+        "observed_at_s": 3.73,
+        "event_interval_s": [
+          3.66,
+          3.72
+        ],
+        "status": "delta",
+        "deltas": {
+          "very_late": 1
+        },
+        "within_interval_order_known": false
+      },
+      {
+        "displayed_at_s": 3.7600000000000002,
+        "observed_at_s": 3.77,
+        "event_interval_s": [
+          3.72,
+          3.7600000000000002
+        ],
+        "status": "delta",
+        "deltas": {
+          "very_late": 1
+        },
+        "within_interval_order_known": false
+      },
+      {
+        "displayed_at_s": 3.8000000000000003,
+        "observed_at_s": 3.81,
+        "event_interval_s": [
+          3.7600000000000002,
+          3.8000000000000003
+        ],
+        "status": "delta",
+        "deltas": {
+          "very_late": 1
+        },
+        "within_interval_order_known": false
+      },
+      {
+        "displayed_at_s": 3.85,
+        "observed_at_s": 3.86,
+        "event_interval_s": [
+          3.8000000000000003,
+          3.85
+        ],
+        "status": "delta",
+        "deltas": {
+          "very_late": 1
+        },
+        "within_interval_order_known": false
+      },
+      {
+        "displayed_at_s": 3.89,
+        "observed_at_s": 3.9,
+        "event_interval_s": [
+          3.85,
+          3.89
+        ],
+        "status": "delta",
+        "deltas": {
+          "very_late": 1
+        },
+        "within_interval_order_known": false
+      },
+      {
+        "displayed_at_s": 3.94,
+        "observed_at_s": 3.9499999999999997,
+        "event_interval_s": [
+          3.89,
+          3.94
+        ],
+        "status": "delta",
+        "deltas": {
+          "very_late": 1
+        },
+        "within_interval_order_known": false
+      },
+      {
+        "displayed_at_s": 3.98,
+        "observed_at_s": 3.9899999999999998,
+        "event_interval_s": [
+          3.94,
+          3.98
+        ],
+        "status": "delta",
+        "deltas": {
+          "very_late": 1
+        },
+        "within_interval_order_known": false
+      },
+      {
+        "displayed_at_s": 4.03,
+        "observed_at_s": 4.04,
+        "event_interval_s": [
+          3.98,
+          4.03
+        ],
+        "status": "delta",
+        "deltas": {
+          "very_late": 1
+        },
+        "within_interval_order_known": false
+      },
+      {
+        "displayed_at_s": 4.07,
+        "observed_at_s": 4.08,
+        "event_interval_s": [
+          4.03,
+          4.07
+        ],
+        "status": "delta",
+        "deltas": {
+          "perfect": 1,
+          "very_late": 1
+        },
+        "within_interval_order_known": false
+      },
+      {
+        "displayed_at_s": 4.11,
+        "observed_at_s": 4.12,
+        "event_interval_s": [
+          4.07,
+          4.11
+        ],
+        "status": "delta",
+        "deltas": {
+          "very_late": 1
+        },
+        "within_interval_order_known": false
+      },
+      {
+        "displayed_at_s": 4.16,
+        "observed_at_s": 4.17,
+        "event_interval_s": [
+          4.11,
+          4.16
+        ],
+        "status": "delta",
+        "deltas": {
+          "very_late": 1
+        },
+        "within_interval_order_known": false
+      },
+      {
+        "displayed_at_s": 4.2,
+        "observed_at_s": 4.21,
+        "event_interval_s": [
+          4.16,
+          4.2
+        ],
+        "status": "delta",
+        "deltas": {
+          "very_late": 1
+        },
+        "within_interval_order_known": false
+      },
+      {
+        "displayed_at_s": 4.24,
+        "observed_at_s": 4.25,
+        "event_interval_s": [
+          4.2,
+          4.24
+        ],
+        "status": "delta",
+        "deltas": {
+          "very_late": 1
+        },
+        "within_interval_order_known": false
+      },
+      {
+        "displayed_at_s": 4.2700000000000005,
+        "observed_at_s": 4.28,
+        "event_interval_s": [
+          4.24,
+          4.2700000000000005
+        ],
+        "status": "delta",
+        "deltas": {
+          "late_perfect": 1
+        },
+        "within_interval_order_known": false
+      },
+      {
+        "displayed_at_s": 4.29,
+        "observed_at_s": 4.3,
+        "event_interval_s": [
+          4.2700000000000005,
+          4.29
+        ],
+        "status": "delta",
+        "deltas": {
+          "very_late": 1
+        },
+        "within_interval_order_known": false
+      },
+      {
+        "displayed_at_s": 4.33,
+        "observed_at_s": 4.34,
+        "event_interval_s": [
+          4.29,
+          4.33
+        ],
+        "status": "delta",
+        "deltas": {
+          "very_late": 1
+        },
+        "within_interval_order_known": false
+      },
+      {
+        "displayed_at_s": 4.38,
+        "observed_at_s": 4.39,
+        "event_interval_s": [
+          4.33,
+          4.38
+        ],
+        "status": "delta",
+        "deltas": {
+          "very_late": 1
+        },
+        "within_interval_order_known": false
+      },
+      {
+        "displayed_at_s": 4.42,
+        "observed_at_s": 4.43,
+        "event_interval_s": [
+          4.38,
+          4.42
+        ],
+        "status": "delta",
+        "deltas": {
+          "very_late": 1
+        },
+        "within_interval_order_known": false
+      },
+      {
+        "displayed_at_s": 4.46,
+        "observed_at_s": 4.47,
+        "event_interval_s": [
+          4.42,
+          4.46
+        ],
+        "status": "delta",
+        "deltas": {
+          "very_late": 1
+        },
+        "within_interval_order_known": false
+      },
+      {
+        "displayed_at_s": 4.51,
+        "observed_at_s": 4.52,
+        "event_interval_s": [
+          4.46,
+          4.51
+        ],
+        "status": "delta",
+        "deltas": {
+          "very_late": 1
+        },
+        "within_interval_order_known": false
+      },
+      {
+        "displayed_at_s": 4.55,
+        "observed_at_s": 4.56,
+        "event_interval_s": [
+          4.51,
+          4.55
+        ],
+        "status": "delta",
+        "deltas": {
+          "very_late": 1
+        },
+        "within_interval_order_known": false
+      },
+      {
+        "displayed_at_s": 4.59,
+        "observed_at_s": 4.6,
+        "event_interval_s": [
+          4.55,
+          4.59
+        ],
+        "status": "delta",
+        "deltas": {
+          "very_late": 1
+        },
+        "within_interval_order_known": false
+      },
+      {
+        "displayed_at_s": 4.62,
+        "observed_at_s": 4.63,
+        "event_interval_s": [
+          4.59,
+          4.62
+        ],
+        "status": "delta",
+        "deltas": {
+          "very_late": 1
+        },
+        "within_interval_order_known": false
+      },
+      {
+        "displayed_at_s": 4.64,
+        "observed_at_s": 4.6499999999999995,
+        "event_interval_s": [
+          4.62,
+          4.64
+        ],
+        "status": "delta",
+        "deltas": {
+          "very_late": 1
+        },
+        "within_interval_order_known": false
+      },
+      {
+        "displayed_at_s": 4.68,
+        "observed_at_s": 4.6899999999999995,
+        "event_interval_s": [
+          4.64,
+          4.68
+        ],
+        "status": "delta",
+        "deltas": {
+          "very_late": 1
+        },
+        "within_interval_order_known": false
+      },
+      {
+        "displayed_at_s": 4.73,
+        "observed_at_s": 4.74,
+        "event_interval_s": [
+          4.68,
+          4.73
+        ],
+        "status": "delta",
+        "deltas": {
+          "very_late": 1
+        },
+        "within_interval_order_known": false
+      },
+      {
+        "displayed_at_s": 4.7700000000000005,
+        "observed_at_s": 4.78,
+        "event_interval_s": [
+          4.73,
+          4.7700000000000005
+        ],
+        "status": "delta",
+        "deltas": {
+          "very_late": 1
+        },
+        "within_interval_order_known": false
+      },
+      {
+        "displayed_at_s": 4.82,
+        "observed_at_s": 4.83,
+        "event_interval_s": [
+          4.7700000000000005,
+          4.82
+        ],
+        "status": "delta",
+        "deltas": {
+          "very_late": 1
+        },
+        "within_interval_order_known": false
+      },
+      {
+        "displayed_at_s": 4.86,
+        "observed_at_s": 4.87,
+        "event_interval_s": [
+          4.82,
+          4.86
+        ],
+        "status": "delta",
+        "deltas": {
+          "very_late": 1
+        },
+        "within_interval_order_known": false
+      },
+      {
+        "displayed_at_s": 4.9,
+        "observed_at_s": 4.91,
+        "event_interval_s": [
+          4.86,
+          4.9
+        ],
+        "status": "delta",
+        "deltas": {
+          "very_late": 1
+        },
+        "within_interval_order_known": false
+      },
+      {
+        "displayed_at_s": 4.95,
+        "observed_at_s": 4.96,
+        "event_interval_s": [
+          4.9,
+          4.95
+        ],
+        "status": "delta",
+        "deltas": {
+          "very_late": 1
+        },
+        "within_interval_order_known": false
+      },
+      {
+        "displayed_at_s": 4.99,
+        "observed_at_s": 5.0,
+        "event_interval_s": [
+          4.95,
+          4.99
+        ],
+        "status": "delta",
+        "deltas": {
+          "very_late": 1
+        },
+        "within_interval_order_known": false
+      },
+      {
+        "displayed_at_s": 5.03,
+        "observed_at_s": 5.04,
+        "event_interval_s": [
+          4.99,
+          5.03
+        ],
+        "status": "delta",
+        "deltas": {
+          "very_late": 1
+        },
+        "within_interval_order_known": false
+      },
+      {
+        "displayed_at_s": 5.09,
+        "observed_at_s": 5.1,
+        "event_interval_s": [
+          5.03,
+          5.09
+        ],
+        "status": "delta",
+        "deltas": {
+          "very_late": 1
+        },
+        "within_interval_order_known": false
+      },
+      {
+        "displayed_at_s": 5.13,
+        "observed_at_s": 5.14,
+        "event_interval_s": [
+          5.09,
+          5.13
+        ],
+        "status": "delta",
+        "deltas": {
+          "very_late": 1
+        },
+        "within_interval_order_known": false
+      },
+      {
+        "displayed_at_s": 5.15,
+        "observed_at_s": 5.16,
+        "event_interval_s": [
+          5.13,
+          5.15
+        ],
+        "status": "delta",
+        "deltas": {
+          "late_perfect": 1
+        },
+        "within_interval_order_known": false
+      },
+      {
+        "displayed_at_s": 5.17,
+        "observed_at_s": 5.18,
+        "event_interval_s": [
+          5.15,
+          5.17
+        ],
+        "status": "delta",
+        "deltas": {
+          "very_late": 1
+        },
+        "within_interval_order_known": false
+      },
+      {
+        "displayed_at_s": 5.21,
+        "observed_at_s": 5.22,
+        "event_interval_s": [
+          5.17,
+          5.21
+        ],
+        "status": "delta",
+        "deltas": {
+          "very_late": 1
+        },
+        "within_interval_order_known": false
+      },
+      {
+        "displayed_at_s": 5.26,
+        "observed_at_s": 5.27,
+        "event_interval_s": [
+          5.21,
+          5.26
+        ],
+        "status": "delta",
+        "deltas": {
+          "very_late": 1
+        },
+        "within_interval_order_known": false
+      },
+      {
+        "displayed_at_s": 5.32,
+        "observed_at_s": 5.33,
+        "event_interval_s": [
+          5.26,
+          5.32
+        ],
+        "status": "delta",
+        "deltas": {
+          "perfect": 1,
+          "fail_miss": 1
+        },
+        "within_interval_order_known": false
+      }
+    ],
+    "invisible_events": []
+  },
+  "conservative_failmiss_unknown": {
+    "observations": [
+      {
+        "displayed_at_s": 3.24,
+        "observed_at_s": 3.25,
+        "status": "baseline",
+        "deltas": {}
+      },
+      {
+        "displayed_at_s": 3.27,
+        "observed_at_s": 3.28,
+        "event_interval_s": [
+          3.25,
+          3.27
+        ],
+        "status": "delta",
+        "deltas": {
+          "very_late": 1
+        },
+        "within_interval_order_known": false
+      },
+      {
+        "displayed_at_s": 3.3200000000000003,
+        "observed_at_s": 3.33,
+        "event_interval_s": [
+          3.27,
+          3.3200000000000003
+        ],
+        "status": "delta",
+        "deltas": {
+          "very_late": 1
+        },
+        "within_interval_order_known": false
+      },
+      {
+        "displayed_at_s": 3.36,
+        "observed_at_s": 3.3699999999999997,
+        "event_interval_s": [
+          3.3200000000000003,
+          3.36
+        ],
+        "status": "delta",
+        "deltas": {
+          "very_late": 1
+        },
+        "within_interval_order_known": false
+      },
+      {
+        "displayed_at_s": 3.38,
+        "observed_at_s": 3.3899999999999997,
+        "event_interval_s": [
+          3.36,
+          3.38
+        ],
+        "status": "delta",
+        "deltas": {
+          "perfect": 1
+        },
+        "within_interval_order_known": false
+      },
+      {
+        "displayed_at_s": 3.45,
+        "observed_at_s": 3.46,
+        "event_interval_s": [
+          3.43,
+          3.45
+        ],
+        "status": "delta",
+        "deltas": {
+          "very_late": 1
+        },
+        "within_interval_order_known": false
+      },
+      {
+        "displayed_at_s": 3.49,
+        "observed_at_s": 3.5,
+        "event_interval_s": [
+          3.45,
+          3.49
+        ],
+        "status": "delta",
+        "deltas": {
+          "very_late": 1
+        },
+        "within_interval_order_known": false
+      },
+      {
+        "displayed_at_s": 3.54,
+        "observed_at_s": 3.55,
+        "event_interval_s": [
+          3.49,
+          3.54
+        ],
+        "status": "delta",
+        "deltas": {
+          "very_late": 1
+        },
+        "within_interval_order_known": false
+      },
+      {
+        "displayed_at_s": 3.5500000000000003,
+        "observed_at_s": 3.56,
+        "event_interval_s": [
+          3.54,
+          3.5500000000000003
+        ],
+        "status": "delta",
+        "deltas": {
+          "perfect": 1
+        },
+        "within_interval_order_known": false
+      },
+      {
+        "displayed_at_s": 3.63,
+        "observed_at_s": 3.6399999999999997,
+        "event_interval_s": [
+          3.61,
+          3.63
+        ],
+        "status": "delta",
+        "deltas": {
+          "very_late": 1
+        },
+        "within_interval_order_known": false
+      },
+      {
+        "displayed_at_s": 3.66,
+        "observed_at_s": 3.67,
+        "event_interval_s": [
+          3.63,
+          3.66
+        ],
+        "status": "delta",
+        "deltas": {
+          "very_late": 1
+        },
+        "within_interval_order_known": false
+      },
+      {
+        "displayed_at_s": 3.72,
+        "observed_at_s": 3.73,
+        "event_interval_s": [
+          3.66,
+          3.72
+        ],
+        "status": "delta",
+        "deltas": {
+          "very_late": 1
+        },
+        "within_interval_order_known": false
+      },
+      {
+        "displayed_at_s": 3.7600000000000002,
+        "observed_at_s": 3.77,
+        "event_interval_s": [
+          3.72,
+          3.7600000000000002
+        ],
+        "status": "delta",
+        "deltas": {
+          "very_late": 1
+        },
+        "within_interval_order_known": false
+      },
+      {
+        "displayed_at_s": 3.8000000000000003,
+        "observed_at_s": 3.81,
+        "event_interval_s": [
+          3.7600000000000002,
+          3.8000000000000003
+        ],
+        "status": "delta",
+        "deltas": {
+          "very_late": 1
+        },
+        "within_interval_order_known": false
+      },
+      {
+        "displayed_at_s": 3.85,
+        "observed_at_s": 3.86,
+        "event_interval_s": [
+          3.8000000000000003,
+          3.85
+        ],
+        "status": "delta",
+        "deltas": {
+          "very_late": 1
+        },
+        "within_interval_order_known": false
+      },
+      {
+        "displayed_at_s": 3.89,
+        "observed_at_s": 3.9,
+        "event_interval_s": [
+          3.85,
+          3.89
+        ],
+        "status": "delta",
+        "deltas": {
+          "very_late": 1
+        },
+        "within_interval_order_known": false
+      },
+      {
+        "displayed_at_s": 3.94,
+        "observed_at_s": 3.9499999999999997,
+        "event_interval_s": [
+          3.89,
+          3.94
+        ],
+        "status": "delta",
+        "deltas": {
+          "very_late": 1
+        },
+        "within_interval_order_known": false
+      },
+      {
+        "displayed_at_s": 3.98,
+        "observed_at_s": 3.9899999999999998,
+        "event_interval_s": [
+          3.94,
+          3.98
+        ],
+        "status": "delta",
+        "deltas": {
+          "very_late": 1
+        },
+        "within_interval_order_known": false
+      },
+      {
+        "displayed_at_s": 4.03,
+        "observed_at_s": 4.04,
+        "event_interval_s": [
+          3.98,
+          4.03
+        ],
+        "status": "delta",
+        "deltas": {
+          "very_late": 1
+        },
+        "within_interval_order_known": false
+      },
+      {
+        "displayed_at_s": 4.07,
+        "observed_at_s": 4.08,
+        "event_interval_s": [
+          4.03,
+          4.07
+        ],
+        "status": "delta",
+        "deltas": {
+          "perfect": 1,
+          "very_late": 1
+        },
+        "within_interval_order_known": false
+      },
+      {
+        "displayed_at_s": 4.11,
+        "observed_at_s": 4.12,
+        "event_interval_s": [
+          4.07,
+          4.11
+        ],
+        "status": "delta",
+        "deltas": {
+          "very_late": 1
+        },
+        "within_interval_order_known": false
+      },
+      {
+        "displayed_at_s": 4.16,
+        "observed_at_s": 4.17,
+        "event_interval_s": [
+          4.11,
+          4.16
+        ],
+        "status": "delta",
+        "deltas": {
+          "very_late": 1
+        },
+        "within_interval_order_known": false
+      },
+      {
+        "displayed_at_s": 4.2,
+        "observed_at_s": 4.21,
+        "event_interval_s": [
+          4.16,
+          4.2
+        ],
+        "status": "delta",
+        "deltas": {
+          "very_late": 1
+        },
+        "within_interval_order_known": false
+      },
+      {
+        "displayed_at_s": 4.24,
+        "observed_at_s": 4.25,
+        "event_interval_s": [
+          4.2,
+          4.24
+        ],
+        "status": "delta",
+        "deltas": {
+          "very_late": 1
+        },
+        "within_interval_order_known": false
+      },
+      {
+        "displayed_at_s": 4.2700000000000005,
+        "observed_at_s": 4.28,
+        "event_interval_s": [
+          4.24,
+          4.2700000000000005
+        ],
+        "status": "delta",
+        "deltas": {
+          "late_perfect": 1
+        },
+        "within_interval_order_known": false
+      },
+      {
+        "displayed_at_s": 4.29,
+        "observed_at_s": 4.3,
+        "event_interval_s": [
+          4.2700000000000005,
+          4.29
+        ],
+        "status": "delta",
+        "deltas": {
+          "very_late": 1
+        },
+        "within_interval_order_known": false
+      },
+      {
+        "displayed_at_s": 4.33,
+        "observed_at_s": 4.34,
+        "event_interval_s": [
+          4.29,
+          4.33
+        ],
+        "status": "delta",
+        "deltas": {
+          "very_late": 1
+        },
+        "within_interval_order_known": false
+      },
+      {
+        "displayed_at_s": 4.38,
+        "observed_at_s": 4.39,
+        "event_interval_s": [
+          4.33,
+          4.38
+        ],
+        "status": "delta",
+        "deltas": {
+          "very_late": 1
+        },
+        "within_interval_order_known": false
+      },
+      {
+        "displayed_at_s": 4.42,
+        "observed_at_s": 4.43,
+        "event_interval_s": [
+          4.38,
+          4.42
+        ],
+        "status": "delta",
+        "deltas": {
+          "very_late": 1
+        },
+        "within_interval_order_known": false
+      },
+      {
+        "displayed_at_s": 4.46,
+        "observed_at_s": 4.47,
+        "event_interval_s": [
+          4.42,
+          4.46
+        ],
+        "status": "delta",
+        "deltas": {
+          "very_late": 1
+        },
+        "within_interval_order_known": false
+      },
+      {
+        "displayed_at_s": 4.51,
+        "observed_at_s": 4.52,
+        "event_interval_s": [
+          4.46,
+          4.51
+        ],
+        "status": "delta",
+        "deltas": {
+          "very_late": 1
+        },
+        "within_interval_order_known": false
+      },
+      {
+        "displayed_at_s": 4.55,
+        "observed_at_s": 4.56,
+        "event_interval_s": [
+          4.51,
+          4.55
+        ],
+        "status": "delta",
+        "deltas": {
+          "very_late": 1
+        },
+        "within_interval_order_known": false
+      },
+      {
+        "displayed_at_s": 4.59,
+        "observed_at_s": 4.6,
+        "event_interval_s": [
+          4.55,
+          4.59
+        ],
+        "status": "delta",
+        "deltas": {
+          "very_late": 1
+        },
+        "within_interval_order_known": false
+      },
+      {
+        "displayed_at_s": 4.62,
+        "observed_at_s": 4.63,
+        "event_interval_s": [
+          4.59,
+          4.62
+        ],
+        "status": "delta",
+        "deltas": {
+          "very_late": 1
+        },
+        "within_interval_order_known": false
+      },
+      {
+        "displayed_at_s": 4.64,
+        "observed_at_s": 4.6499999999999995,
+        "event_interval_s": [
+          4.62,
+          4.64
+        ],
+        "status": "delta",
+        "deltas": {
+          "very_late": 1
+        },
+        "within_interval_order_known": false
+      },
+      {
+        "displayed_at_s": 4.68,
+        "observed_at_s": 4.6899999999999995,
+        "event_interval_s": [
+          4.64,
+          4.68
+        ],
+        "status": "delta",
+        "deltas": {
+          "very_late": 1
+        },
+        "within_interval_order_known": false
+      },
+      {
+        "displayed_at_s": 4.73,
+        "observed_at_s": 4.74,
+        "event_interval_s": [
+          4.68,
+          4.73
+        ],
+        "status": "delta",
+        "deltas": {
+          "very_late": 1
+        },
+        "within_interval_order_known": false
+      },
+      {
+        "displayed_at_s": 4.7700000000000005,
+        "observed_at_s": 4.78,
+        "event_interval_s": [
+          4.73,
+          4.7700000000000005
+        ],
+        "status": "delta",
+        "deltas": {
+          "very_late": 1
+        },
+        "within_interval_order_known": false
+      },
+      {
+        "displayed_at_s": 4.82,
+        "observed_at_s": 4.83,
+        "event_interval_s": [
+          4.7700000000000005,
+          4.82
+        ],
+        "status": "delta",
+        "deltas": {
+          "very_late": 1
+        },
+        "within_interval_order_known": false
+      },
+      {
+        "displayed_at_s": 4.86,
+        "observed_at_s": 4.87,
+        "event_interval_s": [
+          4.82,
+          4.86
+        ],
+        "status": "delta",
+        "deltas": {
+          "very_late": 1
+        },
+        "within_interval_order_known": false
+      },
+      {
+        "displayed_at_s": 4.9,
+        "observed_at_s": 4.91,
+        "event_interval_s": [
+          4.86,
+          4.9
+        ],
+        "status": "delta",
+        "deltas": {
+          "very_late": 1
+        },
+        "within_interval_order_known": false
+      },
+      {
+        "displayed_at_s": 4.95,
+        "observed_at_s": 4.96,
+        "event_interval_s": [
+          4.9,
+          4.95
+        ],
+        "status": "delta",
+        "deltas": {
+          "very_late": 1
+        },
+        "within_interval_order_known": false
+      },
+      {
+        "displayed_at_s": 4.99,
+        "observed_at_s": 5.0,
+        "event_interval_s": [
+          4.95,
+          4.99
+        ],
+        "status": "delta",
+        "deltas": {
+          "very_late": 1
+        },
+        "within_interval_order_known": false
+      },
+      {
+        "displayed_at_s": 5.03,
+        "observed_at_s": 5.04,
+        "event_interval_s": [
+          4.99,
+          5.03
+        ],
+        "status": "delta",
+        "deltas": {
+          "very_late": 1
+        },
+        "within_interval_order_known": false
+      },
+      {
+        "displayed_at_s": 5.09,
+        "observed_at_s": 5.1,
+        "event_interval_s": [
+          5.03,
+          5.09
+        ],
+        "status": "delta",
+        "deltas": {
+          "very_late": 1
+        },
+        "within_interval_order_known": false
+      },
+      {
+        "displayed_at_s": 5.13,
+        "observed_at_s": 5.14,
+        "event_interval_s": [
+          5.09,
+          5.13
+        ],
+        "status": "delta",
+        "deltas": {
+          "very_late": 1
+        },
+        "within_interval_order_known": false
+      },
+      {
+        "displayed_at_s": 5.15,
+        "observed_at_s": 5.16,
+        "event_interval_s": [
+          5.13,
+          5.15
+        ],
+        "status": "delta",
+        "deltas": {
+          "late_perfect": 1
+        },
+        "within_interval_order_known": false
+      },
+      {
+        "displayed_at_s": 5.17,
+        "observed_at_s": 5.18,
+        "event_interval_s": [
+          5.15,
+          5.17
+        ],
+        "status": "delta",
+        "deltas": {
+          "very_late": 1
+        },
+        "within_interval_order_known": false
+      },
+      {
+        "displayed_at_s": 5.21,
+        "observed_at_s": 5.22,
+        "event_interval_s": [
+          5.17,
+          5.21
+        ],
+        "status": "delta",
+        "deltas": {
+          "very_late": 1
+        },
+        "within_interval_order_known": false
+      },
+      {
+        "displayed_at_s": 5.26,
+        "observed_at_s": 5.27,
+        "event_interval_s": [
+          5.21,
+          5.26
+        ],
+        "status": "delta",
+        "deltas": {
+          "very_late": 1
+        },
+        "within_interval_order_known": false
+      },
+      {
+        "displayed_at_s": 5.32,
+        "observed_at_s": 5.33,
+        "event_interval_s": [
+          5.26,
+          5.32
+        ],
+        "status": "delta",
+        "deltas": {
+          "perfect": 1
+        },
+        "within_interval_order_known": false
+      }
+    ],
+    "invisible_events": [
+      {
+        "occurred_at_s": 3.25,
+        "category": "fail_miss",
+        "source": "automatic",
+        "identity": 36
+      },
+      {
+        "occurred_at_s": 3.43,
+        "category": "fail_miss",
+        "source": "automatic",
+        "identity": 41
+      },
+      {
+        "occurred_at_s": 3.61,
+        "category": "fail_miss",
+        "source": "automatic",
+        "identity": 46
+      },
+      {
+        "occurred_at_s": 5.32,
+        "category": "fail_miss",
+        "source": "automatic",
+        "identity": 89
+      }
+    ]
+  },
+  "phase16_milestones": {
+    "event36_automatic_transition_internal_s": 3.25,
+    "fixture_failmiss_observed_s": 3.26,
+    "id38_physical_keydown_s": 3.260999999999752,
+    "id38_very_late_observed_s": 3.28,
+    "warning_before_id38_physical_ms_if_failmiss_visible": 0.999999999752,
+    "event89_automatic_transition_internal_s": 5.32,
+    "id90_physical_keydown_s": 5.318999999999709,
+    "fixture_event89_failmiss_observed_s": 5.33
+  },
+  "causal_conclusions": {
+    "category_delta_only": "contains no floor/target identity or hidden cursor",
+    "id38": "FailMiss fixture would arrive only about 1 ms before the physical KeyDown; with unknown FailMiss visibility it is first observed as VeryLate after the KeyDown",
+    "event89": "the automatic transition is observed after ID90's already-issued physical KeyDown",
+    "safe_44ms_intervention": false
+  }
+}
