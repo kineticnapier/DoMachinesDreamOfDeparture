@@ -296,34 +296,64 @@ def run(chart_path: Path, difficulty: str, checkpoint: Path, output_dir: Path,
     return summary
 
 
+def _numbered_path(path: Path, number: int, *, status: bool = False) -> Path:
+    if number == 1:
+        return path
+    if status and path.name.endswith(".status.json"):
+        name = path.name[:-len(".status.json")]
+        return path.with_name(f"{name}-{number:03d}.status.json")
+    return path.with_name(f"{path.stem}-{number:03d}{path.suffix}") if status else path.with_name(
+        f"{path.name}-{number:03d}")
+
+
+def choose_output_paths(chart_path: Path, output_dir: Path | None,
+                        status_file: Path | None) -> tuple[Path, Path]:
+    """Pick a free output pair without overwriting earlier runs."""
+    base_dir = output_dir or Path("artifacts/dmdogo") / chart_path.stem
+    base_status = status_file or base_dir.with_name(base_dir.name + ".status.json")
+    for number in range(1, 100000):
+        directory = _numbered_path(base_dir, number)
+        status = _numbered_path(base_status, number, status=True)
+        if not directory.exists() and not status.exists():
+            return directory, status
+    raise RuntimeError("could not find a free DMDOGO output path")
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--chart", type=Path, required=True)
     parser.add_argument("--difficulty", default="unrated",
                         help="Optional descriptive label, not an inferred difficulty rating")
-    parser.add_argument("--checkpoint", type=Path, required=True)
-    parser.add_argument("--output-dir", type=Path, required=True)
-    parser.add_argument("--status-file", type=Path, required=True)
+    parser.add_argument("--checkpoint", type=Path,
+                        default=Path("checkpoints/fingering/fingering_network_v01-4fa2ae1.pt"))
+    parser.add_argument("--output-dir", type=Path,
+                        help="Default: artifacts/dmdogo/<chart-name>; auto-numbered if occupied")
+    parser.add_argument("--status-file", type=Path,
+                        help="Default: <output-dir>.status.json; auto-numbered if occupied")
     parser.add_argument("--stop-after-s", type=float)
     parser.add_argument("--wall-timeout-s", type=float, default=300.0)
     args = parser.parse_args()
-    if args.output_dir.exists() or args.status_file.exists():
-        parser.error("refusing to overwrite output")
+    output_dir, status_file = choose_output_paths(args.chart, args.output_dir, args.status_file)
+    print(f"DMDOGO output: {output_dir}", flush=True)
+    print(f"DMDOGO status: {status_file}", flush=True)
     started = datetime.now(timezone.utc)
     try:
-        summary = run(args.chart, args.difficulty, args.checkpoint, args.output_dir,
+        summary = run(args.chart, args.difficulty, args.checkpoint, output_dir,
                       stop_after_s=args.stop_after_s, wall_timeout_s=args.wall_timeout_s)
         status = {"pid": os.getpid(), "started_at_utc": started.isoformat(),
                   "finished_at_utc": datetime.now(timezone.utc).isoformat(), "exit_code": 0,
-                  "output_dir": str(args.output_dir), "termination_reason": summary["termination_reason"]}
+                  "output_dir": str(output_dir), "termination_reason": summary["termination_reason"]}
     except BaseException as error:
         status = {"pid": os.getpid(), "started_at_utc": started.isoformat(),
                   "finished_at_utc": datetime.now(timezone.utc).isoformat(), "exit_code": 1,
-                  "error_type": type(error).__name__, "error": str(error)}
-        if not args.status_file.exists():
-            _write_once(args.status_file, json.dumps(status, indent=2) + "\n")
+                  "error_type": type(error).__name__, "error": str(error),
+                  "output_dir": str(output_dir)}
+        # Never replace a pre-existing status even if another process raced us.
+        if not status_file.exists():
+            _write_once(status_file, json.dumps(status, indent=2) + "\n")
         raise
-    _write_once(args.status_file, json.dumps(status, indent=2) + "\n")
+    _write_once(status_file, json.dumps(status, indent=2) + "\n")
+    print(f"DMDOGO replay: {output_dir / 'full-chart-replay.html'}", flush=True)
 
 
 if __name__ == "__main__":
