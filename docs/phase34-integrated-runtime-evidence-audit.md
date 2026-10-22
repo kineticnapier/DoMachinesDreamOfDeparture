@@ -29,3 +29,21 @@ powershell -ExecutionPolicy Bypass -File scripts/build_phase31_stock_runtime_pro
 生成物を`<ADOFAI>\Mods\DmdodStockRuntimeProbe`へコピーし、`probe-config.json`で34〜40を指定してNoFail/通常Failを別sessionとして記録する。次にPhase 32、33のscriptへJSONLを渡す。Event 42/47と89は範囲を分けた追加sessionにし、ログ負荷を限定する。
 
 実機capture後も、sequence gap、必須hook欠損、floor map欠落、累積counter未観測のいずれかがあれば完全Parityは保留する。
+
+## 検証結果
+
+- Phase 20B〜34関連回帰: `98 passed in 9.60s`
+- repository全体: `2096 passed, 1 warning in 173.31s`
+- Mod最終source build: .NET Framework 4.8、0 warning / 0 error
+- build artifact: `artifacts/phase31-stock-runtime-probe-build-r4/DmdodStockRuntimeProbe.dll`
+- build SHA256: `44FA320828EAC60541DC72C93718C8429156FCA8E632612519E0F95DC91CE4DA`
+
+pytest warningは既存`tests/test_onset_ablation.py`のPyTorch tensor-to-scalar変換であり、本変更の失敗ではない。
+
+## Phase commits
+
+- Phase 30: `96738a2`
+- Phase 31: `60e41b6`（中間生成物除外追補`b6b5a13`）
+- Phase 32: `eeee3d9`
+- Phase 33: `f272de8`
+- Phase 34: `8ebb263`

@@ -1,0 +1,33 @@
+{
+  "format": "dmdod-phase34-runtime-regression-v0.1",
+  "generated_local_date": "2026-10-22",
+  "related": {
+    "scope": "Phase 20B through Phase 34 related tests",
+    "passed": 98,
+    "failed": 0,
+    "duration_s": 9.60
+  },
+  "repository": {
+    "command": "uv run pytest -q -o \"pythonpath=src .\"",
+    "passed": 2096,
+    "failed": 0,
+    "warnings": 1,
+    "duration_s": 173.31,
+    "warning": "pre-existing PyTorch tensor-to-scalar warning in tests/test_onset_ablation.py"
+  },
+  "mod_build": {
+    "target_framework": "net48",
+    "warnings": 0,
+    "errors": 0,
+    "artifact": "artifacts/phase31-stock-runtime-probe-build-r4/DmdodStockRuntimeProbe.dll",
+    "sha256": "44FA320828EAC60541DC72C93718C8429156FCA8E632612519E0F95DC91CE4DA",
+    "runtime_loaded": false,
+    "harmony_hooks_observed": false
+  },
+  "runtime_trace_captured": false,
+  "runtime_parity": "RUNTIME_PARITY_UNVERIFIED",
+  "production_changed": false,
+  "validation20_used": false,
+  "final_used": false,
+  "training_run": false
+}
