@@ -1,0 +1,250 @@
+{
+  "format": "dmdod-phase28-counterfactual-interventions-v0.1",
+  "generated_utc": "2026-10-22T12:29:26.931898+00:00",
+  "verdicts": [
+    "ORACLE_ONLY_INTERVENTION",
+    "NO_SAFE_INTERVENTION_ESTABLISHED"
+  ],
+  "baseline": {
+    "logical_keydown_count": 97,
+    "logical_keydowns_sha256": "225681479437c782d8a27aea58ae24079265f770cb283af7ee6a96d2ec228fdc",
+    "phase23_baseline_mismatch": 50,
+    "event89_recovered": false
+  },
+  "candidates": [
+    {
+      "name": "baseline",
+      "reference_nofail": {
+        "mismatch_count": 50,
+        "event89_recovered": false,
+        "failed": false,
+        "intervention_rows": []
+      },
+      "reference_normal_fail": {
+        "failed": true,
+        "event89_recovered": false
+      },
+      "evidence": {
+        "name": "baseline",
+        "oracle_event89_recovered": false,
+        "action_information_visible_by_deadline": null,
+        "robust_all_hypotheses_safe": null,
+        "motor_envelope_valid": null,
+        "baseline_hits_preserved": null,
+        "runtime_parity_confirmed": false
+      },
+      "classification": "ineffective",
+      "reasons": [
+        "event89_not_recovered_in_reference"
+      ]
+    },
+    {
+      "name": "oracle_event37_due_only",
+      "reference_nofail": {
+        "mismatch_count": 50,
+        "event89_recovered": false,
+        "failed": false,
+        "intervention_rows": [
+          {
+            "frame_time_s": 3.23,
+            "input_id": "oracle:event37",
+            "kind": "hit_advance",
+            "target_ordinal": 36,
+            "judgement": "very_late",
+            "automatic_miss": false,
+            "failed": false
+          }
+        ]
+      },
+      "reference_normal_fail": {
+        "failed": true,
+        "event89_recovered": false
+      },
+      "evidence": {
+        "name": "oracle_event37_due_only",
+        "oracle_event89_recovered": false,
+        "action_information_visible_by_deadline": null,
+        "robust_all_hypotheses_safe": null,
+        "motor_envelope_valid": null,
+        "baseline_hits_preserved": null,
+        "runtime_parity_confirmed": false
+      },
+      "classification": "ineffective",
+      "reasons": [
+        "event89_not_recovered_in_reference"
+      ]
+    },
+    {
+      "name": "oracle_event36_and37_due",
+      "reference_nofail": {
+        "mismatch_count": 46,
+        "event89_recovered": false,
+        "failed": false,
+        "intervention_rows": [
+          {
+            "frame_time_s": 3.19,
+            "input_id": "oracle:event36",
+            "kind": "hit_advance",
+            "target_ordinal": 36,
+            "judgement": "perfect",
+            "automatic_miss": false,
+            "failed": false
+          },
+          {
+            "frame_time_s": 3.23,
+            "input_id": "oracle:event37",
+            "kind": "hit_advance",
+            "target_ordinal": 37,
+            "judgement": "perfect",
+            "automatic_miss": false,
+            "failed": false
+          }
+        ]
+      },
+      "reference_normal_fail": {
+        "failed": true,
+        "event89_recovered": false
+      },
+      "evidence": {
+        "name": "oracle_event36_and37_due",
+        "oracle_event89_recovered": false,
+        "action_information_visible_by_deadline": null,
+        "robust_all_hypotheses_safe": null,
+        "motor_envelope_valid": null,
+        "baseline_hits_preserved": null,
+        "runtime_parity_confirmed": false
+      },
+      "classification": "ineffective",
+      "reasons": [
+        "event89_not_recovered_in_reference"
+      ]
+    },
+    {
+      "name": "oracle_all_pre89_lead_abstentions",
+      "reference_nofail": {
+        "mismatch_count": 0,
+        "event89_recovered": true,
+        "failed": false,
+        "intervention_rows": [
+          {
+            "frame_time_s": 3.19,
+            "input_id": "oracle:event36",
+            "kind": "hit_advance",
+            "target_ordinal": 36,
+            "judgement": "perfect",
+            "automatic_miss": false,
+            "failed": false
+          },
+          {
+            "frame_time_s": 3.23,
+            "input_id": "oracle:event37",
+            "kind": "hit_advance",
+            "target_ordinal": 37,
+            "judgement": "perfect",
+            "automatic_miss": false,
+            "failed": false
+          },
+          {
+            "frame_time_s": 3.4,
+            "input_id": "oracle:event42",
+            "kind": "hit_advance",
+            "target_ordinal": 42,
+            "judgement": "perfect",
+            "automatic_miss": false,
+            "failed": false
+          },
+          {
+            "frame_time_s": 3.58,
+            "input_id": "oracle:event47",
+            "kind": "hit_advance",
+            "target_ordinal": 47,
+            "judgement": "perfect",
+            "automatic_miss": false,
+            "failed": false
+          }
+        ]
+      },
+      "reference_normal_fail": {
+        "failed": false,
+        "event89_recovered": true
+      },
+      "evidence": {
+        "name": "oracle_all_pre89_lead_abstentions",
+        "oracle_event89_recovered": true,
+        "action_information_visible_by_deadline": false,
+        "robust_all_hypotheses_safe": false,
+        "motor_envelope_valid": false,
+        "baseline_hits_preserved": null,
+        "runtime_parity_confirmed": false
+      },
+      "classification": "oracle_only_intervention",
+      "reasons": [
+        "action_not_causally_selectable_by_deadline",
+        "not_safe_in_all_retained_hypotheses",
+        "motor_envelope_not_validated_for_actual_snapshot",
+        "baseline_hit_preservation_unproven",
+        "live_stock_runtime_parity_unverified"
+      ]
+    },
+    {
+      "name": "hud_candidate_after_virtual_nofail_auto",
+      "reference_nofail": {
+        "mismatch_count": 46,
+        "event89_recovered": false,
+        "failed": false,
+        "intervention_rows": [
+          {
+            "frame_time_s": 3.2600000000000002,
+            "input_id": "hud_candidate:event37",
+            "kind": "hit_advance",
+            "target_ordinal": 37,
+            "judgement": "very_late",
+            "automatic_miss": false,
+            "failed": false
+          }
+        ]
+      },
+      "reference_normal_fail": {
+        "failed": true,
+        "event89_recovered": false
+      },
+      "evidence": {
+        "name": "hud_candidate_after_virtual_nofail_auto",
+        "oracle_event89_recovered": false,
+        "action_information_visible_by_deadline": null,
+        "robust_all_hypotheses_safe": null,
+        "motor_envelope_valid": null,
+        "baseline_hits_preserved": null,
+        "runtime_parity_confirmed": false
+      },
+      "classification": "ineffective",
+      "reasons": [
+        "event89_not_recovered_in_reference"
+      ]
+    }
+  ],
+  "event89_recovery_upper_bound": {
+    "candidate": "oracle_all_pre89_lead_abstentions",
+    "required_evaluator_only_events": [
+      36,
+      37,
+      42,
+      47
+    ],
+    "first_reference_processed_frame_s": 3.19,
+    "last_reference_processed_frame_s": 3.58,
+    "mismatch_count_after": 0,
+    "event89_recovered": true,
+    "causal_status": "not selectable: all four exact dues/floors are evaluator truth and include known lead-abstention events",
+    "baseline_hit_effect": "not established by limited Stock attribution replay"
+  },
+  "other_candidate_families": {
+    "state_aware_lead": "Event37 actual axis/snapshot absent -> UNKNOWN",
+    "reservation_cancel_or_reorder": "counterfactual physical trace absent -> INCONCLUSIVE",
+    "axis_reassignment": "fixed Network abstained before allocation -> INCONCLUSIVE",
+    "late_window_keydown": "3.251 NoFail helps Event37 only; Event89 remains missed"
+  },
+  "robust_scheduler_status": "unknown",
+  "oracle_fields_used_online": [],
+  "production_changed": false
+}
