@@ -1,0 +1,107 @@
+{
+  "format": "dmdod-phase30-dll-signature-audit-v0.1",
+  "generated_utc": "2026-10-22T13:07:02.982014+00:00",
+  "audited_dll_sha256": "0D1524DABF0F8C67AA58BA1992D6ED858522B9094490EBBB00E5E8AEFF7F40CD",
+  "installed_dll_identity": "USER_CONFIRMED_NOT_CODEX_EXECUTED",
+  "signatures": [
+    {
+      "method": "scrPlayer.Simulated_PlayerControl_Update",
+      "source": "scrPlayer.cs",
+      "declaration": "public void Simulated_PlayerControl_Update(ulong? targetTick = null)",
+      "verified": true,
+      "source_sha256": "21326189390DB431A4BBE2EA9E608D67048509AA2138526E5AD5179DA08EFC47"
+    },
+    {
+      "method": "scrPlayer.CheckPostHoldFail",
+      "source": "scrPlayer.cs",
+      "declaration": "private void CheckPostHoldFail(ulong? targetTick = null)",
+      "verified": true,
+      "source_sha256": "21326189390DB431A4BBE2EA9E608D67048509AA2138526E5AD5179DA08EFC47"
+    },
+    {
+      "method": "scrPlayer.HitInputEvent",
+      "source": "scrPlayer.cs",
+      "declaration": "public bool HitInputEvent(bool isAuto = false, InputEventState state = InputEventState.Down)",
+      "verified": true,
+      "source_sha256": "21326189390DB431A4BBE2EA9E608D67048509AA2138526E5AD5179DA08EFC47"
+    },
+    {
+      "method": "scrPlayer.Die",
+      "source": "scrPlayer.cs",
+      "declaration": "public void Die(bool overload = false, bool multipress = false, string failMessage = \"\", bool hitbox = false)",
+      "verified": true,
+      "source_sha256": "21326189390DB431A4BBE2EA9E608D67048509AA2138526E5AD5179DA08EFC47"
+    },
+    {
+      "method": "scrController.ProcessKeyInputs",
+      "source": "scrController.cs",
+      "declaration": "private void ProcessKeyInputs(ulong eventTick)",
+      "verified": true,
+      "source_sha256": "7917D47F0B714A8C56F048789AA3E9A48C7B4735D0296FC96B009F951715ED23"
+    },
+    {
+      "method": "scrController.PlayerControl_Update",
+      "source": "scrController.cs",
+      "declaration": "private void PlayerControl_Update()",
+      "verified": true,
+      "source_sha256": "7917D47F0B714A8C56F048789AA3E9A48C7B4735D0296FC96B009F951715ED23"
+    },
+    {
+      "method": "scrController.OnPlayerDied",
+      "source": "scrController.cs",
+      "declaration": "public void OnPlayerDied(scrPlayer deadPlayer, bool overload = false, bool multipress = false, string failMessage = \"\", bool hitbox = false)",
+      "verified": true,
+      "source_sha256": "7917D47F0B714A8C56F048789AA3E9A48C7B4735D0296FC96B009F951715ED23"
+    },
+    {
+      "method": "scrController.Fail2Action",
+      "source": "scrController.cs",
+      "declaration": "public void Fail2Action()",
+      "verified": true,
+      "source_sha256": "7917D47F0B714A8C56F048789AA3E9A48C7B4735D0296FC96B009F951715ED23"
+    },
+    {
+      "method": "scrPlanet.SwitchChosen",
+      "source": "scrPlanet.cs",
+      "declaration": "public scrPlanet SwitchChosen()",
+      "verified": true,
+      "source_sha256": "2250FEB39218F386233227E1BD2007BD1A9360C62C12749EBE0B8EFC07618C0E"
+    },
+    {
+      "method": "scrMarginTracker.AddHit",
+      "source": "scrMarginTracker.cs",
+      "declaration": "public void AddHit(HitMargin hit)",
+      "verified": true,
+      "source_sha256": "A7E181E0F22CE32A99D21B1D0A0D4E0121ABB8B0066AC978BD4BDC4BCDB7A1BF"
+    },
+    {
+      "method": "scrHitTextManager.ShowHitText",
+      "source": "scrHitTextManager.cs",
+      "declaration": "public void ShowHitText(HitMargin hitMargin, scrPlanet planet, float missAngle = 0f)",
+      "verified": true,
+      "source_sha256": "CCC3D10E60DEFBD9C354EA840AB3C7D2A9843FE8480E2292AF194F3A5A6E65CD"
+    }
+  ],
+  "control_flow": {
+    "simulated_update_order": {
+      "CheckPostHoldFail(targetTick)": 639,
+      "OttoHoldHit(targetTick)": 736,
+      "HitAutoFloors(targetTick)": 769,
+      "UpdateHoldBehavior(targetTick)": 798,
+      "HitHoldFloorsIfStartedAtHold(targetTick)": 890,
+      "CheckPreHoldFail(targetTick)": 998,
+      "UpdateHoldKeys(targetTick)": 1094
+    },
+    "simulated_update_order_verified": true,
+    "no_fail_die_hit_order": {
+      "ADOBase.controller.noFailInfiniteMargin = true": 1337,
+      "Hit()": 1390,
+      "ADOBase.controller.noFailInfiniteMargin = false": 1402
+    },
+    "no_fail_die_hit_order_verified": true,
+    "async_input_dispatch_verified": true,
+    "fail_stop_path_verified": true
+  },
+  "verdict": "DLL_SIGNATURES_VERIFIED",
+  "runtime_parity": "RUNTIME_PARITY_UNVERIFIED"
+}
