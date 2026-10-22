@@ -89,4 +89,13 @@ uv run pytest -q tests/test_motor_lead_feasibility_v01.py tests/test_audit_phase
 uv run python -u scripts/audit_phase24_motor_lead_stock_transition_v01.py --output reports/phase24-motor-lead-stock-transition-<new-run>.json
 ```
 
+## テスト結果
+
+- Phase 24単体: `14 passed`
+- Phase 20C〜24、Stock floor/frame、N-key calibration、persistent reservation関連: `80 passed`
+- repository全体: `2046 passed, 1 warning`（`uv run pytest -q -o "pythonpath=src ."`、169.74秒）
+- warningは既存`test_onset_ablation.py`のPyTorch scalar変換。
+
+通常の`uv run pytest -q`は、`pyproject.toml`の`pythonpath=["src"]`だけではrepository直下のnamespace package `scripts`を解決できず、44件がcollection時に`ModuleNotFoundError: scripts`となった。アプリケーションやpytest設定は変更せず、全体確認では実行時だけrootを追加した。Phase 24のテスト自体はscriptをfile pathからloadするため、この環境依存を持たない。
+
 正規成果物は`reports/phase24-motor-lead-stock-transition-20261022-r2.json`。`r1`は12軸全軸のcold latency範囲を追加する前の保存済み予備出力であり、上書き防止規則に従って残した。実機試験、production変更、学習、Validation20、FINAL、Train16全体Motor A/Bは実施していない。
