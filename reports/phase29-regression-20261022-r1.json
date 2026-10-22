@@ -1,0 +1,22 @@
+{
+  "format": "dmdod-phase29-regression-v0.1",
+  "generated_local_date": "2026-10-22",
+  "related": {
+    "command": "uv run pytest -q -o \"pythonpath=src .\" <phase16-29 related files>",
+    "passed": 113,
+    "failed": 0,
+    "duration_s": 9.60
+  },
+  "repository": {
+    "command": "uv run pytest -q -o \"pythonpath=src .\"",
+    "passed": 2079,
+    "failed": 0,
+    "warnings": 1,
+    "duration_s": 180.36,
+    "warning": "pre-existing PyTorch tensor-to-scalar warning in tests/test_onset_ablation.py"
+  },
+  "production_changed": false,
+  "validation20_used": false,
+  "final_used": false,
+  "training_run": false
+}
