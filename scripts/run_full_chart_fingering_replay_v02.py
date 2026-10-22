@@ -27,6 +27,10 @@ from dmdod.adofai.playable import build_playable_segment
 from dmdod.adofai.timing import compile_adofai
 from dmdod.envs.contact_chart_16k import CoupledContactRealChartEnv
 from dmdod.motor.keyboard import KeyEvent
+from dmdod.planning.fingering_continuity_v02 import (
+    ContinuitySelector,
+    continuity_metrics,
+)
 from dmdod.training import fingering_network_v01 as network
 from dmdod.training.prestige1_autoplay_timing import AutoplayTimingTeacher
 
@@ -75,8 +79,14 @@ def _summarize(env: CoupledContactRealChartEnv) -> dict:
 
 def run_network(segment, model: network.FingeringRanker, *, stop_after_s: float | None = None,
                 wall_timeout_s: float | None = None, style_alpha: float = 0.0,
-                policy_name: str = "network_v0_1_free") -> dict:
+                policy_name: str = "network_v0_1_free",
+                selector_mode: str = "free") -> dict:
     """Execute the causal Network policy; no Teacher rollout exists here."""
+
+    if selector_mode not in {"free", "continuity"}:
+        raise ValueError("selector mode must be free or continuity")
+    if selector_mode == "continuity" and style_alpha != 0.0:
+        raise ValueError("continuity selector cannot be combined with Human-Proxy style alpha")
 
     env = CoupledContactRealChartEnv(segment, control_dt_s=teacher.CTRL, physics_dt_s=teacher.PHYS)
     env.reset()
@@ -86,6 +96,7 @@ def run_network(segment, model: network.FingeringRanker, *, stop_after_s: float 
     decisions: list[dict] = []
     keydowns: list[dict] = []
     frames = [_trace_frame(env)]
+    continuity_selector = ContinuitySelector(mode=selector_mode)
     maximum = int((segment.duration_s + 2.0) / teacher.CTRL) + 200
     wall_started = time.monotonic()
     step_done = False
@@ -111,10 +122,23 @@ def run_network(segment, model: network.FingeringRanker, *, stop_after_s: float 
             eligible = tuple(teacher.eligible(env.motor, occupied, value)[0]
                              for value in allocations)
             context = network.encode_context(env.motor, look, now, occupied)
-            selected_index, scores, blended = network.choose_candidate_styled(
-                model, context, allocations, eligible, alpha=style_alpha)
-            free_indices = [index for index, value in enumerate(scores) if value is not None]
-            free_index = min(free_indices, key=lambda index: (scores[index], index)) if free_indices else None
+            if selector_mode == "continuity":
+                _, scores = network.choose_candidate(model, context, allocations, eligible)
+                selection = continuity_selector.select(
+                    scores, allocations, eligible, event.event_index, event.episode_time_s)
+                selected_index = selection.selected_index
+                free_index = selection.free_index
+                blended = selection.combined_rank_scores
+                continuity_costs = selection.continuity_costs
+                selection_reason = selection.reason
+            else:
+                selected_index, scores, blended = network.choose_candidate_styled(
+                    model, context, allocations, eligible, alpha=style_alpha)
+                free_indices = [index for index, value in enumerate(scores) if value is not None]
+                free_index = min(free_indices, key=lambda index: (scores[index], index)) if free_indices else None
+                continuity_costs = tuple(None for _ in allocations)
+                selection_reason = ("free_network_argmin" if style_alpha == 0.0
+                                    else "human_proxy_style_blend")
             allocation = allocations[selected_index] if selected_index is not None else ()
             item = teacher.PlanItem(event.event_index, event.episode_time_s, allocation)
             selected.add(event.event_index)
@@ -129,10 +153,14 @@ def run_network(segment, model: network.FingeringRanker, *, stop_after_s: float 
                 "axes": [finger.axis for finger in allocation],
                 "network_scores": [value for value in scores],
                 "blended_rank_scores": [value for value in blended],
+                "continuity_costs": [value for value in continuity_costs],
                 "eligible": list(eligible),
                 "inference_inputs": "oracle_relative_times_and_current_motor_only",
                 "policy": policy_name,
                 "style_alpha": style_alpha,
+                "selector_mode": selector_mode,
+                "selected_candidate_index": selected_index,
+                "selection_reason": selection_reason,
                 "free_chosen": (teacher.PlanItem(event.event_index, event.episode_time_s,
                                                   allocations[free_index]).label
                                 if free_index is not None else None),
@@ -195,6 +223,7 @@ def run_network(segment, model: network.FingeringRanker, *, stop_after_s: float 
         "teacher_shadow_rollout_used": False,
         "teacher_candidate_scores_used": False,
         "policy": policy_name, "style_alpha": style_alpha,
+        "selector_mode": selector_mode,
     }
 
 
@@ -261,11 +290,13 @@ def summarize_choices(decisions: list[dict]) -> dict:
         "thumb_uses": sum(value for axis, value in axes.items() if axis.endswith("_5")),
         "side_uses": sum(value for axis, value in axes.items() if axis.endswith("_6")),
         "extreme_switches_le_35ms": changes,
+        "continuity": continuity_metrics(decisions),
     }
 
 
 def run(chart_path: Path, difficulty: str, checkpoint: Path, output_dir: Path,
-        *, stop_after_s: float | None = None, wall_timeout_s: float | None = None) -> dict:
+        *, stop_after_s: float | None = None, wall_timeout_s: float | None = None,
+        selector_mode: str = "free") -> dict:
     if chart_path.suffix.lower() != ".adofai":
         raise ValueError("chart must be a .adofai file")
     chart_sha256 = viewer.file_sha256(chart_path)
@@ -274,7 +305,9 @@ def run(chart_path: Path, difficulty: str, checkpoint: Path, output_dir: Path,
     model = load_model(checkpoint)
     started = time.perf_counter()
     result = run_network(segment, model, stop_after_s=stop_after_s,
-                         wall_timeout_s=wall_timeout_s)
+                         wall_timeout_s=wall_timeout_s,
+                         selector_mode=selector_mode,
+                         policy_name=selector_mode)
     elapsed = time.perf_counter() - started
     payload = build_payload(chart_path, difficulty, checkpoint, compiled, segment, result)
     summary = {
@@ -285,6 +318,7 @@ def run(chart_path: Path, difficulty: str, checkpoint: Path, output_dir: Path,
         "replay_end_s": result["replay_end_s"], "termination_reason": result["termination_reason"],
         "runtime_s": round(elapsed, 3), "control_ms": 10.0, "physics_ms": 1.0,
         "stats": result["stats"], "choice_statistics": summarize_choices(result["decisions"]),
+        "selector_mode": selector_mode,
         "decisions_recorded": len(result["decisions"]),
         "teacher_shadow_rollout_used": False, "teacher_candidate_scores_used": False,
         "timing_source": "AutoPlay Oracle exact event times", "training_performed": False,
@@ -341,6 +375,8 @@ def main() -> None:
                         help="Default: <output-dir>.status.json; auto-numbered if occupied")
     parser.add_argument("--stop-after-s", type=float)
     parser.add_argument("--wall-timeout-s", type=float, default=300.0)
+    parser.add_argument("--selector", choices=("free", "continuity"), default="free",
+                        help="Candidate selector; default preserves Fingering Network v0.1")
     args = parser.parse_args()
     output_dir, status_file = choose_output_paths(args.chart, args.output_dir, args.status_file)
     print(f"DMDOGO output: {output_dir}", flush=True)
@@ -348,10 +384,12 @@ def main() -> None:
     started = datetime.now(timezone.utc)
     try:
         summary = run(args.chart, args.difficulty, args.checkpoint, output_dir,
-                      stop_after_s=args.stop_after_s, wall_timeout_s=args.wall_timeout_s)
+                      stop_after_s=args.stop_after_s, wall_timeout_s=args.wall_timeout_s,
+                      selector_mode=args.selector)
         status = {"pid": os.getpid(), "started_at_utc": started.isoformat(),
                   "finished_at_utc": datetime.now(timezone.utc).isoformat(), "exit_code": 0,
                   "output_dir": str(output_dir), "termination_reason": summary["termination_reason"]}
+        status["selector_mode"] = args.selector
     except BaseException as error:
         status = {"pid": os.getpid(), "started_at_utc": started.isoformat(),
                   "finished_at_utc": datetime.now(timezone.utc).isoformat(), "exit_code": 1,

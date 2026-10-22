@@ -42,6 +42,39 @@ def test_network_execution_never_calls_teacher_physical_ranker(monkeypatch):
     assert result["trace"]
 
 
+def test_free_selector_mode_is_the_legacy_default():
+    model = network.FingeringRanker()
+    model.eval()
+    legacy = full.run_network(_segment(), model, stop_after_s=.08)
+    explicit = full.run_network(_segment(), model, stop_after_s=.08,
+                                selector_mode="free", policy_name="free")
+    assert [row["chosen"] for row in legacy["decisions"]] == [
+        row["chosen"] for row in explicit["decisions"]
+    ]
+    assert legacy["stats"] == explicit["stats"]
+
+
+def test_continuity_selector_records_only_eligible_choices():
+    model = network.FingeringRanker()
+    model.eval()
+    result = full.run_network(_segment(), model, stop_after_s=.60,
+                              selector_mode="continuity", policy_name="continuity")
+    assert result["selector_mode"] == "continuity"
+    assert result["decisions"]
+    for row in result["decisions"]:
+        if row["selected_candidate_index"] is not None:
+            assert row["eligible"][row["selected_candidate_index"]] is True
+        assert row["selection_reason"]
+
+
+def test_unknown_selector_mode_is_rejected():
+    model = network.FingeringRanker()
+    model.eval()
+    with pytest.raises(ValueError, match="selector"):
+        full.run_network(_segment(), model, stop_after_s=.01,
+                         selector_mode="teacher_magic")
+
+
 def test_choice_summary_counts_thumb_side_and_fast_disjoint_switch():
     rows = [
         {"event_index": 1, "due_ms": 10, "chosen": "left_5/tip", "axes": ["left_5"]},
@@ -50,6 +83,7 @@ def test_choice_summary_counts_thumb_side_and_fast_disjoint_switch():
     result = full.summarize_choices(rows)
     assert result["thumb_uses"] == 1 and result["side_uses"] == 1
     assert result["extreme_switches_le_35ms"][0]["gap_ms"] == 20
+    assert result["continuity"]["left_right_switches"] == 1
 
 
 def test_trace_contains_seek_reconstructable_cumulative_state():
@@ -93,7 +127,8 @@ def test_run_accepts_two_distinct_chart_files_and_records_actual_hashes(tmp_path
         }), encoding="utf-8")
         output_dir = tmp_path / f"replay-{index}"
         summary = full.run(chart_path, "unrated", checkpoint, output_dir,
-                           stop_after_s=.08, wall_timeout_s=10)
+                           stop_after_s=.08, wall_timeout_s=10,
+                           selector_mode="continuity")
         payload = json.loads((output_dir / "full-chart-replay.json").read_text(encoding="utf-8"))
         disk_summary = json.loads((output_dir / "summary.json").read_text(encoding="utf-8"))
 
@@ -103,6 +138,7 @@ def test_run_accepts_two_distinct_chart_files_and_records_actual_hashes(tmp_path
         assert summary["difficulty"] == payload["difficulty"] == "unrated"
         assert summary["timing_source"] == "AutoPlay Oracle exact event times"
         assert summary["training_performed"] is False
+        assert summary["selector_mode"] == "continuity"
         assert summary["teacher_shadow_rollout_used"] is False
         viewer_html = (output_dir / "full-chart-replay.html").read_text(encoding="utf-8")
         assert "16 Contact KeyDown Counter" in viewer_html
@@ -179,12 +215,13 @@ def test_cli_retries_existing_pair_and_reports_actual_replay_path(tmp_path, monk
     monkeypatch.setattr(full, "run", fake_run)
     monkeypatch.setattr(sys, "argv", ["dmdogo", "--chart", str(tmp_path / "bool.adofai"),
                                     "--output-dir", str(base), "--status-file", str(status),
-                                    "--stop-after-s", "64"])
+                                    "--stop-after-s", "64", "--selector", "continuity"])
     full.main()
 
     chosen = tmp_path / "test-01-002"
     assert seen[0][3] == chosen
     assert seen[0][4]["stop_after_s"] == 64
+    assert seen[0][4]["selector_mode"] == "continuity"
     assert "fingering_network_v01-4fa2ae1.pt" in str(seen[0][2])
     created_status = tmp_path / "test-01-002.status.json"
     assert json.loads(created_status.read_text(encoding="utf-8"))["output_dir"] == str(chosen)
