@@ -1,0 +1,101 @@
+{
+  "format": "dmdod-phase29-integrated-feasibility-v0.1",
+  "generated_utc": "2026-10-22T12:30:41.774231+00:00",
+  "verdicts": [
+    "RUNTIME_PARITY_UNVERIFIED",
+    "STATE_AWARE_LATENCY_VALIDATED",
+    "ROBUST_SCHEDULER_VALIDATED",
+    "ORACLE_ONLY_INTERVENTION",
+    "NO_SAFE_INTERVENTION_ESTABLISHED",
+    "INSUFFICIENT_EVIDENCE"
+  ],
+  "scope": {
+    "chart": "01645 - First town of this Journey remix - Irin.adofai",
+    "seconds": 12.0,
+    "saved_physical_replay_only": true,
+    "new_motor_ab_executed": false,
+    "production_changed": false
+  },
+  "physical_results_already_executed": {
+    "frozen_phase16_baseline": {
+      "targets": 220,
+      "hits": 162,
+      "misses": 58,
+      "too_early": 0,
+      "overloaded": false,
+      "overload_counter": 0.0,
+      "x_accuracy_percent": 48.0,
+      "timing_mae_ms": 28.602361036772855,
+      "physical_keydowns": 162
+    },
+    "frozen_phase16_candidate": {
+      "targets": 220,
+      "hits": 207,
+      "misses": 13,
+      "too_early": 0,
+      "overloaded": false,
+      "overload_counter": 0.0,
+      "x_accuracy_percent": 66.0909090909091,
+      "timing_mae_ms": 24.883172309440557,
+      "physical_keydowns": 207
+    },
+    "recovered_hits_posthoc": 46,
+    "lost_baseline_hits_posthoc": 1,
+    "lost_ordinals_posthoc": [
+      89
+    ],
+    "existing_hit_preservation": false,
+    "lead_violations": 13,
+    "motor_collisions": 0
+  },
+  "research_candidates_not_physically_executed": {
+    "state_aware_latency": {
+      "cases": 48,
+      "interval_containment_rate": 1.0,
+      "event37": "UNKNOWN: no selected axis/exact Motor snapshot exists because production abstained",
+      "hit": null,
+      "miss": null,
+      "lost_baseline_hits": null
+    },
+    "robust_scheduler": {
+      "decisions": 2,
+      "safe": 0,
+      "abstain": 0,
+      "unknown": 2,
+      "false_safe_decisions": 0,
+      "hit": null,
+      "miss": null
+    },
+    "counterfactual_interventions": {
+      "candidate_count": 5,
+      "hud_only_safe_count": 0,
+      "oracle_only_count": 1,
+      "event89_oracle_recovered": true,
+      "event89_hud_recovered": false,
+      "false_safe_decisions": 0
+    }
+  },
+  "stock_state": {
+    "baseline_floor_attribution_mismatches": 50,
+    "normal_fail_stops": true,
+    "no_fail_continues": true,
+    "runtime_parity": "RUNTIME_PARITY_UNVERIFIED"
+  },
+  "causality_and_leakage": {
+    "counterfactual_prefix_max_difference": 0.0,
+    "phase27_oracle_fields_used_online": [],
+    "phase28_oracle_fields_used_online": [],
+    "oracle_leakage_detected": false
+  },
+  "adoption": {
+    "ready_for_production": false,
+    "blocking_constraints": [
+      "live Stock runtime parity is unverified",
+      "Event37 selected axis and exact Motor snapshot do not exist",
+      "predeadline due worlds have disjoint Stock windows",
+      "floor state is not uniquely observable before intervention",
+      "only Oracle completion of events 36/37/42/47 recovers Event89",
+      "saved Phase16 candidate loses baseline Event89 Hit"
+    ]
+  }
+}
