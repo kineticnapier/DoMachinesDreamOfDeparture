@@ -1,0 +1,32 @@
+{
+  "format": "dmdod-phase27-robust-scheduler-v0.1",
+  "generated_utc": "2026-10-22T12:28:15.069790+00:00",
+  "verdict": "ROBUST_SCHEDULER_VALIDATED",
+  "meaning": "prototype rejects unsafe/unknown candidates; no safe Event37 action found",
+  "event37_predeadline": {
+    "status": "unknown",
+    "arrival": null,
+    "axis": null,
+    "reasons": [
+      "motor_arrival_envelope_unknown",
+      "arrival_not_safe_for_due:counterfactual",
+      "floor_attribution_not_robust:event36_pending"
+    ],
+    "evaluated_due_hypotheses": 2,
+    "evaluated_floor_hypotheses": 2
+  },
+  "event37_after_point_forecast": {
+    "status": "unknown",
+    "arrival": null,
+    "axis": null,
+    "reasons": [
+      "motor_arrival_envelope_unknown",
+      "floor_attribution_not_robust:floor_unknown"
+    ],
+    "evaluated_due_hypotheses": 1,
+    "evaluated_floor_hypotheses": 1
+  },
+  "counterfactual_prefix_max_difference": 0.0,
+  "oracle_fields_used_online": [],
+  "production_changed": false
+}
