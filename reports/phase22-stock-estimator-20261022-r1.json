@@ -1,0 +1,1609 @@
+{
+  "format": "dmdod-phase22-stock-estimator-audit-v0.1",
+  "generated_utc": "2026-10-22T09:32:40.297837+00:00",
+  "verdicts": [
+    "STATE_NONIDENTIFIABLE",
+    "NO_SAFE_INTERVENTION_ESTABLISHED"
+  ],
+  "scope": "Phase16 First town local IDs 36..90; production control unchanged",
+  "online_inputs": [
+    "Timing local ID/due/status",
+    "own physical KeyDown history",
+    "Phase21 visible counter deltas",
+    "past estimator hypotheses"
+  ],
+  "forbidden_inputs_absent": [
+    "true target index",
+    "scorer cursor",
+    "_used/_missed",
+    "privileged target time",
+    "future counter delta"
+  ],
+  "fixture_failmiss_visible": {
+    "trace": [
+      {
+        "observed_at_s": 3.26,
+        "visible_deltas": {
+          "fail_miss": 1
+        },
+        "status": "identified_under_model",
+        "hypothesis_count": 1,
+        "possible_current_local_ids": [
+          "37"
+        ],
+        "identifiable": true,
+        "unknown_remainder": false
+      },
+      {
+        "observed_at_s": 3.28,
+        "visible_deltas": {
+          "very_late": 1
+        },
+        "status": "identified_under_model",
+        "hypothesis_count": 1,
+        "possible_current_local_ids": [
+          "38"
+        ],
+        "identifiable": true,
+        "unknown_remainder": false
+      },
+      {
+        "observed_at_s": 3.33,
+        "visible_deltas": {
+          "very_late": 1
+        },
+        "status": "identified_under_model",
+        "hypothesis_count": 1,
+        "possible_current_local_ids": [
+          "39"
+        ],
+        "identifiable": true,
+        "unknown_remainder": false
+      },
+      {
+        "observed_at_s": 3.3699999999999997,
+        "visible_deltas": {
+          "very_late": 1
+        },
+        "status": "identified_under_model",
+        "hypothesis_count": 1,
+        "possible_current_local_ids": [
+          "40"
+        ],
+        "identifiable": true,
+        "unknown_remainder": false
+      },
+      {
+        "observed_at_s": 3.3899999999999997,
+        "visible_deltas": {
+          "perfect": 1
+        },
+        "status": "identified_under_model",
+        "hypothesis_count": 1,
+        "possible_current_local_ids": [
+          "41"
+        ],
+        "identifiable": true,
+        "unknown_remainder": false
+      },
+      {
+        "observed_at_s": 3.44,
+        "visible_deltas": {
+          "fail_miss": 1
+        },
+        "status": "identified_under_model",
+        "hypothesis_count": 1,
+        "possible_current_local_ids": [
+          "42"
+        ],
+        "identifiable": true,
+        "unknown_remainder": false
+      },
+      {
+        "observed_at_s": 3.46,
+        "visible_deltas": {
+          "very_late": 1
+        },
+        "status": "identified_under_model",
+        "hypothesis_count": 1,
+        "possible_current_local_ids": [
+          "43"
+        ],
+        "identifiable": true,
+        "unknown_remainder": false
+      },
+      {
+        "observed_at_s": 3.5,
+        "visible_deltas": {
+          "very_late": 1
+        },
+        "status": "identified_under_model",
+        "hypothesis_count": 1,
+        "possible_current_local_ids": [
+          "44"
+        ],
+        "identifiable": true,
+        "unknown_remainder": false
+      },
+      {
+        "observed_at_s": 3.55,
+        "visible_deltas": {
+          "very_late": 1
+        },
+        "status": "identified_under_model",
+        "hypothesis_count": 1,
+        "possible_current_local_ids": [
+          "45"
+        ],
+        "identifiable": true,
+        "unknown_remainder": false
+      },
+      {
+        "observed_at_s": 3.56,
+        "visible_deltas": {
+          "perfect": 1
+        },
+        "status": "identified_under_model",
+        "hypothesis_count": 1,
+        "possible_current_local_ids": [
+          "46"
+        ],
+        "identifiable": true,
+        "unknown_remainder": false
+      },
+      {
+        "observed_at_s": 3.6199999999999997,
+        "visible_deltas": {
+          "fail_miss": 1
+        },
+        "status": "identified_under_model",
+        "hypothesis_count": 1,
+        "possible_current_local_ids": [
+          "47"
+        ],
+        "identifiable": true,
+        "unknown_remainder": false
+      },
+      {
+        "observed_at_s": 3.6399999999999997,
+        "visible_deltas": {
+          "very_late": 1
+        },
+        "status": "identified_under_model",
+        "hypothesis_count": 1,
+        "possible_current_local_ids": [
+          "48"
+        ],
+        "identifiable": true,
+        "unknown_remainder": false
+      },
+      {
+        "observed_at_s": 3.67,
+        "visible_deltas": {
+          "very_late": 1
+        },
+        "status": "identified_under_model",
+        "hypothesis_count": 1,
+        "possible_current_local_ids": [
+          "49"
+        ],
+        "identifiable": true,
+        "unknown_remainder": false
+      },
+      {
+        "observed_at_s": 3.73,
+        "visible_deltas": {
+          "very_late": 1
+        },
+        "status": "identified_under_model",
+        "hypothesis_count": 1,
+        "possible_current_local_ids": [
+          "50"
+        ],
+        "identifiable": true,
+        "unknown_remainder": false
+      },
+      {
+        "observed_at_s": 3.77,
+        "visible_deltas": {
+          "very_late": 1
+        },
+        "status": "identified_under_model",
+        "hypothesis_count": 1,
+        "possible_current_local_ids": [
+          "51"
+        ],
+        "identifiable": true,
+        "unknown_remainder": false
+      },
+      {
+        "observed_at_s": 3.81,
+        "visible_deltas": {
+          "very_late": 1
+        },
+        "status": "identified_under_model",
+        "hypothesis_count": 1,
+        "possible_current_local_ids": [
+          "52"
+        ],
+        "identifiable": true,
+        "unknown_remainder": false
+      },
+      {
+        "observed_at_s": 3.86,
+        "visible_deltas": {
+          "very_late": 1
+        },
+        "status": "identified_under_model",
+        "hypothesis_count": 1,
+        "possible_current_local_ids": [
+          "53"
+        ],
+        "identifiable": true,
+        "unknown_remainder": false
+      },
+      {
+        "observed_at_s": 3.9,
+        "visible_deltas": {
+          "very_late": 1
+        },
+        "status": "identified_under_model",
+        "hypothesis_count": 1,
+        "possible_current_local_ids": [
+          "54"
+        ],
+        "identifiable": true,
+        "unknown_remainder": false
+      },
+      {
+        "observed_at_s": 3.9499999999999997,
+        "visible_deltas": {
+          "very_late": 1
+        },
+        "status": "identified_under_model",
+        "hypothesis_count": 1,
+        "possible_current_local_ids": [
+          "55"
+        ],
+        "identifiable": true,
+        "unknown_remainder": false
+      },
+      {
+        "observed_at_s": 3.9899999999999998,
+        "visible_deltas": {
+          "very_late": 1
+        },
+        "status": "identified_under_model",
+        "hypothesis_count": 1,
+        "possible_current_local_ids": [
+          "56"
+        ],
+        "identifiable": true,
+        "unknown_remainder": false
+      },
+      {
+        "observed_at_s": 4.04,
+        "visible_deltas": {
+          "very_late": 1
+        },
+        "status": "identified_under_model",
+        "hypothesis_count": 1,
+        "possible_current_local_ids": [
+          "57"
+        ],
+        "identifiable": true,
+        "unknown_remainder": false
+      },
+      {
+        "observed_at_s": 4.08,
+        "visible_deltas": {
+          "perfect": 1,
+          "very_late": 1
+        },
+        "status": "identified_under_model",
+        "hypothesis_count": 2,
+        "possible_current_local_ids": [
+          "59"
+        ],
+        "identifiable": true,
+        "unknown_remainder": false
+      },
+      {
+        "observed_at_s": 4.12,
+        "visible_deltas": {
+          "very_late": 1
+        },
+        "status": "identified_under_model",
+        "hypothesis_count": 2,
+        "possible_current_local_ids": [
+          "60"
+        ],
+        "identifiable": true,
+        "unknown_remainder": false
+      },
+      {
+        "observed_at_s": 4.17,
+        "visible_deltas": {
+          "very_late": 1
+        },
+        "status": "identified_under_model",
+        "hypothesis_count": 2,
+        "possible_current_local_ids": [
+          "61"
+        ],
+        "identifiable": true,
+        "unknown_remainder": false
+      },
+      {
+        "observed_at_s": 4.21,
+        "visible_deltas": {
+          "very_late": 1
+        },
+        "status": "identified_under_model",
+        "hypothesis_count": 2,
+        "possible_current_local_ids": [
+          "62"
+        ],
+        "identifiable": true,
+        "unknown_remainder": false
+      },
+      {
+        "observed_at_s": 4.25,
+        "visible_deltas": {
+          "very_late": 1
+        },
+        "status": "identified_under_model",
+        "hypothesis_count": 2,
+        "possible_current_local_ids": [
+          "63"
+        ],
+        "identifiable": true,
+        "unknown_remainder": false
+      },
+      {
+        "observed_at_s": 4.28,
+        "visible_deltas": {
+          "late_perfect": 1
+        },
+        "status": "identified_under_model",
+        "hypothesis_count": 2,
+        "possible_current_local_ids": [
+          "64"
+        ],
+        "identifiable": true,
+        "unknown_remainder": false
+      },
+      {
+        "observed_at_s": 4.3,
+        "visible_deltas": {
+          "very_late": 1
+        },
+        "status": "identified_under_model",
+        "hypothesis_count": 2,
+        "possible_current_local_ids": [
+          "65"
+        ],
+        "identifiable": true,
+        "unknown_remainder": false
+      },
+      {
+        "observed_at_s": 4.34,
+        "visible_deltas": {
+          "very_late": 1
+        },
+        "status": "identified_under_model",
+        "hypothesis_count": 2,
+        "possible_current_local_ids": [
+          "66"
+        ],
+        "identifiable": true,
+        "unknown_remainder": false
+      },
+      {
+        "observed_at_s": 4.39,
+        "visible_deltas": {
+          "very_late": 1
+        },
+        "status": "identified_under_model",
+        "hypothesis_count": 2,
+        "possible_current_local_ids": [
+          "67"
+        ],
+        "identifiable": true,
+        "unknown_remainder": false
+      },
+      {
+        "observed_at_s": 4.43,
+        "visible_deltas": {
+          "very_late": 1
+        },
+        "status": "identified_under_model",
+        "hypothesis_count": 2,
+        "possible_current_local_ids": [
+          "68"
+        ],
+        "identifiable": true,
+        "unknown_remainder": false
+      },
+      {
+        "observed_at_s": 4.47,
+        "visible_deltas": {
+          "very_late": 1
+        },
+        "status": "identified_under_model",
+        "hypothesis_count": 2,
+        "possible_current_local_ids": [
+          "69"
+        ],
+        "identifiable": true,
+        "unknown_remainder": false
+      },
+      {
+        "observed_at_s": 4.52,
+        "visible_deltas": {
+          "very_late": 1
+        },
+        "status": "identified_under_model",
+        "hypothesis_count": 2,
+        "possible_current_local_ids": [
+          "70"
+        ],
+        "identifiable": true,
+        "unknown_remainder": false
+      },
+      {
+        "observed_at_s": 4.56,
+        "visible_deltas": {
+          "very_late": 1
+        },
+        "status": "identified_under_model",
+        "hypothesis_count": 2,
+        "possible_current_local_ids": [
+          "71"
+        ],
+        "identifiable": true,
+        "unknown_remainder": false
+      },
+      {
+        "observed_at_s": 4.6,
+        "visible_deltas": {
+          "very_late": 1
+        },
+        "status": "identified_under_model",
+        "hypothesis_count": 2,
+        "possible_current_local_ids": [
+          "72"
+        ],
+        "identifiable": true,
+        "unknown_remainder": false
+      },
+      {
+        "observed_at_s": 4.63,
+        "visible_deltas": {
+          "very_late": 1
+        },
+        "status": "identified_under_model",
+        "hypothesis_count": 2,
+        "possible_current_local_ids": [
+          "73"
+        ],
+        "identifiable": true,
+        "unknown_remainder": false
+      },
+      {
+        "observed_at_s": 4.6499999999999995,
+        "visible_deltas": {
+          "very_late": 1
+        },
+        "status": "identified_under_model",
+        "hypothesis_count": 2,
+        "possible_current_local_ids": [
+          "74"
+        ],
+        "identifiable": true,
+        "unknown_remainder": false
+      },
+      {
+        "observed_at_s": 4.6899999999999995,
+        "visible_deltas": {
+          "very_late": 1
+        },
+        "status": "identified_under_model",
+        "hypothesis_count": 2,
+        "possible_current_local_ids": [
+          "75"
+        ],
+        "identifiable": true,
+        "unknown_remainder": false
+      },
+      {
+        "observed_at_s": 4.74,
+        "visible_deltas": {
+          "very_late": 1
+        },
+        "status": "identified_under_model",
+        "hypothesis_count": 2,
+        "possible_current_local_ids": [
+          "76"
+        ],
+        "identifiable": true,
+        "unknown_remainder": false
+      },
+      {
+        "observed_at_s": 4.78,
+        "visible_deltas": {
+          "very_late": 1
+        },
+        "status": "identified_under_model",
+        "hypothesis_count": 2,
+        "possible_current_local_ids": [
+          "77"
+        ],
+        "identifiable": true,
+        "unknown_remainder": false
+      },
+      {
+        "observed_at_s": 4.83,
+        "visible_deltas": {
+          "very_late": 1
+        },
+        "status": "identified_under_model",
+        "hypothesis_count": 2,
+        "possible_current_local_ids": [
+          "78"
+        ],
+        "identifiable": true,
+        "unknown_remainder": false
+      },
+      {
+        "observed_at_s": 4.87,
+        "visible_deltas": {
+          "very_late": 1
+        },
+        "status": "identified_under_model",
+        "hypothesis_count": 2,
+        "possible_current_local_ids": [
+          "79"
+        ],
+        "identifiable": true,
+        "unknown_remainder": false
+      },
+      {
+        "observed_at_s": 4.91,
+        "visible_deltas": {
+          "very_late": 1
+        },
+        "status": "identified_under_model",
+        "hypothesis_count": 2,
+        "possible_current_local_ids": [
+          "80"
+        ],
+        "identifiable": true,
+        "unknown_remainder": false
+      },
+      {
+        "observed_at_s": 4.96,
+        "visible_deltas": {
+          "very_late": 1
+        },
+        "status": "identified_under_model",
+        "hypothesis_count": 2,
+        "possible_current_local_ids": [
+          "81"
+        ],
+        "identifiable": true,
+        "unknown_remainder": false
+      },
+      {
+        "observed_at_s": 5.0,
+        "visible_deltas": {
+          "very_late": 1
+        },
+        "status": "identified_under_model",
+        "hypothesis_count": 2,
+        "possible_current_local_ids": [
+          "82"
+        ],
+        "identifiable": true,
+        "unknown_remainder": false
+      },
+      {
+        "observed_at_s": 5.04,
+        "visible_deltas": {
+          "very_late": 1
+        },
+        "status": "identified_under_model",
+        "hypothesis_count": 2,
+        "possible_current_local_ids": [
+          "83"
+        ],
+        "identifiable": true,
+        "unknown_remainder": false
+      },
+      {
+        "observed_at_s": 5.1,
+        "visible_deltas": {
+          "very_late": 1
+        },
+        "status": "identified_under_model",
+        "hypothesis_count": 2,
+        "possible_current_local_ids": [
+          "84"
+        ],
+        "identifiable": true,
+        "unknown_remainder": false
+      },
+      {
+        "observed_at_s": 5.14,
+        "visible_deltas": {
+          "very_late": 1
+        },
+        "status": "identified_under_model",
+        "hypothesis_count": 2,
+        "possible_current_local_ids": [
+          "85"
+        ],
+        "identifiable": true,
+        "unknown_remainder": false
+      },
+      {
+        "observed_at_s": 5.16,
+        "visible_deltas": {
+          "late_perfect": 1
+        },
+        "status": "identified_under_model",
+        "hypothesis_count": 2,
+        "possible_current_local_ids": [
+          "86"
+        ],
+        "identifiable": true,
+        "unknown_remainder": false
+      },
+      {
+        "observed_at_s": 5.18,
+        "visible_deltas": {
+          "very_late": 1
+        },
+        "status": "identified_under_model",
+        "hypothesis_count": 2,
+        "possible_current_local_ids": [
+          "87"
+        ],
+        "identifiable": true,
+        "unknown_remainder": false
+      },
+      {
+        "observed_at_s": 5.22,
+        "visible_deltas": {
+          "very_late": 1
+        },
+        "status": "identified_under_model",
+        "hypothesis_count": 2,
+        "possible_current_local_ids": [
+          "88"
+        ],
+        "identifiable": true,
+        "unknown_remainder": false
+      },
+      {
+        "observed_at_s": 5.27,
+        "visible_deltas": {
+          "very_late": 1
+        },
+        "status": "identified_under_model",
+        "hypothesis_count": 2,
+        "possible_current_local_ids": [
+          "89"
+        ],
+        "identifiable": true,
+        "unknown_remainder": false
+      },
+      {
+        "observed_at_s": 5.33,
+        "visible_deltas": {
+          "perfect": 1,
+          "fail_miss": 1
+        },
+        "status": "ambiguous",
+        "hypothesis_count": 4,
+        "possible_current_local_ids": [],
+        "identifiable": false,
+        "unknown_remainder": false
+      }
+    ],
+    "final_hypothesis_count": 4,
+    "oracle_posthoc": {
+      "truth_pair_count": 51,
+      "best_exact_attribution_count": 51,
+      "complete_exact_hypothesis_exists": true,
+      "unknown_remainder_retained": false
+    },
+    "interpretation": "conditional result only; automatic FailMiss counter visibility is not established on live Stock"
+  },
+  "conservative_failmiss_unknown": {
+    "trace": [
+      {
+        "observed_at_s": 3.28,
+        "visible_deltas": {
+          "very_late": 1
+        },
+        "status": "ambiguous",
+        "hypothesis_count": 3,
+        "possible_current_local_ids": [
+          "37",
+          "38"
+        ],
+        "identifiable": false,
+        "unknown_remainder": true
+      },
+      {
+        "observed_at_s": 3.33,
+        "visible_deltas": {
+          "very_late": 1
+        },
+        "status": "ambiguous",
+        "hypothesis_count": 8,
+        "possible_current_local_ids": [
+          "38",
+          "39",
+          "40"
+        ],
+        "identifiable": false,
+        "unknown_remainder": true
+      },
+      {
+        "observed_at_s": 3.3699999999999997,
+        "visible_deltas": {
+          "very_late": 1
+        },
+        "status": "ambiguous",
+        "hypothesis_count": 20,
+        "possible_current_local_ids": [
+          "39",
+          "40",
+          "41"
+        ],
+        "identifiable": false,
+        "unknown_remainder": true
+      },
+      {
+        "observed_at_s": 3.3899999999999997,
+        "visible_deltas": {
+          "perfect": 1
+        },
+        "status": "ambiguous",
+        "hypothesis_count": 48,
+        "possible_current_local_ids": [
+          "40",
+          "41",
+          "42",
+          "43"
+        ],
+        "identifiable": false,
+        "unknown_remainder": true
+      },
+      {
+        "observed_at_s": 3.46,
+        "visible_deltas": {
+          "very_late": 1
+        },
+        "status": "ambiguous",
+        "hypothesis_count": 112,
+        "possible_current_local_ids": [
+          "41",
+          "42",
+          "43",
+          "44"
+        ],
+        "identifiable": false,
+        "unknown_remainder": true
+      },
+      {
+        "observed_at_s": 3.5,
+        "visible_deltas": {
+          "very_late": 1
+        },
+        "status": "truncated",
+        "hypothesis_count": 128,
+        "possible_current_local_ids": [
+          "42",
+          "43",
+          "44",
+          "45",
+          "46"
+        ],
+        "identifiable": false,
+        "unknown_remainder": true
+      },
+      {
+        "observed_at_s": 3.55,
+        "visible_deltas": {
+          "very_late": 1
+        },
+        "status": "truncated",
+        "hypothesis_count": 128,
+        "possible_current_local_ids": [
+          "43",
+          "44",
+          "45",
+          "46",
+          "47"
+        ],
+        "identifiable": false,
+        "unknown_remainder": true
+      },
+      {
+        "observed_at_s": 3.56,
+        "visible_deltas": {
+          "perfect": 1
+        },
+        "status": "truncated",
+        "hypothesis_count": 128,
+        "possible_current_local_ids": [
+          "44",
+          "45",
+          "46",
+          "47",
+          "48"
+        ],
+        "identifiable": false,
+        "unknown_remainder": true
+      },
+      {
+        "observed_at_s": 3.6399999999999997,
+        "visible_deltas": {
+          "very_late": 1
+        },
+        "status": "truncated",
+        "hypothesis_count": 128,
+        "possible_current_local_ids": [
+          "45",
+          "46",
+          "47",
+          "48",
+          "49"
+        ],
+        "identifiable": false,
+        "unknown_remainder": true
+      },
+      {
+        "observed_at_s": 3.67,
+        "visible_deltas": {
+          "very_late": 1
+        },
+        "status": "truncated",
+        "hypothesis_count": 128,
+        "possible_current_local_ids": [
+          "46",
+          "47",
+          "48",
+          "49",
+          "50"
+        ],
+        "identifiable": false,
+        "unknown_remainder": true
+      },
+      {
+        "observed_at_s": 3.73,
+        "visible_deltas": {
+          "very_late": 1
+        },
+        "status": "truncated",
+        "hypothesis_count": 128,
+        "possible_current_local_ids": [
+          "47",
+          "48",
+          "49",
+          "50",
+          "51",
+          "52"
+        ],
+        "identifiable": false,
+        "unknown_remainder": true
+      },
+      {
+        "observed_at_s": 3.77,
+        "visible_deltas": {
+          "very_late": 1
+        },
+        "status": "truncated",
+        "hypothesis_count": 128,
+        "possible_current_local_ids": [
+          "48",
+          "49",
+          "50",
+          "51",
+          "52",
+          "53"
+        ],
+        "identifiable": false,
+        "unknown_remainder": true
+      },
+      {
+        "observed_at_s": 3.81,
+        "visible_deltas": {
+          "very_late": 1
+        },
+        "status": "truncated",
+        "hypothesis_count": 128,
+        "possible_current_local_ids": [
+          "49",
+          "50",
+          "51",
+          "52",
+          "53"
+        ],
+        "identifiable": false,
+        "unknown_remainder": true
+      },
+      {
+        "observed_at_s": 3.86,
+        "visible_deltas": {
+          "very_late": 1
+        },
+        "status": "truncated",
+        "hypothesis_count": 128,
+        "possible_current_local_ids": [
+          "50",
+          "51",
+          "52",
+          "53",
+          "54",
+          "55"
+        ],
+        "identifiable": false,
+        "unknown_remainder": true
+      },
+      {
+        "observed_at_s": 3.9,
+        "visible_deltas": {
+          "very_late": 1
+        },
+        "status": "truncated",
+        "hypothesis_count": 128,
+        "possible_current_local_ids": [
+          "51",
+          "52",
+          "53",
+          "54",
+          "55"
+        ],
+        "identifiable": false,
+        "unknown_remainder": true
+      },
+      {
+        "observed_at_s": 3.9499999999999997,
+        "visible_deltas": {
+          "very_late": 1
+        },
+        "status": "truncated",
+        "hypothesis_count": 128,
+        "possible_current_local_ids": [
+          "52",
+          "53",
+          "54",
+          "55",
+          "56"
+        ],
+        "identifiable": false,
+        "unknown_remainder": true
+      },
+      {
+        "observed_at_s": 3.9899999999999998,
+        "visible_deltas": {
+          "very_late": 1
+        },
+        "status": "truncated",
+        "hypothesis_count": 128,
+        "possible_current_local_ids": [
+          "53",
+          "54",
+          "55",
+          "56",
+          "57"
+        ],
+        "identifiable": false,
+        "unknown_remainder": true
+      },
+      {
+        "observed_at_s": 4.04,
+        "visible_deltas": {
+          "very_late": 1
+        },
+        "status": "truncated",
+        "hypothesis_count": 128,
+        "possible_current_local_ids": [
+          "54",
+          "55",
+          "56",
+          "57",
+          "58",
+          "59"
+        ],
+        "identifiable": false,
+        "unknown_remainder": true
+      },
+      {
+        "observed_at_s": 4.08,
+        "visible_deltas": {
+          "perfect": 1,
+          "very_late": 1
+        },
+        "status": "truncated",
+        "hypothesis_count": 128,
+        "possible_current_local_ids": [
+          "56",
+          "57",
+          "58",
+          "59",
+          "60"
+        ],
+        "identifiable": false,
+        "unknown_remainder": true
+      },
+      {
+        "observed_at_s": 4.12,
+        "visible_deltas": {
+          "very_late": 1
+        },
+        "status": "truncated",
+        "hypothesis_count": 128,
+        "possible_current_local_ids": [
+          "57",
+          "58",
+          "59",
+          "60",
+          "61"
+        ],
+        "identifiable": false,
+        "unknown_remainder": true
+      },
+      {
+        "observed_at_s": 4.17,
+        "visible_deltas": {
+          "very_late": 1
+        },
+        "status": "truncated",
+        "hypothesis_count": 128,
+        "possible_current_local_ids": [
+          "58",
+          "59",
+          "60",
+          "61",
+          "62"
+        ],
+        "identifiable": false,
+        "unknown_remainder": true
+      },
+      {
+        "observed_at_s": 4.21,
+        "visible_deltas": {
+          "very_late": 1
+        },
+        "status": "truncated",
+        "hypothesis_count": 128,
+        "possible_current_local_ids": [
+          "59",
+          "60",
+          "61",
+          "62",
+          "63"
+        ],
+        "identifiable": false,
+        "unknown_remainder": true
+      },
+      {
+        "observed_at_s": 4.25,
+        "visible_deltas": {
+          "very_late": 1
+        },
+        "status": "truncated",
+        "hypothesis_count": 128,
+        "possible_current_local_ids": [
+          "60",
+          "61",
+          "62",
+          "63",
+          "64"
+        ],
+        "identifiable": false,
+        "unknown_remainder": true
+      },
+      {
+        "observed_at_s": 4.28,
+        "visible_deltas": {
+          "late_perfect": 1
+        },
+        "status": "truncated",
+        "hypothesis_count": 128,
+        "possible_current_local_ids": [
+          "61",
+          "62",
+          "63",
+          "64",
+          "65",
+          "66"
+        ],
+        "identifiable": false,
+        "unknown_remainder": true
+      },
+      {
+        "observed_at_s": 4.3,
+        "visible_deltas": {
+          "very_late": 1
+        },
+        "status": "truncated",
+        "hypothesis_count": 128,
+        "possible_current_local_ids": [
+          "62",
+          "63",
+          "64",
+          "65",
+          "66",
+          "67"
+        ],
+        "identifiable": false,
+        "unknown_remainder": true
+      },
+      {
+        "observed_at_s": 4.34,
+        "visible_deltas": {
+          "very_late": 1
+        },
+        "status": "truncated",
+        "hypothesis_count": 128,
+        "possible_current_local_ids": [
+          "63",
+          "64",
+          "65",
+          "66",
+          "67"
+        ],
+        "identifiable": false,
+        "unknown_remainder": true
+      },
+      {
+        "observed_at_s": 4.39,
+        "visible_deltas": {
+          "very_late": 1
+        },
+        "status": "truncated",
+        "hypothesis_count": 128,
+        "possible_current_local_ids": [
+          "64",
+          "65",
+          "66",
+          "67",
+          "68",
+          "69"
+        ],
+        "identifiable": false,
+        "unknown_remainder": true
+      },
+      {
+        "observed_at_s": 4.43,
+        "visible_deltas": {
+          "very_late": 1
+        },
+        "status": "truncated",
+        "hypothesis_count": 128,
+        "possible_current_local_ids": [
+          "65",
+          "66",
+          "67",
+          "68",
+          "69"
+        ],
+        "identifiable": false,
+        "unknown_remainder": true
+      },
+      {
+        "observed_at_s": 4.47,
+        "visible_deltas": {
+          "very_late": 1
+        },
+        "status": "truncated",
+        "hypothesis_count": 128,
+        "possible_current_local_ids": [
+          "66",
+          "67",
+          "68",
+          "69",
+          "70"
+        ],
+        "identifiable": false,
+        "unknown_remainder": true
+      },
+      {
+        "observed_at_s": 4.52,
+        "visible_deltas": {
+          "very_late": 1
+        },
+        "status": "truncated",
+        "hypothesis_count": 128,
+        "possible_current_local_ids": [
+          "67",
+          "68",
+          "69",
+          "70",
+          "71"
+        ],
+        "identifiable": false,
+        "unknown_remainder": true
+      },
+      {
+        "observed_at_s": 4.56,
+        "visible_deltas": {
+          "very_late": 1
+        },
+        "status": "truncated",
+        "hypothesis_count": 128,
+        "possible_current_local_ids": [
+          "68",
+          "69",
+          "70",
+          "71",
+          "72",
+          "73"
+        ],
+        "identifiable": false,
+        "unknown_remainder": true
+      },
+      {
+        "observed_at_s": 4.6,
+        "visible_deltas": {
+          "very_late": 1
+        },
+        "status": "truncated",
+        "hypothesis_count": 128,
+        "possible_current_local_ids": [
+          "69",
+          "70",
+          "71",
+          "72",
+          "73",
+          "74"
+        ],
+        "identifiable": false,
+        "unknown_remainder": true
+      },
+      {
+        "observed_at_s": 4.63,
+        "visible_deltas": {
+          "very_late": 1
+        },
+        "status": "truncated",
+        "hypothesis_count": 128,
+        "possible_current_local_ids": [
+          "70",
+          "71",
+          "72",
+          "73",
+          "74",
+          "75"
+        ],
+        "identifiable": false,
+        "unknown_remainder": true
+      },
+      {
+        "observed_at_s": 4.6499999999999995,
+        "visible_deltas": {
+          "very_late": 1
+        },
+        "status": "truncated",
+        "hypothesis_count": 128,
+        "possible_current_local_ids": [
+          "71",
+          "72",
+          "73",
+          "74",
+          "75"
+        ],
+        "identifiable": false,
+        "unknown_remainder": true
+      },
+      {
+        "observed_at_s": 4.6899999999999995,
+        "visible_deltas": {
+          "very_late": 1
+        },
+        "status": "truncated",
+        "hypothesis_count": 128,
+        "possible_current_local_ids": [
+          "72",
+          "73",
+          "74",
+          "75",
+          "76"
+        ],
+        "identifiable": false,
+        "unknown_remainder": true
+      },
+      {
+        "observed_at_s": 4.74,
+        "visible_deltas": {
+          "very_late": 1
+        },
+        "status": "truncated",
+        "hypothesis_count": 128,
+        "possible_current_local_ids": [
+          "73",
+          "74",
+          "75",
+          "76",
+          "77",
+          "78"
+        ],
+        "identifiable": false,
+        "unknown_remainder": true
+      },
+      {
+        "observed_at_s": 4.78,
+        "visible_deltas": {
+          "very_late": 1
+        },
+        "status": "truncated",
+        "hypothesis_count": 128,
+        "possible_current_local_ids": [
+          "74",
+          "75",
+          "76",
+          "77",
+          "78"
+        ],
+        "identifiable": false,
+        "unknown_remainder": true
+      },
+      {
+        "observed_at_s": 4.83,
+        "visible_deltas": {
+          "very_late": 1
+        },
+        "status": "truncated",
+        "hypothesis_count": 128,
+        "possible_current_local_ids": [
+          "75",
+          "76",
+          "77",
+          "78",
+          "79",
+          "80"
+        ],
+        "identifiable": false,
+        "unknown_remainder": true
+      },
+      {
+        "observed_at_s": 4.87,
+        "visible_deltas": {
+          "very_late": 1
+        },
+        "status": "truncated",
+        "hypothesis_count": 128,
+        "possible_current_local_ids": [
+          "76",
+          "77",
+          "78",
+          "79",
+          "80"
+        ],
+        "identifiable": false,
+        "unknown_remainder": true
+      },
+      {
+        "observed_at_s": 4.91,
+        "visible_deltas": {
+          "very_late": 1
+        },
+        "status": "truncated",
+        "hypothesis_count": 128,
+        "possible_current_local_ids": [
+          "77",
+          "78",
+          "79",
+          "80",
+          "81"
+        ],
+        "identifiable": false,
+        "unknown_remainder": true
+      },
+      {
+        "observed_at_s": 4.96,
+        "visible_deltas": {
+          "very_late": 1
+        },
+        "status": "truncated",
+        "hypothesis_count": 128,
+        "possible_current_local_ids": [
+          "78",
+          "79",
+          "80",
+          "81",
+          "82"
+        ],
+        "identifiable": false,
+        "unknown_remainder": true
+      },
+      {
+        "observed_at_s": 5.0,
+        "visible_deltas": {
+          "very_late": 1
+        },
+        "status": "truncated",
+        "hypothesis_count": 128,
+        "possible_current_local_ids": [
+          "79",
+          "80",
+          "81",
+          "82",
+          "83"
+        ],
+        "identifiable": false,
+        "unknown_remainder": true
+      },
+      {
+        "observed_at_s": 5.04,
+        "visible_deltas": {
+          "very_late": 1
+        },
+        "status": "truncated",
+        "hypothesis_count": 128,
+        "possible_current_local_ids": [
+          "80",
+          "81",
+          "82",
+          "83",
+          "84"
+        ],
+        "identifiable": false,
+        "unknown_remainder": true
+      },
+      {
+        "observed_at_s": 5.1,
+        "visible_deltas": {
+          "very_late": 1
+        },
+        "status": "truncated",
+        "hypothesis_count": 128,
+        "possible_current_local_ids": [
+          "81",
+          "82",
+          "83",
+          "84",
+          "85",
+          "86"
+        ],
+        "identifiable": false,
+        "unknown_remainder": true
+      },
+      {
+        "observed_at_s": 5.14,
+        "visible_deltas": {
+          "very_late": 1
+        },
+        "status": "truncated",
+        "hypothesis_count": 128,
+        "possible_current_local_ids": [
+          "82",
+          "83",
+          "84",
+          "85",
+          "86",
+          "87"
+        ],
+        "identifiable": false,
+        "unknown_remainder": true
+      },
+      {
+        "observed_at_s": 5.16,
+        "visible_deltas": {
+          "late_perfect": 1
+        },
+        "status": "truncated",
+        "hypothesis_count": 128,
+        "possible_current_local_ids": [
+          "83",
+          "84",
+          "85",
+          "86",
+          "87",
+          "88"
+        ],
+        "identifiable": false,
+        "unknown_remainder": true
+      },
+      {
+        "observed_at_s": 5.18,
+        "visible_deltas": {
+          "very_late": 1
+        },
+        "status": "truncated",
+        "hypothesis_count": 128,
+        "possible_current_local_ids": [
+          "84",
+          "85",
+          "86",
+          "87",
+          "88"
+        ],
+        "identifiable": false,
+        "unknown_remainder": true
+      },
+      {
+        "observed_at_s": 5.22,
+        "visible_deltas": {
+          "very_late": 1
+        },
+        "status": "truncated",
+        "hypothesis_count": 128,
+        "possible_current_local_ids": [
+          "85",
+          "86",
+          "87",
+          "88",
+          "89"
+        ],
+        "identifiable": false,
+        "unknown_remainder": true
+      },
+      {
+        "observed_at_s": 5.27,
+        "visible_deltas": {
+          "very_late": 1
+        },
+        "status": "truncated",
+        "hypothesis_count": 128,
+        "possible_current_local_ids": [
+          "86",
+          "87",
+          "88",
+          "89",
+          "90"
+        ],
+        "identifiable": false,
+        "unknown_remainder": true
+      },
+      {
+        "observed_at_s": 5.33,
+        "visible_deltas": {
+          "perfect": 1
+        },
+        "status": "truncated",
+        "hypothesis_count": 128,
+        "possible_current_local_ids": [
+          "87",
+          "88",
+          "89",
+          "90"
+        ],
+        "identifiable": false,
+        "unknown_remainder": true
+      }
+    ],
+    "final_hypothesis_count": 128,
+    "oracle_posthoc": {
+      "truth_pair_count": 51,
+      "best_exact_attribution_count": 3,
+      "complete_exact_hypothesis_exists": false,
+      "unknown_remainder_retained": true
+    },
+    "first_alignment_risk_visible_at_s": 3.28,
+    "false_unique_identification_count": 0,
+    "interpretation": "normal and hidden-auto-transition floor states remain observationally compatible"
+  },
+  "event89_prevention": {
+    "risk_detectable_as_possibility_at_s": 3.28,
+    "risk_uniquely_identified": false,
+    "fixture_first_warning_s": 3.26,
+    "id38_physical_keydown_s": 3.260999999999752,
+    "available_margin_ms": 0.999999999752,
+    "required_motor_lead_ms": 44.0,
+    "safe_intervention": false,
+    "reason": "the optimistic signal is too late for the frozen Motor contract; the conservative visible history is not target-identifying"
+  },
+  "normal_fail": {
+    "reference_stop_s": 3.32,
+    "estimator_tracking_ends_when_a separately observable game-stop signal is supplied": true,
+    "counter_deltas_alone_prove_terminal_state": false
+  },
+  "stock_runtime_verified": false
+}
