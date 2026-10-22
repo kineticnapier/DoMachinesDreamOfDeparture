@@ -115,6 +115,6 @@ def test_run_rejects_non_adofai_before_creating_output(tmp_path):
     wrong_chart = tmp_path / "input.txt"
     wrong_chart.write_text("{}", encoding="utf-8")
     output_dir = tmp_path / "should-not-exist"
-    with pytest.raises(ValueError, match=r"\\.adofai"):
+    with pytest.raises(ValueError, match=r"\.adofai"):
         full.run(wrong_chart, "unrated", tmp_path / "unused.pt", output_dir)
     assert not output_dir.exists()
