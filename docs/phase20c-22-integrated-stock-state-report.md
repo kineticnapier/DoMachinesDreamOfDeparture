@@ -124,3 +124,9 @@ Primary results:
 - `reports/phase20c-frame-stock-state-20261022-r1.json`
 - `reports/phase21-stock-visible-feedback-20261022-r1.json`
 - `reports/phase22-stock-estimator-20261022-r1.json`
+
+## Test status
+
+- focused Phase 20B–22 regression set: 71 passed;
+- full repository suite: 2022 passed, 1 pre-existing PyTorch warning;
+- isolated full-suite temporary root: `artifacts/pytest-phase20c22-full-r1/`.
