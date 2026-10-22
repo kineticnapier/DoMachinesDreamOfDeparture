@@ -115,3 +115,9 @@ Event 89をHUD-onlyで防ぐには、少なくとも次が必要である。
 .\.venv\Scripts\python.exe scripts/audit_phase23_predictive_timing_observability_v01.py `
   --output reports/phase23-predictive-timing-observability-20261022-r4.json
 ```
+
+検証結果：
+
+- Phase 13・16・20C・21・22を含む関連回帰: 89 passed
+- 全repository: 2032 passed, 1既存PyTorch warning
+- 全体テストの隔離先: `artifacts/pytest-phase23-full-r1/`
