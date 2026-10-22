@@ -1,0 +1,29 @@
+{
+  "verdict": "RUNTIME_PARITY_UNVERIFIED",
+  "reason": "capture is not declared live runtime evidence",
+  "evidence_kind": "synthetic_fixture",
+  "dll_sha256": "0D1524DABF0F8C67AA58BA1992D6ED858522B9094490EBBB00E5E8AEFF7F40CD",
+  "audited_dll_match": true,
+  "event_count": 9,
+  "missing_required_kinds": [],
+  "frame_orders": {
+    "325": [
+      "frame_begin",
+      "check_post_hold_fail",
+      "auto_fail_miss",
+      "add_hit",
+      "counter_update",
+      "input_dispatch",
+      "key_down",
+      "judgement",
+      "frame_end"
+    ]
+  },
+  "student_visible_fields": [],
+  "evaluator_only": true,
+  "format": "dmdod-phase25-stock-runtime-parity-v0.1",
+  "generated_utc": "2026-10-22T12:25:10.667409+00:00",
+  "input": "tests\\fixtures\\phase25_stock_runtime_synthetic.jsonl",
+  "live_mod_executed": false,
+  "production_changed": false
+}

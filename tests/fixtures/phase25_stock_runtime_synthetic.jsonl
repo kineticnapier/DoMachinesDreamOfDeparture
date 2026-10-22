@@ -1,0 +1,10 @@
+{"type":"stock_runtime_probe_header","session_id":"synthetic-event36-37","evidence_kind":"synthetic_fixture","assembly_csharp_sha256":"0D1524DABF0F8C67AA58BA1992D6ED858522B9094490EBBB00E5E8AEFF7F40CD"}
+{"type":"event","session_id":"synthetic-event36-37","sequence":1,"frame":325,"realtime_s":3.25,"kind":"frame_begin","no_fail":true}
+{"type":"event","session_id":"synthetic-event36-37","sequence":2,"frame":325,"realtime_s":3.25,"kind":"check_post_hold_fail","no_fail":true,"floor_evaluator_only":36}
+{"type":"event","session_id":"synthetic-event36-37","sequence":3,"frame":325,"realtime_s":3.25,"kind":"auto_fail_miss","no_fail":true,"floor_evaluator_only":36}
+{"type":"event","session_id":"synthetic-event36-37","sequence":4,"frame":325,"realtime_s":3.25,"kind":"add_hit","no_fail":true,"judgement":"fail_miss"}
+{"type":"event","session_id":"synthetic-event36-37","sequence":5,"frame":325,"realtime_s":3.25,"kind":"counter_update","no_fail":true,"judgement":"fail_miss","visible_status":"unverified_fixture"}
+{"type":"event","session_id":"synthetic-event36-37","sequence":6,"frame":325,"realtime_s":3.25,"kind":"input_dispatch","no_fail":true,"input_id":"synthetic:38"}
+{"type":"event","session_id":"synthetic-event36-37","sequence":7,"frame":325,"realtime_s":3.251,"kind":"key_down","no_fail":true,"input_id":"synthetic:38"}
+{"type":"event","session_id":"synthetic-event36-37","sequence":8,"frame":325,"realtime_s":3.251,"kind":"judgement","no_fail":true,"judgement":"very_late","floor_evaluator_only":37}
+{"type":"event","session_id":"synthetic-event36-37","sequence":9,"frame":325,"realtime_s":3.251,"kind":"frame_end","no_fail":true}
