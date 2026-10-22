@@ -1,0 +1,66 @@
+{
+  "format": "dmdogo-fingering-continuity-evaluation-v0.2",
+  "chart": "04042 - bool - vo[ICE].adofai",
+  "chart_sha256": "04981e92f74288b8aac7286e83420b933036d2caead9c157bc33b706779ad1b1",
+  "events": 1122,
+  "duration_s": 64.1351456762209,
+  "timing_source": "AutoPlay Oracle exact event times",
+  "checkpoint": "checkpoints/fingering/fingering_network_v01-4fa2ae1.pt",
+  "training_performed": false,
+  "teacher_shadow_rollout_used": false,
+  "hyperparameter_search": false,
+  "runtime_s": 23.173,
+  "free": {
+    "hits": 1122,
+    "misses": 0,
+    "too_early": 0,
+    "overloaded": false,
+    "x_accuracy_percent": 94.0597147950089,
+    "timing_mae_ms": 16.6992320671693,
+    "left_right_switches": 526,
+    "thumb_uses": 228,
+    "side_uses": 0,
+    "fast_pattern_stability": 0.6153846153846154,
+    "fast_pattern_comparisons": 13,
+    "same_part_reinputs_le_35ms": 0
+  },
+  "continuity": {
+    "hits": 1122,
+    "misses": 0,
+    "too_early": 0,
+    "overloaded": false,
+    "x_accuracy_percent": 91.6711229946524,
+    "timing_mae_ms": 17.2555053734681,
+    "left_right_switches": 405,
+    "thumb_uses": 64,
+    "side_uses": 0,
+    "fast_pattern_stability": 0.8536585365853658,
+    "fast_pattern_comparisons": 41,
+    "same_part_reinputs_le_35ms": 0
+  },
+  "comparison": {
+    "different_event_count_between_independent_arms": 944,
+    "different_event_rate_between_independent_arms": 0.841354723707665,
+    "changed_from_free_count_in_continuity_arm": 440,
+    "changed_from_free_rate_in_continuity_arm": 0.39215686274509803,
+    "lost_baseline_hit_count": 0,
+    "recovered_hit_count": 0,
+    "hit_non_regression": true,
+    "left_right_switch_reduction": 121,
+    "thumb_use_reduction": 164,
+    "x_accuracy_delta_points": -2.3885918003565,
+    "timing_mae_delta_ms": 0.5562733062988
+  },
+  "artifacts": {
+    "comparison": "artifacts/dmdogo-continuity/bool-full-r1/comparison.json",
+    "viewer": "artifacts/dmdogo-continuity/bool-full-r1/replay-v02.html",
+    "replay": "artifacts/dmdogo-continuity/bool-full-r1/replay-v02.json",
+    "status": "logs/dmdogo-continuity-bool-full-r1.status.json"
+  },
+  "tests": {
+    "focused": "33 passed",
+    "repository": "2113 passed, 1 pre-existing tensor conversion warning",
+    "repository_runtime_s": 189.12
+  },
+  "conclusion": "HIT_NON_REGRESSION_WITH_CONTINUITY_IMPROVEMENT_AND_TIMING_QUALITY_TRADEOFF"
+}

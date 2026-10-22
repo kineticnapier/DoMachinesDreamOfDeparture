@@ -45,9 +45,10 @@ def test_network_execution_never_calls_teacher_physical_ranker(monkeypatch):
 def test_free_selector_mode_is_the_legacy_default():
     model = network.FingeringRanker()
     model.eval()
-    legacy = full.run_network(_segment(), model, stop_after_s=.08)
-    explicit = full.run_network(_segment(), model, stop_after_s=.08,
+    legacy = full.run_network(_segment(), model, stop_after_s=.60)
+    explicit = full.run_network(_segment(), model, stop_after_s=.60,
                                 selector_mode="free", policy_name="free")
+    assert legacy["decisions"]
     assert [row["chosen"] for row in legacy["decisions"]] == [
         row["chosen"] for row in explicit["decisions"]
     ]

@@ -75,3 +75,38 @@ Run the fixed Free/Continuity A/B (two independent Motor episodes):
 Both commands refuse to overwrite their output. The A/B HTML keeps the v0.3
 16-contact counter and allows switching between the two independently executed
 policies.
+
+## Fixed bool result
+
+The fixed full-chart A/B used chart SHA256
+`04981e92f74288b8aac7286e83420b933036d2caead9c157bc33b706779ad1b1`
+and the unchanged `fingering_network_v01-4fa2ae1.pt` checkpoint. Both arms ran
+the complete 1,122-event chart in independent Motor episodes.
+
+| Metric | Free | Continuity |
+|---|---:|---:|
+| Hit | 1,122 | 1,122 |
+| Miss / TooEarly / Overload | 0 / 0 / false | 0 / 0 / false |
+| X accuracy | 94.059715% | 91.671123% |
+| Timing MAE | 16.699232 ms | 17.255505 ms |
+| left/right switches | 526 | 405 |
+| thumb uses | 228 | 64 |
+| side uses | 0 | 0 |
+| fast-pattern stability | 0.615385 (13 comparisons) | 0.853659 (41 comparisons) |
+| same-axis reinput <=35 ms | 0 | 0 |
+
+The two independently executed arms chose different allocations at 944/1,122
+events (84.14%). Within the Continuity arm, 440 decisions (39.22%) differed
+from the Free argmin computed in that arm's own diverged Motor state. These are
+different denominators and must not be conflated.
+
+This result meets Hit non-regression and materially reduces hand switching and
+auxiliary thumb use. It does **not** improve every metric: X accuracy fell by
+2.3886 percentage points and Timing MAE increased by 0.5563 ms. The result is
+therefore evidence for improved selection continuity under the frozen physical
+success criterion, not evidence that the new selector dominates Free on timing
+quality or resembles measured human fingering.
+
+Focused Selector/runner/viewer regression: 33 passed. Full repository
+regression: 2,113 passed with one unrelated existing PyTorch tensor-conversion
+warning.
