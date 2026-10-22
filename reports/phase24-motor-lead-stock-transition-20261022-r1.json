@@ -1,0 +1,5102 @@
+{
+  "format": "dmdod-phase24-motor-lead-stock-transition-v0.1",
+  "generated_utc": "2026-10-22T10:46:33.258919+00:00",
+  "verdicts": [
+    "LEAD_44MS_JUSTIFIED",
+    "SHORTER_LEAD_TEMPORALLY_FEASIBLE",
+    "SHORTER_LEAD_UNSAFE",
+    "NOFAIL_DELAYED_HIT_CONDITIONALLY_VALID",
+    "STOCK_RUNTIME_PARITY_UNVERIFIED",
+    "NO_SAFE_INTERVENTION_ESTABLISHED"
+  ],
+  "scope": {
+    "chart": "01645 - First town of this Journey remix - Irin.adofai",
+    "chart_sha256": "4a71411d454d3b10a10cd98165a2e9cce99e4b14c310d1e6847836fdc68fc0e1",
+    "production_changed": false,
+    "validation_or_final_used": false
+  },
+  "lead_origin": {
+    "cold_press_latency_ms": 39.0,
+    "control_tick_ms": 10.0,
+    "physics_tick_ms": 1.0,
+    "half_control_tick_allowance_ms": 5.0,
+    "reconstructed_nominal_lead_ms": 44.0,
+    "classification": "empirical cold-press latency plus average half-control-tick allowance; nominal calibration, not a theoretical lower bound or worst-case proof",
+    "evidence": [
+      "src/dmdod/motor/capacity.py: calibrate_n_key_press_lead",
+      "src/dmdod/legacy/four_key/calibration.py: same convention",
+      "tests/test_n_key_capacity.py: every 4-key cold latency is 39ms and lead is 44ms",
+      "src/dmdod/planning/timing_fingering_motor_policy_v02.py: frozen NORMAL_LEAD_S=.044"
+    ],
+    "unresolved": [
+      "no worst-case control-phase proof (half tick is an average allowance)",
+      "no Event37 physical snapshot or selected axis because policy abstained",
+      "no live-hardware measurement; all latencies are simulator measurements"
+    ]
+  },
+  "event37": {
+    "due_s_posthoc": 3.2205882724022707,
+    "stock_counted_window_s_posthoc": [
+      3.155588272402271,
+      3.2855882724022707
+    ],
+    "first_numeric_bpm_frame_s": 3.18,
+    "existing_point_forecast_s": 3.19,
+    "counterfactual_pre_44ms": {
+      "compared_frames": 318,
+      "last_compared_at_s": 3.17,
+      "maximum_hud_difference": 0.0,
+      "alternate_due_s_posthoc": 3.5294118054760544,
+      "status": "early_due_nonidentifiable"
+    },
+    "lead_cases": {
+      "existing_point_forecast_3_190": [
+        {
+          "lead_s": 0.044,
+          "observed_at_s": 3.19,
+          "due_s_posthoc": 3.2205882724022707,
+          "reservation_deadline_s_posthoc": 3.1765882724022707,
+          "nominal_lead_temporally_available": false,
+          "due_observability": "yes",
+          "earliest_command_tick_s": 3.19,
+          "cold_keydown_s": 3.229,
+          "cold_keydown_error_ms": 8.411727597729346,
+          "cold_keydown_by_due": false,
+          "cold_keydown_in_stock_window": true,
+          "reservation_conflict_clear": "unverified",
+          "all_due_aligned_conditions": false,
+          "all_counted_hit_conditions": false,
+          "physical_scope": "conditional cold/free-axis projection; actual Event37 allocation was abstained and not replayed"
+        },
+        {
+          "lead_s": 0.03,
+          "observed_at_s": 3.19,
+          "due_s_posthoc": 3.2205882724022707,
+          "reservation_deadline_s_posthoc": 3.190588272402271,
+          "nominal_lead_temporally_available": true,
+          "due_observability": "yes",
+          "earliest_command_tick_s": 3.2,
+          "cold_keydown_s": 3.2390000000000003,
+          "cold_keydown_error_ms": 18.411727597729577,
+          "cold_keydown_by_due": false,
+          "cold_keydown_in_stock_window": true,
+          "reservation_conflict_clear": "unverified",
+          "all_due_aligned_conditions": false,
+          "all_counted_hit_conditions": false,
+          "physical_scope": "conditional cold/free-axis projection; actual Event37 allocation was abstained and not replayed"
+        },
+        {
+          "lead_s": 0.02,
+          "observed_at_s": 3.19,
+          "due_s_posthoc": 3.2205882724022707,
+          "reservation_deadline_s_posthoc": 3.2005882724022707,
+          "nominal_lead_temporally_available": true,
+          "due_observability": "yes",
+          "earliest_command_tick_s": 3.21,
+          "cold_keydown_s": 3.249,
+          "cold_keydown_error_ms": 28.411727597729364,
+          "cold_keydown_by_due": false,
+          "cold_keydown_in_stock_window": true,
+          "reservation_conflict_clear": "unverified",
+          "all_due_aligned_conditions": false,
+          "all_counted_hit_conditions": false,
+          "physical_scope": "conditional cold/free-axis projection; actual Event37 allocation was abstained and not replayed"
+        },
+        {
+          "lead_s": 0.01,
+          "observed_at_s": 3.19,
+          "due_s_posthoc": 3.2205882724022707,
+          "reservation_deadline_s_posthoc": 3.210588272402271,
+          "nominal_lead_temporally_available": true,
+          "due_observability": "yes",
+          "earliest_command_tick_s": 3.22,
+          "cold_keydown_s": 3.2590000000000003,
+          "cold_keydown_error_ms": 38.411727597729595,
+          "cold_keydown_by_due": false,
+          "cold_keydown_in_stock_window": true,
+          "reservation_conflict_clear": "unverified",
+          "all_due_aligned_conditions": false,
+          "all_counted_hit_conditions": false,
+          "physical_scope": "conditional cold/free-axis projection; actual Event37 allocation was abstained and not replayed"
+        },
+        {
+          "lead_s": 0.0,
+          "observed_at_s": 3.19,
+          "due_s_posthoc": 3.2205882724022707,
+          "reservation_deadline_s_posthoc": 3.2205882724022707,
+          "nominal_lead_temporally_available": true,
+          "due_observability": "yes",
+          "earliest_command_tick_s": 3.23,
+          "cold_keydown_s": 3.269,
+          "cold_keydown_error_ms": 48.41172759772938,
+          "cold_keydown_by_due": false,
+          "cold_keydown_in_stock_window": true,
+          "reservation_conflict_clear": "unverified",
+          "all_due_aligned_conditions": false,
+          "all_counted_hit_conditions": false,
+          "physical_scope": "conditional cold/free-axis projection; actual Event37 allocation was abstained and not replayed"
+        }
+      ],
+      "hypothetical_exact_due_at_bpm_frame_3_180": [
+        {
+          "lead_s": 0.044,
+          "observed_at_s": 3.18,
+          "due_s_posthoc": 3.2205882724022707,
+          "reservation_deadline_s_posthoc": 3.1765882724022707,
+          "nominal_lead_temporally_available": false,
+          "due_observability": "unverified",
+          "earliest_command_tick_s": 3.18,
+          "cold_keydown_s": 3.2190000000000003,
+          "cold_keydown_error_ms": -1.5882724022704409,
+          "cold_keydown_by_due": true,
+          "cold_keydown_in_stock_window": true,
+          "reservation_conflict_clear": "unverified",
+          "all_due_aligned_conditions": false,
+          "all_counted_hit_conditions": false,
+          "physical_scope": "conditional cold/free-axis projection; actual Event37 allocation was abstained and not replayed"
+        },
+        {
+          "lead_s": 0.03,
+          "observed_at_s": 3.18,
+          "due_s_posthoc": 3.2205882724022707,
+          "reservation_deadline_s_posthoc": 3.190588272402271,
+          "nominal_lead_temporally_available": true,
+          "due_observability": "unverified",
+          "earliest_command_tick_s": 3.2,
+          "cold_keydown_s": 3.2390000000000003,
+          "cold_keydown_error_ms": 18.411727597729577,
+          "cold_keydown_by_due": false,
+          "cold_keydown_in_stock_window": true,
+          "reservation_conflict_clear": "unverified",
+          "all_due_aligned_conditions": false,
+          "all_counted_hit_conditions": false,
+          "physical_scope": "conditional cold/free-axis projection; actual Event37 allocation was abstained and not replayed"
+        },
+        {
+          "lead_s": 0.02,
+          "observed_at_s": 3.18,
+          "due_s_posthoc": 3.2205882724022707,
+          "reservation_deadline_s_posthoc": 3.2005882724022707,
+          "nominal_lead_temporally_available": true,
+          "due_observability": "unverified",
+          "earliest_command_tick_s": 3.21,
+          "cold_keydown_s": 3.249,
+          "cold_keydown_error_ms": 28.411727597729364,
+          "cold_keydown_by_due": false,
+          "cold_keydown_in_stock_window": true,
+          "reservation_conflict_clear": "unverified",
+          "all_due_aligned_conditions": false,
+          "all_counted_hit_conditions": false,
+          "physical_scope": "conditional cold/free-axis projection; actual Event37 allocation was abstained and not replayed"
+        },
+        {
+          "lead_s": 0.01,
+          "observed_at_s": 3.18,
+          "due_s_posthoc": 3.2205882724022707,
+          "reservation_deadline_s_posthoc": 3.210588272402271,
+          "nominal_lead_temporally_available": true,
+          "due_observability": "unverified",
+          "earliest_command_tick_s": 3.22,
+          "cold_keydown_s": 3.2590000000000003,
+          "cold_keydown_error_ms": 38.411727597729595,
+          "cold_keydown_by_due": false,
+          "cold_keydown_in_stock_window": true,
+          "reservation_conflict_clear": "unverified",
+          "all_due_aligned_conditions": false,
+          "all_counted_hit_conditions": false,
+          "physical_scope": "conditional cold/free-axis projection; actual Event37 allocation was abstained and not replayed"
+        },
+        {
+          "lead_s": 0.0,
+          "observed_at_s": 3.18,
+          "due_s_posthoc": 3.2205882724022707,
+          "reservation_deadline_s_posthoc": 3.2205882724022707,
+          "nominal_lead_temporally_available": true,
+          "due_observability": "unverified",
+          "earliest_command_tick_s": 3.23,
+          "cold_keydown_s": 3.269,
+          "cold_keydown_error_ms": 48.41172759772938,
+          "cold_keydown_by_due": false,
+          "cold_keydown_in_stock_window": true,
+          "reservation_conflict_clear": "unverified",
+          "all_due_aligned_conditions": false,
+          "all_counted_hit_conditions": false,
+          "physical_scope": "conditional cold/free-axis projection; actual Event37 allocation was abstained and not replayed"
+        }
+      ]
+    }
+  },
+  "nofail_delayed_candidate": {
+    "candidate_is_fixed_safe_time": false,
+    "nofail_threshold_crossing_s_posthoc": 3.249473567304636,
+    "phase_auto_transition": [
+      {
+        "phase_ms": 0.0,
+        "first_frame_after_crossing_s": 3.25
+      },
+      {
+        "phase_ms": 1.0,
+        "first_frame_after_crossing_s": 3.251
+      },
+      {
+        "phase_ms": 2.0,
+        "first_frame_after_crossing_s": 3.252
+      },
+      {
+        "phase_ms": 3.0,
+        "first_frame_after_crossing_s": 3.253
+      },
+      {
+        "phase_ms": 4.0,
+        "first_frame_after_crossing_s": 3.254
+      },
+      {
+        "phase_ms": 5.0,
+        "first_frame_after_crossing_s": 3.255
+      },
+      {
+        "phase_ms": 6.0,
+        "first_frame_after_crossing_s": 3.256
+      },
+      {
+        "phase_ms": 7.0,
+        "first_frame_after_crossing_s": 3.257
+      },
+      {
+        "phase_ms": 8.0,
+        "first_frame_after_crossing_s": 3.258
+      },
+      {
+        "phase_ms": 9.0,
+        "first_frame_after_crossing_s": 3.259
+      }
+    ],
+    "phase_and_microtime_runs": [
+      {
+        "phase_ms": 0.0,
+        "candidate_time_s": 3.249,
+        "mode": "no_fail",
+        "event36_auto": {
+          "frame_time_s": 3.25,
+          "input_id": null,
+          "kind": "auto_miss_advance",
+          "target_ordinal": 36,
+          "judgement": "fail_miss",
+          "automatic_miss": true,
+          "failed": false
+        },
+        "candidate_transition": {
+          "frame_time_s": 3.25,
+          "input_id": "candidate:event37",
+          "kind": "hit_advance",
+          "target_ordinal": 37,
+          "judgement": "late_perfect",
+          "automatic_miss": false,
+          "failed": false
+        },
+        "base_input_mismatch_count": 46,
+        "selected_events": {
+          "36": [
+            {
+              "frame_time_s": 3.25,
+              "input_id": null,
+              "kind": "auto_miss_advance",
+              "target_ordinal": 36,
+              "judgement": "fail_miss",
+              "automatic_miss": true,
+              "failed": false
+            }
+          ],
+          "37": [
+            {
+              "frame_time_s": 3.25,
+              "input_id": "candidate:event37",
+              "kind": "hit_advance",
+              "target_ordinal": 37,
+              "judgement": "late_perfect",
+              "automatic_miss": false,
+              "failed": false
+            }
+          ],
+          "42": [
+            {
+              "frame_time_s": 3.45,
+              "input_id": "local:43",
+              "kind": "hit_advance",
+              "target_ordinal": 42,
+              "judgement": "very_late",
+              "automatic_miss": false,
+              "failed": false
+            }
+          ],
+          "47": [
+            {
+              "frame_time_s": 3.63,
+              "input_id": "local:48",
+              "kind": "hit_advance",
+              "target_ordinal": 47,
+              "judgement": "very_late",
+              "automatic_miss": false,
+              "failed": false
+            }
+          ],
+          "89": [
+            {
+              "frame_time_s": 5.32,
+              "input_id": null,
+              "kind": "auto_miss_advance",
+              "target_ordinal": 89,
+              "judgement": "fail_miss",
+              "automatic_miss": true,
+              "failed": false
+            }
+          ]
+        },
+        "failed": false
+      },
+      {
+        "phase_ms": 0.0,
+        "candidate_time_s": 3.25,
+        "mode": "no_fail",
+        "event36_auto": {
+          "frame_time_s": 3.25,
+          "input_id": null,
+          "kind": "auto_miss_advance",
+          "target_ordinal": 36,
+          "judgement": "fail_miss",
+          "automatic_miss": true,
+          "failed": false
+        },
+        "candidate_transition": {
+          "frame_time_s": 3.25,
+          "input_id": "candidate:event37",
+          "kind": "hit_advance",
+          "target_ordinal": 37,
+          "judgement": "late_perfect",
+          "automatic_miss": false,
+          "failed": false
+        },
+        "base_input_mismatch_count": 46,
+        "selected_events": {
+          "36": [
+            {
+              "frame_time_s": 3.25,
+              "input_id": null,
+              "kind": "auto_miss_advance",
+              "target_ordinal": 36,
+              "judgement": "fail_miss",
+              "automatic_miss": true,
+              "failed": false
+            }
+          ],
+          "37": [
+            {
+              "frame_time_s": 3.25,
+              "input_id": "candidate:event37",
+              "kind": "hit_advance",
+              "target_ordinal": 37,
+              "judgement": "late_perfect",
+              "automatic_miss": false,
+              "failed": false
+            }
+          ],
+          "42": [
+            {
+              "frame_time_s": 3.45,
+              "input_id": "local:43",
+              "kind": "hit_advance",
+              "target_ordinal": 42,
+              "judgement": "very_late",
+              "automatic_miss": false,
+              "failed": false
+            }
+          ],
+          "47": [
+            {
+              "frame_time_s": 3.63,
+              "input_id": "local:48",
+              "kind": "hit_advance",
+              "target_ordinal": 47,
+              "judgement": "very_late",
+              "automatic_miss": false,
+              "failed": false
+            }
+          ],
+          "89": [
+            {
+              "frame_time_s": 5.32,
+              "input_id": null,
+              "kind": "auto_miss_advance",
+              "target_ordinal": 89,
+              "judgement": "fail_miss",
+              "automatic_miss": true,
+              "failed": false
+            }
+          ]
+        },
+        "failed": false
+      },
+      {
+        "phase_ms": 0.0,
+        "candidate_time_s": 3.251,
+        "mode": "no_fail",
+        "event36_auto": {
+          "frame_time_s": 3.25,
+          "input_id": null,
+          "kind": "auto_miss_advance",
+          "target_ordinal": 36,
+          "judgement": "fail_miss",
+          "automatic_miss": true,
+          "failed": false
+        },
+        "candidate_transition": {
+          "frame_time_s": 3.2600000000000002,
+          "input_id": "candidate:event37",
+          "kind": "hit_advance",
+          "target_ordinal": 37,
+          "judgement": "very_late",
+          "automatic_miss": false,
+          "failed": false
+        },
+        "base_input_mismatch_count": 46,
+        "selected_events": {
+          "36": [
+            {
+              "frame_time_s": 3.25,
+              "input_id": null,
+              "kind": "auto_miss_advance",
+              "target_ordinal": 36,
+              "judgement": "fail_miss",
+              "automatic_miss": true,
+              "failed": false
+            }
+          ],
+          "37": [
+            {
+              "frame_time_s": 3.2600000000000002,
+              "input_id": "candidate:event37",
+              "kind": "hit_advance",
+              "target_ordinal": 37,
+              "judgement": "very_late",
+              "automatic_miss": false,
+              "failed": false
+            }
+          ],
+          "42": [
+            {
+              "frame_time_s": 3.45,
+              "input_id": "local:43",
+              "kind": "hit_advance",
+              "target_ordinal": 42,
+              "judgement": "very_late",
+              "automatic_miss": false,
+              "failed": false
+            }
+          ],
+          "47": [
+            {
+              "frame_time_s": 3.63,
+              "input_id": "local:48",
+              "kind": "hit_advance",
+              "target_ordinal": 47,
+              "judgement": "very_late",
+              "automatic_miss": false,
+              "failed": false
+            }
+          ],
+          "89": [
+            {
+              "frame_time_s": 5.32,
+              "input_id": null,
+              "kind": "auto_miss_advance",
+              "target_ordinal": 89,
+              "judgement": "fail_miss",
+              "automatic_miss": true,
+              "failed": false
+            }
+          ]
+        },
+        "failed": false
+      },
+      {
+        "phase_ms": 0.0,
+        "candidate_time_s": 3.252,
+        "mode": "no_fail",
+        "event36_auto": {
+          "frame_time_s": 3.25,
+          "input_id": null,
+          "kind": "auto_miss_advance",
+          "target_ordinal": 36,
+          "judgement": "fail_miss",
+          "automatic_miss": true,
+          "failed": false
+        },
+        "candidate_transition": {
+          "frame_time_s": 3.2600000000000002,
+          "input_id": "candidate:event37",
+          "kind": "hit_advance",
+          "target_ordinal": 37,
+          "judgement": "very_late",
+          "automatic_miss": false,
+          "failed": false
+        },
+        "base_input_mismatch_count": 46,
+        "selected_events": {
+          "36": [
+            {
+              "frame_time_s": 3.25,
+              "input_id": null,
+              "kind": "auto_miss_advance",
+              "target_ordinal": 36,
+              "judgement": "fail_miss",
+              "automatic_miss": true,
+              "failed": false
+            }
+          ],
+          "37": [
+            {
+              "frame_time_s": 3.2600000000000002,
+              "input_id": "candidate:event37",
+              "kind": "hit_advance",
+              "target_ordinal": 37,
+              "judgement": "very_late",
+              "automatic_miss": false,
+              "failed": false
+            }
+          ],
+          "42": [
+            {
+              "frame_time_s": 3.45,
+              "input_id": "local:43",
+              "kind": "hit_advance",
+              "target_ordinal": 42,
+              "judgement": "very_late",
+              "automatic_miss": false,
+              "failed": false
+            }
+          ],
+          "47": [
+            {
+              "frame_time_s": 3.63,
+              "input_id": "local:48",
+              "kind": "hit_advance",
+              "target_ordinal": 47,
+              "judgement": "very_late",
+              "automatic_miss": false,
+              "failed": false
+            }
+          ],
+          "89": [
+            {
+              "frame_time_s": 5.32,
+              "input_id": null,
+              "kind": "auto_miss_advance",
+              "target_ordinal": 89,
+              "judgement": "fail_miss",
+              "automatic_miss": true,
+              "failed": false
+            }
+          ]
+        },
+        "failed": false
+      },
+      {
+        "phase_ms": 0.0,
+        "candidate_time_s": 3.259,
+        "mode": "no_fail",
+        "event36_auto": {
+          "frame_time_s": 3.25,
+          "input_id": null,
+          "kind": "auto_miss_advance",
+          "target_ordinal": 36,
+          "judgement": "fail_miss",
+          "automatic_miss": true,
+          "failed": false
+        },
+        "candidate_transition": {
+          "frame_time_s": 3.2600000000000002,
+          "input_id": "candidate:event37",
+          "kind": "hit_advance",
+          "target_ordinal": 37,
+          "judgement": "very_late",
+          "automatic_miss": false,
+          "failed": false
+        },
+        "base_input_mismatch_count": 46,
+        "selected_events": {
+          "36": [
+            {
+              "frame_time_s": 3.25,
+              "input_id": null,
+              "kind": "auto_miss_advance",
+              "target_ordinal": 36,
+              "judgement": "fail_miss",
+              "automatic_miss": true,
+              "failed": false
+            }
+          ],
+          "37": [
+            {
+              "frame_time_s": 3.2600000000000002,
+              "input_id": "candidate:event37",
+              "kind": "hit_advance",
+              "target_ordinal": 37,
+              "judgement": "very_late",
+              "automatic_miss": false,
+              "failed": false
+            }
+          ],
+          "42": [
+            {
+              "frame_time_s": 3.45,
+              "input_id": "local:43",
+              "kind": "hit_advance",
+              "target_ordinal": 42,
+              "judgement": "very_late",
+              "automatic_miss": false,
+              "failed": false
+            }
+          ],
+          "47": [
+            {
+              "frame_time_s": 3.63,
+              "input_id": "local:48",
+              "kind": "hit_advance",
+              "target_ordinal": 47,
+              "judgement": "very_late",
+              "automatic_miss": false,
+              "failed": false
+            }
+          ],
+          "89": [
+            {
+              "frame_time_s": 5.32,
+              "input_id": null,
+              "kind": "auto_miss_advance",
+              "target_ordinal": 89,
+              "judgement": "fail_miss",
+              "automatic_miss": true,
+              "failed": false
+            }
+          ]
+        },
+        "failed": false
+      },
+      {
+        "phase_ms": 1.0,
+        "candidate_time_s": 3.249,
+        "mode": "no_fail",
+        "event36_auto": {
+          "frame_time_s": 3.251,
+          "input_id": null,
+          "kind": "auto_miss_advance",
+          "target_ordinal": 36,
+          "judgement": "fail_miss",
+          "automatic_miss": true,
+          "failed": false
+        },
+        "candidate_transition": {
+          "frame_time_s": 3.251,
+          "input_id": "candidate:event37",
+          "kind": "hit_advance",
+          "target_ordinal": 37,
+          "judgement": "late_perfect",
+          "automatic_miss": false,
+          "failed": false
+        },
+        "base_input_mismatch_count": 46,
+        "selected_events": {
+          "36": [
+            {
+              "frame_time_s": 3.251,
+              "input_id": null,
+              "kind": "auto_miss_advance",
+              "target_ordinal": 36,
+              "judgement": "fail_miss",
+              "automatic_miss": true,
+              "failed": false
+            }
+          ],
+          "37": [
+            {
+              "frame_time_s": 3.251,
+              "input_id": "candidate:event37",
+              "kind": "hit_advance",
+              "target_ordinal": 37,
+              "judgement": "late_perfect",
+              "automatic_miss": false,
+              "failed": false
+            }
+          ],
+          "42": [
+            {
+              "frame_time_s": 3.451,
+              "input_id": "local:43",
+              "kind": "hit_advance",
+              "target_ordinal": 42,
+              "judgement": "very_late",
+              "automatic_miss": false,
+              "failed": false
+            }
+          ],
+          "47": [
+            {
+              "frame_time_s": 3.621,
+              "input_id": "local:48",
+              "kind": "hit_advance",
+              "target_ordinal": 47,
+              "judgement": "very_late",
+              "automatic_miss": false,
+              "failed": false
+            }
+          ],
+          "89": [
+            {
+              "frame_time_s": 5.321000000000001,
+              "input_id": null,
+              "kind": "auto_miss_advance",
+              "target_ordinal": 89,
+              "judgement": "fail_miss",
+              "automatic_miss": true,
+              "failed": false
+            }
+          ]
+        },
+        "failed": false
+      },
+      {
+        "phase_ms": 1.0,
+        "candidate_time_s": 3.25,
+        "mode": "no_fail",
+        "event36_auto": {
+          "frame_time_s": 3.251,
+          "input_id": null,
+          "kind": "auto_miss_advance",
+          "target_ordinal": 36,
+          "judgement": "fail_miss",
+          "automatic_miss": true,
+          "failed": false
+        },
+        "candidate_transition": {
+          "frame_time_s": 3.251,
+          "input_id": "candidate:event37",
+          "kind": "hit_advance",
+          "target_ordinal": 37,
+          "judgement": "late_perfect",
+          "automatic_miss": false,
+          "failed": false
+        },
+        "base_input_mismatch_count": 46,
+        "selected_events": {
+          "36": [
+            {
+              "frame_time_s": 3.251,
+              "input_id": null,
+              "kind": "auto_miss_advance",
+              "target_ordinal": 36,
+              "judgement": "fail_miss",
+              "automatic_miss": true,
+              "failed": false
+            }
+          ],
+          "37": [
+            {
+              "frame_time_s": 3.251,
+              "input_id": "candidate:event37",
+              "kind": "hit_advance",
+              "target_ordinal": 37,
+              "judgement": "late_perfect",
+              "automatic_miss": false,
+              "failed": false
+            }
+          ],
+          "42": [
+            {
+              "frame_time_s": 3.451,
+              "input_id": "local:43",
+              "kind": "hit_advance",
+              "target_ordinal": 42,
+              "judgement": "very_late",
+              "automatic_miss": false,
+              "failed": false
+            }
+          ],
+          "47": [
+            {
+              "frame_time_s": 3.621,
+              "input_id": "local:48",
+              "kind": "hit_advance",
+              "target_ordinal": 47,
+              "judgement": "very_late",
+              "automatic_miss": false,
+              "failed": false
+            }
+          ],
+          "89": [
+            {
+              "frame_time_s": 5.321000000000001,
+              "input_id": null,
+              "kind": "auto_miss_advance",
+              "target_ordinal": 89,
+              "judgement": "fail_miss",
+              "automatic_miss": true,
+              "failed": false
+            }
+          ]
+        },
+        "failed": false
+      },
+      {
+        "phase_ms": 1.0,
+        "candidate_time_s": 3.251,
+        "mode": "no_fail",
+        "event36_auto": {
+          "frame_time_s": 3.251,
+          "input_id": null,
+          "kind": "auto_miss_advance",
+          "target_ordinal": 36,
+          "judgement": "fail_miss",
+          "automatic_miss": true,
+          "failed": false
+        },
+        "candidate_transition": {
+          "frame_time_s": 3.251,
+          "input_id": "candidate:event37",
+          "kind": "hit_advance",
+          "target_ordinal": 37,
+          "judgement": "very_late",
+          "automatic_miss": false,
+          "failed": false
+        },
+        "base_input_mismatch_count": 46,
+        "selected_events": {
+          "36": [
+            {
+              "frame_time_s": 3.251,
+              "input_id": null,
+              "kind": "auto_miss_advance",
+              "target_ordinal": 36,
+              "judgement": "fail_miss",
+              "automatic_miss": true,
+              "failed": false
+            }
+          ],
+          "37": [
+            {
+              "frame_time_s": 3.251,
+              "input_id": "candidate:event37",
+              "kind": "hit_advance",
+              "target_ordinal": 37,
+              "judgement": "very_late",
+              "automatic_miss": false,
+              "failed": false
+            }
+          ],
+          "42": [
+            {
+              "frame_time_s": 3.451,
+              "input_id": "local:43",
+              "kind": "hit_advance",
+              "target_ordinal": 42,
+              "judgement": "very_late",
+              "automatic_miss": false,
+              "failed": false
+            }
+          ],
+          "47": [
+            {
+              "frame_time_s": 3.621,
+              "input_id": "local:48",
+              "kind": "hit_advance",
+              "target_ordinal": 47,
+              "judgement": "very_late",
+              "automatic_miss": false,
+              "failed": false
+            }
+          ],
+          "89": [
+            {
+              "frame_time_s": 5.321000000000001,
+              "input_id": null,
+              "kind": "auto_miss_advance",
+              "target_ordinal": 89,
+              "judgement": "fail_miss",
+              "automatic_miss": true,
+              "failed": false
+            }
+          ]
+        },
+        "failed": false
+      },
+      {
+        "phase_ms": 1.0,
+        "candidate_time_s": 3.252,
+        "mode": "no_fail",
+        "event36_auto": {
+          "frame_time_s": 3.251,
+          "input_id": null,
+          "kind": "auto_miss_advance",
+          "target_ordinal": 36,
+          "judgement": "fail_miss",
+          "automatic_miss": true,
+          "failed": false
+        },
+        "candidate_transition": {
+          "frame_time_s": 3.261,
+          "input_id": "candidate:event37",
+          "kind": "hit_advance",
+          "target_ordinal": 37,
+          "judgement": "very_late",
+          "automatic_miss": false,
+          "failed": false
+        },
+        "base_input_mismatch_count": 46,
+        "selected_events": {
+          "36": [
+            {
+              "frame_time_s": 3.251,
+              "input_id": null,
+              "kind": "auto_miss_advance",
+              "target_ordinal": 36,
+              "judgement": "fail_miss",
+              "automatic_miss": true,
+              "failed": false
+            }
+          ],
+          "37": [
+            {
+              "frame_time_s": 3.261,
+              "input_id": "candidate:event37",
+              "kind": "hit_advance",
+              "target_ordinal": 37,
+              "judgement": "very_late",
+              "automatic_miss": false,
+              "failed": false
+            }
+          ],
+          "42": [
+            {
+              "frame_time_s": 3.451,
+              "input_id": "local:43",
+              "kind": "hit_advance",
+              "target_ordinal": 42,
+              "judgement": "very_late",
+              "automatic_miss": false,
+              "failed": false
+            }
+          ],
+          "47": [
+            {
+              "frame_time_s": 3.621,
+              "input_id": "local:48",
+              "kind": "hit_advance",
+              "target_ordinal": 47,
+              "judgement": "very_late",
+              "automatic_miss": false,
+              "failed": false
+            }
+          ],
+          "89": [
+            {
+              "frame_time_s": 5.321000000000001,
+              "input_id": null,
+              "kind": "auto_miss_advance",
+              "target_ordinal": 89,
+              "judgement": "fail_miss",
+              "automatic_miss": true,
+              "failed": false
+            }
+          ]
+        },
+        "failed": false
+      },
+      {
+        "phase_ms": 1.0,
+        "candidate_time_s": 3.259,
+        "mode": "no_fail",
+        "event36_auto": {
+          "frame_time_s": 3.251,
+          "input_id": null,
+          "kind": "auto_miss_advance",
+          "target_ordinal": 36,
+          "judgement": "fail_miss",
+          "automatic_miss": true,
+          "failed": false
+        },
+        "candidate_transition": {
+          "frame_time_s": 3.261,
+          "input_id": "candidate:event37",
+          "kind": "hit_advance",
+          "target_ordinal": 37,
+          "judgement": "very_late",
+          "automatic_miss": false,
+          "failed": false
+        },
+        "base_input_mismatch_count": 46,
+        "selected_events": {
+          "36": [
+            {
+              "frame_time_s": 3.251,
+              "input_id": null,
+              "kind": "auto_miss_advance",
+              "target_ordinal": 36,
+              "judgement": "fail_miss",
+              "automatic_miss": true,
+              "failed": false
+            }
+          ],
+          "37": [
+            {
+              "frame_time_s": 3.261,
+              "input_id": "candidate:event37",
+              "kind": "hit_advance",
+              "target_ordinal": 37,
+              "judgement": "very_late",
+              "automatic_miss": false,
+              "failed": false
+            }
+          ],
+          "42": [
+            {
+              "frame_time_s": 3.451,
+              "input_id": "local:43",
+              "kind": "hit_advance",
+              "target_ordinal": 42,
+              "judgement": "very_late",
+              "automatic_miss": false,
+              "failed": false
+            }
+          ],
+          "47": [
+            {
+              "frame_time_s": 3.621,
+              "input_id": "local:48",
+              "kind": "hit_advance",
+              "target_ordinal": 47,
+              "judgement": "very_late",
+              "automatic_miss": false,
+              "failed": false
+            }
+          ],
+          "89": [
+            {
+              "frame_time_s": 5.321000000000001,
+              "input_id": null,
+              "kind": "auto_miss_advance",
+              "target_ordinal": 89,
+              "judgement": "fail_miss",
+              "automatic_miss": true,
+              "failed": false
+            }
+          ]
+        },
+        "failed": false
+      },
+      {
+        "phase_ms": 2.0,
+        "candidate_time_s": 3.249,
+        "mode": "no_fail",
+        "event36_auto": {
+          "frame_time_s": 3.252,
+          "input_id": null,
+          "kind": "auto_miss_advance",
+          "target_ordinal": 36,
+          "judgement": "fail_miss",
+          "automatic_miss": true,
+          "failed": false
+        },
+        "candidate_transition": {
+          "frame_time_s": 3.252,
+          "input_id": "candidate:event37",
+          "kind": "hit_advance",
+          "target_ordinal": 37,
+          "judgement": "late_perfect",
+          "automatic_miss": false,
+          "failed": false
+        },
+        "base_input_mismatch_count": 46,
+        "selected_events": {
+          "36": [
+            {
+              "frame_time_s": 3.252,
+              "input_id": null,
+              "kind": "auto_miss_advance",
+              "target_ordinal": 36,
+              "judgement": "fail_miss",
+              "automatic_miss": true,
+              "failed": false
+            }
+          ],
+          "37": [
+            {
+              "frame_time_s": 3.252,
+              "input_id": "candidate:event37",
+              "kind": "hit_advance",
+              "target_ordinal": 37,
+              "judgement": "late_perfect",
+              "automatic_miss": false,
+              "failed": false
+            }
+          ],
+          "42": [
+            {
+              "frame_time_s": 3.452,
+              "input_id": "local:43",
+              "kind": "hit_advance",
+              "target_ordinal": 42,
+              "judgement": "very_late",
+              "automatic_miss": false,
+              "failed": false
+            }
+          ],
+          "47": [
+            {
+              "frame_time_s": 3.622,
+              "input_id": "local:48",
+              "kind": "hit_advance",
+              "target_ordinal": 47,
+              "judgement": "very_late",
+              "automatic_miss": false,
+              "failed": false
+            }
+          ],
+          "89": [
+            {
+              "frame_time_s": 5.322,
+              "input_id": null,
+              "kind": "auto_miss_advance",
+              "target_ordinal": 89,
+              "judgement": "fail_miss",
+              "automatic_miss": true,
+              "failed": false
+            }
+          ]
+        },
+        "failed": false
+      },
+      {
+        "phase_ms": 2.0,
+        "candidate_time_s": 3.25,
+        "mode": "no_fail",
+        "event36_auto": {
+          "frame_time_s": 3.252,
+          "input_id": null,
+          "kind": "auto_miss_advance",
+          "target_ordinal": 36,
+          "judgement": "fail_miss",
+          "automatic_miss": true,
+          "failed": false
+        },
+        "candidate_transition": {
+          "frame_time_s": 3.252,
+          "input_id": "candidate:event37",
+          "kind": "hit_advance",
+          "target_ordinal": 37,
+          "judgement": "late_perfect",
+          "automatic_miss": false,
+          "failed": false
+        },
+        "base_input_mismatch_count": 46,
+        "selected_events": {
+          "36": [
+            {
+              "frame_time_s": 3.252,
+              "input_id": null,
+              "kind": "auto_miss_advance",
+              "target_ordinal": 36,
+              "judgement": "fail_miss",
+              "automatic_miss": true,
+              "failed": false
+            }
+          ],
+          "37": [
+            {
+              "frame_time_s": 3.252,
+              "input_id": "candidate:event37",
+              "kind": "hit_advance",
+              "target_ordinal": 37,
+              "judgement": "late_perfect",
+              "automatic_miss": false,
+              "failed": false
+            }
+          ],
+          "42": [
+            {
+              "frame_time_s": 3.452,
+              "input_id": "local:43",
+              "kind": "hit_advance",
+              "target_ordinal": 42,
+              "judgement": "very_late",
+              "automatic_miss": false,
+              "failed": false
+            }
+          ],
+          "47": [
+            {
+              "frame_time_s": 3.622,
+              "input_id": "local:48",
+              "kind": "hit_advance",
+              "target_ordinal": 47,
+              "judgement": "very_late",
+              "automatic_miss": false,
+              "failed": false
+            }
+          ],
+          "89": [
+            {
+              "frame_time_s": 5.322,
+              "input_id": null,
+              "kind": "auto_miss_advance",
+              "target_ordinal": 89,
+              "judgement": "fail_miss",
+              "automatic_miss": true,
+              "failed": false
+            }
+          ]
+        },
+        "failed": false
+      },
+      {
+        "phase_ms": 2.0,
+        "candidate_time_s": 3.251,
+        "mode": "no_fail",
+        "event36_auto": {
+          "frame_time_s": 3.252,
+          "input_id": null,
+          "kind": "auto_miss_advance",
+          "target_ordinal": 36,
+          "judgement": "fail_miss",
+          "automatic_miss": true,
+          "failed": false
+        },
+        "candidate_transition": {
+          "frame_time_s": 3.252,
+          "input_id": "candidate:event37",
+          "kind": "hit_advance",
+          "target_ordinal": 37,
+          "judgement": "very_late",
+          "automatic_miss": false,
+          "failed": false
+        },
+        "base_input_mismatch_count": 46,
+        "selected_events": {
+          "36": [
+            {
+              "frame_time_s": 3.252,
+              "input_id": null,
+              "kind": "auto_miss_advance",
+              "target_ordinal": 36,
+              "judgement": "fail_miss",
+              "automatic_miss": true,
+              "failed": false
+            }
+          ],
+          "37": [
+            {
+              "frame_time_s": 3.252,
+              "input_id": "candidate:event37",
+              "kind": "hit_advance",
+              "target_ordinal": 37,
+              "judgement": "very_late",
+              "automatic_miss": false,
+              "failed": false
+            }
+          ],
+          "42": [
+            {
+              "frame_time_s": 3.452,
+              "input_id": "local:43",
+              "kind": "hit_advance",
+              "target_ordinal": 42,
+              "judgement": "very_late",
+              "automatic_miss": false,
+              "failed": false
+            }
+          ],
+          "47": [
+            {
+              "frame_time_s": 3.622,
+              "input_id": "local:48",
+              "kind": "hit_advance",
+              "target_ordinal": 47,
+              "judgement": "very_late",
+              "automatic_miss": false,
+              "failed": false
+            }
+          ],
+          "89": [
+            {
+              "frame_time_s": 5.322,
+              "input_id": null,
+              "kind": "auto_miss_advance",
+              "target_ordinal": 89,
+              "judgement": "fail_miss",
+              "automatic_miss": true,
+              "failed": false
+            }
+          ]
+        },
+        "failed": false
+      },
+      {
+        "phase_ms": 2.0,
+        "candidate_time_s": 3.252,
+        "mode": "no_fail",
+        "event36_auto": {
+          "frame_time_s": 3.252,
+          "input_id": null,
+          "kind": "auto_miss_advance",
+          "target_ordinal": 36,
+          "judgement": "fail_miss",
+          "automatic_miss": true,
+          "failed": false
+        },
+        "candidate_transition": {
+          "frame_time_s": 3.252,
+          "input_id": "candidate:event37",
+          "kind": "hit_advance",
+          "target_ordinal": 37,
+          "judgement": "very_late",
+          "automatic_miss": false,
+          "failed": false
+        },
+        "base_input_mismatch_count": 46,
+        "selected_events": {
+          "36": [
+            {
+              "frame_time_s": 3.252,
+              "input_id": null,
+              "kind": "auto_miss_advance",
+              "target_ordinal": 36,
+              "judgement": "fail_miss",
+              "automatic_miss": true,
+              "failed": false
+            }
+          ],
+          "37": [
+            {
+              "frame_time_s": 3.252,
+              "input_id": "candidate:event37",
+              "kind": "hit_advance",
+              "target_ordinal": 37,
+              "judgement": "very_late",
+              "automatic_miss": false,
+              "failed": false
+            }
+          ],
+          "42": [
+            {
+              "frame_time_s": 3.452,
+              "input_id": "local:43",
+              "kind": "hit_advance",
+              "target_ordinal": 42,
+              "judgement": "very_late",
+              "automatic_miss": false,
+              "failed": false
+            }
+          ],
+          "47": [
+            {
+              "frame_time_s": 3.622,
+              "input_id": "local:48",
+              "kind": "hit_advance",
+              "target_ordinal": 47,
+              "judgement": "very_late",
+              "automatic_miss": false,
+              "failed": false
+            }
+          ],
+          "89": [
+            {
+              "frame_time_s": 5.322,
+              "input_id": null,
+              "kind": "auto_miss_advance",
+              "target_ordinal": 89,
+              "judgement": "fail_miss",
+              "automatic_miss": true,
+              "failed": false
+            }
+          ]
+        },
+        "failed": false
+      },
+      {
+        "phase_ms": 2.0,
+        "candidate_time_s": 3.259,
+        "mode": "no_fail",
+        "event36_auto": {
+          "frame_time_s": 3.252,
+          "input_id": null,
+          "kind": "auto_miss_advance",
+          "target_ordinal": 36,
+          "judgement": "fail_miss",
+          "automatic_miss": true,
+          "failed": false
+        },
+        "candidate_transition": {
+          "frame_time_s": 3.262,
+          "input_id": "candidate:event37",
+          "kind": "hit_advance",
+          "target_ordinal": 37,
+          "judgement": "very_late",
+          "automatic_miss": false,
+          "failed": false
+        },
+        "base_input_mismatch_count": 46,
+        "selected_events": {
+          "36": [
+            {
+              "frame_time_s": 3.252,
+              "input_id": null,
+              "kind": "auto_miss_advance",
+              "target_ordinal": 36,
+              "judgement": "fail_miss",
+              "automatic_miss": true,
+              "failed": false
+            }
+          ],
+          "37": [
+            {
+              "frame_time_s": 3.262,
+              "input_id": "candidate:event37",
+              "kind": "hit_advance",
+              "target_ordinal": 37,
+              "judgement": "very_late",
+              "automatic_miss": false,
+              "failed": false
+            }
+          ],
+          "42": [
+            {
+              "frame_time_s": 3.452,
+              "input_id": "local:43",
+              "kind": "hit_advance",
+              "target_ordinal": 42,
+              "judgement": "very_late",
+              "automatic_miss": false,
+              "failed": false
+            }
+          ],
+          "47": [
+            {
+              "frame_time_s": 3.622,
+              "input_id": "local:48",
+              "kind": "hit_advance",
+              "target_ordinal": 47,
+              "judgement": "very_late",
+              "automatic_miss": false,
+              "failed": false
+            }
+          ],
+          "89": [
+            {
+              "frame_time_s": 5.322,
+              "input_id": null,
+              "kind": "auto_miss_advance",
+              "target_ordinal": 89,
+              "judgement": "fail_miss",
+              "automatic_miss": true,
+              "failed": false
+            }
+          ]
+        },
+        "failed": false
+      },
+      {
+        "phase_ms": 3.0,
+        "candidate_time_s": 3.249,
+        "mode": "no_fail",
+        "event36_auto": {
+          "frame_time_s": 3.253,
+          "input_id": null,
+          "kind": "auto_miss_advance",
+          "target_ordinal": 36,
+          "judgement": "fail_miss",
+          "automatic_miss": true,
+          "failed": false
+        },
+        "candidate_transition": {
+          "frame_time_s": 3.253,
+          "input_id": "candidate:event37",
+          "kind": "hit_advance",
+          "target_ordinal": 37,
+          "judgement": "late_perfect",
+          "automatic_miss": false,
+          "failed": false
+        },
+        "base_input_mismatch_count": 46,
+        "selected_events": {
+          "36": [
+            {
+              "frame_time_s": 3.253,
+              "input_id": null,
+              "kind": "auto_miss_advance",
+              "target_ordinal": 36,
+              "judgement": "fail_miss",
+              "automatic_miss": true,
+              "failed": false
+            }
+          ],
+          "37": [
+            {
+              "frame_time_s": 3.253,
+              "input_id": "candidate:event37",
+              "kind": "hit_advance",
+              "target_ordinal": 37,
+              "judgement": "late_perfect",
+              "automatic_miss": false,
+              "failed": false
+            }
+          ],
+          "42": [
+            {
+              "frame_time_s": 3.4530000000000003,
+              "input_id": "local:43",
+              "kind": "hit_advance",
+              "target_ordinal": 42,
+              "judgement": "very_late",
+              "automatic_miss": false,
+              "failed": false
+            }
+          ],
+          "47": [
+            {
+              "frame_time_s": 3.623,
+              "input_id": "local:48",
+              "kind": "hit_advance",
+              "target_ordinal": 47,
+              "judgement": "very_late",
+              "automatic_miss": false,
+              "failed": false
+            }
+          ],
+          "89": [
+            {
+              "frame_time_s": 5.323,
+              "input_id": null,
+              "kind": "auto_miss_advance",
+              "target_ordinal": 89,
+              "judgement": "fail_miss",
+              "automatic_miss": true,
+              "failed": false
+            }
+          ]
+        },
+        "failed": false
+      },
+      {
+        "phase_ms": 3.0,
+        "candidate_time_s": 3.25,
+        "mode": "no_fail",
+        "event36_auto": {
+          "frame_time_s": 3.253,
+          "input_id": null,
+          "kind": "auto_miss_advance",
+          "target_ordinal": 36,
+          "judgement": "fail_miss",
+          "automatic_miss": true,
+          "failed": false
+        },
+        "candidate_transition": {
+          "frame_time_s": 3.253,
+          "input_id": "candidate:event37",
+          "kind": "hit_advance",
+          "target_ordinal": 37,
+          "judgement": "late_perfect",
+          "automatic_miss": false,
+          "failed": false
+        },
+        "base_input_mismatch_count": 46,
+        "selected_events": {
+          "36": [
+            {
+              "frame_time_s": 3.253,
+              "input_id": null,
+              "kind": "auto_miss_advance",
+              "target_ordinal": 36,
+              "judgement": "fail_miss",
+              "automatic_miss": true,
+              "failed": false
+            }
+          ],
+          "37": [
+            {
+              "frame_time_s": 3.253,
+              "input_id": "candidate:event37",
+              "kind": "hit_advance",
+              "target_ordinal": 37,
+              "judgement": "late_perfect",
+              "automatic_miss": false,
+              "failed": false
+            }
+          ],
+          "42": [
+            {
+              "frame_time_s": 3.4530000000000003,
+              "input_id": "local:43",
+              "kind": "hit_advance",
+              "target_ordinal": 42,
+              "judgement": "very_late",
+              "automatic_miss": false,
+              "failed": false
+            }
+          ],
+          "47": [
+            {
+              "frame_time_s": 3.623,
+              "input_id": "local:48",
+              "kind": "hit_advance",
+              "target_ordinal": 47,
+              "judgement": "very_late",
+              "automatic_miss": false,
+              "failed": false
+            }
+          ],
+          "89": [
+            {
+              "frame_time_s": 5.323,
+              "input_id": null,
+              "kind": "auto_miss_advance",
+              "target_ordinal": 89,
+              "judgement": "fail_miss",
+              "automatic_miss": true,
+              "failed": false
+            }
+          ]
+        },
+        "failed": false
+      },
+      {
+        "phase_ms": 3.0,
+        "candidate_time_s": 3.251,
+        "mode": "no_fail",
+        "event36_auto": {
+          "frame_time_s": 3.253,
+          "input_id": null,
+          "kind": "auto_miss_advance",
+          "target_ordinal": 36,
+          "judgement": "fail_miss",
+          "automatic_miss": true,
+          "failed": false
+        },
+        "candidate_transition": {
+          "frame_time_s": 3.253,
+          "input_id": "candidate:event37",
+          "kind": "hit_advance",
+          "target_ordinal": 37,
+          "judgement": "very_late",
+          "automatic_miss": false,
+          "failed": false
+        },
+        "base_input_mismatch_count": 46,
+        "selected_events": {
+          "36": [
+            {
+              "frame_time_s": 3.253,
+              "input_id": null,
+              "kind": "auto_miss_advance",
+              "target_ordinal": 36,
+              "judgement": "fail_miss",
+              "automatic_miss": true,
+              "failed": false
+            }
+          ],
+          "37": [
+            {
+              "frame_time_s": 3.253,
+              "input_id": "candidate:event37",
+              "kind": "hit_advance",
+              "target_ordinal": 37,
+              "judgement": "very_late",
+              "automatic_miss": false,
+              "failed": false
+            }
+          ],
+          "42": [
+            {
+              "frame_time_s": 3.4530000000000003,
+              "input_id": "local:43",
+              "kind": "hit_advance",
+              "target_ordinal": 42,
+              "judgement": "very_late",
+              "automatic_miss": false,
+              "failed": false
+            }
+          ],
+          "47": [
+            {
+              "frame_time_s": 3.623,
+              "input_id": "local:48",
+              "kind": "hit_advance",
+              "target_ordinal": 47,
+              "judgement": "very_late",
+              "automatic_miss": false,
+              "failed": false
+            }
+          ],
+          "89": [
+            {
+              "frame_time_s": 5.323,
+              "input_id": null,
+              "kind": "auto_miss_advance",
+              "target_ordinal": 89,
+              "judgement": "fail_miss",
+              "automatic_miss": true,
+              "failed": false
+            }
+          ]
+        },
+        "failed": false
+      },
+      {
+        "phase_ms": 3.0,
+        "candidate_time_s": 3.252,
+        "mode": "no_fail",
+        "event36_auto": {
+          "frame_time_s": 3.253,
+          "input_id": null,
+          "kind": "auto_miss_advance",
+          "target_ordinal": 36,
+          "judgement": "fail_miss",
+          "automatic_miss": true,
+          "failed": false
+        },
+        "candidate_transition": {
+          "frame_time_s": 3.253,
+          "input_id": "candidate:event37",
+          "kind": "hit_advance",
+          "target_ordinal": 37,
+          "judgement": "very_late",
+          "automatic_miss": false,
+          "failed": false
+        },
+        "base_input_mismatch_count": 46,
+        "selected_events": {
+          "36": [
+            {
+              "frame_time_s": 3.253,
+              "input_id": null,
+              "kind": "auto_miss_advance",
+              "target_ordinal": 36,
+              "judgement": "fail_miss",
+              "automatic_miss": true,
+              "failed": false
+            }
+          ],
+          "37": [
+            {
+              "frame_time_s": 3.253,
+              "input_id": "candidate:event37",
+              "kind": "hit_advance",
+              "target_ordinal": 37,
+              "judgement": "very_late",
+              "automatic_miss": false,
+              "failed": false
+            }
+          ],
+          "42": [
+            {
+              "frame_time_s": 3.4530000000000003,
+              "input_id": "local:43",
+              "kind": "hit_advance",
+              "target_ordinal": 42,
+              "judgement": "very_late",
+              "automatic_miss": false,
+              "failed": false
+            }
+          ],
+          "47": [
+            {
+              "frame_time_s": 3.623,
+              "input_id": "local:48",
+              "kind": "hit_advance",
+              "target_ordinal": 47,
+              "judgement": "very_late",
+              "automatic_miss": false,
+              "failed": false
+            }
+          ],
+          "89": [
+            {
+              "frame_time_s": 5.323,
+              "input_id": null,
+              "kind": "auto_miss_advance",
+              "target_ordinal": 89,
+              "judgement": "fail_miss",
+              "automatic_miss": true,
+              "failed": false
+            }
+          ]
+        },
+        "failed": false
+      },
+      {
+        "phase_ms": 3.0,
+        "candidate_time_s": 3.259,
+        "mode": "no_fail",
+        "event36_auto": {
+          "frame_time_s": 3.253,
+          "input_id": null,
+          "kind": "auto_miss_advance",
+          "target_ordinal": 36,
+          "judgement": "fail_miss",
+          "automatic_miss": true,
+          "failed": false
+        },
+        "candidate_transition": {
+          "frame_time_s": 3.2630000000000003,
+          "input_id": "candidate:event37",
+          "kind": "hit_advance",
+          "target_ordinal": 37,
+          "judgement": "very_late",
+          "automatic_miss": false,
+          "failed": false
+        },
+        "base_input_mismatch_count": 46,
+        "selected_events": {
+          "36": [
+            {
+              "frame_time_s": 3.253,
+              "input_id": null,
+              "kind": "auto_miss_advance",
+              "target_ordinal": 36,
+              "judgement": "fail_miss",
+              "automatic_miss": true,
+              "failed": false
+            }
+          ],
+          "37": [
+            {
+              "frame_time_s": 3.2630000000000003,
+              "input_id": "candidate:event37",
+              "kind": "hit_advance",
+              "target_ordinal": 37,
+              "judgement": "very_late",
+              "automatic_miss": false,
+              "failed": false
+            }
+          ],
+          "42": [
+            {
+              "frame_time_s": 3.4530000000000003,
+              "input_id": "local:43",
+              "kind": "hit_advance",
+              "target_ordinal": 42,
+              "judgement": "very_late",
+              "automatic_miss": false,
+              "failed": false
+            }
+          ],
+          "47": [
+            {
+              "frame_time_s": 3.623,
+              "input_id": "local:48",
+              "kind": "hit_advance",
+              "target_ordinal": 47,
+              "judgement": "very_late",
+              "automatic_miss": false,
+              "failed": false
+            }
+          ],
+          "89": [
+            {
+              "frame_time_s": 5.323,
+              "input_id": null,
+              "kind": "auto_miss_advance",
+              "target_ordinal": 89,
+              "judgement": "fail_miss",
+              "automatic_miss": true,
+              "failed": false
+            }
+          ]
+        },
+        "failed": false
+      },
+      {
+        "phase_ms": 4.0,
+        "candidate_time_s": 3.249,
+        "mode": "no_fail",
+        "event36_auto": {
+          "frame_time_s": 3.254,
+          "input_id": null,
+          "kind": "auto_miss_advance",
+          "target_ordinal": 36,
+          "judgement": "fail_miss",
+          "automatic_miss": true,
+          "failed": false
+        },
+        "candidate_transition": {
+          "frame_time_s": 3.254,
+          "input_id": "candidate:event37",
+          "kind": "hit_advance",
+          "target_ordinal": 37,
+          "judgement": "late_perfect",
+          "automatic_miss": false,
+          "failed": false
+        },
+        "base_input_mismatch_count": 46,
+        "selected_events": {
+          "36": [
+            {
+              "frame_time_s": 3.254,
+              "input_id": null,
+              "kind": "auto_miss_advance",
+              "target_ordinal": 36,
+              "judgement": "fail_miss",
+              "automatic_miss": true,
+              "failed": false
+            }
+          ],
+          "37": [
+            {
+              "frame_time_s": 3.254,
+              "input_id": "candidate:event37",
+              "kind": "hit_advance",
+              "target_ordinal": 37,
+              "judgement": "late_perfect",
+              "automatic_miss": false,
+              "failed": false
+            }
+          ],
+          "42": [
+            {
+              "frame_time_s": 3.454,
+              "input_id": "local:43",
+              "kind": "hit_advance",
+              "target_ordinal": 42,
+              "judgement": "very_late",
+              "automatic_miss": false,
+              "failed": false
+            }
+          ],
+          "47": [
+            {
+              "frame_time_s": 3.624,
+              "input_id": "local:48",
+              "kind": "hit_advance",
+              "target_ordinal": 47,
+              "judgement": "very_late",
+              "automatic_miss": false,
+              "failed": false
+            }
+          ],
+          "89": [
+            {
+              "frame_time_s": 5.324,
+              "input_id": null,
+              "kind": "auto_miss_advance",
+              "target_ordinal": 89,
+              "judgement": "fail_miss",
+              "automatic_miss": true,
+              "failed": false
+            }
+          ]
+        },
+        "failed": false
+      },
+      {
+        "phase_ms": 4.0,
+        "candidate_time_s": 3.25,
+        "mode": "no_fail",
+        "event36_auto": {
+          "frame_time_s": 3.254,
+          "input_id": null,
+          "kind": "auto_miss_advance",
+          "target_ordinal": 36,
+          "judgement": "fail_miss",
+          "automatic_miss": true,
+          "failed": false
+        },
+        "candidate_transition": {
+          "frame_time_s": 3.254,
+          "input_id": "candidate:event37",
+          "kind": "hit_advance",
+          "target_ordinal": 37,
+          "judgement": "late_perfect",
+          "automatic_miss": false,
+          "failed": false
+        },
+        "base_input_mismatch_count": 46,
+        "selected_events": {
+          "36": [
+            {
+              "frame_time_s": 3.254,
+              "input_id": null,
+              "kind": "auto_miss_advance",
+              "target_ordinal": 36,
+              "judgement": "fail_miss",
+              "automatic_miss": true,
+              "failed": false
+            }
+          ],
+          "37": [
+            {
+              "frame_time_s": 3.254,
+              "input_id": "candidate:event37",
+              "kind": "hit_advance",
+              "target_ordinal": 37,
+              "judgement": "late_perfect",
+              "automatic_miss": false,
+              "failed": false
+            }
+          ],
+          "42": [
+            {
+              "frame_time_s": 3.454,
+              "input_id": "local:43",
+              "kind": "hit_advance",
+              "target_ordinal": 42,
+              "judgement": "very_late",
+              "automatic_miss": false,
+              "failed": false
+            }
+          ],
+          "47": [
+            {
+              "frame_time_s": 3.624,
+              "input_id": "local:48",
+              "kind": "hit_advance",
+              "target_ordinal": 47,
+              "judgement": "very_late",
+              "automatic_miss": false,
+              "failed": false
+            }
+          ],
+          "89": [
+            {
+              "frame_time_s": 5.324,
+              "input_id": null,
+              "kind": "auto_miss_advance",
+              "target_ordinal": 89,
+              "judgement": "fail_miss",
+              "automatic_miss": true,
+              "failed": false
+            }
+          ]
+        },
+        "failed": false
+      },
+      {
+        "phase_ms": 4.0,
+        "candidate_time_s": 3.251,
+        "mode": "no_fail",
+        "event36_auto": {
+          "frame_time_s": 3.254,
+          "input_id": null,
+          "kind": "auto_miss_advance",
+          "target_ordinal": 36,
+          "judgement": "fail_miss",
+          "automatic_miss": true,
+          "failed": false
+        },
+        "candidate_transition": {
+          "frame_time_s": 3.254,
+          "input_id": "candidate:event37",
+          "kind": "hit_advance",
+          "target_ordinal": 37,
+          "judgement": "very_late",
+          "automatic_miss": false,
+          "failed": false
+        },
+        "base_input_mismatch_count": 46,
+        "selected_events": {
+          "36": [
+            {
+              "frame_time_s": 3.254,
+              "input_id": null,
+              "kind": "auto_miss_advance",
+              "target_ordinal": 36,
+              "judgement": "fail_miss",
+              "automatic_miss": true,
+              "failed": false
+            }
+          ],
+          "37": [
+            {
+              "frame_time_s": 3.254,
+              "input_id": "candidate:event37",
+              "kind": "hit_advance",
+              "target_ordinal": 37,
+              "judgement": "very_late",
+              "automatic_miss": false,
+              "failed": false
+            }
+          ],
+          "42": [
+            {
+              "frame_time_s": 3.454,
+              "input_id": "local:43",
+              "kind": "hit_advance",
+              "target_ordinal": 42,
+              "judgement": "very_late",
+              "automatic_miss": false,
+              "failed": false
+            }
+          ],
+          "47": [
+            {
+              "frame_time_s": 3.624,
+              "input_id": "local:48",
+              "kind": "hit_advance",
+              "target_ordinal": 47,
+              "judgement": "very_late",
+              "automatic_miss": false,
+              "failed": false
+            }
+          ],
+          "89": [
+            {
+              "frame_time_s": 5.324,
+              "input_id": null,
+              "kind": "auto_miss_advance",
+              "target_ordinal": 89,
+              "judgement": "fail_miss",
+              "automatic_miss": true,
+              "failed": false
+            }
+          ]
+        },
+        "failed": false
+      },
+      {
+        "phase_ms": 4.0,
+        "candidate_time_s": 3.252,
+        "mode": "no_fail",
+        "event36_auto": {
+          "frame_time_s": 3.254,
+          "input_id": null,
+          "kind": "auto_miss_advance",
+          "target_ordinal": 36,
+          "judgement": "fail_miss",
+          "automatic_miss": true,
+          "failed": false
+        },
+        "candidate_transition": {
+          "frame_time_s": 3.254,
+          "input_id": "candidate:event37",
+          "kind": "hit_advance",
+          "target_ordinal": 37,
+          "judgement": "very_late",
+          "automatic_miss": false,
+          "failed": false
+        },
+        "base_input_mismatch_count": 46,
+        "selected_events": {
+          "36": [
+            {
+              "frame_time_s": 3.254,
+              "input_id": null,
+              "kind": "auto_miss_advance",
+              "target_ordinal": 36,
+              "judgement": "fail_miss",
+              "automatic_miss": true,
+              "failed": false
+            }
+          ],
+          "37": [
+            {
+              "frame_time_s": 3.254,
+              "input_id": "candidate:event37",
+              "kind": "hit_advance",
+              "target_ordinal": 37,
+              "judgement": "very_late",
+              "automatic_miss": false,
+              "failed": false
+            }
+          ],
+          "42": [
+            {
+              "frame_time_s": 3.454,
+              "input_id": "local:43",
+              "kind": "hit_advance",
+              "target_ordinal": 42,
+              "judgement": "very_late",
+              "automatic_miss": false,
+              "failed": false
+            }
+          ],
+          "47": [
+            {
+              "frame_time_s": 3.624,
+              "input_id": "local:48",
+              "kind": "hit_advance",
+              "target_ordinal": 47,
+              "judgement": "very_late",
+              "automatic_miss": false,
+              "failed": false
+            }
+          ],
+          "89": [
+            {
+              "frame_time_s": 5.324,
+              "input_id": null,
+              "kind": "auto_miss_advance",
+              "target_ordinal": 89,
+              "judgement": "fail_miss",
+              "automatic_miss": true,
+              "failed": false
+            }
+          ]
+        },
+        "failed": false
+      },
+      {
+        "phase_ms": 4.0,
+        "candidate_time_s": 3.259,
+        "mode": "no_fail",
+        "event36_auto": {
+          "frame_time_s": 3.254,
+          "input_id": null,
+          "kind": "auto_miss_advance",
+          "target_ordinal": 36,
+          "judgement": "fail_miss",
+          "automatic_miss": true,
+          "failed": false
+        },
+        "candidate_transition": {
+          "frame_time_s": 3.2640000000000002,
+          "input_id": "candidate:event37",
+          "kind": "hit_advance",
+          "target_ordinal": 37,
+          "judgement": "very_late",
+          "automatic_miss": false,
+          "failed": false
+        },
+        "base_input_mismatch_count": 46,
+        "selected_events": {
+          "36": [
+            {
+              "frame_time_s": 3.254,
+              "input_id": null,
+              "kind": "auto_miss_advance",
+              "target_ordinal": 36,
+              "judgement": "fail_miss",
+              "automatic_miss": true,
+              "failed": false
+            }
+          ],
+          "37": [
+            {
+              "frame_time_s": 3.2640000000000002,
+              "input_id": "candidate:event37",
+              "kind": "hit_advance",
+              "target_ordinal": 37,
+              "judgement": "very_late",
+              "automatic_miss": false,
+              "failed": false
+            }
+          ],
+          "42": [
+            {
+              "frame_time_s": 3.454,
+              "input_id": "local:43",
+              "kind": "hit_advance",
+              "target_ordinal": 42,
+              "judgement": "very_late",
+              "automatic_miss": false,
+              "failed": false
+            }
+          ],
+          "47": [
+            {
+              "frame_time_s": 3.624,
+              "input_id": "local:48",
+              "kind": "hit_advance",
+              "target_ordinal": 47,
+              "judgement": "very_late",
+              "automatic_miss": false,
+              "failed": false
+            }
+          ],
+          "89": [
+            {
+              "frame_time_s": 5.324,
+              "input_id": null,
+              "kind": "auto_miss_advance",
+              "target_ordinal": 89,
+              "judgement": "fail_miss",
+              "automatic_miss": true,
+              "failed": false
+            }
+          ]
+        },
+        "failed": false
+      },
+      {
+        "phase_ms": 5.0,
+        "candidate_time_s": 3.249,
+        "mode": "no_fail",
+        "event36_auto": {
+          "frame_time_s": 3.255,
+          "input_id": null,
+          "kind": "auto_miss_advance",
+          "target_ordinal": 36,
+          "judgement": "fail_miss",
+          "automatic_miss": true,
+          "failed": false
+        },
+        "candidate_transition": {
+          "frame_time_s": 3.255,
+          "input_id": "candidate:event37",
+          "kind": "hit_advance",
+          "target_ordinal": 37,
+          "judgement": "late_perfect",
+          "automatic_miss": false,
+          "failed": false
+        },
+        "base_input_mismatch_count": 46,
+        "selected_events": {
+          "36": [
+            {
+              "frame_time_s": 3.255,
+              "input_id": null,
+              "kind": "auto_miss_advance",
+              "target_ordinal": 36,
+              "judgement": "fail_miss",
+              "automatic_miss": true,
+              "failed": false
+            }
+          ],
+          "37": [
+            {
+              "frame_time_s": 3.255,
+              "input_id": "candidate:event37",
+              "kind": "hit_advance",
+              "target_ordinal": 37,
+              "judgement": "late_perfect",
+              "automatic_miss": false,
+              "failed": false
+            }
+          ],
+          "42": [
+            {
+              "frame_time_s": 3.455,
+              "input_id": "local:43",
+              "kind": "hit_advance",
+              "target_ordinal": 42,
+              "judgement": "very_late",
+              "automatic_miss": false,
+              "failed": false
+            }
+          ],
+          "47": [
+            {
+              "frame_time_s": 3.625,
+              "input_id": "local:48",
+              "kind": "hit_advance",
+              "target_ordinal": 47,
+              "judgement": "very_late",
+              "automatic_miss": false,
+              "failed": false
+            }
+          ],
+          "89": [
+            {
+              "frame_time_s": 5.325,
+              "input_id": null,
+              "kind": "auto_miss_advance",
+              "target_ordinal": 89,
+              "judgement": "fail_miss",
+              "automatic_miss": true,
+              "failed": false
+            }
+          ]
+        },
+        "failed": false
+      },
+      {
+        "phase_ms": 5.0,
+        "candidate_time_s": 3.25,
+        "mode": "no_fail",
+        "event36_auto": {
+          "frame_time_s": 3.255,
+          "input_id": null,
+          "kind": "auto_miss_advance",
+          "target_ordinal": 36,
+          "judgement": "fail_miss",
+          "automatic_miss": true,
+          "failed": false
+        },
+        "candidate_transition": {
+          "frame_time_s": 3.255,
+          "input_id": "candidate:event37",
+          "kind": "hit_advance",
+          "target_ordinal": 37,
+          "judgement": "late_perfect",
+          "automatic_miss": false,
+          "failed": false
+        },
+        "base_input_mismatch_count": 46,
+        "selected_events": {
+          "36": [
+            {
+              "frame_time_s": 3.255,
+              "input_id": null,
+              "kind": "auto_miss_advance",
+              "target_ordinal": 36,
+              "judgement": "fail_miss",
+              "automatic_miss": true,
+              "failed": false
+            }
+          ],
+          "37": [
+            {
+              "frame_time_s": 3.255,
+              "input_id": "candidate:event37",
+              "kind": "hit_advance",
+              "target_ordinal": 37,
+              "judgement": "late_perfect",
+              "automatic_miss": false,
+              "failed": false
+            }
+          ],
+          "42": [
+            {
+              "frame_time_s": 3.455,
+              "input_id": "local:43",
+              "kind": "hit_advance",
+              "target_ordinal": 42,
+              "judgement": "very_late",
+              "automatic_miss": false,
+              "failed": false
+            }
+          ],
+          "47": [
+            {
+              "frame_time_s": 3.625,
+              "input_id": "local:48",
+              "kind": "hit_advance",
+              "target_ordinal": 47,
+              "judgement": "very_late",
+              "automatic_miss": false,
+              "failed": false
+            }
+          ],
+          "89": [
+            {
+              "frame_time_s": 5.325,
+              "input_id": null,
+              "kind": "auto_miss_advance",
+              "target_ordinal": 89,
+              "judgement": "fail_miss",
+              "automatic_miss": true,
+              "failed": false
+            }
+          ]
+        },
+        "failed": false
+      },
+      {
+        "phase_ms": 5.0,
+        "candidate_time_s": 3.251,
+        "mode": "no_fail",
+        "event36_auto": {
+          "frame_time_s": 3.255,
+          "input_id": null,
+          "kind": "auto_miss_advance",
+          "target_ordinal": 36,
+          "judgement": "fail_miss",
+          "automatic_miss": true,
+          "failed": false
+        },
+        "candidate_transition": {
+          "frame_time_s": 3.255,
+          "input_id": "candidate:event37",
+          "kind": "hit_advance",
+          "target_ordinal": 37,
+          "judgement": "very_late",
+          "automatic_miss": false,
+          "failed": false
+        },
+        "base_input_mismatch_count": 46,
+        "selected_events": {
+          "36": [
+            {
+              "frame_time_s": 3.255,
+              "input_id": null,
+              "kind": "auto_miss_advance",
+              "target_ordinal": 36,
+              "judgement": "fail_miss",
+              "automatic_miss": true,
+              "failed": false
+            }
+          ],
+          "37": [
+            {
+              "frame_time_s": 3.255,
+              "input_id": "candidate:event37",
+              "kind": "hit_advance",
+              "target_ordinal": 37,
+              "judgement": "very_late",
+              "automatic_miss": false,
+              "failed": false
+            }
+          ],
+          "42": [
+            {
+              "frame_time_s": 3.455,
+              "input_id": "local:43",
+              "kind": "hit_advance",
+              "target_ordinal": 42,
+              "judgement": "very_late",
+              "automatic_miss": false,
+              "failed": false
+            }
+          ],
+          "47": [
+            {
+              "frame_time_s": 3.625,
+              "input_id": "local:48",
+              "kind": "hit_advance",
+              "target_ordinal": 47,
+              "judgement": "very_late",
+              "automatic_miss": false,
+              "failed": false
+            }
+          ],
+          "89": [
+            {
+              "frame_time_s": 5.325,
+              "input_id": null,
+              "kind": "auto_miss_advance",
+              "target_ordinal": 89,
+              "judgement": "fail_miss",
+              "automatic_miss": true,
+              "failed": false
+            }
+          ]
+        },
+        "failed": false
+      },
+      {
+        "phase_ms": 5.0,
+        "candidate_time_s": 3.252,
+        "mode": "no_fail",
+        "event36_auto": {
+          "frame_time_s": 3.255,
+          "input_id": null,
+          "kind": "auto_miss_advance",
+          "target_ordinal": 36,
+          "judgement": "fail_miss",
+          "automatic_miss": true,
+          "failed": false
+        },
+        "candidate_transition": {
+          "frame_time_s": 3.255,
+          "input_id": "candidate:event37",
+          "kind": "hit_advance",
+          "target_ordinal": 37,
+          "judgement": "very_late",
+          "automatic_miss": false,
+          "failed": false
+        },
+        "base_input_mismatch_count": 46,
+        "selected_events": {
+          "36": [
+            {
+              "frame_time_s": 3.255,
+              "input_id": null,
+              "kind": "auto_miss_advance",
+              "target_ordinal": 36,
+              "judgement": "fail_miss",
+              "automatic_miss": true,
+              "failed": false
+            }
+          ],
+          "37": [
+            {
+              "frame_time_s": 3.255,
+              "input_id": "candidate:event37",
+              "kind": "hit_advance",
+              "target_ordinal": 37,
+              "judgement": "very_late",
+              "automatic_miss": false,
+              "failed": false
+            }
+          ],
+          "42": [
+            {
+              "frame_time_s": 3.455,
+              "input_id": "local:43",
+              "kind": "hit_advance",
+              "target_ordinal": 42,
+              "judgement": "very_late",
+              "automatic_miss": false,
+              "failed": false
+            }
+          ],
+          "47": [
+            {
+              "frame_time_s": 3.625,
+              "input_id": "local:48",
+              "kind": "hit_advance",
+              "target_ordinal": 47,
+              "judgement": "very_late",
+              "automatic_miss": false,
+              "failed": false
+            }
+          ],
+          "89": [
+            {
+              "frame_time_s": 5.325,
+              "input_id": null,
+              "kind": "auto_miss_advance",
+              "target_ordinal": 89,
+              "judgement": "fail_miss",
+              "automatic_miss": true,
+              "failed": false
+            }
+          ]
+        },
+        "failed": false
+      },
+      {
+        "phase_ms": 5.0,
+        "candidate_time_s": 3.259,
+        "mode": "no_fail",
+        "event36_auto": {
+          "frame_time_s": 3.255,
+          "input_id": null,
+          "kind": "auto_miss_advance",
+          "target_ordinal": 36,
+          "judgement": "fail_miss",
+          "automatic_miss": true,
+          "failed": false
+        },
+        "candidate_transition": {
+          "frame_time_s": 3.265,
+          "input_id": "candidate:event37",
+          "kind": "hit_advance",
+          "target_ordinal": 37,
+          "judgement": "very_late",
+          "automatic_miss": false,
+          "failed": false
+        },
+        "base_input_mismatch_count": 46,
+        "selected_events": {
+          "36": [
+            {
+              "frame_time_s": 3.255,
+              "input_id": null,
+              "kind": "auto_miss_advance",
+              "target_ordinal": 36,
+              "judgement": "fail_miss",
+              "automatic_miss": true,
+              "failed": false
+            }
+          ],
+          "37": [
+            {
+              "frame_time_s": 3.265,
+              "input_id": "candidate:event37",
+              "kind": "hit_advance",
+              "target_ordinal": 37,
+              "judgement": "very_late",
+              "automatic_miss": false,
+              "failed": false
+            }
+          ],
+          "42": [
+            {
+              "frame_time_s": 3.455,
+              "input_id": "local:43",
+              "kind": "hit_advance",
+              "target_ordinal": 42,
+              "judgement": "very_late",
+              "automatic_miss": false,
+              "failed": false
+            }
+          ],
+          "47": [
+            {
+              "frame_time_s": 3.625,
+              "input_id": "local:48",
+              "kind": "hit_advance",
+              "target_ordinal": 47,
+              "judgement": "very_late",
+              "automatic_miss": false,
+              "failed": false
+            }
+          ],
+          "89": [
+            {
+              "frame_time_s": 5.325,
+              "input_id": null,
+              "kind": "auto_miss_advance",
+              "target_ordinal": 89,
+              "judgement": "fail_miss",
+              "automatic_miss": true,
+              "failed": false
+            }
+          ]
+        },
+        "failed": false
+      },
+      {
+        "phase_ms": 6.0,
+        "candidate_time_s": 3.249,
+        "mode": "no_fail",
+        "event36_auto": {
+          "frame_time_s": 3.256,
+          "input_id": null,
+          "kind": "auto_miss_advance",
+          "target_ordinal": 36,
+          "judgement": "fail_miss",
+          "automatic_miss": true,
+          "failed": false
+        },
+        "candidate_transition": {
+          "frame_time_s": 3.256,
+          "input_id": "candidate:event37",
+          "kind": "hit_advance",
+          "target_ordinal": 37,
+          "judgement": "late_perfect",
+          "automatic_miss": false,
+          "failed": false
+        },
+        "base_input_mismatch_count": 46,
+        "selected_events": {
+          "36": [
+            {
+              "frame_time_s": 3.256,
+              "input_id": null,
+              "kind": "auto_miss_advance",
+              "target_ordinal": 36,
+              "judgement": "fail_miss",
+              "automatic_miss": true,
+              "failed": false
+            }
+          ],
+          "37": [
+            {
+              "frame_time_s": 3.256,
+              "input_id": "candidate:event37",
+              "kind": "hit_advance",
+              "target_ordinal": 37,
+              "judgement": "late_perfect",
+              "automatic_miss": false,
+              "failed": false
+            }
+          ],
+          "42": [
+            {
+              "frame_time_s": 3.456,
+              "input_id": "local:43",
+              "kind": "hit_advance",
+              "target_ordinal": 42,
+              "judgement": "very_late",
+              "automatic_miss": false,
+              "failed": false
+            }
+          ],
+          "47": [
+            {
+              "frame_time_s": 3.626,
+              "input_id": "local:48",
+              "kind": "hit_advance",
+              "target_ordinal": 47,
+              "judgement": "very_late",
+              "automatic_miss": false,
+              "failed": false
+            }
+          ],
+          "89": [
+            {
+              "frame_time_s": 5.316000000000001,
+              "input_id": null,
+              "kind": "auto_miss_advance",
+              "target_ordinal": 89,
+              "judgement": "fail_miss",
+              "automatic_miss": true,
+              "failed": false
+            }
+          ]
+        },
+        "failed": false
+      },
+      {
+        "phase_ms": 6.0,
+        "candidate_time_s": 3.25,
+        "mode": "no_fail",
+        "event36_auto": {
+          "frame_time_s": 3.256,
+          "input_id": null,
+          "kind": "auto_miss_advance",
+          "target_ordinal": 36,
+          "judgement": "fail_miss",
+          "automatic_miss": true,
+          "failed": false
+        },
+        "candidate_transition": {
+          "frame_time_s": 3.256,
+          "input_id": "candidate:event37",
+          "kind": "hit_advance",
+          "target_ordinal": 37,
+          "judgement": "late_perfect",
+          "automatic_miss": false,
+          "failed": false
+        },
+        "base_input_mismatch_count": 46,
+        "selected_events": {
+          "36": [
+            {
+              "frame_time_s": 3.256,
+              "input_id": null,
+              "kind": "auto_miss_advance",
+              "target_ordinal": 36,
+              "judgement": "fail_miss",
+              "automatic_miss": true,
+              "failed": false
+            }
+          ],
+          "37": [
+            {
+              "frame_time_s": 3.256,
+              "input_id": "candidate:event37",
+              "kind": "hit_advance",
+              "target_ordinal": 37,
+              "judgement": "late_perfect",
+              "automatic_miss": false,
+              "failed": false
+            }
+          ],
+          "42": [
+            {
+              "frame_time_s": 3.456,
+              "input_id": "local:43",
+              "kind": "hit_advance",
+              "target_ordinal": 42,
+              "judgement": "very_late",
+              "automatic_miss": false,
+              "failed": false
+            }
+          ],
+          "47": [
+            {
+              "frame_time_s": 3.626,
+              "input_id": "local:48",
+              "kind": "hit_advance",
+              "target_ordinal": 47,
+              "judgement": "very_late",
+              "automatic_miss": false,
+              "failed": false
+            }
+          ],
+          "89": [
+            {
+              "frame_time_s": 5.316000000000001,
+              "input_id": null,
+              "kind": "auto_miss_advance",
+              "target_ordinal": 89,
+              "judgement": "fail_miss",
+              "automatic_miss": true,
+              "failed": false
+            }
+          ]
+        },
+        "failed": false
+      },
+      {
+        "phase_ms": 6.0,
+        "candidate_time_s": 3.251,
+        "mode": "no_fail",
+        "event36_auto": {
+          "frame_time_s": 3.256,
+          "input_id": null,
+          "kind": "auto_miss_advance",
+          "target_ordinal": 36,
+          "judgement": "fail_miss",
+          "automatic_miss": true,
+          "failed": false
+        },
+        "candidate_transition": {
+          "frame_time_s": 3.256,
+          "input_id": "candidate:event37",
+          "kind": "hit_advance",
+          "target_ordinal": 37,
+          "judgement": "very_late",
+          "automatic_miss": false,
+          "failed": false
+        },
+        "base_input_mismatch_count": 46,
+        "selected_events": {
+          "36": [
+            {
+              "frame_time_s": 3.256,
+              "input_id": null,
+              "kind": "auto_miss_advance",
+              "target_ordinal": 36,
+              "judgement": "fail_miss",
+              "automatic_miss": true,
+              "failed": false
+            }
+          ],
+          "37": [
+            {
+              "frame_time_s": 3.256,
+              "input_id": "candidate:event37",
+              "kind": "hit_advance",
+              "target_ordinal": 37,
+              "judgement": "very_late",
+              "automatic_miss": false,
+              "failed": false
+            }
+          ],
+          "42": [
+            {
+              "frame_time_s": 3.456,
+              "input_id": "local:43",
+              "kind": "hit_advance",
+              "target_ordinal": 42,
+              "judgement": "very_late",
+              "automatic_miss": false,
+              "failed": false
+            }
+          ],
+          "47": [
+            {
+              "frame_time_s": 3.626,
+              "input_id": "local:48",
+              "kind": "hit_advance",
+              "target_ordinal": 47,
+              "judgement": "very_late",
+              "automatic_miss": false,
+              "failed": false
+            }
+          ],
+          "89": [
+            {
+              "frame_time_s": 5.316000000000001,
+              "input_id": null,
+              "kind": "auto_miss_advance",
+              "target_ordinal": 89,
+              "judgement": "fail_miss",
+              "automatic_miss": true,
+              "failed": false
+            }
+          ]
+        },
+        "failed": false
+      },
+      {
+        "phase_ms": 6.0,
+        "candidate_time_s": 3.252,
+        "mode": "no_fail",
+        "event36_auto": {
+          "frame_time_s": 3.256,
+          "input_id": null,
+          "kind": "auto_miss_advance",
+          "target_ordinal": 36,
+          "judgement": "fail_miss",
+          "automatic_miss": true,
+          "failed": false
+        },
+        "candidate_transition": {
+          "frame_time_s": 3.256,
+          "input_id": "candidate:event37",
+          "kind": "hit_advance",
+          "target_ordinal": 37,
+          "judgement": "very_late",
+          "automatic_miss": false,
+          "failed": false
+        },
+        "base_input_mismatch_count": 46,
+        "selected_events": {
+          "36": [
+            {
+              "frame_time_s": 3.256,
+              "input_id": null,
+              "kind": "auto_miss_advance",
+              "target_ordinal": 36,
+              "judgement": "fail_miss",
+              "automatic_miss": true,
+              "failed": false
+            }
+          ],
+          "37": [
+            {
+              "frame_time_s": 3.256,
+              "input_id": "candidate:event37",
+              "kind": "hit_advance",
+              "target_ordinal": 37,
+              "judgement": "very_late",
+              "automatic_miss": false,
+              "failed": false
+            }
+          ],
+          "42": [
+            {
+              "frame_time_s": 3.456,
+              "input_id": "local:43",
+              "kind": "hit_advance",
+              "target_ordinal": 42,
+              "judgement": "very_late",
+              "automatic_miss": false,
+              "failed": false
+            }
+          ],
+          "47": [
+            {
+              "frame_time_s": 3.626,
+              "input_id": "local:48",
+              "kind": "hit_advance",
+              "target_ordinal": 47,
+              "judgement": "very_late",
+              "automatic_miss": false,
+              "failed": false
+            }
+          ],
+          "89": [
+            {
+              "frame_time_s": 5.316000000000001,
+              "input_id": null,
+              "kind": "auto_miss_advance",
+              "target_ordinal": 89,
+              "judgement": "fail_miss",
+              "automatic_miss": true,
+              "failed": false
+            }
+          ]
+        },
+        "failed": false
+      },
+      {
+        "phase_ms": 6.0,
+        "candidate_time_s": 3.259,
+        "mode": "no_fail",
+        "event36_auto": {
+          "frame_time_s": 3.256,
+          "input_id": null,
+          "kind": "auto_miss_advance",
+          "target_ordinal": 36,
+          "judgement": "fail_miss",
+          "automatic_miss": true,
+          "failed": false
+        },
+        "candidate_transition": {
+          "frame_time_s": 3.266,
+          "input_id": "candidate:event37",
+          "kind": "hit_advance",
+          "target_ordinal": 37,
+          "judgement": "very_late",
+          "automatic_miss": false,
+          "failed": false
+        },
+        "base_input_mismatch_count": 46,
+        "selected_events": {
+          "36": [
+            {
+              "frame_time_s": 3.256,
+              "input_id": null,
+              "kind": "auto_miss_advance",
+              "target_ordinal": 36,
+              "judgement": "fail_miss",
+              "automatic_miss": true,
+              "failed": false
+            }
+          ],
+          "37": [
+            {
+              "frame_time_s": 3.266,
+              "input_id": "candidate:event37",
+              "kind": "hit_advance",
+              "target_ordinal": 37,
+              "judgement": "very_late",
+              "automatic_miss": false,
+              "failed": false
+            }
+          ],
+          "42": [
+            {
+              "frame_time_s": 3.456,
+              "input_id": "local:43",
+              "kind": "hit_advance",
+              "target_ordinal": 42,
+              "judgement": "very_late",
+              "automatic_miss": false,
+              "failed": false
+            }
+          ],
+          "47": [
+            {
+              "frame_time_s": 3.626,
+              "input_id": "local:48",
+              "kind": "hit_advance",
+              "target_ordinal": 47,
+              "judgement": "very_late",
+              "automatic_miss": false,
+              "failed": false
+            }
+          ],
+          "89": [
+            {
+              "frame_time_s": 5.316000000000001,
+              "input_id": null,
+              "kind": "auto_miss_advance",
+              "target_ordinal": 89,
+              "judgement": "fail_miss",
+              "automatic_miss": true,
+              "failed": false
+            }
+          ]
+        },
+        "failed": false
+      },
+      {
+        "phase_ms": 7.0,
+        "candidate_time_s": 3.249,
+        "mode": "no_fail",
+        "event36_auto": {
+          "frame_time_s": 3.257,
+          "input_id": null,
+          "kind": "auto_miss_advance",
+          "target_ordinal": 36,
+          "judgement": "fail_miss",
+          "automatic_miss": true,
+          "failed": false
+        },
+        "candidate_transition": {
+          "frame_time_s": 3.257,
+          "input_id": "candidate:event37",
+          "kind": "hit_advance",
+          "target_ordinal": 37,
+          "judgement": "late_perfect",
+          "automatic_miss": false,
+          "failed": false
+        },
+        "base_input_mismatch_count": 46,
+        "selected_events": {
+          "36": [
+            {
+              "frame_time_s": 3.257,
+              "input_id": null,
+              "kind": "auto_miss_advance",
+              "target_ordinal": 36,
+              "judgement": "fail_miss",
+              "automatic_miss": true,
+              "failed": false
+            }
+          ],
+          "37": [
+            {
+              "frame_time_s": 3.257,
+              "input_id": "candidate:event37",
+              "kind": "hit_advance",
+              "target_ordinal": 37,
+              "judgement": "late_perfect",
+              "automatic_miss": false,
+              "failed": false
+            }
+          ],
+          "42": [
+            {
+              "frame_time_s": 3.447,
+              "input_id": "local:43",
+              "kind": "hit_advance",
+              "target_ordinal": 42,
+              "judgement": "very_late",
+              "automatic_miss": false,
+              "failed": false
+            }
+          ],
+          "47": [
+            {
+              "frame_time_s": 3.6270000000000002,
+              "input_id": "local:48",
+              "kind": "hit_advance",
+              "target_ordinal": 47,
+              "judgement": "very_late",
+              "automatic_miss": false,
+              "failed": false
+            }
+          ],
+          "89": [
+            {
+              "frame_time_s": 5.317,
+              "input_id": null,
+              "kind": "auto_miss_advance",
+              "target_ordinal": 89,
+              "judgement": "fail_miss",
+              "automatic_miss": true,
+              "failed": false
+            }
+          ]
+        },
+        "failed": false
+      },
+      {
+        "phase_ms": 7.0,
+        "candidate_time_s": 3.25,
+        "mode": "no_fail",
+        "event36_auto": {
+          "frame_time_s": 3.257,
+          "input_id": null,
+          "kind": "auto_miss_advance",
+          "target_ordinal": 36,
+          "judgement": "fail_miss",
+          "automatic_miss": true,
+          "failed": false
+        },
+        "candidate_transition": {
+          "frame_time_s": 3.257,
+          "input_id": "candidate:event37",
+          "kind": "hit_advance",
+          "target_ordinal": 37,
+          "judgement": "late_perfect",
+          "automatic_miss": false,
+          "failed": false
+        },
+        "base_input_mismatch_count": 46,
+        "selected_events": {
+          "36": [
+            {
+              "frame_time_s": 3.257,
+              "input_id": null,
+              "kind": "auto_miss_advance",
+              "target_ordinal": 36,
+              "judgement": "fail_miss",
+              "automatic_miss": true,
+              "failed": false
+            }
+          ],
+          "37": [
+            {
+              "frame_time_s": 3.257,
+              "input_id": "candidate:event37",
+              "kind": "hit_advance",
+              "target_ordinal": 37,
+              "judgement": "late_perfect",
+              "automatic_miss": false,
+              "failed": false
+            }
+          ],
+          "42": [
+            {
+              "frame_time_s": 3.447,
+              "input_id": "local:43",
+              "kind": "hit_advance",
+              "target_ordinal": 42,
+              "judgement": "very_late",
+              "automatic_miss": false,
+              "failed": false
+            }
+          ],
+          "47": [
+            {
+              "frame_time_s": 3.6270000000000002,
+              "input_id": "local:48",
+              "kind": "hit_advance",
+              "target_ordinal": 47,
+              "judgement": "very_late",
+              "automatic_miss": false,
+              "failed": false
+            }
+          ],
+          "89": [
+            {
+              "frame_time_s": 5.317,
+              "input_id": null,
+              "kind": "auto_miss_advance",
+              "target_ordinal": 89,
+              "judgement": "fail_miss",
+              "automatic_miss": true,
+              "failed": false
+            }
+          ]
+        },
+        "failed": false
+      },
+      {
+        "phase_ms": 7.0,
+        "candidate_time_s": 3.251,
+        "mode": "no_fail",
+        "event36_auto": {
+          "frame_time_s": 3.257,
+          "input_id": null,
+          "kind": "auto_miss_advance",
+          "target_ordinal": 36,
+          "judgement": "fail_miss",
+          "automatic_miss": true,
+          "failed": false
+        },
+        "candidate_transition": {
+          "frame_time_s": 3.257,
+          "input_id": "candidate:event37",
+          "kind": "hit_advance",
+          "target_ordinal": 37,
+          "judgement": "very_late",
+          "automatic_miss": false,
+          "failed": false
+        },
+        "base_input_mismatch_count": 46,
+        "selected_events": {
+          "36": [
+            {
+              "frame_time_s": 3.257,
+              "input_id": null,
+              "kind": "auto_miss_advance",
+              "target_ordinal": 36,
+              "judgement": "fail_miss",
+              "automatic_miss": true,
+              "failed": false
+            }
+          ],
+          "37": [
+            {
+              "frame_time_s": 3.257,
+              "input_id": "candidate:event37",
+              "kind": "hit_advance",
+              "target_ordinal": 37,
+              "judgement": "very_late",
+              "automatic_miss": false,
+              "failed": false
+            }
+          ],
+          "42": [
+            {
+              "frame_time_s": 3.447,
+              "input_id": "local:43",
+              "kind": "hit_advance",
+              "target_ordinal": 42,
+              "judgement": "very_late",
+              "automatic_miss": false,
+              "failed": false
+            }
+          ],
+          "47": [
+            {
+              "frame_time_s": 3.6270000000000002,
+              "input_id": "local:48",
+              "kind": "hit_advance",
+              "target_ordinal": 47,
+              "judgement": "very_late",
+              "automatic_miss": false,
+              "failed": false
+            }
+          ],
+          "89": [
+            {
+              "frame_time_s": 5.317,
+              "input_id": null,
+              "kind": "auto_miss_advance",
+              "target_ordinal": 89,
+              "judgement": "fail_miss",
+              "automatic_miss": true,
+              "failed": false
+            }
+          ]
+        },
+        "failed": false
+      },
+      {
+        "phase_ms": 7.0,
+        "candidate_time_s": 3.252,
+        "mode": "no_fail",
+        "event36_auto": {
+          "frame_time_s": 3.257,
+          "input_id": null,
+          "kind": "auto_miss_advance",
+          "target_ordinal": 36,
+          "judgement": "fail_miss",
+          "automatic_miss": true,
+          "failed": false
+        },
+        "candidate_transition": {
+          "frame_time_s": 3.257,
+          "input_id": "candidate:event37",
+          "kind": "hit_advance",
+          "target_ordinal": 37,
+          "judgement": "very_late",
+          "automatic_miss": false,
+          "failed": false
+        },
+        "base_input_mismatch_count": 46,
+        "selected_events": {
+          "36": [
+            {
+              "frame_time_s": 3.257,
+              "input_id": null,
+              "kind": "auto_miss_advance",
+              "target_ordinal": 36,
+              "judgement": "fail_miss",
+              "automatic_miss": true,
+              "failed": false
+            }
+          ],
+          "37": [
+            {
+              "frame_time_s": 3.257,
+              "input_id": "candidate:event37",
+              "kind": "hit_advance",
+              "target_ordinal": 37,
+              "judgement": "very_late",
+              "automatic_miss": false,
+              "failed": false
+            }
+          ],
+          "42": [
+            {
+              "frame_time_s": 3.447,
+              "input_id": "local:43",
+              "kind": "hit_advance",
+              "target_ordinal": 42,
+              "judgement": "very_late",
+              "automatic_miss": false,
+              "failed": false
+            }
+          ],
+          "47": [
+            {
+              "frame_time_s": 3.6270000000000002,
+              "input_id": "local:48",
+              "kind": "hit_advance",
+              "target_ordinal": 47,
+              "judgement": "very_late",
+              "automatic_miss": false,
+              "failed": false
+            }
+          ],
+          "89": [
+            {
+              "frame_time_s": 5.317,
+              "input_id": null,
+              "kind": "auto_miss_advance",
+              "target_ordinal": 89,
+              "judgement": "fail_miss",
+              "automatic_miss": true,
+              "failed": false
+            }
+          ]
+        },
+        "failed": false
+      },
+      {
+        "phase_ms": 7.0,
+        "candidate_time_s": 3.259,
+        "mode": "no_fail",
+        "event36_auto": {
+          "frame_time_s": 3.257,
+          "input_id": null,
+          "kind": "auto_miss_advance",
+          "target_ordinal": 36,
+          "judgement": "fail_miss",
+          "automatic_miss": true,
+          "failed": false
+        },
+        "candidate_transition": {
+          "frame_time_s": 3.2670000000000003,
+          "input_id": "candidate:event37",
+          "kind": "hit_advance",
+          "target_ordinal": 37,
+          "judgement": "very_late",
+          "automatic_miss": false,
+          "failed": false
+        },
+        "base_input_mismatch_count": 46,
+        "selected_events": {
+          "36": [
+            {
+              "frame_time_s": 3.257,
+              "input_id": null,
+              "kind": "auto_miss_advance",
+              "target_ordinal": 36,
+              "judgement": "fail_miss",
+              "automatic_miss": true,
+              "failed": false
+            }
+          ],
+          "37": [
+            {
+              "frame_time_s": 3.2670000000000003,
+              "input_id": "candidate:event37",
+              "kind": "hit_advance",
+              "target_ordinal": 37,
+              "judgement": "very_late",
+              "automatic_miss": false,
+              "failed": false
+            }
+          ],
+          "42": [
+            {
+              "frame_time_s": 3.447,
+              "input_id": "local:43",
+              "kind": "hit_advance",
+              "target_ordinal": 42,
+              "judgement": "very_late",
+              "automatic_miss": false,
+              "failed": false
+            }
+          ],
+          "47": [
+            {
+              "frame_time_s": 3.6270000000000002,
+              "input_id": "local:48",
+              "kind": "hit_advance",
+              "target_ordinal": 47,
+              "judgement": "very_late",
+              "automatic_miss": false,
+              "failed": false
+            }
+          ],
+          "89": [
+            {
+              "frame_time_s": 5.317,
+              "input_id": null,
+              "kind": "auto_miss_advance",
+              "target_ordinal": 89,
+              "judgement": "fail_miss",
+              "automatic_miss": true,
+              "failed": false
+            }
+          ]
+        },
+        "failed": false
+      },
+      {
+        "phase_ms": 8.0,
+        "candidate_time_s": 3.249,
+        "mode": "no_fail",
+        "event36_auto": {
+          "frame_time_s": 3.258,
+          "input_id": null,
+          "kind": "auto_miss_advance",
+          "target_ordinal": 36,
+          "judgement": "fail_miss",
+          "automatic_miss": true,
+          "failed": false
+        },
+        "candidate_transition": {
+          "frame_time_s": 3.258,
+          "input_id": "candidate:event37",
+          "kind": "hit_advance",
+          "target_ordinal": 37,
+          "judgement": "late_perfect",
+          "automatic_miss": false,
+          "failed": false
+        },
+        "base_input_mismatch_count": 46,
+        "selected_events": {
+          "36": [
+            {
+              "frame_time_s": 3.258,
+              "input_id": null,
+              "kind": "auto_miss_advance",
+              "target_ordinal": 36,
+              "judgement": "fail_miss",
+              "automatic_miss": true,
+              "failed": false
+            }
+          ],
+          "37": [
+            {
+              "frame_time_s": 3.258,
+              "input_id": "candidate:event37",
+              "kind": "hit_advance",
+              "target_ordinal": 37,
+              "judgement": "late_perfect",
+              "automatic_miss": false,
+              "failed": false
+            }
+          ],
+          "42": [
+            {
+              "frame_time_s": 3.448,
+              "input_id": "local:43",
+              "kind": "hit_advance",
+              "target_ordinal": 42,
+              "judgement": "very_late",
+              "automatic_miss": false,
+              "failed": false
+            }
+          ],
+          "47": [
+            {
+              "frame_time_s": 3.628,
+              "input_id": "local:48",
+              "kind": "hit_advance",
+              "target_ordinal": 47,
+              "judgement": "very_late",
+              "automatic_miss": false,
+              "failed": false
+            }
+          ],
+          "89": [
+            {
+              "frame_time_s": 5.3180000000000005,
+              "input_id": null,
+              "kind": "auto_miss_advance",
+              "target_ordinal": 89,
+              "judgement": "fail_miss",
+              "automatic_miss": true,
+              "failed": false
+            }
+          ]
+        },
+        "failed": false
+      },
+      {
+        "phase_ms": 8.0,
+        "candidate_time_s": 3.25,
+        "mode": "no_fail",
+        "event36_auto": {
+          "frame_time_s": 3.258,
+          "input_id": null,
+          "kind": "auto_miss_advance",
+          "target_ordinal": 36,
+          "judgement": "fail_miss",
+          "automatic_miss": true,
+          "failed": false
+        },
+        "candidate_transition": {
+          "frame_time_s": 3.258,
+          "input_id": "candidate:event37",
+          "kind": "hit_advance",
+          "target_ordinal": 37,
+          "judgement": "late_perfect",
+          "automatic_miss": false,
+          "failed": false
+        },
+        "base_input_mismatch_count": 46,
+        "selected_events": {
+          "36": [
+            {
+              "frame_time_s": 3.258,
+              "input_id": null,
+              "kind": "auto_miss_advance",
+              "target_ordinal": 36,
+              "judgement": "fail_miss",
+              "automatic_miss": true,
+              "failed": false
+            }
+          ],
+          "37": [
+            {
+              "frame_time_s": 3.258,
+              "input_id": "candidate:event37",
+              "kind": "hit_advance",
+              "target_ordinal": 37,
+              "judgement": "late_perfect",
+              "automatic_miss": false,
+              "failed": false
+            }
+          ],
+          "42": [
+            {
+              "frame_time_s": 3.448,
+              "input_id": "local:43",
+              "kind": "hit_advance",
+              "target_ordinal": 42,
+              "judgement": "very_late",
+              "automatic_miss": false,
+              "failed": false
+            }
+          ],
+          "47": [
+            {
+              "frame_time_s": 3.628,
+              "input_id": "local:48",
+              "kind": "hit_advance",
+              "target_ordinal": 47,
+              "judgement": "very_late",
+              "automatic_miss": false,
+              "failed": false
+            }
+          ],
+          "89": [
+            {
+              "frame_time_s": 5.3180000000000005,
+              "input_id": null,
+              "kind": "auto_miss_advance",
+              "target_ordinal": 89,
+              "judgement": "fail_miss",
+              "automatic_miss": true,
+              "failed": false
+            }
+          ]
+        },
+        "failed": false
+      },
+      {
+        "phase_ms": 8.0,
+        "candidate_time_s": 3.251,
+        "mode": "no_fail",
+        "event36_auto": {
+          "frame_time_s": 3.258,
+          "input_id": null,
+          "kind": "auto_miss_advance",
+          "target_ordinal": 36,
+          "judgement": "fail_miss",
+          "automatic_miss": true,
+          "failed": false
+        },
+        "candidate_transition": {
+          "frame_time_s": 3.258,
+          "input_id": "candidate:event37",
+          "kind": "hit_advance",
+          "target_ordinal": 37,
+          "judgement": "very_late",
+          "automatic_miss": false,
+          "failed": false
+        },
+        "base_input_mismatch_count": 46,
+        "selected_events": {
+          "36": [
+            {
+              "frame_time_s": 3.258,
+              "input_id": null,
+              "kind": "auto_miss_advance",
+              "target_ordinal": 36,
+              "judgement": "fail_miss",
+              "automatic_miss": true,
+              "failed": false
+            }
+          ],
+          "37": [
+            {
+              "frame_time_s": 3.258,
+              "input_id": "candidate:event37",
+              "kind": "hit_advance",
+              "target_ordinal": 37,
+              "judgement": "very_late",
+              "automatic_miss": false,
+              "failed": false
+            }
+          ],
+          "42": [
+            {
+              "frame_time_s": 3.448,
+              "input_id": "local:43",
+              "kind": "hit_advance",
+              "target_ordinal": 42,
+              "judgement": "very_late",
+              "automatic_miss": false,
+              "failed": false
+            }
+          ],
+          "47": [
+            {
+              "frame_time_s": 3.628,
+              "input_id": "local:48",
+              "kind": "hit_advance",
+              "target_ordinal": 47,
+              "judgement": "very_late",
+              "automatic_miss": false,
+              "failed": false
+            }
+          ],
+          "89": [
+            {
+              "frame_time_s": 5.3180000000000005,
+              "input_id": null,
+              "kind": "auto_miss_advance",
+              "target_ordinal": 89,
+              "judgement": "fail_miss",
+              "automatic_miss": true,
+              "failed": false
+            }
+          ]
+        },
+        "failed": false
+      },
+      {
+        "phase_ms": 8.0,
+        "candidate_time_s": 3.252,
+        "mode": "no_fail",
+        "event36_auto": {
+          "frame_time_s": 3.258,
+          "input_id": null,
+          "kind": "auto_miss_advance",
+          "target_ordinal": 36,
+          "judgement": "fail_miss",
+          "automatic_miss": true,
+          "failed": false
+        },
+        "candidate_transition": {
+          "frame_time_s": 3.258,
+          "input_id": "candidate:event37",
+          "kind": "hit_advance",
+          "target_ordinal": 37,
+          "judgement": "very_late",
+          "automatic_miss": false,
+          "failed": false
+        },
+        "base_input_mismatch_count": 46,
+        "selected_events": {
+          "36": [
+            {
+              "frame_time_s": 3.258,
+              "input_id": null,
+              "kind": "auto_miss_advance",
+              "target_ordinal": 36,
+              "judgement": "fail_miss",
+              "automatic_miss": true,
+              "failed": false
+            }
+          ],
+          "37": [
+            {
+              "frame_time_s": 3.258,
+              "input_id": "candidate:event37",
+              "kind": "hit_advance",
+              "target_ordinal": 37,
+              "judgement": "very_late",
+              "automatic_miss": false,
+              "failed": false
+            }
+          ],
+          "42": [
+            {
+              "frame_time_s": 3.448,
+              "input_id": "local:43",
+              "kind": "hit_advance",
+              "target_ordinal": 42,
+              "judgement": "very_late",
+              "automatic_miss": false,
+              "failed": false
+            }
+          ],
+          "47": [
+            {
+              "frame_time_s": 3.628,
+              "input_id": "local:48",
+              "kind": "hit_advance",
+              "target_ordinal": 47,
+              "judgement": "very_late",
+              "automatic_miss": false,
+              "failed": false
+            }
+          ],
+          "89": [
+            {
+              "frame_time_s": 5.3180000000000005,
+              "input_id": null,
+              "kind": "auto_miss_advance",
+              "target_ordinal": 89,
+              "judgement": "fail_miss",
+              "automatic_miss": true,
+              "failed": false
+            }
+          ]
+        },
+        "failed": false
+      },
+      {
+        "phase_ms": 8.0,
+        "candidate_time_s": 3.259,
+        "mode": "no_fail",
+        "event36_auto": {
+          "frame_time_s": 3.258,
+          "input_id": null,
+          "kind": "auto_miss_advance",
+          "target_ordinal": 36,
+          "judgement": "fail_miss",
+          "automatic_miss": true,
+          "failed": false
+        },
+        "candidate_transition": {
+          "frame_time_s": 3.2680000000000002,
+          "input_id": "candidate:event37",
+          "kind": "hit_advance",
+          "target_ordinal": 37,
+          "judgement": "very_late",
+          "automatic_miss": false,
+          "failed": false
+        },
+        "base_input_mismatch_count": 46,
+        "selected_events": {
+          "36": [
+            {
+              "frame_time_s": 3.258,
+              "input_id": null,
+              "kind": "auto_miss_advance",
+              "target_ordinal": 36,
+              "judgement": "fail_miss",
+              "automatic_miss": true,
+              "failed": false
+            }
+          ],
+          "37": [
+            {
+              "frame_time_s": 3.2680000000000002,
+              "input_id": "candidate:event37",
+              "kind": "hit_advance",
+              "target_ordinal": 37,
+              "judgement": "very_late",
+              "automatic_miss": false,
+              "failed": false
+            }
+          ],
+          "42": [
+            {
+              "frame_time_s": 3.448,
+              "input_id": "local:43",
+              "kind": "hit_advance",
+              "target_ordinal": 42,
+              "judgement": "very_late",
+              "automatic_miss": false,
+              "failed": false
+            }
+          ],
+          "47": [
+            {
+              "frame_time_s": 3.628,
+              "input_id": "local:48",
+              "kind": "hit_advance",
+              "target_ordinal": 47,
+              "judgement": "very_late",
+              "automatic_miss": false,
+              "failed": false
+            }
+          ],
+          "89": [
+            {
+              "frame_time_s": 5.3180000000000005,
+              "input_id": null,
+              "kind": "auto_miss_advance",
+              "target_ordinal": 89,
+              "judgement": "fail_miss",
+              "automatic_miss": true,
+              "failed": false
+            }
+          ]
+        },
+        "failed": false
+      },
+      {
+        "phase_ms": 9.0,
+        "candidate_time_s": 3.249,
+        "mode": "no_fail",
+        "event36_auto": {
+          "frame_time_s": 3.259,
+          "input_id": null,
+          "kind": "auto_miss_advance",
+          "target_ordinal": 36,
+          "judgement": "fail_miss",
+          "automatic_miss": true,
+          "failed": false
+        },
+        "candidate_transition": {
+          "frame_time_s": 3.249,
+          "input_id": "candidate:event37",
+          "kind": "invalid_input",
+          "target_ordinal": 36,
+          "judgement": "too_late",
+          "automatic_miss": false,
+          "failed": false
+        },
+        "base_input_mismatch_count": 50,
+        "selected_events": {
+          "36": [
+            {
+              "frame_time_s": 3.249,
+              "input_id": "candidate:event37",
+              "kind": "invalid_input",
+              "target_ordinal": 36,
+              "judgement": "too_late",
+              "automatic_miss": false,
+              "failed": false
+            },
+            {
+              "frame_time_s": 3.259,
+              "input_id": null,
+              "kind": "auto_miss_advance",
+              "target_ordinal": 36,
+              "judgement": "fail_miss",
+              "automatic_miss": true,
+              "failed": false
+            }
+          ],
+          "37": [
+            {
+              "frame_time_s": 3.269,
+              "input_id": "local:38",
+              "kind": "hit_advance",
+              "target_ordinal": 37,
+              "judgement": "very_late",
+              "automatic_miss": false,
+              "failed": false
+            }
+          ],
+          "42": [
+            {
+              "frame_time_s": 3.449,
+              "input_id": "local:43",
+              "kind": "hit_advance",
+              "target_ordinal": 42,
+              "judgement": "very_late",
+              "automatic_miss": false,
+              "failed": false
+            }
+          ],
+          "47": [
+            {
+              "frame_time_s": 3.629,
+              "input_id": "local:48",
+              "kind": "hit_advance",
+              "target_ordinal": 47,
+              "judgement": "very_late",
+              "automatic_miss": false,
+              "failed": false
+            }
+          ],
+          "89": [
+            {
+              "frame_time_s": 5.319000000000001,
+              "input_id": null,
+              "kind": "auto_miss_advance",
+              "target_ordinal": 89,
+              "judgement": "fail_miss",
+              "automatic_miss": true,
+              "failed": false
+            }
+          ]
+        },
+        "failed": false
+      },
+      {
+        "phase_ms": 9.0,
+        "candidate_time_s": 3.25,
+        "mode": "no_fail",
+        "event36_auto": {
+          "frame_time_s": 3.259,
+          "input_id": null,
+          "kind": "auto_miss_advance",
+          "target_ordinal": 36,
+          "judgement": "fail_miss",
+          "automatic_miss": true,
+          "failed": false
+        },
+        "candidate_transition": {
+          "frame_time_s": 3.259,
+          "input_id": "candidate:event37",
+          "kind": "hit_advance",
+          "target_ordinal": 37,
+          "judgement": "late_perfect",
+          "automatic_miss": false,
+          "failed": false
+        },
+        "base_input_mismatch_count": 46,
+        "selected_events": {
+          "36": [
+            {
+              "frame_time_s": 3.259,
+              "input_id": null,
+              "kind": "auto_miss_advance",
+              "target_ordinal": 36,
+              "judgement": "fail_miss",
+              "automatic_miss": true,
+              "failed": false
+            }
+          ],
+          "37": [
+            {
+              "frame_time_s": 3.259,
+              "input_id": "candidate:event37",
+              "kind": "hit_advance",
+              "target_ordinal": 37,
+              "judgement": "late_perfect",
+              "automatic_miss": false,
+              "failed": false
+            }
+          ],
+          "42": [
+            {
+              "frame_time_s": 3.449,
+              "input_id": "local:43",
+              "kind": "hit_advance",
+              "target_ordinal": 42,
+              "judgement": "very_late",
+              "automatic_miss": false,
+              "failed": false
+            }
+          ],
+          "47": [
+            {
+              "frame_time_s": 3.629,
+              "input_id": "local:48",
+              "kind": "hit_advance",
+              "target_ordinal": 47,
+              "judgement": "very_late",
+              "automatic_miss": false,
+              "failed": false
+            }
+          ],
+          "89": [
+            {
+              "frame_time_s": 5.319000000000001,
+              "input_id": null,
+              "kind": "auto_miss_advance",
+              "target_ordinal": 89,
+              "judgement": "fail_miss",
+              "automatic_miss": true,
+              "failed": false
+            }
+          ]
+        },
+        "failed": false
+      },
+      {
+        "phase_ms": 9.0,
+        "candidate_time_s": 3.251,
+        "mode": "no_fail",
+        "event36_auto": {
+          "frame_time_s": 3.259,
+          "input_id": null,
+          "kind": "auto_miss_advance",
+          "target_ordinal": 36,
+          "judgement": "fail_miss",
+          "automatic_miss": true,
+          "failed": false
+        },
+        "candidate_transition": {
+          "frame_time_s": 3.259,
+          "input_id": "candidate:event37",
+          "kind": "hit_advance",
+          "target_ordinal": 37,
+          "judgement": "very_late",
+          "automatic_miss": false,
+          "failed": false
+        },
+        "base_input_mismatch_count": 46,
+        "selected_events": {
+          "36": [
+            {
+              "frame_time_s": 3.259,
+              "input_id": null,
+              "kind": "auto_miss_advance",
+              "target_ordinal": 36,
+              "judgement": "fail_miss",
+              "automatic_miss": true,
+              "failed": false
+            }
+          ],
+          "37": [
+            {
+              "frame_time_s": 3.259,
+              "input_id": "candidate:event37",
+              "kind": "hit_advance",
+              "target_ordinal": 37,
+              "judgement": "very_late",
+              "automatic_miss": false,
+              "failed": false
+            }
+          ],
+          "42": [
+            {
+              "frame_time_s": 3.449,
+              "input_id": "local:43",
+              "kind": "hit_advance",
+              "target_ordinal": 42,
+              "judgement": "very_late",
+              "automatic_miss": false,
+              "failed": false
+            }
+          ],
+          "47": [
+            {
+              "frame_time_s": 3.629,
+              "input_id": "local:48",
+              "kind": "hit_advance",
+              "target_ordinal": 47,
+              "judgement": "very_late",
+              "automatic_miss": false,
+              "failed": false
+            }
+          ],
+          "89": [
+            {
+              "frame_time_s": 5.319000000000001,
+              "input_id": null,
+              "kind": "auto_miss_advance",
+              "target_ordinal": 89,
+              "judgement": "fail_miss",
+              "automatic_miss": true,
+              "failed": false
+            }
+          ]
+        },
+        "failed": false
+      },
+      {
+        "phase_ms": 9.0,
+        "candidate_time_s": 3.252,
+        "mode": "no_fail",
+        "event36_auto": {
+          "frame_time_s": 3.259,
+          "input_id": null,
+          "kind": "auto_miss_advance",
+          "target_ordinal": 36,
+          "judgement": "fail_miss",
+          "automatic_miss": true,
+          "failed": false
+        },
+        "candidate_transition": {
+          "frame_time_s": 3.259,
+          "input_id": "candidate:event37",
+          "kind": "hit_advance",
+          "target_ordinal": 37,
+          "judgement": "very_late",
+          "automatic_miss": false,
+          "failed": false
+        },
+        "base_input_mismatch_count": 46,
+        "selected_events": {
+          "36": [
+            {
+              "frame_time_s": 3.259,
+              "input_id": null,
+              "kind": "auto_miss_advance",
+              "target_ordinal": 36,
+              "judgement": "fail_miss",
+              "automatic_miss": true,
+              "failed": false
+            }
+          ],
+          "37": [
+            {
+              "frame_time_s": 3.259,
+              "input_id": "candidate:event37",
+              "kind": "hit_advance",
+              "target_ordinal": 37,
+              "judgement": "very_late",
+              "automatic_miss": false,
+              "failed": false
+            }
+          ],
+          "42": [
+            {
+              "frame_time_s": 3.449,
+              "input_id": "local:43",
+              "kind": "hit_advance",
+              "target_ordinal": 42,
+              "judgement": "very_late",
+              "automatic_miss": false,
+              "failed": false
+            }
+          ],
+          "47": [
+            {
+              "frame_time_s": 3.629,
+              "input_id": "local:48",
+              "kind": "hit_advance",
+              "target_ordinal": 47,
+              "judgement": "very_late",
+              "automatic_miss": false,
+              "failed": false
+            }
+          ],
+          "89": [
+            {
+              "frame_time_s": 5.319000000000001,
+              "input_id": null,
+              "kind": "auto_miss_advance",
+              "target_ordinal": 89,
+              "judgement": "fail_miss",
+              "automatic_miss": true,
+              "failed": false
+            }
+          ]
+        },
+        "failed": false
+      },
+      {
+        "phase_ms": 9.0,
+        "candidate_time_s": 3.259,
+        "mode": "no_fail",
+        "event36_auto": {
+          "frame_time_s": 3.259,
+          "input_id": null,
+          "kind": "auto_miss_advance",
+          "target_ordinal": 36,
+          "judgement": "fail_miss",
+          "automatic_miss": true,
+          "failed": false
+        },
+        "candidate_transition": {
+          "frame_time_s": 3.259,
+          "input_id": "candidate:event37",
+          "kind": "hit_advance",
+          "target_ordinal": 37,
+          "judgement": "very_late",
+          "automatic_miss": false,
+          "failed": false
+        },
+        "base_input_mismatch_count": 46,
+        "selected_events": {
+          "36": [
+            {
+              "frame_time_s": 3.259,
+              "input_id": null,
+              "kind": "auto_miss_advance",
+              "target_ordinal": 36,
+              "judgement": "fail_miss",
+              "automatic_miss": true,
+              "failed": false
+            }
+          ],
+          "37": [
+            {
+              "frame_time_s": 3.259,
+              "input_id": "candidate:event37",
+              "kind": "hit_advance",
+              "target_ordinal": 37,
+              "judgement": "very_late",
+              "automatic_miss": false,
+              "failed": false
+            }
+          ],
+          "42": [
+            {
+              "frame_time_s": 3.449,
+              "input_id": "local:43",
+              "kind": "hit_advance",
+              "target_ordinal": 42,
+              "judgement": "very_late",
+              "automatic_miss": false,
+              "failed": false
+            }
+          ],
+          "47": [
+            {
+              "frame_time_s": 3.629,
+              "input_id": "local:48",
+              "kind": "hit_advance",
+              "target_ordinal": 47,
+              "judgement": "very_late",
+              "automatic_miss": false,
+              "failed": false
+            }
+          ],
+          "89": [
+            {
+              "frame_time_s": 5.319000000000001,
+              "input_id": null,
+              "kind": "auto_miss_advance",
+              "target_ordinal": 89,
+              "judgement": "fail_miss",
+              "automatic_miss": true,
+              "failed": false
+            }
+          ]
+        },
+        "failed": false
+      }
+    ],
+    "normal_fail_runs_at_3_251": [
+      {
+        "phase_ms": 0.0,
+        "candidate_time_s": 3.251,
+        "mode": "fail",
+        "event36_auto": {
+          "frame_time_s": 3.3200000000000003,
+          "input_id": null,
+          "kind": "auto_miss_fail",
+          "target_ordinal": 36,
+          "judgement": "fail_miss",
+          "automatic_miss": true,
+          "failed": true
+        },
+        "candidate_transition": {
+          "frame_time_s": 3.2600000000000002,
+          "input_id": "candidate:event37",
+          "kind": "invalid_input",
+          "target_ordinal": 36,
+          "judgement": "too_late",
+          "automatic_miss": false,
+          "failed": false
+        },
+        "base_input_mismatch_count": 2,
+        "selected_events": {
+          "36": [
+            {
+              "frame_time_s": 3.2600000000000002,
+              "input_id": "candidate:event37",
+              "kind": "invalid_input",
+              "target_ordinal": 36,
+              "judgement": "too_late",
+              "automatic_miss": false,
+              "failed": false
+            },
+            {
+              "frame_time_s": 3.27,
+              "input_id": "local:38",
+              "kind": "invalid_input",
+              "target_ordinal": 36,
+              "judgement": "too_late",
+              "automatic_miss": false,
+              "failed": false
+            },
+            {
+              "frame_time_s": 3.3200000000000003,
+              "input_id": null,
+              "kind": "auto_miss_fail",
+              "target_ordinal": 36,
+              "judgement": "fail_miss",
+              "automatic_miss": true,
+              "failed": true
+            },
+            {
+              "frame_time_s": 3.3200000000000003,
+              "input_id": "local:39",
+              "kind": "ignored_after_fail",
+              "target_ordinal": 36,
+              "judgement": null,
+              "automatic_miss": false,
+              "failed": true
+            }
+          ],
+          "37": [],
+          "42": [],
+          "47": [],
+          "89": []
+        },
+        "failed": true
+      },
+      {
+        "phase_ms": 1.0,
+        "candidate_time_s": 3.251,
+        "mode": "fail",
+        "event36_auto": {
+          "frame_time_s": 3.321,
+          "input_id": null,
+          "kind": "auto_miss_fail",
+          "target_ordinal": 36,
+          "judgement": "fail_miss",
+          "automatic_miss": true,
+          "failed": true
+        },
+        "candidate_transition": {
+          "frame_time_s": 3.251,
+          "input_id": "candidate:event37",
+          "kind": "invalid_input",
+          "target_ordinal": 36,
+          "judgement": "too_late",
+          "automatic_miss": false,
+          "failed": false
+        },
+        "base_input_mismatch_count": 2,
+        "selected_events": {
+          "36": [
+            {
+              "frame_time_s": 3.251,
+              "input_id": "candidate:event37",
+              "kind": "invalid_input",
+              "target_ordinal": 36,
+              "judgement": "too_late",
+              "automatic_miss": false,
+              "failed": false
+            },
+            {
+              "frame_time_s": 3.261,
+              "input_id": "local:38",
+              "kind": "invalid_input",
+              "target_ordinal": 36,
+              "judgement": "too_late",
+              "automatic_miss": false,
+              "failed": false
+            },
+            {
+              "frame_time_s": 3.311,
+              "input_id": "local:39",
+              "kind": "invalid_input",
+              "target_ordinal": 36,
+              "judgement": "too_late",
+              "automatic_miss": false,
+              "failed": false
+            },
+            {
+              "frame_time_s": 3.321,
+              "input_id": null,
+              "kind": "auto_miss_fail",
+              "target_ordinal": 36,
+              "judgement": "fail_miss",
+              "automatic_miss": true,
+              "failed": true
+            }
+          ],
+          "37": [],
+          "42": [],
+          "47": [],
+          "89": []
+        },
+        "failed": true
+      },
+      {
+        "phase_ms": 2.0,
+        "candidate_time_s": 3.251,
+        "mode": "fail",
+        "event36_auto": {
+          "frame_time_s": 3.322,
+          "input_id": null,
+          "kind": "auto_miss_fail",
+          "target_ordinal": 36,
+          "judgement": "fail_miss",
+          "automatic_miss": true,
+          "failed": true
+        },
+        "candidate_transition": {
+          "frame_time_s": 3.252,
+          "input_id": "candidate:event37",
+          "kind": "invalid_input",
+          "target_ordinal": 36,
+          "judgement": "too_late",
+          "automatic_miss": false,
+          "failed": false
+        },
+        "base_input_mismatch_count": 2,
+        "selected_events": {
+          "36": [
+            {
+              "frame_time_s": 3.252,
+              "input_id": "candidate:event37",
+              "kind": "invalid_input",
+              "target_ordinal": 36,
+              "judgement": "too_late",
+              "automatic_miss": false,
+              "failed": false
+            },
+            {
+              "frame_time_s": 3.262,
+              "input_id": "local:38",
+              "kind": "invalid_input",
+              "target_ordinal": 36,
+              "judgement": "too_late",
+              "automatic_miss": false,
+              "failed": false
+            },
+            {
+              "frame_time_s": 3.312,
+              "input_id": "local:39",
+              "kind": "invalid_input",
+              "target_ordinal": 36,
+              "judgement": "too_late",
+              "automatic_miss": false,
+              "failed": false
+            },
+            {
+              "frame_time_s": 3.322,
+              "input_id": null,
+              "kind": "auto_miss_fail",
+              "target_ordinal": 36,
+              "judgement": "fail_miss",
+              "automatic_miss": true,
+              "failed": true
+            }
+          ],
+          "37": [],
+          "42": [],
+          "47": [],
+          "89": []
+        },
+        "failed": true
+      },
+      {
+        "phase_ms": 3.0,
+        "candidate_time_s": 3.251,
+        "mode": "fail",
+        "event36_auto": {
+          "frame_time_s": 3.3230000000000004,
+          "input_id": null,
+          "kind": "auto_miss_fail",
+          "target_ordinal": 36,
+          "judgement": "fail_miss",
+          "automatic_miss": true,
+          "failed": true
+        },
+        "candidate_transition": {
+          "frame_time_s": 3.253,
+          "input_id": "candidate:event37",
+          "kind": "invalid_input",
+          "target_ordinal": 36,
+          "judgement": "too_late",
+          "automatic_miss": false,
+          "failed": false
+        },
+        "base_input_mismatch_count": 2,
+        "selected_events": {
+          "36": [
+            {
+              "frame_time_s": 3.253,
+              "input_id": "candidate:event37",
+              "kind": "invalid_input",
+              "target_ordinal": 36,
+              "judgement": "too_late",
+              "automatic_miss": false,
+              "failed": false
+            },
+            {
+              "frame_time_s": 3.2630000000000003,
+              "input_id": "local:38",
+              "kind": "invalid_input",
+              "target_ordinal": 36,
+              "judgement": "too_late",
+              "automatic_miss": false,
+              "failed": false
+            },
+            {
+              "frame_time_s": 3.313,
+              "input_id": "local:39",
+              "kind": "invalid_input",
+              "target_ordinal": 36,
+              "judgement": "too_late",
+              "automatic_miss": false,
+              "failed": false
+            },
+            {
+              "frame_time_s": 3.3230000000000004,
+              "input_id": null,
+              "kind": "auto_miss_fail",
+              "target_ordinal": 36,
+              "judgement": "fail_miss",
+              "automatic_miss": true,
+              "failed": true
+            }
+          ],
+          "37": [],
+          "42": [],
+          "47": [],
+          "89": []
+        },
+        "failed": true
+      },
+      {
+        "phase_ms": 4.0,
+        "candidate_time_s": 3.251,
+        "mode": "fail",
+        "event36_auto": {
+          "frame_time_s": 3.314,
+          "input_id": null,
+          "kind": "auto_miss_fail",
+          "target_ordinal": 36,
+          "judgement": "fail_miss",
+          "automatic_miss": true,
+          "failed": true
+        },
+        "candidate_transition": {
+          "frame_time_s": 3.254,
+          "input_id": "candidate:event37",
+          "kind": "invalid_input",
+          "target_ordinal": 36,
+          "judgement": "too_late",
+          "automatic_miss": false,
+          "failed": false
+        },
+        "base_input_mismatch_count": 2,
+        "selected_events": {
+          "36": [
+            {
+              "frame_time_s": 3.254,
+              "input_id": "candidate:event37",
+              "kind": "invalid_input",
+              "target_ordinal": 36,
+              "judgement": "too_late",
+              "automatic_miss": false,
+              "failed": false
+            },
+            {
+              "frame_time_s": 3.2640000000000002,
+              "input_id": "local:38",
+              "kind": "invalid_input",
+              "target_ordinal": 36,
+              "judgement": "too_late",
+              "automatic_miss": false,
+              "failed": false
+            },
+            {
+              "frame_time_s": 3.314,
+              "input_id": null,
+              "kind": "auto_miss_fail",
+              "target_ordinal": 36,
+              "judgement": "fail_miss",
+              "automatic_miss": true,
+              "failed": true
+            },
+            {
+              "frame_time_s": 3.314,
+              "input_id": "local:39",
+              "kind": "ignored_after_fail",
+              "target_ordinal": 36,
+              "judgement": null,
+              "automatic_miss": false,
+              "failed": true
+            }
+          ],
+          "37": [],
+          "42": [],
+          "47": [],
+          "89": []
+        },
+        "failed": true
+      },
+      {
+        "phase_ms": 5.0,
+        "candidate_time_s": 3.251,
+        "mode": "fail",
+        "event36_auto": {
+          "frame_time_s": 3.315,
+          "input_id": null,
+          "kind": "auto_miss_fail",
+          "target_ordinal": 36,
+          "judgement": "fail_miss",
+          "automatic_miss": true,
+          "failed": true
+        },
+        "candidate_transition": {
+          "frame_time_s": 3.255,
+          "input_id": "candidate:event37",
+          "kind": "invalid_input",
+          "target_ordinal": 36,
+          "judgement": "too_late",
+          "automatic_miss": false,
+          "failed": false
+        },
+        "base_input_mismatch_count": 2,
+        "selected_events": {
+          "36": [
+            {
+              "frame_time_s": 3.255,
+              "input_id": "candidate:event37",
+              "kind": "invalid_input",
+              "target_ordinal": 36,
+              "judgement": "too_late",
+              "automatic_miss": false,
+              "failed": false
+            },
+            {
+              "frame_time_s": 3.265,
+              "input_id": "local:38",
+              "kind": "invalid_input",
+              "target_ordinal": 36,
+              "judgement": "too_late",
+              "automatic_miss": false,
+              "failed": false
+            },
+            {
+              "frame_time_s": 3.315,
+              "input_id": null,
+              "kind": "auto_miss_fail",
+              "target_ordinal": 36,
+              "judgement": "fail_miss",
+              "automatic_miss": true,
+              "failed": true
+            },
+            {
+              "frame_time_s": 3.315,
+              "input_id": "local:39",
+              "kind": "ignored_after_fail",
+              "target_ordinal": 36,
+              "judgement": null,
+              "automatic_miss": false,
+              "failed": true
+            }
+          ],
+          "37": [],
+          "42": [],
+          "47": [],
+          "89": []
+        },
+        "failed": true
+      },
+      {
+        "phase_ms": 6.0,
+        "candidate_time_s": 3.251,
+        "mode": "fail",
+        "event36_auto": {
+          "frame_time_s": 3.316,
+          "input_id": null,
+          "kind": "auto_miss_fail",
+          "target_ordinal": 36,
+          "judgement": "fail_miss",
+          "automatic_miss": true,
+          "failed": true
+        },
+        "candidate_transition": {
+          "frame_time_s": 3.256,
+          "input_id": "candidate:event37",
+          "kind": "invalid_input",
+          "target_ordinal": 36,
+          "judgement": "too_late",
+          "automatic_miss": false,
+          "failed": false
+        },
+        "base_input_mismatch_count": 2,
+        "selected_events": {
+          "36": [
+            {
+              "frame_time_s": 3.256,
+              "input_id": "candidate:event37",
+              "kind": "invalid_input",
+              "target_ordinal": 36,
+              "judgement": "too_late",
+              "automatic_miss": false,
+              "failed": false
+            },
+            {
+              "frame_time_s": 3.266,
+              "input_id": "local:38",
+              "kind": "invalid_input",
+              "target_ordinal": 36,
+              "judgement": "too_late",
+              "automatic_miss": false,
+              "failed": false
+            },
+            {
+              "frame_time_s": 3.316,
+              "input_id": null,
+              "kind": "auto_miss_fail",
+              "target_ordinal": 36,
+              "judgement": "fail_miss",
+              "automatic_miss": true,
+              "failed": true
+            },
+            {
+              "frame_time_s": 3.316,
+              "input_id": "local:39",
+              "kind": "ignored_after_fail",
+              "target_ordinal": 36,
+              "judgement": null,
+              "automatic_miss": false,
+              "failed": true
+            }
+          ],
+          "37": [],
+          "42": [],
+          "47": [],
+          "89": []
+        },
+        "failed": true
+      },
+      {
+        "phase_ms": 7.0,
+        "candidate_time_s": 3.251,
+        "mode": "fail",
+        "event36_auto": {
+          "frame_time_s": 3.317,
+          "input_id": null,
+          "kind": "auto_miss_fail",
+          "target_ordinal": 36,
+          "judgement": "fail_miss",
+          "automatic_miss": true,
+          "failed": true
+        },
+        "candidate_transition": {
+          "frame_time_s": 3.257,
+          "input_id": "candidate:event37",
+          "kind": "invalid_input",
+          "target_ordinal": 36,
+          "judgement": "too_late",
+          "automatic_miss": false,
+          "failed": false
+        },
+        "base_input_mismatch_count": 2,
+        "selected_events": {
+          "36": [
+            {
+              "frame_time_s": 3.257,
+              "input_id": "candidate:event37",
+              "kind": "invalid_input",
+              "target_ordinal": 36,
+              "judgement": "too_late",
+              "automatic_miss": false,
+              "failed": false
+            },
+            {
+              "frame_time_s": 3.2670000000000003,
+              "input_id": "local:38",
+              "kind": "invalid_input",
+              "target_ordinal": 36,
+              "judgement": "too_late",
+              "automatic_miss": false,
+              "failed": false
+            },
+            {
+              "frame_time_s": 3.317,
+              "input_id": null,
+              "kind": "auto_miss_fail",
+              "target_ordinal": 36,
+              "judgement": "fail_miss",
+              "automatic_miss": true,
+              "failed": true
+            },
+            {
+              "frame_time_s": 3.317,
+              "input_id": "local:39",
+              "kind": "ignored_after_fail",
+              "target_ordinal": 36,
+              "judgement": null,
+              "automatic_miss": false,
+              "failed": true
+            }
+          ],
+          "37": [],
+          "42": [],
+          "47": [],
+          "89": []
+        },
+        "failed": true
+      },
+      {
+        "phase_ms": 8.0,
+        "candidate_time_s": 3.251,
+        "mode": "fail",
+        "event36_auto": {
+          "frame_time_s": 3.318,
+          "input_id": null,
+          "kind": "auto_miss_fail",
+          "target_ordinal": 36,
+          "judgement": "fail_miss",
+          "automatic_miss": true,
+          "failed": true
+        },
+        "candidate_transition": {
+          "frame_time_s": 3.258,
+          "input_id": "candidate:event37",
+          "kind": "invalid_input",
+          "target_ordinal": 36,
+          "judgement": "too_late",
+          "automatic_miss": false,
+          "failed": false
+        },
+        "base_input_mismatch_count": 2,
+        "selected_events": {
+          "36": [
+            {
+              "frame_time_s": 3.258,
+              "input_id": "candidate:event37",
+              "kind": "invalid_input",
+              "target_ordinal": 36,
+              "judgement": "too_late",
+              "automatic_miss": false,
+              "failed": false
+            },
+            {
+              "frame_time_s": 3.2680000000000002,
+              "input_id": "local:38",
+              "kind": "invalid_input",
+              "target_ordinal": 36,
+              "judgement": "too_late",
+              "automatic_miss": false,
+              "failed": false
+            },
+            {
+              "frame_time_s": 3.318,
+              "input_id": null,
+              "kind": "auto_miss_fail",
+              "target_ordinal": 36,
+              "judgement": "fail_miss",
+              "automatic_miss": true,
+              "failed": true
+            },
+            {
+              "frame_time_s": 3.318,
+              "input_id": "local:39",
+              "kind": "ignored_after_fail",
+              "target_ordinal": 36,
+              "judgement": null,
+              "automatic_miss": false,
+              "failed": true
+            }
+          ],
+          "37": [],
+          "42": [],
+          "47": [],
+          "89": []
+        },
+        "failed": true
+      },
+      {
+        "phase_ms": 9.0,
+        "candidate_time_s": 3.251,
+        "mode": "fail",
+        "event36_auto": {
+          "frame_time_s": 3.319,
+          "input_id": null,
+          "kind": "auto_miss_fail",
+          "target_ordinal": 36,
+          "judgement": "fail_miss",
+          "automatic_miss": true,
+          "failed": true
+        },
+        "candidate_transition": {
+          "frame_time_s": 3.259,
+          "input_id": "candidate:event37",
+          "kind": "invalid_input",
+          "target_ordinal": 36,
+          "judgement": "too_late",
+          "automatic_miss": false,
+          "failed": false
+        },
+        "base_input_mismatch_count": 2,
+        "selected_events": {
+          "36": [
+            {
+              "frame_time_s": 3.259,
+              "input_id": "candidate:event37",
+              "kind": "invalid_input",
+              "target_ordinal": 36,
+              "judgement": "too_late",
+              "automatic_miss": false,
+              "failed": false
+            },
+            {
+              "frame_time_s": 3.269,
+              "input_id": "local:38",
+              "kind": "invalid_input",
+              "target_ordinal": 36,
+              "judgement": "too_late",
+              "automatic_miss": false,
+              "failed": false
+            },
+            {
+              "frame_time_s": 3.319,
+              "input_id": null,
+              "kind": "auto_miss_fail",
+              "target_ordinal": 36,
+              "judgement": "fail_miss",
+              "automatic_miss": true,
+              "failed": true
+            },
+            {
+              "frame_time_s": 3.319,
+              "input_id": "local:39",
+              "kind": "ignored_after_fail",
+              "target_ordinal": 36,
+              "judgement": null,
+              "automatic_miss": false,
+              "failed": true
+            }
+          ],
+          "37": [],
+          "42": [],
+          "47": [],
+          "89": []
+        },
+        "failed": true
+      }
+    ],
+    "visible_counter_limit": "automatic FailMiss counter visibility remains unverified; same-capture ordering cannot be reconstructed from a cumulative vector",
+    "causal_propagation": "Event37-only delayed input leaves later abstentions at 42 and 47; Event89 still auto-misses in every audited 3.251 NoFail phase"
+  },
+  "live_stock_plan": {
+    "status": "not_executed",
+    "steps": [
+      "SHA256 the installed Assembly-CSharp.dll and compare with audited 0D1524DABF0F8C67AA58BA1992D6ED858522B9094490EBBB00E5E8AEFF7F40CD",
+      "Record only the Event36/37 interval in NoFail ON and OFF at >=120fps while capturing the full judgement-counter region and an input timestamp trace",
+      "Repeat taps bracketing the auto-transition; retain raw frame timestamps and input-clock uncertainty rather than assigning 3.251s as ground truth",
+      "Align episode time with two visible anchors, report capture/input latency intervals, and classify target/category only after recording",
+      "If frame-order proof is required, collect evaluator-only Unity frameCount logs for CheckPostHoldFail, input dispatch, AddHit, and visible counter update; never feed them to Student"
+    ],
+    "minimum_outputs": [
+      "installed DLL hash and game build identifier",
+      "NoFail/Fail setting and FPS/frame-time trace",
+      "raw video around Event36/37 with counter labels visible",
+      "timestamped KeyDown log and synchronization uncertainty",
+      "observed auto-FailMiss visibility and game-stop frame"
+    ]
+  },
+  "student_boundary": {
+    "truth_use": "due, target ordinals, Stock windows and crossings are posthoc evaluator labels only",
+    "production_modules_modified": [],
+    "oracle_exact_due_at_3_180": "explicit hypothetical; not established as HUD-observable"
+  }
+}
