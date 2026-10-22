@@ -20,6 +20,7 @@ import torch
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import audit_oracle_fingering_v02 as teacher
 import build_fingering_replay_viewer_v01 as viewer
+import build_fingering_replay_viewer_v03 as viewer_v03
 
 from dmdod.adofai.chart import load_adofai
 from dmdod.adofai.playable import build_playable_segment
@@ -289,9 +290,17 @@ def run(chart_path: Path, difficulty: str, checkpoint: Path, output_dir: Path,
         "timing_source": "AutoPlay Oracle exact event times", "training_performed": False,
         "failure_continuation": False, "checkpoint_sha256": viewer.file_sha256(checkpoint),
     }
+    # Rendering v0.3 reuses immutable physical traces and inferred decisions;
+    # it never reruns Network inference, Motor physics or training.
+    enhanced = viewer_v03.build_payload(payload, chart_path)
+    if enhanced["policies"]["network"]["saved_metrics"] != result["stats"]:
+        raise RuntimeError("v0.3 viewer changed saved physical metrics")
+    enhanced_html = viewer_v03.render_html(enhanced)
     output_dir.mkdir(parents=True, exist_ok=False)
     _write_once(output_dir / "full-chart-replay.json", json.dumps(payload, ensure_ascii=False, indent=2) + "\n")
-    _write_once(output_dir / "full-chart-replay.html", viewer.render_html(payload))
+    _write_once(output_dir / "full-chart-replay-v03.json", json.dumps(enhanced, ensure_ascii=False, indent=2) + "\n")
+    _write_once(output_dir / "full-chart-replay.html", enhanced_html)
+    _write_once(output_dir / "full-chart-replay-v02.html", viewer.render_html(payload))
     _write_once(output_dir / "summary.json", json.dumps(summary, ensure_ascii=False, indent=2) + "\n")
     return summary
 
