@@ -118,3 +118,66 @@ def test_run_rejects_non_adofai_before_creating_output(tmp_path):
     with pytest.raises(ValueError, match=r"\.adofai"):
         full.run(wrong_chart, "unrated", tmp_path / "unused.pt", output_dir)
     assert not output_dir.exists()
+
+
+def test_choose_output_paths_auto_numbers_both_paths_without_overwrite(tmp_path):
+    base = tmp_path / "test-01"
+    status = tmp_path / "test-01.status.json"
+    base.mkdir()
+    status.write_text("previous status", encoding="utf-8")
+    (base / "summary.json").write_text("previous run", encoding="utf-8")
+
+    first_dir, first_status = full.choose_output_paths(
+        tmp_path / "bool.adofai", base, status)
+    assert first_dir == tmp_path / "test-01-002"
+    assert first_status == tmp_path / "test-01-002.status.json"
+
+    first_status.write_text("interrupted run", encoding="utf-8")
+    second_dir, second_status = full.choose_output_paths(
+        tmp_path / "bool.adofai", base, status)
+    assert second_dir == tmp_path / "test-01-003"
+    assert second_status == tmp_path / "test-01-003.status.json"
+    assert (base / "summary.json").read_text(encoding="utf-8") == "previous run"
+    assert status.read_text(encoding="utf-8") == "previous status"
+    assert first_status.read_text(encoding="utf-8") == "interrupted run"
+
+
+def test_choose_output_paths_provides_chart_named_default(tmp_path, monkeypatch):
+    monkeypatch.chdir(tmp_path)
+    target, status = full.choose_output_paths(Path("C:/charts/bool.adofai"), None, None)
+    assert target == Path("artifacts/dmdogo/bool")
+    assert status == Path("artifacts/dmdogo/bool.status.json")
+    status.parent.mkdir(parents=True)
+    status.write_text("keep", encoding="utf-8")
+    target2, status2 = full.choose_output_paths(Path("bool.adofai"), None, None)
+    assert target2 == Path("artifacts/dmdogo/bool-002")
+    assert status2 == Path("artifacts/dmdogo/bool-002.status.json")
+
+
+def test_cli_retries_existing_pair_and_reports_actual_replay_path(tmp_path, monkeypatch, capsys):
+    base = tmp_path / "test-01"
+    base.mkdir()
+    status = tmp_path / "test-01.status.json"
+    status.write_text("previous", encoding="utf-8")
+    seen = []
+
+    def fake_run(chart, difficulty, checkpoint, output_dir, **kwargs):
+        seen.append((chart, difficulty, checkpoint, output_dir, kwargs))
+        output_dir.mkdir()
+        (output_dir / "full-chart-replay.html").write_text("preview", encoding="utf-8")
+        return {"termination_reason": "diagnostic_prefix_complete"}
+
+    monkeypatch.setattr(full, "run", fake_run)
+    monkeypatch.setattr(sys, "argv", ["dmdogo", "--chart", str(tmp_path / "bool.adofai"),
+                                    "--output-dir", str(base), "--status-file", str(status),
+                                    "--stop-after-s", "64"])
+    full.main()
+
+    chosen = tmp_path / "test-01-002"
+    assert seen[0][3] == chosen
+    assert seen[0][4]["stop_after_s"] == 64
+    assert "fingering_network_v01-4fa2ae1.pt" in str(seen[0][2])
+    created_status = tmp_path / "test-01-002.status.json"
+    assert json.loads(created_status.read_text(encoding="utf-8"))["output_dir"] == str(chosen)
+    assert status.read_text(encoding="utf-8") == "previous"
+    assert f"DMDOGO replay: {chosen / 'full-chart-replay.html'}" in capsys.readouterr().out
