@@ -1,0 +1,1315 @@
+{
+  "format": "dmdod-phase26-state-aware-motor-latency-v0.1",
+  "generated_utc": "2026-10-22T12:26:34.816057+00:00",
+  "verdict": "STATE_AWARE_LATENCY_VALIDATED",
+  "scope": "frozen deterministic simulator; exact full-state and declared command-delay envelope only",
+  "cases": [
+    {
+      "axis": "left_6",
+      "state": "cold",
+      "envelope": {
+        "axis": "left_6",
+        "status": "valid",
+        "observed_at_s": 0.0,
+        "earliest_arrival_s": 0.03900000000000003,
+        "nominal_arrival_s": 0.04400000000000003,
+        "latest_arrival_s": 0.04900000000000004,
+        "uncertainty_s": 0.010000000000000009,
+        "validity_conditions": [
+          "exact full NKeyMotorEnv state",
+          "selected axis held at +1 after issue",
+          "all other axes held at 0",
+          "issue delay lies in [0, one control tick]",
+          "no contact-topology switch",
+          "no competing reservation or command",
+          "frozen simulator physics"
+        ],
+        "reason": "deterministic frozen-Motor rollouts bracket zero/one-control-tick issue delay"
+      },
+      "status": "valid",
+      "actual_immediate_arrival_s": 0.03900000000000003,
+      "contained": true,
+      "fixed_44ms_covers_latest": false
+    },
+    {
+      "axis": "left_6",
+      "state": "preactivated_10ms",
+      "envelope": {
+        "axis": "left_6",
+        "status": "valid",
+        "observed_at_s": 0.010000000000000002,
+        "earliest_arrival_s": 0.03900000000000003,
+        "nominal_arrival_s": 0.04200000000000003,
+        "latest_arrival_s": 0.04500000000000003,
+        "uncertainty_s": 0.006000000000000005,
+        "validity_conditions": [
+          "exact full NKeyMotorEnv state",
+          "selected axis held at +1 after issue",
+          "all other axes held at 0",
+          "issue delay lies in [0, one control tick]",
+          "no contact-topology switch",
+          "no competing reservation or command",
+          "frozen simulator physics"
+        ],
+        "reason": "deterministic frozen-Motor rollouts bracket zero/one-control-tick issue delay"
+      },
+      "status": "valid",
+      "actual_immediate_arrival_s": 0.03900000000000003,
+      "contained": true,
+      "fixed_44ms_covers_latest": true
+    },
+    {
+      "axis": "left_6",
+      "state": "braked_10ms",
+      "envelope": {
+        "axis": "left_6",
+        "status": "valid",
+        "observed_at_s": 0.010000000000000002,
+        "earliest_arrival_s": 0.06200000000000005,
+        "nominal_arrival_s": 0.06600000000000004,
+        "latest_arrival_s": 0.07000000000000005,
+        "uncertainty_s": 0.008,
+        "validity_conditions": [
+          "exact full NKeyMotorEnv state",
+          "selected axis held at +1 after issue",
+          "all other axes held at 0",
+          "issue delay lies in [0, one control tick]",
+          "no contact-topology switch",
+          "no competing reservation or command",
+          "frozen simulator physics"
+        ],
+        "reason": "deterministic frozen-Motor rollouts bracket zero/one-control-tick issue delay"
+      },
+      "status": "valid",
+      "actual_immediate_arrival_s": 0.06200000000000005,
+      "contained": true,
+      "fixed_44ms_covers_latest": false
+    },
+    {
+      "axis": "left_6",
+      "state": "reversing_20ms",
+      "envelope": {
+        "axis": "left_6",
+        "status": "valid",
+        "observed_at_s": 0.02000000000000001,
+        "earliest_arrival_s": 0.05500000000000004,
+        "nominal_arrival_s": 0.06050000000000004,
+        "latest_arrival_s": 0.06600000000000004,
+        "uncertainty_s": 0.011000000000000003,
+        "validity_conditions": [
+          "exact full NKeyMotorEnv state",
+          "selected axis held at +1 after issue",
+          "all other axes held at 0",
+          "issue delay lies in [0, one control tick]",
+          "no contact-topology switch",
+          "no competing reservation or command",
+          "frozen simulator physics"
+        ],
+        "reason": "deterministic frozen-Motor rollouts bracket zero/one-control-tick issue delay"
+      },
+      "status": "valid",
+      "actual_immediate_arrival_s": 0.05500000000000004,
+      "contained": true,
+      "fixed_44ms_covers_latest": false
+    },
+    {
+      "axis": "left_5",
+      "state": "cold",
+      "envelope": {
+        "axis": "left_5",
+        "status": "valid",
+        "observed_at_s": 0.0,
+        "earliest_arrival_s": 0.04100000000000003,
+        "nominal_arrival_s": 0.046000000000000034,
+        "latest_arrival_s": 0.05100000000000004,
+        "uncertainty_s": 0.010000000000000009,
+        "validity_conditions": [
+          "exact full NKeyMotorEnv state",
+          "selected axis held at +1 after issue",
+          "all other axes held at 0",
+          "issue delay lies in [0, one control tick]",
+          "no contact-topology switch",
+          "no competing reservation or command",
+          "frozen simulator physics"
+        ],
+        "reason": "deterministic frozen-Motor rollouts bracket zero/one-control-tick issue delay"
+      },
+      "status": "valid",
+      "actual_immediate_arrival_s": 0.04100000000000003,
+      "contained": true,
+      "fixed_44ms_covers_latest": false
+    },
+    {
+      "axis": "left_5",
+      "state": "preactivated_10ms",
+      "envelope": {
+        "axis": "left_5",
+        "status": "valid",
+        "observed_at_s": 0.010000000000000002,
+        "earliest_arrival_s": 0.04100000000000003,
+        "nominal_arrival_s": 0.04450000000000003,
+        "latest_arrival_s": 0.048000000000000036,
+        "uncertainty_s": 0.007000000000000006,
+        "validity_conditions": [
+          "exact full NKeyMotorEnv state",
+          "selected axis held at +1 after issue",
+          "all other axes held at 0",
+          "issue delay lies in [0, one control tick]",
+          "no contact-topology switch",
+          "no competing reservation or command",
+          "frozen simulator physics"
+        ],
+        "reason": "deterministic frozen-Motor rollouts bracket zero/one-control-tick issue delay"
+      },
+      "status": "valid",
+      "actual_immediate_arrival_s": 0.04100000000000003,
+      "contained": true,
+      "fixed_44ms_covers_latest": true
+    },
+    {
+      "axis": "left_5",
+      "state": "braked_10ms",
+      "envelope": {
+        "axis": "left_5",
+        "status": "valid",
+        "observed_at_s": 0.010000000000000002,
+        "earliest_arrival_s": 0.06400000000000004,
+        "nominal_arrival_s": 0.06800000000000005,
+        "latest_arrival_s": 0.07200000000000005,
+        "uncertainty_s": 0.008000000000000007,
+        "validity_conditions": [
+          "exact full NKeyMotorEnv state",
+          "selected axis held at +1 after issue",
+          "all other axes held at 0",
+          "issue delay lies in [0, one control tick]",
+          "no contact-topology switch",
+          "no competing reservation or command",
+          "frozen simulator physics"
+        ],
+        "reason": "deterministic frozen-Motor rollouts bracket zero/one-control-tick issue delay"
+      },
+      "status": "valid",
+      "actual_immediate_arrival_s": 0.06400000000000004,
+      "contained": true,
+      "fixed_44ms_covers_latest": false
+    },
+    {
+      "axis": "left_5",
+      "state": "reversing_20ms",
+      "envelope": {
+        "axis": "left_5",
+        "status": "valid",
+        "observed_at_s": 0.02000000000000001,
+        "earliest_arrival_s": 0.058000000000000045,
+        "nominal_arrival_s": 0.06350000000000004,
+        "latest_arrival_s": 0.06900000000000005,
+        "uncertainty_s": 0.011000000000000003,
+        "validity_conditions": [
+          "exact full NKeyMotorEnv state",
+          "selected axis held at +1 after issue",
+          "all other axes held at 0",
+          "issue delay lies in [0, one control tick]",
+          "no contact-topology switch",
+          "no competing reservation or command",
+          "frozen simulator physics"
+        ],
+        "reason": "deterministic frozen-Motor rollouts bracket zero/one-control-tick issue delay"
+      },
+      "status": "valid",
+      "actual_immediate_arrival_s": 0.058000000000000045,
+      "contained": true,
+      "fixed_44ms_covers_latest": false
+    },
+    {
+      "axis": "left_4",
+      "state": "cold",
+      "envelope": {
+        "axis": "left_4",
+        "status": "valid",
+        "observed_at_s": 0.0,
+        "earliest_arrival_s": 0.04300000000000003,
+        "nominal_arrival_s": 0.048000000000000036,
+        "latest_arrival_s": 0.05300000000000004,
+        "uncertainty_s": 0.010000000000000009,
+        "validity_conditions": [
+          "exact full NKeyMotorEnv state",
+          "selected axis held at +1 after issue",
+          "all other axes held at 0",
+          "issue delay lies in [0, one control tick]",
+          "no contact-topology switch",
+          "no competing reservation or command",
+          "frozen simulator physics"
+        ],
+        "reason": "deterministic frozen-Motor rollouts bracket zero/one-control-tick issue delay"
+      },
+      "status": "valid",
+      "actual_immediate_arrival_s": 0.04300000000000003,
+      "contained": true,
+      "fixed_44ms_covers_latest": false
+    },
+    {
+      "axis": "left_4",
+      "state": "preactivated_10ms",
+      "envelope": {
+        "axis": "left_4",
+        "status": "valid",
+        "observed_at_s": 0.010000000000000002,
+        "earliest_arrival_s": 0.04300000000000003,
+        "nominal_arrival_s": 0.046500000000000034,
+        "latest_arrival_s": 0.05000000000000004,
+        "uncertainty_s": 0.007000000000000006,
+        "validity_conditions": [
+          "exact full NKeyMotorEnv state",
+          "selected axis held at +1 after issue",
+          "all other axes held at 0",
+          "issue delay lies in [0, one control tick]",
+          "no contact-topology switch",
+          "no competing reservation or command",
+          "frozen simulator physics"
+        ],
+        "reason": "deterministic frozen-Motor rollouts bracket zero/one-control-tick issue delay"
+      },
+      "status": "valid",
+      "actual_immediate_arrival_s": 0.04300000000000003,
+      "contained": true,
+      "fixed_44ms_covers_latest": true
+    },
+    {
+      "axis": "left_4",
+      "state": "braked_10ms",
+      "envelope": {
+        "axis": "left_4",
+        "status": "valid",
+        "observed_at_s": 0.010000000000000002,
+        "earliest_arrival_s": 0.06600000000000004,
+        "nominal_arrival_s": 0.06950000000000006,
+        "latest_arrival_s": 0.07300000000000006,
+        "uncertainty_s": 0.00700000000000002,
+        "validity_conditions": [
+          "exact full NKeyMotorEnv state",
+          "selected axis held at +1 after issue",
+          "all other axes held at 0",
+          "issue delay lies in [0, one control tick]",
+          "no contact-topology switch",
+          "no competing reservation or command",
+          "frozen simulator physics"
+        ],
+        "reason": "deterministic frozen-Motor rollouts bracket zero/one-control-tick issue delay"
+      },
+      "status": "valid",
+      "actual_immediate_arrival_s": 0.06600000000000004,
+      "contained": true,
+      "fixed_44ms_covers_latest": false
+    },
+    {
+      "axis": "left_4",
+      "state": "reversing_20ms",
+      "envelope": {
+        "axis": "left_4",
+        "status": "valid",
+        "observed_at_s": 0.02000000000000001,
+        "earliest_arrival_s": 0.060000000000000046,
+        "nominal_arrival_s": 0.06550000000000004,
+        "latest_arrival_s": 0.07100000000000005,
+        "uncertainty_s": 0.011000000000000003,
+        "validity_conditions": [
+          "exact full NKeyMotorEnv state",
+          "selected axis held at +1 after issue",
+          "all other axes held at 0",
+          "issue delay lies in [0, one control tick]",
+          "no contact-topology switch",
+          "no competing reservation or command",
+          "frozen simulator physics"
+        ],
+        "reason": "deterministic frozen-Motor rollouts bracket zero/one-control-tick issue delay"
+      },
+      "status": "valid",
+      "actual_immediate_arrival_s": 0.060000000000000046,
+      "contained": true,
+      "fixed_44ms_covers_latest": false
+    },
+    {
+      "axis": "left_3",
+      "state": "cold",
+      "envelope": {
+        "axis": "left_3",
+        "status": "valid",
+        "observed_at_s": 0.0,
+        "earliest_arrival_s": 0.04300000000000003,
+        "nominal_arrival_s": 0.048000000000000036,
+        "latest_arrival_s": 0.05300000000000004,
+        "uncertainty_s": 0.010000000000000009,
+        "validity_conditions": [
+          "exact full NKeyMotorEnv state",
+          "selected axis held at +1 after issue",
+          "all other axes held at 0",
+          "issue delay lies in [0, one control tick]",
+          "no contact-topology switch",
+          "no competing reservation or command",
+          "frozen simulator physics"
+        ],
+        "reason": "deterministic frozen-Motor rollouts bracket zero/one-control-tick issue delay"
+      },
+      "status": "valid",
+      "actual_immediate_arrival_s": 0.04300000000000003,
+      "contained": true,
+      "fixed_44ms_covers_latest": false
+    },
+    {
+      "axis": "left_3",
+      "state": "preactivated_10ms",
+      "envelope": {
+        "axis": "left_3",
+        "status": "valid",
+        "observed_at_s": 0.010000000000000002,
+        "earliest_arrival_s": 0.04300000000000003,
+        "nominal_arrival_s": 0.046500000000000034,
+        "latest_arrival_s": 0.05000000000000004,
+        "uncertainty_s": 0.007000000000000006,
+        "validity_conditions": [
+          "exact full NKeyMotorEnv state",
+          "selected axis held at +1 after issue",
+          "all other axes held at 0",
+          "issue delay lies in [0, one control tick]",
+          "no contact-topology switch",
+          "no competing reservation or command",
+          "frozen simulator physics"
+        ],
+        "reason": "deterministic frozen-Motor rollouts bracket zero/one-control-tick issue delay"
+      },
+      "status": "valid",
+      "actual_immediate_arrival_s": 0.04300000000000003,
+      "contained": true,
+      "fixed_44ms_covers_latest": true
+    },
+    {
+      "axis": "left_3",
+      "state": "braked_10ms",
+      "envelope": {
+        "axis": "left_3",
+        "status": "valid",
+        "observed_at_s": 0.010000000000000002,
+        "earliest_arrival_s": 0.06600000000000004,
+        "nominal_arrival_s": 0.06950000000000006,
+        "latest_arrival_s": 0.07300000000000006,
+        "uncertainty_s": 0.00700000000000002,
+        "validity_conditions": [
+          "exact full NKeyMotorEnv state",
+          "selected axis held at +1 after issue",
+          "all other axes held at 0",
+          "issue delay lies in [0, one control tick]",
+          "no contact-topology switch",
+          "no competing reservation or command",
+          "frozen simulator physics"
+        ],
+        "reason": "deterministic frozen-Motor rollouts bracket zero/one-control-tick issue delay"
+      },
+      "status": "valid",
+      "actual_immediate_arrival_s": 0.06600000000000004,
+      "contained": true,
+      "fixed_44ms_covers_latest": false
+    },
+    {
+      "axis": "left_3",
+      "state": "reversing_20ms",
+      "envelope": {
+        "axis": "left_3",
+        "status": "valid",
+        "observed_at_s": 0.02000000000000001,
+        "earliest_arrival_s": 0.060000000000000046,
+        "nominal_arrival_s": 0.06550000000000004,
+        "latest_arrival_s": 0.07100000000000005,
+        "uncertainty_s": 0.011000000000000003,
+        "validity_conditions": [
+          "exact full NKeyMotorEnv state",
+          "selected axis held at +1 after issue",
+          "all other axes held at 0",
+          "issue delay lies in [0, one control tick]",
+          "no contact-topology switch",
+          "no competing reservation or command",
+          "frozen simulator physics"
+        ],
+        "reason": "deterministic frozen-Motor rollouts bracket zero/one-control-tick issue delay"
+      },
+      "status": "valid",
+      "actual_immediate_arrival_s": 0.060000000000000046,
+      "contained": true,
+      "fixed_44ms_covers_latest": false
+    },
+    {
+      "axis": "left_2",
+      "state": "cold",
+      "envelope": {
+        "axis": "left_2",
+        "status": "valid",
+        "observed_at_s": 0.0,
+        "earliest_arrival_s": 0.04100000000000003,
+        "nominal_arrival_s": 0.046000000000000034,
+        "latest_arrival_s": 0.05100000000000004,
+        "uncertainty_s": 0.010000000000000009,
+        "validity_conditions": [
+          "exact full NKeyMotorEnv state",
+          "selected axis held at +1 after issue",
+          "all other axes held at 0",
+          "issue delay lies in [0, one control tick]",
+          "no contact-topology switch",
+          "no competing reservation or command",
+          "frozen simulator physics"
+        ],
+        "reason": "deterministic frozen-Motor rollouts bracket zero/one-control-tick issue delay"
+      },
+      "status": "valid",
+      "actual_immediate_arrival_s": 0.04100000000000003,
+      "contained": true,
+      "fixed_44ms_covers_latest": false
+    },
+    {
+      "axis": "left_2",
+      "state": "preactivated_10ms",
+      "envelope": {
+        "axis": "left_2",
+        "status": "valid",
+        "observed_at_s": 0.010000000000000002,
+        "earliest_arrival_s": 0.04100000000000003,
+        "nominal_arrival_s": 0.04450000000000003,
+        "latest_arrival_s": 0.048000000000000036,
+        "uncertainty_s": 0.007000000000000006,
+        "validity_conditions": [
+          "exact full NKeyMotorEnv state",
+          "selected axis held at +1 after issue",
+          "all other axes held at 0",
+          "issue delay lies in [0, one control tick]",
+          "no contact-topology switch",
+          "no competing reservation or command",
+          "frozen simulator physics"
+        ],
+        "reason": "deterministic frozen-Motor rollouts bracket zero/one-control-tick issue delay"
+      },
+      "status": "valid",
+      "actual_immediate_arrival_s": 0.04100000000000003,
+      "contained": true,
+      "fixed_44ms_covers_latest": true
+    },
+    {
+      "axis": "left_2",
+      "state": "braked_10ms",
+      "envelope": {
+        "axis": "left_2",
+        "status": "valid",
+        "observed_at_s": 0.010000000000000002,
+        "earliest_arrival_s": 0.06400000000000004,
+        "nominal_arrival_s": 0.06800000000000005,
+        "latest_arrival_s": 0.07200000000000005,
+        "uncertainty_s": 0.008000000000000007,
+        "validity_conditions": [
+          "exact full NKeyMotorEnv state",
+          "selected axis held at +1 after issue",
+          "all other axes held at 0",
+          "issue delay lies in [0, one control tick]",
+          "no contact-topology switch",
+          "no competing reservation or command",
+          "frozen simulator physics"
+        ],
+        "reason": "deterministic frozen-Motor rollouts bracket zero/one-control-tick issue delay"
+      },
+      "status": "valid",
+      "actual_immediate_arrival_s": 0.06400000000000004,
+      "contained": true,
+      "fixed_44ms_covers_latest": false
+    },
+    {
+      "axis": "left_2",
+      "state": "reversing_20ms",
+      "envelope": {
+        "axis": "left_2",
+        "status": "valid",
+        "observed_at_s": 0.02000000000000001,
+        "earliest_arrival_s": 0.058000000000000045,
+        "nominal_arrival_s": 0.06350000000000004,
+        "latest_arrival_s": 0.06900000000000005,
+        "uncertainty_s": 0.011000000000000003,
+        "validity_conditions": [
+          "exact full NKeyMotorEnv state",
+          "selected axis held at +1 after issue",
+          "all other axes held at 0",
+          "issue delay lies in [0, one control tick]",
+          "no contact-topology switch",
+          "no competing reservation or command",
+          "frozen simulator physics"
+        ],
+        "reason": "deterministic frozen-Motor rollouts bracket zero/one-control-tick issue delay"
+      },
+      "status": "valid",
+      "actual_immediate_arrival_s": 0.058000000000000045,
+      "contained": true,
+      "fixed_44ms_covers_latest": false
+    },
+    {
+      "axis": "left_1",
+      "state": "cold",
+      "envelope": {
+        "axis": "left_1",
+        "status": "valid",
+        "observed_at_s": 0.0,
+        "earliest_arrival_s": 0.03900000000000003,
+        "nominal_arrival_s": 0.04400000000000003,
+        "latest_arrival_s": 0.04900000000000004,
+        "uncertainty_s": 0.010000000000000009,
+        "validity_conditions": [
+          "exact full NKeyMotorEnv state",
+          "selected axis held at +1 after issue",
+          "all other axes held at 0",
+          "issue delay lies in [0, one control tick]",
+          "no contact-topology switch",
+          "no competing reservation or command",
+          "frozen simulator physics"
+        ],
+        "reason": "deterministic frozen-Motor rollouts bracket zero/one-control-tick issue delay"
+      },
+      "status": "valid",
+      "actual_immediate_arrival_s": 0.03900000000000003,
+      "contained": true,
+      "fixed_44ms_covers_latest": false
+    },
+    {
+      "axis": "left_1",
+      "state": "preactivated_10ms",
+      "envelope": {
+        "axis": "left_1",
+        "status": "valid",
+        "observed_at_s": 0.010000000000000002,
+        "earliest_arrival_s": 0.03900000000000003,
+        "nominal_arrival_s": 0.04200000000000003,
+        "latest_arrival_s": 0.04500000000000003,
+        "uncertainty_s": 0.006000000000000005,
+        "validity_conditions": [
+          "exact full NKeyMotorEnv state",
+          "selected axis held at +1 after issue",
+          "all other axes held at 0",
+          "issue delay lies in [0, one control tick]",
+          "no contact-topology switch",
+          "no competing reservation or command",
+          "frozen simulator physics"
+        ],
+        "reason": "deterministic frozen-Motor rollouts bracket zero/one-control-tick issue delay"
+      },
+      "status": "valid",
+      "actual_immediate_arrival_s": 0.03900000000000003,
+      "contained": true,
+      "fixed_44ms_covers_latest": true
+    },
+    {
+      "axis": "left_1",
+      "state": "braked_10ms",
+      "envelope": {
+        "axis": "left_1",
+        "status": "valid",
+        "observed_at_s": 0.010000000000000002,
+        "earliest_arrival_s": 0.06200000000000005,
+        "nominal_arrival_s": 0.06600000000000004,
+        "latest_arrival_s": 0.07000000000000005,
+        "uncertainty_s": 0.008,
+        "validity_conditions": [
+          "exact full NKeyMotorEnv state",
+          "selected axis held at +1 after issue",
+          "all other axes held at 0",
+          "issue delay lies in [0, one control tick]",
+          "no contact-topology switch",
+          "no competing reservation or command",
+          "frozen simulator physics"
+        ],
+        "reason": "deterministic frozen-Motor rollouts bracket zero/one-control-tick issue delay"
+      },
+      "status": "valid",
+      "actual_immediate_arrival_s": 0.06200000000000005,
+      "contained": true,
+      "fixed_44ms_covers_latest": false
+    },
+    {
+      "axis": "left_1",
+      "state": "reversing_20ms",
+      "envelope": {
+        "axis": "left_1",
+        "status": "valid",
+        "observed_at_s": 0.02000000000000001,
+        "earliest_arrival_s": 0.05500000000000004,
+        "nominal_arrival_s": 0.06050000000000004,
+        "latest_arrival_s": 0.06600000000000004,
+        "uncertainty_s": 0.011000000000000003,
+        "validity_conditions": [
+          "exact full NKeyMotorEnv state",
+          "selected axis held at +1 after issue",
+          "all other axes held at 0",
+          "issue delay lies in [0, one control tick]",
+          "no contact-topology switch",
+          "no competing reservation or command",
+          "frozen simulator physics"
+        ],
+        "reason": "deterministic frozen-Motor rollouts bracket zero/one-control-tick issue delay"
+      },
+      "status": "valid",
+      "actual_immediate_arrival_s": 0.05500000000000004,
+      "contained": true,
+      "fixed_44ms_covers_latest": false
+    },
+    {
+      "axis": "right_1",
+      "state": "cold",
+      "envelope": {
+        "axis": "right_1",
+        "status": "valid",
+        "observed_at_s": 0.0,
+        "earliest_arrival_s": 0.03900000000000003,
+        "nominal_arrival_s": 0.04400000000000003,
+        "latest_arrival_s": 0.04900000000000004,
+        "uncertainty_s": 0.010000000000000009,
+        "validity_conditions": [
+          "exact full NKeyMotorEnv state",
+          "selected axis held at +1 after issue",
+          "all other axes held at 0",
+          "issue delay lies in [0, one control tick]",
+          "no contact-topology switch",
+          "no competing reservation or command",
+          "frozen simulator physics"
+        ],
+        "reason": "deterministic frozen-Motor rollouts bracket zero/one-control-tick issue delay"
+      },
+      "status": "valid",
+      "actual_immediate_arrival_s": 0.03900000000000003,
+      "contained": true,
+      "fixed_44ms_covers_latest": false
+    },
+    {
+      "axis": "right_1",
+      "state": "preactivated_10ms",
+      "envelope": {
+        "axis": "right_1",
+        "status": "valid",
+        "observed_at_s": 0.010000000000000002,
+        "earliest_arrival_s": 0.03900000000000003,
+        "nominal_arrival_s": 0.04200000000000003,
+        "latest_arrival_s": 0.04500000000000003,
+        "uncertainty_s": 0.006000000000000005,
+        "validity_conditions": [
+          "exact full NKeyMotorEnv state",
+          "selected axis held at +1 after issue",
+          "all other axes held at 0",
+          "issue delay lies in [0, one control tick]",
+          "no contact-topology switch",
+          "no competing reservation or command",
+          "frozen simulator physics"
+        ],
+        "reason": "deterministic frozen-Motor rollouts bracket zero/one-control-tick issue delay"
+      },
+      "status": "valid",
+      "actual_immediate_arrival_s": 0.03900000000000003,
+      "contained": true,
+      "fixed_44ms_covers_latest": true
+    },
+    {
+      "axis": "right_1",
+      "state": "braked_10ms",
+      "envelope": {
+        "axis": "right_1",
+        "status": "valid",
+        "observed_at_s": 0.010000000000000002,
+        "earliest_arrival_s": 0.06200000000000005,
+        "nominal_arrival_s": 0.06600000000000004,
+        "latest_arrival_s": 0.07000000000000005,
+        "uncertainty_s": 0.008,
+        "validity_conditions": [
+          "exact full NKeyMotorEnv state",
+          "selected axis held at +1 after issue",
+          "all other axes held at 0",
+          "issue delay lies in [0, one control tick]",
+          "no contact-topology switch",
+          "no competing reservation or command",
+          "frozen simulator physics"
+        ],
+        "reason": "deterministic frozen-Motor rollouts bracket zero/one-control-tick issue delay"
+      },
+      "status": "valid",
+      "actual_immediate_arrival_s": 0.06200000000000005,
+      "contained": true,
+      "fixed_44ms_covers_latest": false
+    },
+    {
+      "axis": "right_1",
+      "state": "reversing_20ms",
+      "envelope": {
+        "axis": "right_1",
+        "status": "valid",
+        "observed_at_s": 0.02000000000000001,
+        "earliest_arrival_s": 0.05500000000000004,
+        "nominal_arrival_s": 0.06050000000000004,
+        "latest_arrival_s": 0.06600000000000004,
+        "uncertainty_s": 0.011000000000000003,
+        "validity_conditions": [
+          "exact full NKeyMotorEnv state",
+          "selected axis held at +1 after issue",
+          "all other axes held at 0",
+          "issue delay lies in [0, one control tick]",
+          "no contact-topology switch",
+          "no competing reservation or command",
+          "frozen simulator physics"
+        ],
+        "reason": "deterministic frozen-Motor rollouts bracket zero/one-control-tick issue delay"
+      },
+      "status": "valid",
+      "actual_immediate_arrival_s": 0.05500000000000004,
+      "contained": true,
+      "fixed_44ms_covers_latest": false
+    },
+    {
+      "axis": "right_2",
+      "state": "cold",
+      "envelope": {
+        "axis": "right_2",
+        "status": "valid",
+        "observed_at_s": 0.0,
+        "earliest_arrival_s": 0.04100000000000003,
+        "nominal_arrival_s": 0.046000000000000034,
+        "latest_arrival_s": 0.05100000000000004,
+        "uncertainty_s": 0.010000000000000009,
+        "validity_conditions": [
+          "exact full NKeyMotorEnv state",
+          "selected axis held at +1 after issue",
+          "all other axes held at 0",
+          "issue delay lies in [0, one control tick]",
+          "no contact-topology switch",
+          "no competing reservation or command",
+          "frozen simulator physics"
+        ],
+        "reason": "deterministic frozen-Motor rollouts bracket zero/one-control-tick issue delay"
+      },
+      "status": "valid",
+      "actual_immediate_arrival_s": 0.04100000000000003,
+      "contained": true,
+      "fixed_44ms_covers_latest": false
+    },
+    {
+      "axis": "right_2",
+      "state": "preactivated_10ms",
+      "envelope": {
+        "axis": "right_2",
+        "status": "valid",
+        "observed_at_s": 0.010000000000000002,
+        "earliest_arrival_s": 0.04100000000000003,
+        "nominal_arrival_s": 0.04450000000000003,
+        "latest_arrival_s": 0.048000000000000036,
+        "uncertainty_s": 0.007000000000000006,
+        "validity_conditions": [
+          "exact full NKeyMotorEnv state",
+          "selected axis held at +1 after issue",
+          "all other axes held at 0",
+          "issue delay lies in [0, one control tick]",
+          "no contact-topology switch",
+          "no competing reservation or command",
+          "frozen simulator physics"
+        ],
+        "reason": "deterministic frozen-Motor rollouts bracket zero/one-control-tick issue delay"
+      },
+      "status": "valid",
+      "actual_immediate_arrival_s": 0.04100000000000003,
+      "contained": true,
+      "fixed_44ms_covers_latest": true
+    },
+    {
+      "axis": "right_2",
+      "state": "braked_10ms",
+      "envelope": {
+        "axis": "right_2",
+        "status": "valid",
+        "observed_at_s": 0.010000000000000002,
+        "earliest_arrival_s": 0.06400000000000004,
+        "nominal_arrival_s": 0.06800000000000005,
+        "latest_arrival_s": 0.07200000000000005,
+        "uncertainty_s": 0.008000000000000007,
+        "validity_conditions": [
+          "exact full NKeyMotorEnv state",
+          "selected axis held at +1 after issue",
+          "all other axes held at 0",
+          "issue delay lies in [0, one control tick]",
+          "no contact-topology switch",
+          "no competing reservation or command",
+          "frozen simulator physics"
+        ],
+        "reason": "deterministic frozen-Motor rollouts bracket zero/one-control-tick issue delay"
+      },
+      "status": "valid",
+      "actual_immediate_arrival_s": 0.06400000000000004,
+      "contained": true,
+      "fixed_44ms_covers_latest": false
+    },
+    {
+      "axis": "right_2",
+      "state": "reversing_20ms",
+      "envelope": {
+        "axis": "right_2",
+        "status": "valid",
+        "observed_at_s": 0.02000000000000001,
+        "earliest_arrival_s": 0.058000000000000045,
+        "nominal_arrival_s": 0.06350000000000004,
+        "latest_arrival_s": 0.06900000000000005,
+        "uncertainty_s": 0.011000000000000003,
+        "validity_conditions": [
+          "exact full NKeyMotorEnv state",
+          "selected axis held at +1 after issue",
+          "all other axes held at 0",
+          "issue delay lies in [0, one control tick]",
+          "no contact-topology switch",
+          "no competing reservation or command",
+          "frozen simulator physics"
+        ],
+        "reason": "deterministic frozen-Motor rollouts bracket zero/one-control-tick issue delay"
+      },
+      "status": "valid",
+      "actual_immediate_arrival_s": 0.058000000000000045,
+      "contained": true,
+      "fixed_44ms_covers_latest": false
+    },
+    {
+      "axis": "right_3",
+      "state": "cold",
+      "envelope": {
+        "axis": "right_3",
+        "status": "valid",
+        "observed_at_s": 0.0,
+        "earliest_arrival_s": 0.04300000000000003,
+        "nominal_arrival_s": 0.048000000000000036,
+        "latest_arrival_s": 0.05300000000000004,
+        "uncertainty_s": 0.010000000000000009,
+        "validity_conditions": [
+          "exact full NKeyMotorEnv state",
+          "selected axis held at +1 after issue",
+          "all other axes held at 0",
+          "issue delay lies in [0, one control tick]",
+          "no contact-topology switch",
+          "no competing reservation or command",
+          "frozen simulator physics"
+        ],
+        "reason": "deterministic frozen-Motor rollouts bracket zero/one-control-tick issue delay"
+      },
+      "status": "valid",
+      "actual_immediate_arrival_s": 0.04300000000000003,
+      "contained": true,
+      "fixed_44ms_covers_latest": false
+    },
+    {
+      "axis": "right_3",
+      "state": "preactivated_10ms",
+      "envelope": {
+        "axis": "right_3",
+        "status": "valid",
+        "observed_at_s": 0.010000000000000002,
+        "earliest_arrival_s": 0.04300000000000003,
+        "nominal_arrival_s": 0.046500000000000034,
+        "latest_arrival_s": 0.05000000000000004,
+        "uncertainty_s": 0.007000000000000006,
+        "validity_conditions": [
+          "exact full NKeyMotorEnv state",
+          "selected axis held at +1 after issue",
+          "all other axes held at 0",
+          "issue delay lies in [0, one control tick]",
+          "no contact-topology switch",
+          "no competing reservation or command",
+          "frozen simulator physics"
+        ],
+        "reason": "deterministic frozen-Motor rollouts bracket zero/one-control-tick issue delay"
+      },
+      "status": "valid",
+      "actual_immediate_arrival_s": 0.04300000000000003,
+      "contained": true,
+      "fixed_44ms_covers_latest": true
+    },
+    {
+      "axis": "right_3",
+      "state": "braked_10ms",
+      "envelope": {
+        "axis": "right_3",
+        "status": "valid",
+        "observed_at_s": 0.010000000000000002,
+        "earliest_arrival_s": 0.06600000000000004,
+        "nominal_arrival_s": 0.06950000000000006,
+        "latest_arrival_s": 0.07300000000000006,
+        "uncertainty_s": 0.00700000000000002,
+        "validity_conditions": [
+          "exact full NKeyMotorEnv state",
+          "selected axis held at +1 after issue",
+          "all other axes held at 0",
+          "issue delay lies in [0, one control tick]",
+          "no contact-topology switch",
+          "no competing reservation or command",
+          "frozen simulator physics"
+        ],
+        "reason": "deterministic frozen-Motor rollouts bracket zero/one-control-tick issue delay"
+      },
+      "status": "valid",
+      "actual_immediate_arrival_s": 0.06600000000000004,
+      "contained": true,
+      "fixed_44ms_covers_latest": false
+    },
+    {
+      "axis": "right_3",
+      "state": "reversing_20ms",
+      "envelope": {
+        "axis": "right_3",
+        "status": "valid",
+        "observed_at_s": 0.02000000000000001,
+        "earliest_arrival_s": 0.060000000000000046,
+        "nominal_arrival_s": 0.06550000000000004,
+        "latest_arrival_s": 0.07100000000000005,
+        "uncertainty_s": 0.011000000000000003,
+        "validity_conditions": [
+          "exact full NKeyMotorEnv state",
+          "selected axis held at +1 after issue",
+          "all other axes held at 0",
+          "issue delay lies in [0, one control tick]",
+          "no contact-topology switch",
+          "no competing reservation or command",
+          "frozen simulator physics"
+        ],
+        "reason": "deterministic frozen-Motor rollouts bracket zero/one-control-tick issue delay"
+      },
+      "status": "valid",
+      "actual_immediate_arrival_s": 0.060000000000000046,
+      "contained": true,
+      "fixed_44ms_covers_latest": false
+    },
+    {
+      "axis": "right_4",
+      "state": "cold",
+      "envelope": {
+        "axis": "right_4",
+        "status": "valid",
+        "observed_at_s": 0.0,
+        "earliest_arrival_s": 0.04300000000000003,
+        "nominal_arrival_s": 0.048000000000000036,
+        "latest_arrival_s": 0.05300000000000004,
+        "uncertainty_s": 0.010000000000000009,
+        "validity_conditions": [
+          "exact full NKeyMotorEnv state",
+          "selected axis held at +1 after issue",
+          "all other axes held at 0",
+          "issue delay lies in [0, one control tick]",
+          "no contact-topology switch",
+          "no competing reservation or command",
+          "frozen simulator physics"
+        ],
+        "reason": "deterministic frozen-Motor rollouts bracket zero/one-control-tick issue delay"
+      },
+      "status": "valid",
+      "actual_immediate_arrival_s": 0.04300000000000003,
+      "contained": true,
+      "fixed_44ms_covers_latest": false
+    },
+    {
+      "axis": "right_4",
+      "state": "preactivated_10ms",
+      "envelope": {
+        "axis": "right_4",
+        "status": "valid",
+        "observed_at_s": 0.010000000000000002,
+        "earliest_arrival_s": 0.04300000000000003,
+        "nominal_arrival_s": 0.046500000000000034,
+        "latest_arrival_s": 0.05000000000000004,
+        "uncertainty_s": 0.007000000000000006,
+        "validity_conditions": [
+          "exact full NKeyMotorEnv state",
+          "selected axis held at +1 after issue",
+          "all other axes held at 0",
+          "issue delay lies in [0, one control tick]",
+          "no contact-topology switch",
+          "no competing reservation or command",
+          "frozen simulator physics"
+        ],
+        "reason": "deterministic frozen-Motor rollouts bracket zero/one-control-tick issue delay"
+      },
+      "status": "valid",
+      "actual_immediate_arrival_s": 0.04300000000000003,
+      "contained": true,
+      "fixed_44ms_covers_latest": true
+    },
+    {
+      "axis": "right_4",
+      "state": "braked_10ms",
+      "envelope": {
+        "axis": "right_4",
+        "status": "valid",
+        "observed_at_s": 0.010000000000000002,
+        "earliest_arrival_s": 0.06600000000000004,
+        "nominal_arrival_s": 0.06950000000000006,
+        "latest_arrival_s": 0.07300000000000006,
+        "uncertainty_s": 0.00700000000000002,
+        "validity_conditions": [
+          "exact full NKeyMotorEnv state",
+          "selected axis held at +1 after issue",
+          "all other axes held at 0",
+          "issue delay lies in [0, one control tick]",
+          "no contact-topology switch",
+          "no competing reservation or command",
+          "frozen simulator physics"
+        ],
+        "reason": "deterministic frozen-Motor rollouts bracket zero/one-control-tick issue delay"
+      },
+      "status": "valid",
+      "actual_immediate_arrival_s": 0.06600000000000004,
+      "contained": true,
+      "fixed_44ms_covers_latest": false
+    },
+    {
+      "axis": "right_4",
+      "state": "reversing_20ms",
+      "envelope": {
+        "axis": "right_4",
+        "status": "valid",
+        "observed_at_s": 0.02000000000000001,
+        "earliest_arrival_s": 0.060000000000000046,
+        "nominal_arrival_s": 0.06550000000000004,
+        "latest_arrival_s": 0.07100000000000005,
+        "uncertainty_s": 0.011000000000000003,
+        "validity_conditions": [
+          "exact full NKeyMotorEnv state",
+          "selected axis held at +1 after issue",
+          "all other axes held at 0",
+          "issue delay lies in [0, one control tick]",
+          "no contact-topology switch",
+          "no competing reservation or command",
+          "frozen simulator physics"
+        ],
+        "reason": "deterministic frozen-Motor rollouts bracket zero/one-control-tick issue delay"
+      },
+      "status": "valid",
+      "actual_immediate_arrival_s": 0.060000000000000046,
+      "contained": true,
+      "fixed_44ms_covers_latest": false
+    },
+    {
+      "axis": "right_5",
+      "state": "cold",
+      "envelope": {
+        "axis": "right_5",
+        "status": "valid",
+        "observed_at_s": 0.0,
+        "earliest_arrival_s": 0.04100000000000003,
+        "nominal_arrival_s": 0.046000000000000034,
+        "latest_arrival_s": 0.05100000000000004,
+        "uncertainty_s": 0.010000000000000009,
+        "validity_conditions": [
+          "exact full NKeyMotorEnv state",
+          "selected axis held at +1 after issue",
+          "all other axes held at 0",
+          "issue delay lies in [0, one control tick]",
+          "no contact-topology switch",
+          "no competing reservation or command",
+          "frozen simulator physics"
+        ],
+        "reason": "deterministic frozen-Motor rollouts bracket zero/one-control-tick issue delay"
+      },
+      "status": "valid",
+      "actual_immediate_arrival_s": 0.04100000000000003,
+      "contained": true,
+      "fixed_44ms_covers_latest": false
+    },
+    {
+      "axis": "right_5",
+      "state": "preactivated_10ms",
+      "envelope": {
+        "axis": "right_5",
+        "status": "valid",
+        "observed_at_s": 0.010000000000000002,
+        "earliest_arrival_s": 0.04100000000000003,
+        "nominal_arrival_s": 0.04450000000000003,
+        "latest_arrival_s": 0.048000000000000036,
+        "uncertainty_s": 0.007000000000000006,
+        "validity_conditions": [
+          "exact full NKeyMotorEnv state",
+          "selected axis held at +1 after issue",
+          "all other axes held at 0",
+          "issue delay lies in [0, one control tick]",
+          "no contact-topology switch",
+          "no competing reservation or command",
+          "frozen simulator physics"
+        ],
+        "reason": "deterministic frozen-Motor rollouts bracket zero/one-control-tick issue delay"
+      },
+      "status": "valid",
+      "actual_immediate_arrival_s": 0.04100000000000003,
+      "contained": true,
+      "fixed_44ms_covers_latest": true
+    },
+    {
+      "axis": "right_5",
+      "state": "braked_10ms",
+      "envelope": {
+        "axis": "right_5",
+        "status": "valid",
+        "observed_at_s": 0.010000000000000002,
+        "earliest_arrival_s": 0.06400000000000004,
+        "nominal_arrival_s": 0.06800000000000005,
+        "latest_arrival_s": 0.07200000000000005,
+        "uncertainty_s": 0.008000000000000007,
+        "validity_conditions": [
+          "exact full NKeyMotorEnv state",
+          "selected axis held at +1 after issue",
+          "all other axes held at 0",
+          "issue delay lies in [0, one control tick]",
+          "no contact-topology switch",
+          "no competing reservation or command",
+          "frozen simulator physics"
+        ],
+        "reason": "deterministic frozen-Motor rollouts bracket zero/one-control-tick issue delay"
+      },
+      "status": "valid",
+      "actual_immediate_arrival_s": 0.06400000000000004,
+      "contained": true,
+      "fixed_44ms_covers_latest": false
+    },
+    {
+      "axis": "right_5",
+      "state": "reversing_20ms",
+      "envelope": {
+        "axis": "right_5",
+        "status": "valid",
+        "observed_at_s": 0.02000000000000001,
+        "earliest_arrival_s": 0.058000000000000045,
+        "nominal_arrival_s": 0.06350000000000004,
+        "latest_arrival_s": 0.06900000000000005,
+        "uncertainty_s": 0.011000000000000003,
+        "validity_conditions": [
+          "exact full NKeyMotorEnv state",
+          "selected axis held at +1 after issue",
+          "all other axes held at 0",
+          "issue delay lies in [0, one control tick]",
+          "no contact-topology switch",
+          "no competing reservation or command",
+          "frozen simulator physics"
+        ],
+        "reason": "deterministic frozen-Motor rollouts bracket zero/one-control-tick issue delay"
+      },
+      "status": "valid",
+      "actual_immediate_arrival_s": 0.058000000000000045,
+      "contained": true,
+      "fixed_44ms_covers_latest": false
+    },
+    {
+      "axis": "right_6",
+      "state": "cold",
+      "envelope": {
+        "axis": "right_6",
+        "status": "valid",
+        "observed_at_s": 0.0,
+        "earliest_arrival_s": 0.03900000000000003,
+        "nominal_arrival_s": 0.04400000000000003,
+        "latest_arrival_s": 0.04900000000000004,
+        "uncertainty_s": 0.010000000000000009,
+        "validity_conditions": [
+          "exact full NKeyMotorEnv state",
+          "selected axis held at +1 after issue",
+          "all other axes held at 0",
+          "issue delay lies in [0, one control tick]",
+          "no contact-topology switch",
+          "no competing reservation or command",
+          "frozen simulator physics"
+        ],
+        "reason": "deterministic frozen-Motor rollouts bracket zero/one-control-tick issue delay"
+      },
+      "status": "valid",
+      "actual_immediate_arrival_s": 0.03900000000000003,
+      "contained": true,
+      "fixed_44ms_covers_latest": false
+    },
+    {
+      "axis": "right_6",
+      "state": "preactivated_10ms",
+      "envelope": {
+        "axis": "right_6",
+        "status": "valid",
+        "observed_at_s": 0.010000000000000002,
+        "earliest_arrival_s": 0.03900000000000003,
+        "nominal_arrival_s": 0.04200000000000003,
+        "latest_arrival_s": 0.04500000000000003,
+        "uncertainty_s": 0.006000000000000005,
+        "validity_conditions": [
+          "exact full NKeyMotorEnv state",
+          "selected axis held at +1 after issue",
+          "all other axes held at 0",
+          "issue delay lies in [0, one control tick]",
+          "no contact-topology switch",
+          "no competing reservation or command",
+          "frozen simulator physics"
+        ],
+        "reason": "deterministic frozen-Motor rollouts bracket zero/one-control-tick issue delay"
+      },
+      "status": "valid",
+      "actual_immediate_arrival_s": 0.03900000000000003,
+      "contained": true,
+      "fixed_44ms_covers_latest": true
+    },
+    {
+      "axis": "right_6",
+      "state": "braked_10ms",
+      "envelope": {
+        "axis": "right_6",
+        "status": "valid",
+        "observed_at_s": 0.010000000000000002,
+        "earliest_arrival_s": 0.06200000000000005,
+        "nominal_arrival_s": 0.06600000000000004,
+        "latest_arrival_s": 0.07000000000000005,
+        "uncertainty_s": 0.008,
+        "validity_conditions": [
+          "exact full NKeyMotorEnv state",
+          "selected axis held at +1 after issue",
+          "all other axes held at 0",
+          "issue delay lies in [0, one control tick]",
+          "no contact-topology switch",
+          "no competing reservation or command",
+          "frozen simulator physics"
+        ],
+        "reason": "deterministic frozen-Motor rollouts bracket zero/one-control-tick issue delay"
+      },
+      "status": "valid",
+      "actual_immediate_arrival_s": 0.06200000000000005,
+      "contained": true,
+      "fixed_44ms_covers_latest": false
+    },
+    {
+      "axis": "right_6",
+      "state": "reversing_20ms",
+      "envelope": {
+        "axis": "right_6",
+        "status": "valid",
+        "observed_at_s": 0.02000000000000001,
+        "earliest_arrival_s": 0.05500000000000004,
+        "nominal_arrival_s": 0.06050000000000004,
+        "latest_arrival_s": 0.06600000000000004,
+        "uncertainty_s": 0.011000000000000003,
+        "validity_conditions": [
+          "exact full NKeyMotorEnv state",
+          "selected axis held at +1 after issue",
+          "all other axes held at 0",
+          "issue delay lies in [0, one control tick]",
+          "no contact-topology switch",
+          "no competing reservation or command",
+          "frozen simulator physics"
+        ],
+        "reason": "deterministic frozen-Motor rollouts bracket zero/one-control-tick issue delay"
+      },
+      "status": "valid",
+      "actual_immediate_arrival_s": 0.05500000000000004,
+      "contained": true,
+      "fixed_44ms_covers_latest": false
+    }
+  ],
+  "metrics": {
+    "cases": 48,
+    "valid": 48,
+    "contained": 48,
+    "containment_rate": 1.0,
+    "fixed_44ms_covers_latest": 12,
+    "arrival_error_ms": 0.0
+  },
+  "event37": "UNKNOWN: no selected axis/exact Motor snapshot exists because production abstained",
+  "production_changed": false,
+  "hardware_validated": false
+}
