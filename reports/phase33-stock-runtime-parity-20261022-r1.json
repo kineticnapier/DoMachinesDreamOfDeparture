@@ -1,0 +1,946 @@
+{
+  "format": "dmdod-phase33-stock-runtime-parity-v0.1",
+  "generated_utc": "2026-10-22T13:14:17.708041+00:00",
+  "verdict": "RUNTIME_PARITY_UNVERIFIED",
+  "runtime": "tests\\fixtures\\phase32-stock-runtime-multisession-synthetic.jsonl",
+  "reference": "reports\\phase20c-frame-stock-state-20261022-r1.json",
+  "sessions": [
+    {
+      "verdict": "RUNTIME_PARITY_UNVERIFIED",
+      "reason": "evidence is synthetic, incomplete, unqualified, or contains UNKNOWN fields",
+      "session_id": "nofail-synthetic",
+      "no_fail": true,
+      "live_qualified": false,
+      "reference_count": 55,
+      "observed_count": 1,
+      "complete": false,
+      "explicit_mismatch": true,
+      "comparisons": [
+        {
+          "index": 0,
+          "observed": {
+            "kind": "auto_miss",
+            "frame": 325,
+            "song_time_s": null,
+            "realtime_s": 3.2504,
+            "target_ordinal": null,
+            "judgement": "fail_miss",
+            "floor_before": 36,
+            "floor_after": 37,
+            "source_sequences": [
+              3,
+              4,
+              6
+            ]
+          },
+          "reference": {
+            "kind": "auto_miss",
+            "song_time_s": 3.25,
+            "target_ordinal": 36,
+            "judgement": "fail_miss",
+            "floor_before": 37,
+            "floor_after": 39
+          },
+          "fields": {
+            "kind": "MATCH",
+            "judgement": "MATCH",
+            "floor_before": "MISMATCH",
+            "floor_after": "MISMATCH",
+            "target_ordinal": "UNKNOWN",
+            "song_time_s": "UNKNOWN"
+          }
+        },
+        {
+          "index": 1,
+          "observed": null,
+          "reference": {
+            "kind": "key_down",
+            "song_time_s": 3.260999999999752,
+            "target_ordinal": 37,
+            "judgement": "very_late",
+            "floor_before": 39,
+            "floor_after": 40
+          },
+          "fields": {
+            "row": "MISSING"
+          }
+        },
+        {
+          "index": 2,
+          "observed": null,
+          "reference": {
+            "kind": "key_down",
+            "song_time_s": 3.3109999999997464,
+            "target_ordinal": 38,
+            "judgement": "very_late",
+            "floor_before": 40,
+            "floor_after": 41
+          },
+          "fields": {
+            "row": "MISSING"
+          }
+        },
+        {
+          "index": 3,
+          "observed": null,
+          "reference": {
+            "kind": "key_down",
+            "song_time_s": 3.3549999999997415,
+            "target_ordinal": 39,
+            "judgement": "very_late",
+            "floor_before": 41,
+            "floor_after": 42
+          },
+          "fields": {
+            "row": "MISSING"
+          }
+        },
+        {
+          "index": 4,
+          "observed": null,
+          "reference": {
+            "kind": "key_down",
+            "song_time_s": 3.3719999999997397,
+            "target_ordinal": 40,
+            "judgement": "perfect",
+            "floor_before": 42,
+            "floor_after": 43
+          },
+          "fields": {
+            "row": "MISSING"
+          }
+        },
+        {
+          "index": 5,
+          "observed": null,
+          "reference": {
+            "kind": "auto_miss",
+            "song_time_s": 3.43,
+            "target_ordinal": 41,
+            "judgement": "fail_miss",
+            "floor_before": 43,
+            "floor_after": 45
+          },
+          "fields": {
+            "row": "MISSING"
+          }
+        },
+        {
+          "index": 6,
+          "observed": null,
+          "reference": {
+            "kind": "key_down",
+            "song_time_s": 3.4469999999997314,
+            "target_ordinal": 42,
+            "judgement": "very_late",
+            "floor_before": 45,
+            "floor_after": 46
+          },
+          "fields": {
+            "row": "MISSING"
+          }
+        },
+        {
+          "index": 7,
+          "observed": null,
+          "reference": {
+            "kind": "key_down",
+            "song_time_s": 3.487999999999727,
+            "target_ordinal": 43,
+            "judgement": "very_late",
+            "floor_before": 46,
+            "floor_after": 47
+          },
+          "fields": {
+            "row": "MISSING"
+          }
+        },
+        {
+          "index": 8,
+          "observed": null,
+          "reference": {
+            "kind": "key_down",
+            "song_time_s": 3.5369999999997215,
+            "target_ordinal": 44,
+            "judgement": "very_late",
+            "floor_before": 47,
+            "floor_after": 48
+          },
+          "fields": {
+            "row": "MISSING"
+          }
+        },
+        {
+          "index": 9,
+          "observed": null,
+          "reference": {
+            "kind": "key_down",
+            "song_time_s": 3.5439999999997207,
+            "target_ordinal": 45,
+            "judgement": "perfect",
+            "floor_before": 48,
+            "floor_after": 49
+          },
+          "fields": {
+            "row": "MISSING"
+          }
+        },
+        {
+          "index": 10,
+          "observed": null,
+          "reference": {
+            "kind": "auto_miss",
+            "song_time_s": 3.61,
+            "target_ordinal": 46,
+            "judgement": "fail_miss",
+            "floor_before": 49,
+            "floor_after": 51
+          },
+          "fields": {
+            "row": "MISSING"
+          }
+        },
+        {
+          "index": 11,
+          "observed": null,
+          "reference": {
+            "kind": "key_down",
+            "song_time_s": 3.6209999999997122,
+            "target_ordinal": 47,
+            "judgement": "very_late",
+            "floor_before": 51,
+            "floor_after": 52
+          },
+          "fields": {
+            "row": "MISSING"
+          }
+        },
+        {
+          "index": 12,
+          "observed": null,
+          "reference": {
+            "kind": "key_down",
+            "song_time_s": 3.659999999999708,
+            "target_ordinal": 48,
+            "judgement": "very_late",
+            "floor_before": 52,
+            "floor_after": 53
+          },
+          "fields": {
+            "row": "MISSING"
+          }
+        },
+        {
+          "index": 13,
+          "observed": null,
+          "reference": {
+            "kind": "key_down",
+            "song_time_s": 3.7109999999997023,
+            "target_ordinal": 49,
+            "judgement": "very_late",
+            "floor_before": 53,
+            "floor_after": 54
+          },
+          "fields": {
+            "row": "MISSING"
+          }
+        },
+        {
+          "index": 14,
+          "observed": null,
+          "reference": {
+            "kind": "key_down",
+            "song_time_s": 3.7529999999996977,
+            "target_ordinal": 50,
+            "judgement": "very_late",
+            "floor_before": 54,
+            "floor_after": 55
+          },
+          "fields": {
+            "row": "MISSING"
+          }
+        },
+        {
+          "index": 15,
+          "observed": null,
+          "reference": {
+            "kind": "key_down",
+            "song_time_s": 3.794999999999693,
+            "target_ordinal": 51,
+            "judgement": "very_late",
+            "floor_before": 55,
+            "floor_after": 56
+          },
+          "fields": {
+            "row": "MISSING"
+          }
+        },
+        {
+          "index": 16,
+          "observed": null,
+          "reference": {
+            "kind": "key_down",
+            "song_time_s": 3.841999999999688,
+            "target_ordinal": 52,
+            "judgement": "very_late",
+            "floor_before": 56,
+            "floor_after": 57
+          },
+          "fields": {
+            "row": "MISSING"
+          }
+        },
+        {
+          "index": 17,
+          "observed": null,
+          "reference": {
+            "kind": "key_down",
+            "song_time_s": 3.8839999999996833,
+            "target_ordinal": 53,
+            "judgement": "very_late",
+            "floor_before": 57,
+            "floor_after": 58
+          },
+          "fields": {
+            "row": "MISSING"
+          }
+        },
+        {
+          "index": 18,
+          "observed": null,
+          "reference": {
+            "kind": "key_down",
+            "song_time_s": 3.931999999999678,
+            "target_ordinal": 54,
+            "judgement": "very_late",
+            "floor_before": 58,
+            "floor_after": 59
+          },
+          "fields": {
+            "row": "MISSING"
+          }
+        },
+        {
+          "index": 19,
+          "observed": null,
+          "reference": {
+            "kind": "key_down",
+            "song_time_s": 3.9719999999996736,
+            "target_ordinal": 55,
+            "judgement": "very_late",
+            "floor_before": 59,
+            "floor_after": 60
+          },
+          "fields": {
+            "row": "MISSING"
+          }
+        },
+        {
+          "index": 20,
+          "observed": null,
+          "reference": {
+            "kind": "key_down",
+            "song_time_s": 4.0209999999996775,
+            "target_ordinal": 56,
+            "judgement": "very_late",
+            "floor_before": 60,
+            "floor_after": 61
+          },
+          "fields": {
+            "row": "MISSING"
+          }
+        },
+        {
+          "index": 21,
+          "observed": null,
+          "reference": {
+            "kind": "key_down",
+            "song_time_s": 4.064999999999692,
+            "target_ordinal": 57,
+            "judgement": "very_late",
+            "floor_before": 61,
+            "floor_after": 62
+          },
+          "fields": {
+            "row": "MISSING"
+          }
+        },
+        {
+          "index": 22,
+          "observed": null,
+          "reference": {
+            "kind": "key_down",
+            "song_time_s": 4.069999999999694,
+            "target_ordinal": 58,
+            "judgement": "perfect",
+            "floor_before": 62,
+            "floor_after": 63
+          },
+          "fields": {
+            "row": "MISSING"
+          }
+        },
+        {
+          "index": 23,
+          "observed": null,
+          "reference": {
+            "kind": "key_down",
+            "song_time_s": 4.100999999999704,
+            "target_ordinal": 59,
+            "judgement": "very_late",
+            "floor_before": 63,
+            "floor_after": 64
+          },
+          "fields": {
+            "row": "MISSING"
+          }
+        },
+        {
+          "index": 24,
+          "observed": null,
+          "reference": {
+            "kind": "key_down",
+            "song_time_s": 4.157999999999723,
+            "target_ordinal": 60,
+            "judgement": "very_late",
+            "floor_before": 64,
+            "floor_after": 65
+          },
+          "fields": {
+            "row": "MISSING"
+          }
+        },
+        {
+          "index": 25,
+          "observed": null,
+          "reference": {
+            "kind": "key_down",
+            "song_time_s": 4.191999999999735,
+            "target_ordinal": 61,
+            "judgement": "very_late",
+            "floor_before": 65,
+            "floor_after": 66
+          },
+          "fields": {
+            "row": "MISSING"
+          }
+        },
+        {
+          "index": 26,
+          "observed": null,
+          "reference": {
+            "kind": "key_down",
+            "song_time_s": 4.23799999999975,
+            "target_ordinal": 62,
+            "judgement": "very_late",
+            "floor_before": 66,
+            "floor_after": 67
+          },
+          "fields": {
+            "row": "MISSING"
+          }
+        },
+        {
+          "index": 27,
+          "observed": null,
+          "reference": {
+            "kind": "key_down",
+            "song_time_s": 4.263999999999759,
+            "target_ordinal": 63,
+            "judgement": "late_perfect",
+            "floor_before": 67,
+            "floor_after": 68
+          },
+          "fields": {
+            "row": "MISSING"
+          }
+        },
+        {
+          "index": 28,
+          "observed": null,
+          "reference": {
+            "kind": "key_down",
+            "song_time_s": 4.281999999999765,
+            "target_ordinal": 64,
+            "judgement": "very_late",
+            "floor_before": 68,
+            "floor_after": 69
+          },
+          "fields": {
+            "row": "MISSING"
+          }
+        },
+        {
+          "index": 29,
+          "observed": null,
+          "reference": {
+            "kind": "key_down",
+            "song_time_s": 4.32699999999978,
+            "target_ordinal": 65,
+            "judgement": "very_late",
+            "floor_before": 69,
+            "floor_after": 70
+          },
+          "fields": {
+            "row": "MISSING"
+          }
+        },
+        {
+          "index": 30,
+          "observed": null,
+          "reference": {
+            "kind": "key_down",
+            "song_time_s": 4.373999999999795,
+            "target_ordinal": 66,
+            "judgement": "very_late",
+            "floor_before": 70,
+            "floor_after": 71
+          },
+          "fields": {
+            "row": "MISSING"
+          }
+        },
+        {
+          "index": 31,
+          "observed": null,
+          "reference": {
+            "kind": "key_down",
+            "song_time_s": 4.41699999999981,
+            "target_ordinal": 67,
+            "judgement": "very_late",
+            "floor_before": 71,
+            "floor_after": 72
+          },
+          "fields": {
+            "row": "MISSING"
+          }
+        },
+        {
+          "index": 32,
+          "observed": null,
+          "reference": {
+            "kind": "key_down",
+            "song_time_s": 4.453999999999822,
+            "target_ordinal": 68,
+            "judgement": "very_late",
+            "floor_before": 72,
+            "floor_after": 73
+          },
+          "fields": {
+            "row": "MISSING"
+          }
+        },
+        {
+          "index": 33,
+          "observed": null,
+          "reference": {
+            "kind": "key_down",
+            "song_time_s": 4.503999999999839,
+            "target_ordinal": 69,
+            "judgement": "very_late",
+            "floor_before": 73,
+            "floor_after": 74
+          },
+          "fields": {
+            "row": "MISSING"
+          }
+        },
+        {
+          "index": 34,
+          "observed": null,
+          "reference": {
+            "kind": "key_down",
+            "song_time_s": 4.545999999999853,
+            "target_ordinal": 70,
+            "judgement": "very_late",
+            "floor_before": 74,
+            "floor_after": 75
+          },
+          "fields": {
+            "row": "MISSING"
+          }
+        },
+        {
+          "index": 35,
+          "observed": null,
+          "reference": {
+            "kind": "key_down",
+            "song_time_s": 4.584999999999866,
+            "target_ordinal": 71,
+            "judgement": "very_late",
+            "floor_before": 75,
+            "floor_after": 76
+          },
+          "fields": {
+            "row": "MISSING"
+          }
+        },
+        {
+          "index": 36,
+          "observed": null,
+          "reference": {
+            "kind": "key_down",
+            "song_time_s": 4.618999999999877,
+            "target_ordinal": 72,
+            "judgement": "very_late",
+            "floor_before": 76,
+            "floor_after": 77
+          },
+          "fields": {
+            "row": "MISSING"
+          }
+        },
+        {
+          "index": 37,
+          "observed": null,
+          "reference": {
+            "kind": "key_down",
+            "song_time_s": 4.635999999999883,
+            "target_ordinal": 73,
+            "judgement": "very_late",
+            "floor_before": 77,
+            "floor_after": 78
+          },
+          "fields": {
+            "row": "MISSING"
+          }
+        },
+        {
+          "index": 38,
+          "observed": null,
+          "reference": {
+            "kind": "key_down",
+            "song_time_s": 4.675999999999896,
+            "target_ordinal": 74,
+            "judgement": "very_late",
+            "floor_before": 78,
+            "floor_after": 79
+          },
+          "fields": {
+            "row": "MISSING"
+          }
+        },
+        {
+          "index": 39,
+          "observed": null,
+          "reference": {
+            "kind": "key_down",
+            "song_time_s": 4.725999999999913,
+            "target_ordinal": 75,
+            "judgement": "very_late",
+            "floor_before": 79,
+            "floor_after": 80
+          },
+          "fields": {
+            "row": "MISSING"
+          }
+        },
+        {
+          "index": 40,
+          "observed": null,
+          "reference": {
+            "kind": "key_down",
+            "song_time_s": 4.766999999999927,
+            "target_ordinal": 76,
+            "judgement": "very_late",
+            "floor_before": 80,
+            "floor_after": 81
+          },
+          "fields": {
+            "row": "MISSING"
+          }
+        },
+        {
+          "index": 41,
+          "observed": null,
+          "reference": {
+            "kind": "key_down",
+            "song_time_s": 4.814999999999943,
+            "target_ordinal": 77,
+            "judgement": "very_late",
+            "floor_before": 81,
+            "floor_after": 82
+          },
+          "fields": {
+            "row": "MISSING"
+          }
+        },
+        {
+          "index": 42,
+          "observed": null,
+          "reference": {
+            "kind": "key_down",
+            "song_time_s": 4.853999999999956,
+            "target_ordinal": 78,
+            "judgement": "very_late",
+            "floor_before": 82,
+            "floor_after": 83
+          },
+          "fields": {
+            "row": "MISSING"
+          }
+        },
+        {
+          "index": 43,
+          "observed": null,
+          "reference": {
+            "kind": "key_down",
+            "song_time_s": 4.89699999999997,
+            "target_ordinal": 79,
+            "judgement": "very_late",
+            "floor_before": 83,
+            "floor_after": 84
+          },
+          "fields": {
+            "row": "MISSING"
+          }
+        },
+        {
+          "index": 44,
+          "observed": null,
+          "reference": {
+            "kind": "key_down",
+            "song_time_s": 4.944999999999986,
+            "target_ordinal": 80,
+            "judgement": "very_late",
+            "floor_before": 84,
+            "floor_after": 85
+          },
+          "fields": {
+            "row": "MISSING"
+          }
+        },
+        {
+          "index": 45,
+          "observed": null,
+          "reference": {
+            "kind": "key_down",
+            "song_time_s": 4.990000000000001,
+            "target_ordinal": 81,
+            "judgement": "very_late",
+            "floor_before": 85,
+            "floor_after": 86
+          },
+          "fields": {
+            "row": "MISSING"
+          }
+        },
+        {
+          "index": 46,
+          "observed": null,
+          "reference": {
+            "kind": "key_down",
+            "song_time_s": 5.0270000000000135,
+            "target_ordinal": 82,
+            "judgement": "very_late",
+            "floor_before": 86,
+            "floor_after": 87
+          },
+          "fields": {
+            "row": "MISSING"
+          }
+        },
+        {
+          "index": 47,
+          "observed": null,
+          "reference": {
+            "kind": "key_down",
+            "song_time_s": 5.083000000000032,
+            "target_ordinal": 83,
+            "judgement": "very_late",
+            "floor_before": 87,
+            "floor_after": 88
+          },
+          "fields": {
+            "row": "MISSING"
+          }
+        },
+        {
+          "index": 48,
+          "observed": null,
+          "reference": {
+            "kind": "key_down",
+            "song_time_s": 5.125000000000046,
+            "target_ordinal": 84,
+            "judgement": "very_late",
+            "floor_before": 88,
+            "floor_after": 89
+          },
+          "fields": {
+            "row": "MISSING"
+          }
+        },
+        {
+          "index": 49,
+          "observed": null,
+          "reference": {
+            "kind": "key_down",
+            "song_time_s": 5.146000000000053,
+            "target_ordinal": 85,
+            "judgement": "late_perfect",
+            "floor_before": 89,
+            "floor_after": 90
+          },
+          "fields": {
+            "row": "MISSING"
+          }
+        },
+        {
+          "index": 50,
+          "observed": null,
+          "reference": {
+            "kind": "key_down",
+            "song_time_s": 5.16700000000006,
+            "target_ordinal": 86,
+            "judgement": "very_late",
+            "floor_before": 90,
+            "floor_after": 91
+          },
+          "fields": {
+            "row": "MISSING"
+          }
+        },
+        {
+          "index": 51,
+          "observed": null,
+          "reference": {
+            "kind": "key_down",
+            "song_time_s": 5.205000000000073,
+            "target_ordinal": 87,
+            "judgement": "very_late",
+            "floor_before": 91,
+            "floor_after": 92
+          },
+          "fields": {
+            "row": "MISSING"
+          }
+        },
+        {
+          "index": 52,
+          "observed": null,
+          "reference": {
+            "kind": "key_down",
+            "song_time_s": 5.253000000000089,
+            "target_ordinal": 88,
+            "judgement": "very_late",
+            "floor_before": 92,
+            "floor_after": 93
+          },
+          "fields": {
+            "row": "MISSING"
+          }
+        },
+        {
+          "index": 53,
+          "observed": null,
+          "reference": {
+            "kind": "key_down",
+            "song_time_s": 5.319000000000111,
+            "target_ordinal": 90,
+            "judgement": "perfect",
+            "floor_before": 94,
+            "floor_after": 95
+          },
+          "fields": {
+            "row": "MISSING"
+          }
+        },
+        {
+          "index": 54,
+          "observed": null,
+          "reference": {
+            "kind": "auto_miss",
+            "song_time_s": 5.32,
+            "target_ordinal": 89,
+            "judgement": "fail_miss",
+            "floor_before": 93,
+            "floor_after": 94
+          },
+          "fields": {
+            "row": "MISSING"
+          }
+        }
+      ],
+      "uses_virtual_10ms_as_runtime_time": false,
+      "student_visible_fields": []
+    },
+    {
+      "verdict": "RUNTIME_PARITY_UNVERIFIED",
+      "reason": "evidence is synthetic, incomplete, unqualified, or contains UNKNOWN fields",
+      "session_id": "fail-synthetic",
+      "no_fail": false,
+      "live_qualified": false,
+      "reference_count": 3,
+      "observed_count": 1,
+      "complete": false,
+      "explicit_mismatch": true,
+      "comparisons": [
+        {
+          "index": 0,
+          "observed": {
+            "kind": "game_stop",
+            "frame": 332,
+            "song_time_s": null,
+            "realtime_s": 3.3203,
+            "target_ordinal": null,
+            "judgement": null,
+            "floor_before": null,
+            "floor_after": null,
+            "source_sequences": [
+              4
+            ]
+          },
+          "reference": {
+            "kind": "key_down",
+            "song_time_s": 3.260999999999752,
+            "target_ordinal": 36,
+            "judgement": "too_late",
+            "floor_before": 37,
+            "floor_after": 37
+          },
+          "fields": {
+            "kind": "MISMATCH",
+            "judgement": "UNKNOWN",
+            "floor_before": "UNKNOWN",
+            "floor_after": "UNKNOWN",
+            "target_ordinal": "UNKNOWN",
+            "song_time_s": "UNKNOWN"
+          }
+        },
+        {
+          "index": 1,
+          "observed": null,
+          "reference": {
+            "kind": "auto_miss",
+            "song_time_s": 3.3200000000000003,
+            "target_ordinal": 36,
+            "judgement": "fail_miss",
+            "floor_before": 37,
+            "floor_after": 37
+          },
+          "fields": {
+            "row": "MISSING"
+          }
+        },
+        {
+          "index": 2,
+          "observed": null,
+          "reference": {
+            "kind": "game_stop",
+            "song_time_s": 3.3200000000000003,
+            "target_ordinal": null,
+            "judgement": null,
+            "floor_before": 37,
+            "floor_after": 37
+          },
+          "fields": {
+            "row": "MISSING"
+          }
+        }
+      ],
+      "uses_virtual_10ms_as_runtime_time": false,
+      "student_visible_fields": []
+    }
+  ],
+  "production_changed": false
+}

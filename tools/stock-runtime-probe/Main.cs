@@ -243,6 +243,7 @@ namespace Dmdod.StockRuntimeProbe
                 var row = payload == null ? new Dictionary<string, object>() : new Dictionary<string, object>(payload);
                 row["hook"] = hook;
                 row["floor_evaluator_only"] = floor >= 0 ? (object)floor : null;
+                row["song_time_evaluator_only"] = ReadSongTime();
                 row["no_fail"] = ReadNoFail();
                 target.Emit(kind, row);
             }
@@ -280,6 +281,12 @@ namespace Dmdod.StockRuntimeProbe
         {
             try { return ADOBase.controller != null && ADOBase.controller.noFail; }
             catch { return false; }
+        }
+
+        private static double? ReadSongTime()
+        {
+            try { return ADOBase.conductor == null ? (double?)null : ADOBase.conductor.songposition_minusi; }
+            catch { return null; }
         }
 
         private static IDictionary<string, object> Merge(IDictionary<string, object> source, string key, object value)
