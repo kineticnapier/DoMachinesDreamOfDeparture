@@ -1,0 +1,47 @@
+{
+  "format": "dmdogo-v08-frozen-reference-v1",
+  "branch": "develop/dmdogo",
+  "implementation_head": "45f30bcaf968281400e2c2913a96dd95515222d2",
+  "planning_mode": "gesture_v08",
+  "source": "user_supplied_full_chart_physical_run",
+  "chart": "04042 - bool - vo[ICE].adofai",
+  "chart_sha256": "04981e92f74288b8aac7286e83420b933036d2caead9c157bc33b706779ad1b1",
+  "model_restrictions": {
+    "training": false,
+    "network": false,
+    "teacher_candidate_ranking": false,
+    "oracle_times": true,
+    "hud_only": false
+  },
+  "physical_result": {
+    "termination_reason": "chart_complete",
+    "total_events": 1122,
+    "duration_s": 64.13514567622092,
+    "hits": 1122,
+    "targets": 1122,
+    "misses": 0,
+    "too_early": 0,
+    "overloaded": false,
+    "x_accuracy_percent": 100,
+    "timing_mae_ms": 4.500751665118454,
+    "signed_timing_error_ms": 4.436558357124721,
+    "physical_keydowns": 1122,
+    "local_replans": 0,
+    "deferred_events": 0,
+    "deferral_frames": 0,
+    "unassigned_events": 0
+  },
+  "abstract_plan": {
+    "chunk_count": 392,
+    "gesture_families": {
+      "paired_exchange": 153,
+      "same_hand_roll": 160,
+      "single": 79
+    },
+    "axis_8_lag_repetition_fraction": 0.663375,
+    "minimum_abstract_axis_reuse_ms": 156.22396,
+    "abstract_reuse_violations": 0
+  },
+  "benchmark_note": "One Train chart, one physical run. No claim of human likeness or generalization.",
+  "policy": "Reference-only: do not alter planner, Motor, compensation, chart or baseline files while evaluating Train generalization; do not run Validation20 or FINAL."
+}
