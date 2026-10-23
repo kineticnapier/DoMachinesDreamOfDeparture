@@ -76,3 +76,32 @@ def test_reuse_history_survives_intervening_single_event_segments():
 def test_invalid_configuration_is_rejected():
     with pytest.raises(ValueError):
         PatternFirstScheduler(("a", "a"), minimum_reuse_s=.1)
+
+
+def test_segment_dp_keeps_globally_relevant_key_reuse_histories():
+    # A single best path per last cycle is not sufficient. A globally
+    # preferable path can retain an older last-use time for an omitted key.
+    result = PatternFirstScheduler(
+        logical_keys=("a", "b", "c"),
+        minimum_reuse_s=.100,
+        minimum_cycle_keys=2,
+        gap_change_ratio=.10,
+    ).schedule(_events([0., .03125, .09225, .26225, .2935, .3055]))
+    assert result.feasible
+    assert result.objective[:2] == (14, 3)
+    assert schedule_metrics(result)["reuse_violations"] == 0
+    assert result == PatternFirstScheduler(
+        ("a", "b", "c"), minimum_reuse_s=.100,
+        gap_change_ratio=.10,
+    ).schedule(_events([0., .03125, .09225, .26225, .2935, .3055]))
+
+
+def test_first_gap_pause_starts_new_segment():
+    scheduler = PatternFirstScheduler(
+        ("a", "b", "c"), minimum_reuse_s=.08,
+        restart_gap_s=.5,
+    )
+    events = _events([0., .6, .63125, .6625])
+    segments = scheduler._segments(events)
+    assert segments[0] == events[:1]
+    assert segments[1][0] == events[1]
