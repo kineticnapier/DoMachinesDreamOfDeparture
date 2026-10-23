@@ -12,6 +12,11 @@
     "continuity_compensated": {"hits": 1122, "x": 100.0, "mae_ms": 4.638267, "signed_ms": 4.556879, "switches": 359, "thumb": 39, "fixed_fast": "4/381", "prediction_mae_ms": 0.506239}
   },
   "all_arms": {"misses": 0, "too_early": 0, "overload": false, "keydowns": 1122},
+  "verification": {
+    "focused_pytest": {"passed": 55, "warnings": 0, "seconds": 11.87},
+    "full_pytest": {"passed": 2145, "warnings": 1, "seconds": 194.45},
+    "new_warnings": 0
+  },
   "cause_audit": {
     "mean_selection_advance_ms": 45.926916,
     "choices_changed_from_v02": 967,

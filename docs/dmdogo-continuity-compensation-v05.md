@@ -74,6 +74,17 @@ real-time bound even though simulated episode time and results remain valid.
 All arms had zero Miss, zero TooEarly, no overload and 1,122 physical KeyDowns.
 The three baseline rows reproduce the saved v0.4 values.
 
+## Verification
+
+- Focused v0.5/continuity/compensation/viewer regression: 55 passed in 11.87 s.
+- Full repository regression: 2,145 passed in 194.45 s.
+- The sole warning is the pre-existing PyTorch tensor-to-scalar warning in
+  `tests/test_onset_ablation.py`; no new warning was observed.
+- The comparison JSON, telemetry and HTML hashes are fixed in
+  `reports/dmdogo-v05-bool-r1.json`.
+- The full chart was evaluated once after the design was fixed; no result-led
+  selector or compensation tuning was performed.
+
 ## Artifacts and reproduction
 
 - Comparison: `artifacts/dmdogo-v05/bool-full-r1/comparison-v05.json`
