@@ -175,7 +175,8 @@ def _compensated_action(motor, plans: tuple[teacher.PlanItem, ...], now: float,
 
 def run_research_arm(segment, model, *, policy_name: str,
                      planning: bool, compensation: bool,
-                     stop_after_s: float | None, wall_timeout_s: float) -> dict:
+                     stop_after_s: float | None, wall_timeout_s: float,
+                     fixed_choices: dict[int, str] | None = None) -> dict:
     env = CoupledContactRealChartEnv(segment, control_dt_s=teacher.CTRL,
                                      physics_dt_s=teacher.PHYS)
     env.reset()
@@ -191,6 +192,11 @@ def run_research_arm(segment, model, *, policy_name: str,
     compensation_rows = []
     planner_evaluated = planner_peak = 0
     inference_seconds = 0.0
+    max_inference_seconds = 0.0
+    inference_calls = 0
+    controller_seconds = 0.0
+    max_controller_seconds = 0.0
+    controller_calls = 0
     horizon = compensator.max_prediction_s if compensation else teacher.LEAD
     maximum = int((segment.duration_s + 2.0) / teacher.CTRL) + 200
     wall_started = time.monotonic()
@@ -217,17 +223,33 @@ def run_research_arm(segment, model, *, policy_name: str,
             allocations = teacher.finger_options(event.chord_size)
             eligibility = tuple(teacher.eligible(env.motor, occupied, value)[0]
                                 for value in allocations)
-            context = network.encode_context(env.motor, look, now, occupied)
-            free_index, scores = network.choose_candidate(model, context, allocations, eligibility)
             planning_info = {"reason": "free_network_argmin", "preview": [],
                              "evaluated": 0, "peak": 0, "objective": None}
-            selected_index = free_index
-            if planning:
+            if fixed_choices is not None:
+                wanted = fixed_choices[event.event_index]
+                selected_index = next((index for index, allocation in enumerate(allocations)
+                                       if _allocation_id(allocation) == wanted), None)
+                if selected_index is None or not eligibility[selected_index]:
+                    raise RuntimeError(
+                        f"fixed allocation is not live-eligible at event {event.event_index}")
+                free_index = selected_index
+                scores = tuple(0.0 if index == selected_index else None
+                               for index in range(len(allocations)))
+                planning_info["reason"] = "fixed_free_allocation_posthoc_ablation"
+            else:
+                context = network.encode_context(env.motor, look, now, occupied)
+                free_index, scores = network.choose_candidate(
+                    model, context, allocations, eligibility)
+                selected_index = free_index
+            if planning and fixed_choices is None:
                 selected_index, allocations, scores, _, planning_info = _planner_choice(
                     planner, model, env.motor, event, look, now, occupied)
                 planner_evaluated += planning_info["evaluated"]
                 planner_peak = max(planner_peak, planning_info["peak"])
-            inference_seconds += time.perf_counter() - started_inference
+            inference_elapsed = time.perf_counter() - started_inference
+            inference_seconds += inference_elapsed
+            max_inference_seconds = max(max_inference_seconds, inference_elapsed)
+            inference_calls += 1
             allocation = allocations[selected_index] if selected_index is not None else ()
             if selected_index is not None and not eligibility[selected_index]:
                 raise RuntimeError("research policy selected an ineligible live allocation")
@@ -260,8 +282,13 @@ def run_research_arm(segment, model, *, policy_name: str,
                                 else "thumb_or_side" if allocation else "unassigned"),
             })
         if compensation:
+            controller_started = time.perf_counter()
             action, starts = _compensated_action(
                 env.motor, tuple(committed.values()), now, compensator, armed)
+            controller_elapsed = time.perf_counter() - controller_started
+            controller_seconds += controller_elapsed
+            max_controller_seconds = max(max_controller_seconds, controller_elapsed)
+            controller_calls += 1
             compensation_rows.extend(starts)
         else:
             action = teacher.action_for(env.motor, tuple(committed.values()), now)
@@ -327,7 +354,17 @@ def run_research_arm(segment, model, *, policy_name: str,
                     "discards": planner.discard_count,
                     "evaluated_candidates": planner_evaluated,
                     "peak_beam": planner_peak,
-                    "inference_seconds": inference_seconds},
+                    "inference_seconds": inference_seconds,
+                    "inference_calls": inference_calls,
+                    "mean_inference_ms": (1000.0 * inference_seconds / inference_calls
+                                          if inference_calls else 0.0),
+                    "max_inference_ms": 1000.0 * max_inference_seconds,
+                    "controller_seconds": controller_seconds,
+                    "controller_calls": controller_calls,
+                    "mean_controller_ms": (1000.0 * controller_seconds / controller_calls
+                                           if controller_calls else 0.0),
+                    "max_controller_ms": 1000.0 * max_controller_seconds},
+        "fixed_choices_posthoc": fixed_choices is not None,
     }
 
 

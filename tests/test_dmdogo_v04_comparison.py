@@ -59,6 +59,21 @@ def test_planning_is_deterministic_and_reset_per_episode():
     assert [row["chosen"] for row in left["decisions"]] == [
         row["chosen"] for row in right["decisions"]]
     assert left["planner"]["peak_beam"] <= 8
+    assert left["planner"]["inference_calls"] == len(left["decisions"])
+    assert left["planner"]["max_inference_ms"] >= left["planner"]["mean_inference_ms"]
+
+
+def test_fixed_allocation_ablation_uses_choices_without_network_or_teacher():
+    segment = _segment(count=5, bpm=120)
+    oracle = v04.AutoplayTimingTeacher.from_segment(segment)
+    fixed = {event.event_index: "left_1" if event.event_index % 2 == 0 else "right_1"
+             for event in oracle.events}
+    result = v04.run_research_arm(
+        segment, None, policy_name="fixed", planning=False, compensation=True,
+        stop_after_s=1.0, wall_timeout_s=10, fixed_choices=fixed)
+    assert result["fixed_choices_posthoc"] is True
+    assert all(row["chosen"] == fixed[row["event_index"]]
+               for row in result["decisions"])
 
 
 def test_six_arm_output_is_create_once_and_viewer_keeps_key_overlay(tmp_path, monkeypatch):
@@ -79,5 +94,7 @@ def test_six_arm_output_is_create_once_and_viewer_keeps_key_overlay(tmp_path, mo
     html = (output / "replay-v04.html").read_text(encoding="utf-8")
     assert "16 Contact KeyDown Counter" in html
     assert "Integrated v0.4" in html
+    assert "Motor compensation ON" in html
+    assert "Plan:" in html
     with pytest.raises(FileExistsError):
         v04.run(chart, checkpoint, output, stop_after_s=.2, wall_timeout_s=10)
