@@ -89,3 +89,13 @@ def test_common_fast_metrics_use_the_same_event_population_for_all_policies():
     assert result["policies"]["continuity"]["fixed_window_comparisons"] == 1
     assert result["policies"]["free"]["fixed_window_stability"] == 1.0
     assert result["policies"]["continuity"]["fixed_window_stability"] == 0.0
+
+
+def test_common_fast_metrics_intersect_prefixes_instead_of_reading_future_rows():
+    event_times = {0: 1.0, 1: 1.02, 2: 1.04, 3: 1.06, 4: 1.08}
+    free = [{"event_index": i, "due_ms": event_times[i] * 1000,
+             "axes": [f"left_{i % 4 + 1}"]} for i in range(4)]
+    shorter = free[:3]
+    result = common_fast_metrics({"free": free, "short": shorter}, event_times)
+    assert result["event_indices"] == [0, 1, 2]
+    assert result["fixed_windows"] == []

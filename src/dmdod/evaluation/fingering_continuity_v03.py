@@ -123,10 +123,14 @@ def common_fast_metrics(
     *,
     threshold_ms: float = 35.0,
 ) -> dict:
-    indices = _fast_event_indices(event_times, threshold_ms)
+    common_indices = set(event_times)
+    for decisions in decisions_by_policy.values():
+        common_indices &= {int(row["event_index"]) for row in decisions}
+    common_event_times = {index: event_times[index] for index in common_indices}
+    indices = _fast_event_indices(common_event_times, threshold_ms)
     selected = set(indices)
     policies = {}
-    ordered_events = sorted(event_times.items(), key=lambda item: (item[1], item[0]))
+    ordered_events = sorted(common_event_times.items(), key=lambda item: (item[1], item[0]))
     fixed_windows = [
         tuple(index for index, _ in ordered_events[start:start + 4])
         for start in range(max(0, len(ordered_events) - 3))
