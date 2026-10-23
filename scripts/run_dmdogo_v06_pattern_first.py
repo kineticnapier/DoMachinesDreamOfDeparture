@@ -25,6 +25,7 @@ from dmdod.envs.contact_chart_16k import CoupledContactRealChartEnv
 from dmdod.motor.keyboard import KeyEvent
 from dmdod.planning.pattern_motor_adapter_v06 import PatternMotorMapping
 from dmdod.planning.human_phrase_planner_v07 import HumanPhrasePlannerV07, PhraseEvent
+from dmdod.planning.gesture_chunk_planner_v08 import GestureChunkPlannerV08, GestureEvent
 from dmdod.planning.pattern_scheduler_v06 import (
     PatternEvent, PatternFirstScheduler, schedule_metrics,
 )
@@ -34,6 +35,7 @@ from dmdod.training.prestige1_autoplay_timing import AutoplayTimingTeacher
 
 FORMAT = "dmdogo-pattern-first-physical-v0.6"
 FORMAT_V07 = "dmdogo-human-phrase-physical-v0.7"
+FORMAT_V08 = "dmdogo-gesture-chunk-physical-v0.8"
 
 
 def _write_once(path: Path, value: str) -> None:
@@ -63,10 +65,11 @@ def run_pattern_arm(segment, *, minimum_reuse_s: float = .080,
         segment, control_dt_s=teacher.CTRL, physics_dt_s=teacher.PHYS)
     env.reset()
     events = AutoplayTimingTeacher.from_segment(segment).events
-    if planning_mode not in {"pattern_v06", "phrase_v07"}:
-        raise ValueError("planning_mode must be pattern_v06 or phrase_v07")
+    if planning_mode not in {"pattern_v06", "phrase_v07", "gesture_v08"}:
+        raise ValueError("invalid planning_mode")
     mapping = PatternMotorMapping.default_eight()
     phrase_by_event = {}
+    chunk_by_event = {}
     if planning_mode == "pattern_v06":
         schedule = _schedule(events, minimum_reuse_s)
         if not schedule.feasible:
@@ -89,7 +92,7 @@ def run_pattern_arm(segment, *, minimum_reuse_s: float = .080,
                 for span in schedule.patterns
             ],
         }
-    else:
+    elif planning_mode == "phrase_v07":
         phrase_plan = HumanPhrasePlannerV07(
             minimum_reuse_s=minimum_reuse_s,
         ).plan(tuple(
@@ -124,6 +127,40 @@ def run_pattern_arm(segment, *, minimum_reuse_s: float = .080,
                 }
                 for p in phrase_plan.phrases
             ],
+        }
+    else:
+        gesture_plan = GestureChunkPlannerV08(
+            minimum_reuse_s=minimum_reuse_s,
+        ).plan(tuple(
+            GestureEvent(event.event_index, event.episode_time_s, event.chord_size)
+            for event in events
+        ))
+        if not gesture_plan.feasible:
+            raise RuntimeError(f"v0.8 gesture plan failed: {gesture_plan.failure_reason}")
+        axis_to_key = dict(zip(mapping.physical_axes, mapping.logical_keys))
+        assignment_by = {
+            event.event_index: tuple(axis_to_key[axis]
+                                     for axis in gesture_plan.assignments[index])
+            for index, event in enumerate(events)
+        }
+        for chunk in gesture_plan.chunks:
+            for index in range(chunk.start_event_index,
+                               chunk.end_event_index + 1):
+                chunk_by_event[index] = chunk
+        abstract_plan = {
+            "feasible": True,
+            "metrics": gesture_plan.metrics,
+            "model_contract": gesture_plan.model_contract,
+            "candidates_evaluated": gesture_plan.candidates_evaluated,
+            "chunks": [{
+                "start_event_index": c.start_event_index,
+                "end_event_index": c.end_event_index,
+                "event_count": c.event_count,
+                "rhythm_kind": c.rhythm_kind,
+                "start_reason": c.start_reason,
+                "gesture_family": c.gesture_family,
+                "axes": [list(axes) for axes in c.axes],
+            } for c in gesture_plan.chunks],
         }
     committed: dict[int, teacher.PlanItem] = {}
     selected: set[int] = set()
@@ -216,13 +253,16 @@ def run_pattern_arm(segment, *, minimum_reuse_s: float = .080,
                 "physical_candidates_checked": choice.attempted,
                 "deferral_frames": deferrals.get(event.event_index, 0),
                 "selector_mode": (
-                    "human_phrase_v07" if planning_mode == "phrase_v07"
+                    "gesture_chunk_v08" if planning_mode == "gesture_v08"
+                    else "human_phrase_v07" if planning_mode == "phrase_v07"
                     else "pattern_first_v06"),
                 "policy": (
-                    "human_phrase_v07" if planning_mode == "phrase_v07"
+                    "gesture_chunk_v08" if planning_mode == "gesture_v08"
+                    else "human_phrase_v07" if planning_mode == "phrase_v07"
                     else "pattern_first_v06"),
                 "selection_reason": (
                     "physical_local_replan" if local_replan
+                    else "gesture_chunk_plan" if planning_mode == "gesture_v08"
                     else "rhythm_phrase_template" if planning_mode == "phrase_v07"
                     else "abstract_pattern_mapping"),
                 "rhythm_class": (
@@ -231,15 +271,25 @@ def run_pattern_arm(segment, *, minimum_reuse_s: float = .080,
                 "gesture_template": (
                     phrase_by_event[event.event_index].template
                     if event.event_index in phrase_by_event else None),
+                "gesture_chunk": ({
+                    "start_event_index": chunk_by_event[event.event_index].start_event_index,
+                    "end_event_index": chunk_by_event[event.event_index].end_event_index,
+                    "rhythm_kind": chunk_by_event[event.event_index].rhythm_kind,
+                    "gesture_family": chunk_by_event[event.event_index].gesture_family,
+                    "start_reason": chunk_by_event[event.event_index].start_reason,
+                } if event.event_index in chunk_by_event else None),
                 "plan_preview": [],
                 "compensation_enabled": True,
                 "free_chosen": None,
                 "different_from_free": False,
                 "style_class": (
-                    "untrained_rhythm_phrase_hypothesis" if planning_mode == "phrase_v07"
+                    "untrained_gesture_chunk_hypothesis" if planning_mode == "gesture_v08"
+                    else "untrained_rhythm_phrase_hypothesis" if planning_mode == "phrase_v07"
                     else "pattern_first_abstract"),
                 "inference_inputs": (
-                    "offline_oracle_rhythm_phrase_and_live_motor_no_future_outcomes"
+                    "offline_oracle_gesture_chunks_and_live_motor_no_future_outcomes"
+                    if planning_mode == "gesture_v08"
+                    else "offline_oracle_rhythm_phrase_and_live_motor_no_future_outcomes"
                     if planning_mode == "phrase_v07"
                     else "oracle_schedule_and_live_motor_without_network_or_future_outcomes"),
             })
@@ -351,9 +401,11 @@ def run_pattern_arm(segment, *, minimum_reuse_s: float = .080,
         "trace": frames,
         "replay_end_s": round(end_s, 6),
         "termination_reason": reason,
-        "policy": ("human_phrase_v07" if planning_mode == "phrase_v07"
+        "policy": ("gesture_chunk_v08" if planning_mode == "gesture_v08"
+                   else "human_phrase_v07" if planning_mode == "phrase_v07"
                    else "pattern_first_v06"),
-        "selector_mode": ("human_phrase_v07" if planning_mode == "phrase_v07"
+        "selector_mode": ("gesture_chunk_v08" if planning_mode == "gesture_v08"
+                          else "human_phrase_v07" if planning_mode == "phrase_v07"
                           else "pattern_first_v06"),
         "planning_mode": planning_mode,
         "network_used": False,
@@ -373,7 +425,9 @@ def build_payload(chart_path: Path, compiled, segment, result: dict) -> dict:
     oracle = AutoplayTimingTeacher.from_segment(segment)
     by_event = {int(row["event_index"]): row for row in result["decisions"]}
     is_v07 = result.get("planning_mode") == "phrase_v07"
-    policy_key = "human_phrase_v07" if is_v07 else "pattern_first_v06"
+    is_v08 = result.get("planning_mode") == "gesture_v08"
+    policy_key = ("gesture_chunk_v08" if is_v08 else
+                  "human_phrase_v07" if is_v07 else "pattern_first_v06")
     replay_end = float(result["replay_end_s"])
     events = []
     for event in oracle.events:
@@ -393,7 +447,7 @@ def build_payload(chart_path: Path, compiled, segment, result: dict) -> dict:
             },
         })
     return {
-        "format": FORMAT_V07 if is_v07 else FORMAT,
+        "format": FORMAT_V08 if is_v08 else FORMAT_V07 if is_v07 else FORMAT,
         "chart": chart_path.name,
         "chart_sha256": v01.file_sha256(chart_path),
         "default_policy": policy_key,
@@ -413,7 +467,8 @@ def build_payload(chart_path: Path, compiled, segment, result: dict) -> dict:
         "events": events,
         "policies": {
             policy_key: {
-                "label": ("Rhythm phrase v0.7 (untrained physical)" if is_v07
+                "label": ("Gesture chunks v0.8 (untrained physical)" if is_v08
+                          else "Rhythm phrase v0.7 (untrained physical)" if is_v07
                           else "Pattern-first v0.6 (physical)"),
                 "style_alpha": 0.0,
                 "trace": result["trace"],
@@ -459,7 +514,8 @@ def run(chart_path: Path, output_dir: Path, *,
     oracle = AutoplayTimingTeacher.from_segment(segment)
     payload = build_payload(chart_path, compiled, segment, result)
     report = {
-        "format": FORMAT_V07 if planning_mode == "phrase_v07" else FORMAT,
+        "format": (FORMAT_V08 if planning_mode == "gesture_v08"
+                   else FORMAT_V07 if planning_mode == "phrase_v07" else FORMAT),
         "planning_mode": planning_mode,
         "generated_at_utc": datetime.now(timezone.utc).isoformat(),
         "chart": chart_path.name,
@@ -482,7 +538,8 @@ def run(chart_path: Path, output_dir: Path, *,
     output_dir.mkdir(parents=True, exist_ok=False)
     _write_once(output_dir / "summary.json",
                 json.dumps(report, ensure_ascii=False, indent=2) + "\n")
-    suffix = "v07" if planning_mode == "phrase_v07" else "v06"
+    suffix = ("v08" if planning_mode == "gesture_v08"
+              else "v07" if planning_mode == "phrase_v07" else "v06")
     _write_once(output_dir / f"replay-{suffix}.json",
                 json.dumps(payload, ensure_ascii=False, indent=2) + "\n")
     _write_once(output_dir / f"replay-{suffix}.html", rendered)
@@ -501,7 +558,8 @@ def main() -> None:
     parser.add_argument("--output-dir", required=True, type=Path)
     parser.add_argument("--status-file", required=True, type=Path)
     parser.add_argument("--minimum-reuse-ms", type=float, default=80.0)
-    parser.add_argument("--planning-mode", choices=("pattern_v06", "phrase_v07"),
+    parser.add_argument("--planning-mode",
+                        choices=("pattern_v06", "phrase_v07", "gesture_v08"),
                         default="pattern_v06")
     parser.add_argument("--stop-after-s", type=float)
     parser.add_argument("--wall-timeout-s", type=float, default=900.0)
@@ -538,7 +596,8 @@ def main() -> None:
             _write_once(args.status_file, json.dumps(status, indent=2) + "\n")
         raise
     _write_once(args.status_file, json.dumps(status, indent=2) + "\n")
-    suffix = "v07" if args.planning_mode == "phrase_v07" else "v06"
+    suffix = ("v08" if args.planning_mode == "gesture_v08"
+              else "v07" if args.planning_mode == "phrase_v07" else "v06")
     print(f"DMDOGO {suffix}: {args.output_dir / f'replay-{suffix}.html'}")
 
 
