@@ -8,6 +8,7 @@ event times.  Physical realization is a separate contract.
 """
 
 from dataclasses import dataclass
+from math import isfinite
 from statistics import mean, median
 from typing import Sequence
 
@@ -52,8 +53,12 @@ class _Candidate:
 
 
 def _reuse_valid(previous: dict[str, float], current: dict[str, float], minimum: float) -> bool:
-    return all(key not in previous or due - previous[key] + 1e-12 >= minimum
-               for key, due in current.items())
+    return all(
+        key not in previous
+        or (due - previous[key] > 1e-12
+            and due - previous[key] + 1e-12 >= minimum)
+        for key, due in current.items()
+    )
 
 
 class PatternFirstScheduler:
@@ -71,12 +76,13 @@ class PatternFirstScheduler:
         keys = tuple(str(value) for value in logical_keys)
         if not keys or len(set(keys)) != len(keys):
             raise ValueError("logical keys must be non-empty and unique")
-        if minimum_reuse_s < 0:
-            raise ValueError("minimum reuse must be non-negative")
+        if not isfinite(minimum_reuse_s) or minimum_reuse_s < 0:
+            raise ValueError("minimum reuse must be finite and non-negative")
         if minimum_cycle_keys < 1 or minimum_cycle_keys > len(keys):
             raise ValueError("minimum cycle width is outside the key set")
-        if ((gap_change_ratio is not None and gap_change_ratio < 0)
-                or restart_gap_s <= 0):
+        if ((gap_change_ratio is not None
+                 and (not isfinite(gap_change_ratio) or gap_change_ratio < 0))
+                or not isfinite(restart_gap_s) or restart_gap_s <= 0):
             raise ValueError("invalid segmentation parameters")
         self.logical_keys = keys
         self.minimum_reuse_s = float(minimum_reuse_s)
@@ -104,6 +110,10 @@ class PatternFirstScheduler:
         boundaries = [0]
         gaps = [events[index].due_s - events[index - 1].due_s
                 for index in range(1, len(events))]
+        # The first gap has no preceding gap to compare with, but can still
+        # be a genuine restarts-after-pause boundary.
+        if gaps[0] >= self.restart_gap_s:
+            boundaries.append(1)
         for gap_index in range(1, len(gaps)):
             previous, current = gaps[gap_index - 1], gaps[gap_index]
             scale = max(abs(previous), abs(current), 1e-12)
@@ -135,8 +145,10 @@ class PatternFirstScheduler:
                         valid = False
                         break
                     for key in keys:
-                        if (key in last_use and event.due_s - last_use[key] + 1e-12
-                                < self.minimum_reuse_s):
+                        if (key in last_use and (
+                                event.due_s - last_use[key] <= 1e-12
+                                or event.due_s - last_use[key] + 1e-12
+                                < self.minimum_reuse_s)):
                             valid = False
                             break
                         first_use.setdefault(key, event.due_s)
@@ -155,6 +167,9 @@ class PatternFirstScheduler:
 
     def schedule(self, events: Sequence[PatternEvent]) -> PatternSchedule:
         ordered = tuple(events)
+        if any(not isfinite(event.due_s) for event in ordered):
+            return PatternSchedule(False, (), (), (), (), None,
+                                   "non_finite_event_time", 0, self._contract())
         if any(event.chord_size <= 0 for event in ordered):
             return PatternSchedule(False, (), (), (), (), None,
                                    "invalid_chord_size", 0, self._contract())
@@ -230,6 +245,10 @@ class PatternFirstScheduler:
                         frontier = [existing for existing in frontier
                                     if not dominates(value, existing)]
                         frontier.append(value)
+                        if len(frontier) > max_frontier_states:
+                            return PatternSchedule(
+                                False, (), (), (), (), None,
+                                "dp_frontier_state_limit_exceeded", evaluated, self._contract())
                 if frontier:
                     next_states[current_index] = frontier
                     retained += len(frontier)
