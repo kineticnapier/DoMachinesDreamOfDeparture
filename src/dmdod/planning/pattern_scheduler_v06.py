@@ -176,46 +176,77 @@ class PatternFirstScheduler:
                                    "no_periodic_assignment_satisfies_reuse", evaluated,
                                    self._contract())
 
-        # State retains the last use of every key across all earlier segments.
-        # Keeping only the immediately preceding candidate is unsound when a
-        # short intervening segment does not touch one of the keys.
-        states: dict[int, tuple[tuple[int, int, tuple], tuple[int, ...],
-                                dict[str, float]]] = {}
+        # DP must retain a Pareto frontier per current cycle. Two histories
+        # ending in the same cycle can have different last-use times for keys
+        # omitted by short intervening segments. Pruning solely by current
+        # cycle loses feasible (and sometimes optimal) continuations.
+        #
+        # History A dominates B only if it has no worse objective AND every
+        # physical key was last used no later than in B. A missing last use
+        # counts as -infinity. Exact dominance preserves the optimum; the
+        # explicit cap fails closed rather than silently pruning valid plans.
+        max_frontier_states = 10000
+
+        def dominates(left, right) -> bool:
+            left_obj, _, left_last = left
+            right_obj, _, right_last = right
+            return (left_obj <= right_obj
+                    and all(left_last.get(key, float("-inf"))
+                            <= right_last.get(key, float("-inf"))
+                            for key in self.logical_keys))
+
+        states: dict[int, list[tuple[tuple[int, int, tuple], tuple[int, ...],
+                                     dict[str, float]]]] = {}
         first_tokens = sum(event.chord_size for event in segments[0])
         for index, candidate in enumerate(candidates[0]):
             objective = (candidate.width * first_tokens, 0, (candidate.signature,))
-            states[index] = (objective, (index,), dict(candidate.last_use))
+            states[index] = [(objective, (index,), dict(candidate.last_use))]
+
         for segment_index in range(1, len(segments)):
             next_states = {}
             tokens = sum(event.chord_size for event in segments[segment_index])
+            retained = 0
             for current_index, current in enumerate(candidates[segment_index]):
-                best = None
-                for previous_index, (objective, path, global_last_use) in states.items():
+                frontier = []
+                for previous_index, previous_states in states.items():
                     previous = candidates[segment_index - 1][previous_index]
-                    if not _reuse_valid(global_last_use, dict(current.first_use),
-                                        self.minimum_reuse_s):
-                        continue
-                    changed = previous.cycle != current.cycle
-                    candidate_objective = (
-                        objective[0] + current.width * tokens,
-                        objective[1] + int(changed),
-                        objective[2] + (current.signature,),
-                    )
-                    next_last_use = dict(global_last_use)
-                    next_last_use.update(dict(current.last_use))
-                    value = (candidate_objective, path + (current_index,), next_last_use)
-                    if best is None or value[0] < best[0]:
-                        best = value
-                if best is not None:
-                    next_states[current_index] = best
+                    for objective, path, global_last_use in previous_states:
+                        evaluated += 1
+                        if not _reuse_valid(global_last_use, dict(current.first_use),
+                                            self.minimum_reuse_s):
+                            continue
+                        changed = previous.cycle != current.cycle
+                        candidate_objective = (
+                            objective[0] + current.width * tokens,
+                            objective[1] + int(changed),
+                            objective[2] + (current.signature,),
+                        )
+                        next_last_use = dict(global_last_use)
+                        next_last_use.update(dict(current.last_use))
+                        value = (candidate_objective, path + (current_index,),
+                                 next_last_use)
+                        if any(dominates(existing, value) for existing in frontier):
+                            continue
+                        frontier = [existing for existing in frontier
+                                    if not dominates(value, existing)]
+                        frontier.append(value)
+                if frontier:
+                    next_states[current_index] = frontier
+                    retained += len(frontier)
+                    if retained > max_frontier_states:
+                        return PatternSchedule(
+                            False, (), (), (), (), None,
+                            "dp_frontier_state_limit_exceeded", evaluated, self._contract())
             states = next_states
-            evaluated += len(candidates[segment_index - 1]) * len(candidates[segment_index])
             if not states:
                 return PatternSchedule(False, (), (), (), (), None,
                                        "no_cross_segment_reuse_safe_path", evaluated,
                                        self._contract())
 
-        objective, path, _ = min(states.values(), key=lambda value: value[0])
+        objective, path, _ = min(
+            (state for frontier in states.values() for state in frontier),
+            key=lambda state: state[0],
+        )
         chosen = tuple(candidates[index][candidate_index]
                        for index, candidate_index in enumerate(path))
         assignments = tuple(keys for candidate in chosen for keys in candidate.assignments)
