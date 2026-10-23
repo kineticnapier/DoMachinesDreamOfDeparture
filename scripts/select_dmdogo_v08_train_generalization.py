@@ -147,7 +147,7 @@ def verify_frozen_code(repo: Path) -> None:
         ("scripts/run_dmdogo_v06_pattern_first.py", FROZEN_RUNNER_BLOB),
     ):
         completed = subprocess.run(
-            ["git", "hash-object", source], cwd=repo,
+            ["git", "hash-object", f"--path={source}", source], cwd=repo,
             capture_output=True, text=True, check=True,
         )
         if completed.stdout.strip() != expected:
