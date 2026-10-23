@@ -25,7 +25,7 @@ from dmdod.envs.contact_chart_16k import CoupledContactRealChartEnv
 from dmdod.evaluation.fingering_continuity_v03 import common_fast_metrics
 from dmdod.motor.contact_16k import ContactAction, PHYSICAL_AXES, ThumbMode
 from dmdod.motor.keyboard import KeyEvent
-from dmdod.planning.fingering_continuity_v02 import continuity_metrics
+from dmdod.planning.fingering_continuity_v02 import ContinuitySelector, continuity_metrics
 from dmdod.planning.fingering_planner_v04 import (
     CandidateNode, EventCandidates, ShortHorizonFingeringPlanner,
 )
@@ -176,7 +176,10 @@ def _compensated_action(motor, plans: tuple[teacher.PlanItem, ...], now: float,
 def run_research_arm(segment, model, *, policy_name: str,
                      planning: bool, compensation: bool,
                      stop_after_s: float | None, wall_timeout_s: float,
-                     fixed_choices: dict[int, str] | None = None) -> dict:
+                     fixed_choices: dict[int, str] | None = None,
+                     selector_mode: str = "free") -> dict:
+    if selector_mode not in {"free", "continuity", "continuity_v03"}:
+        raise ValueError("unsupported causal selector mode")
     env = CoupledContactRealChartEnv(segment, control_dt_s=teacher.CTRL,
                                      physics_dt_s=teacher.PHYS)
     env.reset()
@@ -187,6 +190,7 @@ def run_research_arm(segment, model, *, policy_name: str,
     keydowns = []
     frames = [baseline._trace_frame(env)]
     planner = ShortHorizonFingeringPlanner()
+    continuity_selector = ContinuitySelector(mode=selector_mode)
     compensator = MotorLeadCompensator()
     armed: dict[tuple[int, str], dict] = {}
     compensation_rows = []
@@ -236,11 +240,24 @@ def run_research_arm(segment, model, *, policy_name: str,
                 scores = tuple(0.0 if index == selected_index else None
                                for index in range(len(allocations)))
                 planning_info["reason"] = "fixed_free_allocation_posthoc_ablation"
+                continuity_costs = tuple(None for _ in allocations)
+                combined_rank_scores = tuple(None for _ in allocations)
             else:
                 context = network.encode_context(env.motor, look, now, occupied)
                 free_index, scores = network.choose_candidate(
                     model, context, allocations, eligibility)
                 selected_index = free_index
+                if selector_mode != "free":
+                    selection = continuity_selector.select(
+                        scores, allocations, eligibility,
+                        event.event_index, event.episode_time_s)
+                    selected_index = selection.selected_index
+                    planning_info["reason"] = selection.reason
+                    continuity_costs = selection.continuity_costs
+                    combined_rank_scores = selection.combined_rank_scores
+                else:
+                    continuity_costs = tuple(None for _ in allocations)
+                    combined_rank_scores = tuple(None for _ in allocations)
             if planning and fixed_choices is None:
                 selected_index, allocations, scores, _, planning_info = _planner_choice(
                     planner, model, env.motor, event, look, now, occupied)
@@ -264,6 +281,8 @@ def run_research_arm(segment, model, *, policy_name: str,
                 "chosen": item.label if allocation else None,
                 "axes": [finger.axis for finger in allocation],
                 "network_scores": list(scores), "eligible": list(eligibility),
+                "continuity_costs": list(continuity_costs),
+                "combined_rank_scores": list(combined_rank_scores),
                 "selected_candidate_index": selected_index,
                 "free_chosen": (teacher.PlanItem(event.event_index, event.episode_time_s,
                                                    allocations[free_index]).label
@@ -349,6 +368,7 @@ def run_research_arm(segment, model, *, policy_name: str,
         "termination_reason": reason, "failure_continuation": False,
         "teacher_shadow_rollout_used": False, "teacher_candidate_scores_used": False,
         "policy": policy_name, "style_alpha": 0.0, "selector_mode": policy_name,
+        "causal_selector_mode": selector_mode,
         "compensation_telemetry": compensation_rows,
         "planner": {"enabled": planning, "replans": planner.replan_count,
                     "discards": planner.discard_count,
