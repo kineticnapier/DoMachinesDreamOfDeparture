@@ -55,32 +55,24 @@ collision** once these same paths exist in the remote commit.
 
 Do **not** run `git clean` or `git reset`.
 
-Safely retain the originals outside the repository first. The backup
-commands below copy rather than delete any original file:
+Move the three unfinished untracked files into a **timestamped backup
+directory** outside the checkout, then fast-forward to the tracked versions.
+`Move-Item` preserves their contents and avoids any reset, clean, or
+force-overwrite operation:
 
 ```powershell
 $backup = Join-Path $env:TEMP ("dmdogo-v06-handoff-" + (Get-Date -Format "yyyyMMdd-HHmmss"))
 New-Item -ItemType Directory -Force -Path $backup | Out-Null
-Copy-Item scripts/run_dmdogo_v06_pattern_first.py $backup/
-Copy-Item src/dmdod/planning/pattern_motor_adapter_v06.py $backup/
-Copy-Item tests/test_pattern_motor_v06.py $backup/
-```
-
-To permit `git pull --ff-only` without overwriting the old untracked
-files, relocate the originals to those backups:
-
-```powershell
-Remove-Item scripts/run_dmdogo_v06_pattern_first.py
-Remove-Item src/dmdod/planning/pattern_motor_adapter_v06.py
-Remove-Item tests/test_pattern_motor_v06.py
+Move-Item scripts/run_dmdogo_v06_pattern_first.py (Join-Path $backup "run_dmdogo_v06_pattern_first.py")
+Move-Item src/dmdod/planning/pattern_motor_adapter_v06.py (Join-Path $backup "pattern_motor_adapter_v06.py")
+Move-Item tests/test_pattern_motor_v06.py (Join-Path $backup "test_pattern_motor_v06.py")
 git pull --ff-only
 ```
 
-Only do this after verifying that **all three files were successfully
-backed up** in `$backup`. These removals are of the copied original local
-untracked paths, not project history. If preserving the working-tree
-copy without any deletion is required, use `Move-Item` instead of the
-copy/removal sequence.
+Leave `configs/training/prestige1.toml` and other local artifacts untouched.
+If you already staged or committed the three files locally, first inspect
+`git status`; this move procedure is specifically for the originally
+untracked state.
 
 Focused test:
 
