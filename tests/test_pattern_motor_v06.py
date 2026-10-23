@@ -106,3 +106,28 @@ def test_runner_refuses_to_overwrite_existing_output(tmp_path):
     directory.mkdir()
     with pytest.raises(FileExistsError):
         v06.run(tmp_path / "not-even-a-chart.adofai", directory)
+
+
+def test_physical_replay_exports_self_contained_html(tmp_path):
+    chart = tmp_path / "mini.adofai"
+    chart.write_text(json.dumps({
+        "angleData": [0] * 20,
+        "settings": {"bpm": 1920, "pitch": 100, "countdownTicks": 0},
+        "actions": [],
+    }), encoding="utf-8")
+    out = tmp_path / "physical-output"
+    report = v06.run(
+        chart, out, stop_after_s=1.0, wall_timeout_s=30.0)
+    assert report["network_used"] is False
+    assert report["timing_source"] == "AutoPlay Oracle exact event times"
+    assert (out / "summary.json").is_file()
+    payload = json.loads((out / "replay-v06.json").read_text(encoding="utf-8"))
+    assert payload["default_policy"] == "pattern_first_v06"
+    assert len(payload["key_overlay"]["mapping"]) == 16
+    assert "pattern_first_v06" in payload["policies"]
+    html = (out / "replay-v06.html").read_text(encoding="utf-8")
+    assert "<!doctype html>" in html
+    assert "KeyDown" in html
+    assert (out / "telemetry-v06.json").is_file()
+    with pytest.raises(FileExistsError):
+        v06.run(chart, out, stop_after_s=1.0, wall_timeout_s=30.0)
