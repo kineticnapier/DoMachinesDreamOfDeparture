@@ -36,7 +36,16 @@ def _result_row(case: dict, summary: dict | None) -> dict:
         row["status"] = "invalid_identity"
         return row
     stats, physical = summary.get("stats"), summary.get("physical")
-    if not isinstance(stats, dict) or not isinstance(physical, dict):
+    required_stats = {
+        "hits", "targets", "misses", "too_early", "overloaded",
+        "x_accuracy_percent", "timing_mae_ms",
+    }
+    required_physical = {"local_replans", "deferred_events"}
+    if (not isinstance(stats, dict) or not isinstance(physical, dict)
+            or not required_stats.issubset(stats)
+            or not required_physical.issubset(physical)
+            or any(stats[key] is None for key in required_stats)
+            or any(physical[key] is None for key in required_physical)):
         row["status"] = "invalid_metrics"
         return row
     row.update({
