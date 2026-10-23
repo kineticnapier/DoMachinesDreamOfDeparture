@@ -1,0 +1,37 @@
+{
+  "format": "dmdogo-v05-final-summary",
+  "chart_sha256": "04981e92f74288b8aac7286e83420b933036d2caead9c157bc33b706779ad1b1",
+  "checkpoint_sha256": "CCA1BFCC2D8E2988EEABF602A57211C8D8B66A54BFBBCBE0E3A9409EC167D2D8",
+  "source": "artifacts/dmdogo-v05/bool-full-r1/comparison-v05.json",
+  "telemetry": "artifacts/dmdogo-v05/bool-full-r1/telemetry-v05.json",
+  "viewer": "artifacts/dmdogo-v05/bool-full-r1/replay-v05.html",
+  "policies": {
+    "continuity": {"hits": 1122, "x": 91.671123, "mae_ms": 17.255505, "signed_ms": 17.227111, "switches": 405, "thumb": 64, "fixed_fast": "35/381"},
+    "latency_only": {"hits": 1122, "x": 100.0, "mae_ms": 4.861032, "signed_ms": 4.827824, "switches": 527, "thumb": 209, "fixed_fast": "2/381"},
+    "integrated_v04": {"hits": 1122, "x": 100.0, "mae_ms": 4.885002, "signed_ms": 4.849214, "switches": 517, "thumb": 197, "fixed_fast": "3/381"},
+    "continuity_compensated": {"hits": 1122, "x": 100.0, "mae_ms": 4.638267, "signed_ms": 4.556879, "switches": 359, "thumb": 39, "fixed_fast": "4/381", "prediction_mae_ms": 0.506239}
+  },
+  "all_arms": {"misses": 0, "too_early": 0, "overload": false, "keydowns": 1122},
+  "cause_audit": {
+    "mean_selection_advance_ms": 45.926916,
+    "choices_changed_from_v02": 967,
+    "free_argmin_changed": 976,
+    "v02_choice_live_unavailable": 405,
+    "v02_choice_available_but_not_selected": 562,
+    "fast_choice_preserved": "66/577",
+    "fallbacks": 0
+  },
+  "verdicts": {
+    "physical_completion": "PASS",
+    "timing_target": "PASS",
+    "aggregate_continuity_target": "PASS",
+    "fixed_fast_rolling_target": "FAIL",
+    "hard_realtime_10ms": "UNVERIFIED_MAX_RUNTIME_EXCEEDS_PERIOD",
+    "recommendation": "PARETO_CANDIDATE_WITH_ROLLING_REGRESSION"
+  },
+  "artifact_sha256": {
+    "comparison": "A5E03D2B5717D8ABBA1A2C34FB9BCF0F670EF4473CA1B2BB2D23846489CFD515",
+    "telemetry": "F577D2FED6347EE7BE41F908D9400B2CD7F2ED3F25DAA2DC3133083E6BE88C2C",
+    "viewer": "B6EB56A7AB1EA31A6C7F87DB894E58D5AC60884881C774EF94BF68E1448BB8AA"
+  }
+}

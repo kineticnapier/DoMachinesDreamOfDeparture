@@ -1,0 +1,69 @@
+{
+  "format": "dmdogo-continuity-compensated-cause-audit-v0.5",
+  "source_replay": "artifacts\\dmdogo-v05\\bool-full-r1\\replay-v05.json",
+  "source_telemetry": "artifacts\\dmdogo-v05\\bool-full-r1\\telemetry-v05.json",
+  "chart": "04042 - bool - vo[ICE].adofai",
+  "chart_sha256": "04981e92f74288b8aac7286e83420b933036d2caead9c157bc33b706779ad1b1",
+  "analysis": {
+    "matched_events": 1122,
+    "choice_preserved": 155,
+    "choice_changed": 967,
+    "choice_changed_rate": 0.8618538324420677,
+    "free_argmin_changed": 976,
+    "decision_advance_ms": {
+      "count": 1122,
+      "minimum": 40.0,
+      "median": 50.0,
+      "maximum": 50.0,
+      "mean": 45.92691622103387
+    },
+    "fast_events": 577,
+    "fast_choice_preserved": 66,
+    "v02_preferred_live_eligibility": {
+      "checked_changed_events": 967,
+      "unavailable": 405,
+      "available_but_not_selected": 562
+    },
+    "continuity_thumb_uses": 64,
+    "compensated_thumb_uses": 39,
+    "by_bpm": {
+      "1920": {
+        "events": 384,
+        "changed_choices": 342,
+        "thumb_uses": 23,
+        "timing_error_ms": {
+          "count": 384,
+          "minimum": -2.392,
+          "median": 4.5695,
+          "maximum": 10.863,
+          "mean": 4.4044505208333335
+        }
+      },
+      "480": {
+        "events": 737,
+        "changed_choices": 624,
+        "thumb_uses": 16,
+        "timing_error_ms": {
+          "count": 737,
+          "minimum": -1.981,
+          "median": 4.479,
+          "maximum": 11.876,
+          "mean": 4.638858887381275
+        }
+      },
+      "60": {
+        "events": 1,
+        "changed_choices": 1,
+        "thumb_uses": 0,
+        "timing_error_ms": {
+          "count": 1,
+          "minimum": 2.666,
+          "median": 2.666,
+          "maximum": 2.666,
+          "mean": 2.666
+        }
+      }
+    },
+    "evidence_limit": "Independent episodes are coupled histories; per-event differences are causal candidates, not isolated treatment effects."
+  }
+}

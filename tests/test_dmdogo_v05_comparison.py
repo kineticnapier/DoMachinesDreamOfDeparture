@@ -56,6 +56,8 @@ def test_compensated_continuity_is_causal_live_eligible_and_reset(monkeypatch):
     assert left["compensation_telemetry"]
     assert all(row["eligible"][row["selected_candidate_index"]]
                for row in left["decisions"] if row["selected_candidate_index"] is not None)
+    assert all(len(row["candidate_labels"]) == len(row["eligible"])
+               for row in left["decisions"])
     assert all(row["selection_reason"] in {
         "scale_free_network_continuity_rank", "no_eligible_candidate"}
         for row in left["decisions"])
