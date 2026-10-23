@@ -13,6 +13,7 @@ import hashlib
 import json
 from pathlib import Path
 from statistics import median
+import subprocess
 
 from dmdod.adofai.chart import load_adofai
 from dmdod.adofai.playable import build_playable_segment
@@ -23,6 +24,8 @@ BOOL_SHA = "04981e92f74288b8aac7286e83420b933036d2caead9c157bc33b706779ad1b1"
 FROZEN_HEAD = "45f30bcaf968281400e2c2913a96dd95515222d2"
 FORBIDDEN = {"validation", "validation20", "final", "holdout"}
 DEFAULT_CASES = 3
+FROZEN_PLANNER_BLOB = "4ce02c2e4450dc7a5181ab74cbaa0c1accea94f5"
+FROZEN_RUNNER_BLOB = "5fddfc84419722de7bbd0556419511069fd3200d"
 
 
 def _sha256(path: Path) -> str:
@@ -33,7 +36,11 @@ def _quantile(values: list[float], fraction: float) -> float:
     if not values:
         return 0.
     ordered = sorted(values)
-    return ordered[int((len(ordered) - 1) * fraction)]
+    position = (len(ordered) - 1) * fraction
+    low = int(position)
+    high = min(low + 1, len(ordered) - 1)
+    weight = position - low
+    return ordered[low] * (1 - weight) + ordered[high] * weight
 
 
 def describe_events(events: tuple, *, name: str, sha256: str,
@@ -103,14 +110,18 @@ def select_cases(records: list[dict], count: int = DEFAULT_CASES) -> list[dict]:
 
 
 def make_manifest(records: list[dict], skipped: list[dict],
-                  *, train_root: str) -> dict:
+                  *, train_root: str, baseline_excluded: int = 0) -> dict:
     return {
         "format": "dmdogo-v08-frozen-train-generalization-manifest-v1",
         "frozen_implementation_commit": FROZEN_HEAD,
+        "frozen_file_blobs": {
+            "planner": FROZEN_PLANNER_BLOB, "runner": FROZEN_RUNNER_BLOB,
+        },
         "frozen_planner": "GestureChunkPlannerV08",
         "planning_mode": "gesture_v08",
         "train_root": train_root,
-        "train_charts_screened": len(records) + len(skipped),
+        "train_charts_screened": len(records) + len(skipped) + baseline_excluded,
+        "baseline_charts_excluded": baseline_excluded,
         "train_charts_parsed": len(records),
         "baseline_bool_sha256_excluded": BOOL_SHA,
         "selection_pre_registered_axes": [
@@ -130,6 +141,20 @@ def make_manifest(records: list[dict], skipped: list[dict],
     }
 
 
+def verify_frozen_code(repo: Path) -> None:
+    for source, expected in (
+        ("src/dmdod/planning/gesture_chunk_planner_v08.py", FROZEN_PLANNER_BLOB),
+        ("scripts/run_dmdogo_v06_pattern_first.py", FROZEN_RUNNER_BLOB),
+    ):
+        completed = subprocess.run(
+            ["git", "hash-object", source], cwd=repo,
+            capture_output=True, text=True, check=True,
+        )
+        if completed.stdout.strip() != expected:
+            raise RuntimeError(
+                f"frozen source changed: {source}; refuse to claim v0.8 baseline")
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--train-root", type=Path, required=True,
@@ -139,6 +164,10 @@ def main() -> None:
     parser.add_argument("--max-charts", type=int, default=1000,
                         help="Fixed screening budget, sorted by path")
     args = parser.parse_args()
+    try:
+        verify_frozen_code(Path(__file__).resolve().parents[1])
+    except (OSError, subprocess.CalledProcessError, RuntimeError) as exc:
+        parser.error(str(exc))
     root = args.train_root.resolve()
     if root.name.lower() != "train" or not root.is_dir():
         parser.error("--train-root must point to an existing directory named Train")
@@ -150,6 +179,7 @@ def main() -> None:
     if not candidates:
         parser.error("no .adofai charts inside this Train directory")
     records, skipped = [], []
+    baseline_excluded = 0
     for path in candidates[:args.max_charts]:
         safe_path = path.resolve()
         if not safe_path.is_relative_to(root):
@@ -162,6 +192,7 @@ def main() -> None:
         try:
             chart_sha = _sha256(safe_path)
             if chart_sha == BOOL_SHA:
+                baseline_excluded += 1
                 continue  # exclude the exact already evaluated chart
             compiled = compile_adofai(load_adofai(safe_path))
             segment = build_playable_segment(compiled)
@@ -175,7 +206,8 @@ def main() -> None:
                 "path": str(path), "reason": type(exc).__name__,
                 "detail": str(exc)[:200],
             })
-    manifest = make_manifest(records, skipped, train_root=str(root))
+    manifest = make_manifest(records, skipped, train_root=str(root),
+                             baseline_excluded=baseline_excluded)
     if not manifest["cases"]:
         parser.error("no eligible non-baseline Train charts; no output written")
     args.output.parent.mkdir(parents=True, exist_ok=True)
