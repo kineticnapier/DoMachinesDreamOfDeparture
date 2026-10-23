@@ -24,6 +24,7 @@ from dmdod.adofai.timing import compile_adofai
 from dmdod.envs.contact_chart_16k import CoupledContactRealChartEnv
 from dmdod.motor.keyboard import KeyEvent
 from dmdod.planning.pattern_motor_adapter_v06 import PatternMotorMapping
+from dmdod.planning.human_phrase_planner_v07 import HumanPhrasePlannerV07, PhraseEvent
 from dmdod.planning.pattern_scheduler_v06 import (
     PatternEvent, PatternFirstScheduler, schedule_metrics,
 )
@@ -32,6 +33,7 @@ from dmdod.training.prestige1_autoplay_timing import AutoplayTimingTeacher
 
 
 FORMAT = "dmdogo-pattern-first-physical-v0.6"
+FORMAT_V07 = "dmdogo-human-phrase-physical-v0.7"
 
 
 def _write_once(path: Path, value: str) -> None:
@@ -54,20 +56,75 @@ def _schedule(events, minimum_reuse_s: float):
 
 def run_pattern_arm(segment, *, minimum_reuse_s: float = .080,
                     stop_after_s: float | None = None,
-                    wall_timeout_s: float = 900.0) -> dict:
+                    wall_timeout_s: float = 900.0,
+                    planning_mode: str = "pattern_v06") -> dict:
     """Execute exactly one independent Motor episode without the Network."""
     env = CoupledContactRealChartEnv(
         segment, control_dt_s=teacher.CTRL, physics_dt_s=teacher.PHYS)
     env.reset()
     events = AutoplayTimingTeacher.from_segment(segment).events
-    schedule = _schedule(events, minimum_reuse_s)
-    if not schedule.feasible:
-        raise RuntimeError(f"abstract schedule failed: {schedule.failure_reason}")
-    assignment_by = {
-        event.event_index: schedule.assignments[index]
-        for index, event in enumerate(events)
-    }
+    if planning_mode not in {"pattern_v06", "phrase_v07"}:
+        raise ValueError("planning_mode must be pattern_v06 or phrase_v07")
     mapping = PatternMotorMapping.default_eight()
+    phrase_by_event = {}
+    if planning_mode == "pattern_v06":
+        schedule = _schedule(events, minimum_reuse_s)
+        if not schedule.feasible:
+            raise RuntimeError(f"abstract schedule failed: {schedule.failure_reason}")
+        assignment_by = {
+            event.event_index: schedule.assignments[index]
+            for index, event in enumerate(events)
+        }
+        abstract_plan = {
+            "feasible": schedule.feasible,
+            "metrics": schedule_metrics(schedule),
+            "patterns": [
+                {
+                    "start_event_index": span.start_event_index,
+                    "end_event_index": span.end_event_index,
+                    "width": span.width,
+                    "cycle": list(span.cycle),
+                    "event_count": span.event_count,
+                }
+                for span in schedule.patterns
+            ],
+        }
+    else:
+        phrase_plan = HumanPhrasePlannerV07(
+            minimum_reuse_s=minimum_reuse_s,
+        ).plan(tuple(
+            PhraseEvent(event.event_index, event.episode_time_s, event.chord_size)
+            for event in events
+        ))
+        if not phrase_plan.feasible:
+            raise RuntimeError(f"v0.7 offline phrase plan failed: {phrase_plan.failure_reason}")
+        axis_to_key = dict(zip(mapping.physical_axes, mapping.logical_keys))
+        assignment_by = {
+            event.event_index: tuple(axis_to_key[axis] for axis in phrase_plan.assignments[index])
+            for index, event in enumerate(events)
+        }
+        for phrase in phrase_plan.phrases:
+            for index in range(phrase.start_event_index, phrase.end_event_index + 1):
+                phrase_by_event[index] = phrase
+        abstract_plan = {
+            "feasible": phrase_plan.feasible,
+            "metrics": phrase_plan.metrics,
+            "model_contract": phrase_plan.model_contract,
+            "phrases": [
+                {
+                    "start_event_index": p.start_event_index,
+                    "end_event_index": p.end_event_index,
+                    "event_count": p.event_count,
+                    "rhythm_class": p.rhythm_class,
+                    "gap_motif_s": list(p.gap_motif_s),
+                    "boundary_reason": p.boundary_reason,
+                    "gesture_template": p.template,
+                    "mirrored": p.mirrored,
+                    "phase": p.phase,
+                }
+                for p in phrase_plan.phrases
+            ],
+        }
     committed: dict[int, teacher.PlanItem] = {}
     selected: set[int] = set()
     decisions: list[dict] = []
@@ -158,18 +215,33 @@ def run_pattern_arm(segment, *, minimum_reuse_s: float = .080,
                 "physical_choice_disposition": choice.disposition,
                 "physical_candidates_checked": choice.attempted,
                 "deferral_frames": deferrals.get(event.event_index, 0),
-                "selector_mode": "pattern_first_v06",
-                "policy": "pattern_first_v06",
+                "selector_mode": (
+                    "human_phrase_v07" if planning_mode == "phrase_v07"
+                    else "pattern_first_v06"),
+                "policy": (
+                    "human_phrase_v07" if planning_mode == "phrase_v07"
+                    else "pattern_first_v06"),
                 "selection_reason": (
                     "physical_local_replan" if local_replan
+                    else "rhythm_phrase_template" if planning_mode == "phrase_v07"
                     else "abstract_pattern_mapping"),
+                "rhythm_class": (
+                    phrase_by_event[event.event_index].rhythm_class
+                    if event.event_index in phrase_by_event else None),
+                "gesture_template": (
+                    phrase_by_event[event.event_index].template
+                    if event.event_index in phrase_by_event else None),
                 "plan_preview": [],
                 "compensation_enabled": True,
                 "free_chosen": None,
                 "different_from_free": False,
-                "style_class": "pattern_first_abstract",
+                "style_class": (
+                    "untrained_rhythm_phrase_hypothesis" if planning_mode == "phrase_v07"
+                    else "pattern_first_abstract"),
                 "inference_inputs": (
-                    "oracle_schedule_and_live_motor_without_network_or_future_outcomes"),
+                    "offline_oracle_rhythm_phrase_and_live_motor_no_future_outcomes"
+                    if planning_mode == "phrase_v07"
+                    else "oracle_schedule_and_live_motor_without_network_or_future_outcomes"),
             })
 
         start = time.perf_counter()
@@ -279,27 +351,17 @@ def run_pattern_arm(segment, *, minimum_reuse_s: float = .080,
         "trace": frames,
         "replay_end_s": round(end_s, 6),
         "termination_reason": reason,
-        "policy": "pattern_first_v06",
-        "selector_mode": "pattern_first_v06",
+        "policy": ("human_phrase_v07" if planning_mode == "phrase_v07"
+                   else "pattern_first_v06"),
+        "selector_mode": ("human_phrase_v07" if planning_mode == "phrase_v07"
+                          else "pattern_first_v06"),
+        "planning_mode": planning_mode,
         "network_used": False,
         "teacher_shadow_rollout_used": False,
         "teacher_candidate_scores_used": False,
         "training_performed": False,
         "compensation_telemetry": compensation_rows,
-        "abstract_schedule": {
-            "feasible": schedule.feasible,
-            "metrics": schedule_metrics(schedule),
-            "patterns": [
-                {
-                    "start_event_index": span.start_event_index,
-                    "end_event_index": span.end_event_index,
-                    "width": span.width,
-                    "cycle": list(span.cycle),
-                    "event_count": span.event_count,
-                }
-                for span in schedule.patterns
-            ],
-        },
+        "abstract_schedule": abstract_plan,
         "physical_mapping": dict(zip(
             mapping.logical_keys, mapping.physical_axes)),
         "physical": physical,
@@ -310,6 +372,8 @@ def build_payload(chart_path: Path, compiled, segment, result: dict) -> dict:
     """A self-contained single-policy replay; no Network was used."""
     oracle = AutoplayTimingTeacher.from_segment(segment)
     by_event = {int(row["event_index"]): row for row in result["decisions"]}
+    is_v07 = result.get("planning_mode") == "phrase_v07"
+    policy_key = "human_phrase_v07" if is_v07 else "pattern_first_v06"
     replay_end = float(result["replay_end_s"])
     events = []
     for event in oracle.events:
@@ -324,15 +388,15 @@ def build_payload(chart_path: Path, compiled, segment, result: dict) -> dict:
             "chord_size": event.chord_size,
             "different": False,
             "decisions": {
-                "pattern_first_v06": v03_compare.v02_compare._decision_view(
+                policy_key: v03_compare.v02_compare._decision_view(
                     by_event.get(event.event_index), None),
             },
         })
     return {
-        "format": FORMAT,
+        "format": FORMAT_V07 if is_v07 else FORMAT,
         "chart": chart_path.name,
         "chart_sha256": v01.file_sha256(chart_path),
-        "default_policy": "pattern_first_v06",
+        "default_policy": policy_key,
         "timebase": {
             "episode_duration_s": replay_end,
             "full_chart_duration_s": segment.duration_s,
@@ -348,8 +412,9 @@ def build_payload(chart_path: Path, compiled, segment, result: dict) -> dict:
             load_adofai(chart_path), compiled, segment),
         "events": events,
         "policies": {
-            "pattern_first_v06": {
-                "label": "Pattern-first v0.6 (physical)",
+            policy_key: {
+                "label": ("Rhythm phrase v0.7 (untrained physical)" if is_v07
+                          else "Pattern-first v0.6 (physical)"),
                 "style_alpha": 0.0,
                 "trace": result["trace"],
                 "keydowns": result["keydowns"],
@@ -365,6 +430,8 @@ def build_payload(chart_path: Path, compiled, segment, result: dict) -> dict:
                 "Display aliases, not verified OS-key bindings."),
         },
         "limitations": [
+            "v0.7 rhythm gesture templates are untrained hypotheses, not human demonstrations.",
+            "Offline Oracle timing is privileged and not HUD-only Student perception.",
             "Pattern-first uses no learned Network and only ordinary physical axes.",
             "Abstract periodic schedules do not establish physical Hit feasibility.",
             "Physical local alternatives may break the abstract key cycle.",
@@ -376,7 +443,8 @@ def build_payload(chart_path: Path, compiled, segment, result: dict) -> dict:
 def run(chart_path: Path, output_dir: Path, *,
         minimum_reuse_s: float = .080,
         stop_after_s: float | None = None,
-        wall_timeout_s: float = 900.0) -> dict:
+        wall_timeout_s: float = 900.0,
+        planning_mode: str = "pattern_v06") -> dict:
     if output_dir.exists():
         raise FileExistsError(f"refusing to overwrite {output_dir}")
     if chart_path.suffix.lower() != ".adofai":
@@ -386,11 +454,13 @@ def run(chart_path: Path, output_dir: Path, *,
     started = time.perf_counter()
     result = run_pattern_arm(
         segment, minimum_reuse_s=minimum_reuse_s,
-        stop_after_s=stop_after_s, wall_timeout_s=wall_timeout_s)
+        stop_after_s=stop_after_s, wall_timeout_s=wall_timeout_s,
+        planning_mode=planning_mode)
     oracle = AutoplayTimingTeacher.from_segment(segment)
     payload = build_payload(chart_path, compiled, segment, result)
     report = {
-        "format": FORMAT,
+        "format": FORMAT_V07 if planning_mode == "phrase_v07" else FORMAT,
+        "planning_mode": planning_mode,
         "generated_at_utc": datetime.now(timezone.utc).isoformat(),
         "chart": chart_path.name,
         "chart_sha256": v01.file_sha256(chart_path),
@@ -412,10 +482,11 @@ def run(chart_path: Path, output_dir: Path, *,
     output_dir.mkdir(parents=True, exist_ok=False)
     _write_once(output_dir / "summary.json",
                 json.dumps(report, ensure_ascii=False, indent=2) + "\n")
-    _write_once(output_dir / "replay-v06.json",
+    suffix = "v07" if planning_mode == "phrase_v07" else "v06"
+    _write_once(output_dir / f"replay-{suffix}.json",
                 json.dumps(payload, ensure_ascii=False, indent=2) + "\n")
-    _write_once(output_dir / "replay-v06.html", rendered)
-    _write_once(output_dir / "telemetry-v06.json",
+    _write_once(output_dir / f"replay-{suffix}.html", rendered)
+    _write_once(output_dir / f"telemetry-{suffix}.json",
                 json.dumps({
                     "compensation": result["compensation_telemetry"],
                     "physical": result["physical"],
@@ -430,6 +501,8 @@ def main() -> None:
     parser.add_argument("--output-dir", required=True, type=Path)
     parser.add_argument("--status-file", required=True, type=Path)
     parser.add_argument("--minimum-reuse-ms", type=float, default=80.0)
+    parser.add_argument("--planning-mode", choices=("pattern_v06", "phrase_v07"),
+                        default="pattern_v06")
     parser.add_argument("--stop-after-s", type=float)
     parser.add_argument("--wall-timeout-s", type=float, default=900.0)
     args = parser.parse_args()
@@ -441,7 +514,8 @@ def main() -> None:
             args.chart, args.output_dir,
             minimum_reuse_s=args.minimum_reuse_ms * .001,
             stop_after_s=args.stop_after_s,
-            wall_timeout_s=args.wall_timeout_s)
+            wall_timeout_s=args.wall_timeout_s,
+            planning_mode=args.planning_mode)
         status = {
             "started_at_utc": started.isoformat(),
             "finished_at_utc": datetime.now(timezone.utc).isoformat(),
@@ -464,7 +538,8 @@ def main() -> None:
             _write_once(args.status_file, json.dumps(status, indent=2) + "\n")
         raise
     _write_once(args.status_file, json.dumps(status, indent=2) + "\n")
-    print(f"DMDOGO v0.6: {args.output_dir / 'replay-v06.html'}")
+    suffix = "v07" if args.planning_mode == "phrase_v07" else "v06"
+    print(f"DMDOGO {suffix}: {args.output_dir / f'replay-{suffix}.html'}")
 
 
 if __name__ == "__main__":
