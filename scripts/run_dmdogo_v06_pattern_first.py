@@ -304,3 +304,168 @@ def run_pattern_arm(segment, *, minimum_reuse_s: float = .080,
             mapping.logical_keys, mapping.physical_axes)),
         "physical": physical,
     }
+
+
+def build_payload(chart_path: Path, compiled, segment, result: dict) -> dict:
+    """A self-contained single-policy replay; no Network was used."""
+    oracle = AutoplayTimingTeacher.from_segment(segment)
+    by_event = {int(row["event_index"]): row for row in result["decisions"]}
+    replay_end = float(result["replay_end_s"])
+    events = []
+    for event in oracle.events:
+        if event.episode_time_s > replay_end + teacher.PREVIEW_TAIL:
+            break
+        events.append({
+            "event_index": event.event_index,
+            "episode_s": round(event.episode_time_s, 9),
+            "chart_s": round(event.chart_time_s, 9),
+            "audio_s": round(compiled.chart_to_audio_time(event.chart_time_s), 9),
+            "floor_indices": list(event.floor_indices),
+            "chord_size": event.chord_size,
+            "different": False,
+            "decisions": {
+                "pattern_first_v06": v03_compare.v02_compare._decision_view(
+                    by_event.get(event.event_index), None),
+            },
+        })
+    return {
+        "format": FORMAT,
+        "chart": chart_path.name,
+        "chart_sha256": v01.file_sha256(chart_path),
+        "default_policy": "pattern_first_v06",
+        "timebase": {
+            "episode_duration_s": replay_end,
+            "full_chart_duration_s": segment.duration_s,
+            "segment_start_chart_s": segment.start_chart_s,
+            "segment_end_chart_s": segment.end_chart_s,
+            "pitch_percent": compiled.pitch_percent,
+            "pitch_ratio": segment.pitch_ratio,
+            "offset_ms": compiled.offset_ms,
+            "separate_countdown_chart_s": (
+                compiled._separate_countdown_chart_seconds()),
+        },
+        "floors": viewer.rotation_profiles(
+            load_adofai(chart_path), compiled, segment),
+        "events": events,
+        "policies": {
+            "pattern_first_v06": {
+                "label": "Pattern-first v0.6 (physical)",
+                "style_alpha": 0.0,
+                "trace": result["trace"],
+                "keydowns": result["keydowns"],
+                "saved_metrics": result["stats"],
+            },
+        },
+        "key_overlay": {
+            "mapping": [
+                {"label": label, "contact": contact}
+                for label, contact in viewer.KEY_DISPLAY_MAP
+            ],
+            "mapping_semantics": (
+                "Display aliases, not verified OS-key bindings."),
+        },
+        "limitations": [
+            "Pattern-first uses no learned Network and only ordinary physical axes.",
+            "Abstract periodic schedules do not establish physical Hit feasibility.",
+            "Physical local alternatives may break the abstract key cycle.",
+            "Nearest-axis diagnostic KeyDowns do not prove event correspondence.",
+        ],
+    }
+
+
+def run(chart_path: Path, output_dir: Path, *,
+        minimum_reuse_s: float = .080,
+        stop_after_s: float | None = None,
+        wall_timeout_s: float = 900.0) -> dict:
+    if output_dir.exists():
+        raise FileExistsError(f"refusing to overwrite {output_dir}")
+    if chart_path.suffix.lower() != ".adofai":
+        raise ValueError("chart must be a .adofai file")
+    compiled = compile_adofai(load_adofai(chart_path))
+    segment = build_playable_segment(compiled)
+    started = time.perf_counter()
+    result = run_pattern_arm(
+        segment, minimum_reuse_s=minimum_reuse_s,
+        stop_after_s=stop_after_s, wall_timeout_s=wall_timeout_s)
+    oracle = AutoplayTimingTeacher.from_segment(segment)
+    payload = build_payload(chart_path, compiled, segment, result)
+    report = {
+        "format": FORMAT,
+        "generated_at_utc": datetime.now(timezone.utc).isoformat(),
+        "chart": chart_path.name,
+        "chart_sha256": v01.file_sha256(chart_path),
+        "total_events": len(oracle.events),
+        "duration_s": segment.duration_s,
+        "runtime_s": round(time.perf_counter() - started, 3),
+        "termination_reason": result["termination_reason"],
+        "stats": result["stats"],
+        "physical": result["physical"],
+        "abstract_schedule": result["abstract_schedule"],
+        "network_used": False,
+        "training_performed": False,
+        "teacher_candidate_scores_used": False,
+        "timing_source": "AutoPlay Oracle exact event times",
+        "minimum_reuse_s": minimum_reuse_s,
+        "partial_run": result["termination_reason"] == "diagnostic_prefix_complete",
+    }
+    rendered = viewer.render_html(payload)
+    output_dir.mkdir(parents=True, exist_ok=False)
+    _write_once(output_dir / "summary.json",
+                json.dumps(report, ensure_ascii=False, indent=2) + "\n")
+    _write_once(output_dir / "replay-v06.json",
+                json.dumps(payload, ensure_ascii=False, indent=2) + "\n")
+    _write_once(output_dir / "replay-v06.html", rendered)
+    _write_once(output_dir / "telemetry-v06.json",
+                json.dumps({
+                    "compensation": result["compensation_telemetry"],
+                    "physical": result["physical"],
+                    "decisions": result["decisions"],
+                }, ensure_ascii=False, indent=2) + "\n")
+    return report
+
+
+def main() -> None:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--chart", required=True, type=Path)
+    parser.add_argument("--output-dir", required=True, type=Path)
+    parser.add_argument("--status-file", required=True, type=Path)
+    parser.add_argument("--minimum-reuse-ms", type=float, default=80.0)
+    parser.add_argument("--stop-after-s", type=float)
+    parser.add_argument("--wall-timeout-s", type=float, default=900.0)
+    args = parser.parse_args()
+    if args.output_dir.exists() or args.status_file.exists():
+        parser.error("refusing to overwrite existing output or status")
+    started = datetime.now(timezone.utc)
+    try:
+        report = run(
+            args.chart, args.output_dir,
+            minimum_reuse_s=args.minimum_reuse_ms * .001,
+            stop_after_s=args.stop_after_s,
+            wall_timeout_s=args.wall_timeout_s)
+        status = {
+            "started_at_utc": started.isoformat(),
+            "finished_at_utc": datetime.now(timezone.utc).isoformat(),
+            "pid": os.getpid(),
+            "exit_code": 0,
+            "output_dir": str(args.output_dir),
+            "termination_reason": report["termination_reason"],
+        }
+    except BaseException as error:
+        status = {
+            "started_at_utc": started.isoformat(),
+            "finished_at_utc": datetime.now(timezone.utc).isoformat(),
+            "pid": os.getpid(),
+            "exit_code": 1,
+            "output_dir": str(args.output_dir),
+            "error_type": type(error).__name__,
+            "error": str(error),
+        }
+        if not args.status_file.exists():
+            _write_once(args.status_file, json.dumps(status, indent=2) + "\n")
+        raise
+    _write_once(args.status_file, json.dumps(status, indent=2) + "\n")
+    print(f"DMDOGO v0.6: {args.output_dir / 'replay-v06.html'}")
+
+
+if __name__ == "__main__":
+    main()
