@@ -1,0 +1,10160 @@
+{
+  "format": "dmdogo-pattern-first-schedule-v0.6",
+  "chart": "04042 - bool - vo[ICE].adofai",
+  "event_count": 1122,
+  "runtime_ms": 43.48059999756515,
+  "configuration": {
+    "minimum_reuse_s": 0.08,
+    "minimum_cycle_keys": 2,
+    "gap_change_ratio": null,
+    "restart_gap_s": 0.5,
+    "cycle_floor_semantics": "A declared anti-degenerate regularity constraint, not a physiological limit.",
+    "future_information": "Oracle event times and chord sizes only",
+    "excluded": [
+      "Motor state",
+      "Network score",
+      "future KeyDown",
+      "judgement"
+    ]
+  },
+  "feasible": true,
+  "failure_reason": null,
+  "objective": [
+    3366,
+    0,
+    [
+      [
+        "key_0",
+        "key_1",
+        "key_2",
+        "key_0",
+        "key_1",
+        "key_2",
+        "key_0",
+        "key_1",
+        "key_2",
+        "key_0",
+        "key_1",
+        "key_2",
+        "key_0",
+        "key_1",
+        "key_2",
+        "key_0",
+        "key_1",
+        "key_2",
+        "key_0",
+        "key_1",
+        "key_2",
+        "key_0",
+        "key_1",
+        "key_2",
+        "key_0",
+        "key_1",
+        "key_2",
+        "key_0",
+        "key_1",
+        "key_2",
+        "key_0",
+        "key_1",
+        "key_2",
+        "key_0",
+        "key_1",
+        "key_2",
+        "key_0",
+        "key_1",
+        "key_2",
+        "key_0",
+        "key_1",
+        "key_2",
+        "key_0",
+        "key_1",
+        "key_2",
+        "key_0",
+        "key_1",
+        "key_2",
+        "key_0",
+        "key_1",
+        "key_2",
+        "key_0",
+        "key_1",
+        "key_2",
+        "key_0",
+        "key_1",
+        "key_2",
+        "key_0",
+        "key_1",
+        "key_2",
+        "key_0",
+        "key_1",
+        "key_2",
+        "key_0",
+        "key_1",
+        "key_2",
+        "key_0",
+        "key_1",
+        "key_2",
+        "key_0",
+        "key_1",
+        "key_2",
+        "key_0",
+        "key_1",
+        "key_2",
+        "key_0",
+        "key_1",
+        "key_2",
+        "key_0",
+        "key_1",
+        "key_2",
+        "key_0",
+        "key_1",
+        "key_2",
+        "key_0",
+        "key_1",
+        "key_2",
+        "key_0",
+        "key_1",
+        "key_2",
+        "key_0",
+        "key_1",
+        "key_2",
+        "key_0",
+        "key_1",
+        "key_2",
+        "key_0",
+        "key_1",
+        "key_2",
+        "key_0",
+        "key_1",
+        "key_2",
+        "key_0",
+        "key_1",
+        "key_2",
+        "key_0",
+        "key_1",
+        "key_2",
+        "key_0",
+        "key_1",
+        "key_2",
+        "key_0",
+        "key_1",
+        "key_2",
+        "key_0",
+        "key_1",
+        "key_2",
+        "key_0",
+        "key_1",
+        "key_2",
+        "key_0",
+        "key_1",
+        "key_2",
+        "key_0",
+        "key_1",
+        "key_2",
+        "key_0",
+        "key_1",
+        "key_2",
+        "key_0",
+        "key_1",
+        "key_2",
+        "key_0",
+        "key_1",
+        "key_2",
+        "key_0",
+        "key_1",
+        "key_2",
+        "key_0",
+        "key_1",
+        "key_2",
+        "key_0",
+        "key_1",
+        "key_2",
+        "key_0",
+        "key_1",
+        "key_2",
+        "key_0",
+        "key_1",
+        "key_2",
+        "key_0",
+        "key_1",
+        "key_2",
+        "key_0",
+        "key_1",
+        "key_2",
+        "key_0",
+        "key_1",
+        "key_2",
+        "key_0",
+        "key_1",
+        "key_2",
+        "key_0",
+        "key_1",
+        "key_2",
+        "key_0",
+        "key_1",
+        "key_2",
+        "key_0",
+        "key_1",
+        "key_2",
+        "key_0",
+        "key_1",
+        "key_2",
+        "key_0",
+        "key_1",
+        "key_2",
+        "key_0",
+        "key_1",
+        "key_2",
+        "key_0",
+        "key_1",
+        "key_2",
+        "key_0",
+        "key_1",
+        "key_2",
+        "key_0",
+        "key_1",
+        "key_2",
+        "key_0",
+        "key_1",
+        "key_2",
+        "key_0",
+        "key_1",
+        "key_2",
+        "key_0",
+        "key_1",
+        "key_2",
+        "key_0",
+        "key_1",
+        "key_2",
+        "key_0",
+        "key_1",
+        "key_2",
+        "key_0",
+        "key_1",
+        "key_2",
+        "key_0",
+        "key_1",
+        "key_2",
+        "key_0",
+        "key_1",
+        "key_2",
+        "key_0",
+        "key_1",
+        "key_2",
+        "key_0",
+        "key_1",
+        "key_2",
+        "key_0",
+        "key_1",
+        "key_2",
+        "key_0",
+        "key_1",
+        "key_2",
+        "key_0",
+        "key_1",
+        "key_2",
+        "key_0",
+        "key_1",
+        "key_2",
+        "key_0",
+        "key_1",
+        "key_2",
+        "key_0",
+        "key_1",
+        "key_2",
+        "key_0",
+        "key_1",
+        "key_2",
+        "key_0",
+        "key_1",
+        "key_2",
+        "key_0",
+        "key_1",
+        "key_2",
+        "key_0",
+        "key_1",
+        "key_2",
+        "key_0",
+        "key_1",
+        "key_2",
+        "key_0",
+        "key_1",
+        "key_2",
+        "key_0",
+        "key_1",
+        "key_2",
+        "key_0",
+        "key_1",
+        "key_2",
+        "key_0",
+        "key_1",
+        "key_2",
+        "key_0",
+        "key_1",
+        "key_2",
+        "key_0",
+        "key_1",
+        "key_2",
+        "key_0",
+        "key_1",
+        "key_2",
+        "key_0",
+        "key_1",
+        "key_2",
+        "key_0",
+        "key_1",
+        "key_2",
+        "key_0",
+        "key_1",
+        "key_2",
+        "key_0",
+        "key_1",
+        "key_2",
+        "key_0",
+        "key_1",
+        "key_2",
+        "key_0",
+        "key_1",
+        "key_2",
+        "key_0",
+        "key_1",
+        "key_2",
+        "key_0",
+        "key_1",
+        "key_2",
+        "key_0",
+        "key_1",
+        "key_2",
+        "key_0",
+        "key_1",
+        "key_2",
+        "key_0",
+        "key_1",
+        "key_2",
+        "key_0",
+        "key_1",
+        "key_2",
+        "key_0",
+        "key_1",
+        "key_2",
+        "key_0",
+        "key_1",
+        "key_2",
+        "key_0",
+        "key_1",
+        "key_2",
+        "key_0",
+        "key_1",
+        "key_2",
+        "key_0",
+        "key_1",
+        "key_2",
+        "key_0",
+        "key_1",
+        "key_2",
+        "key_0",
+        "key_1",
+        "key_2",
+        "key_0",
+        "key_1",
+        "key_2",
+        "key_0",
+        "key_1",
+        "key_2",
+        "key_0",
+        "key_1",
+        "key_2",
+        "key_0",
+        "key_1",
+        "key_2",
+        "key_0",
+        "key_1",
+        "key_2",
+        "key_0",
+        "key_1",
+        "key_2",
+        "key_0",
+        "key_1",
+        "key_2",
+        "key_0",
+        "key_1",
+        "key_2",
+        "key_0",
+        "key_1",
+        "key_2",
+        "key_0",
+        "key_1",
+        "key_2",
+        "key_0",
+        "key_1",
+        "key_2",
+        "key_0",
+        "key_1",
+        "key_2",
+        "key_0",
+        "key_1",
+        "key_2",
+        "key_0",
+        "key_1",
+        "key_2",
+        "key_0",
+        "key_1",
+        "key_2",
+        "key_0",
+        "key_1",
+        "key_2",
+        "key_0",
+        "key_1",
+        "key_2",
+        "key_0",
+        "key_1",
+        "key_2",
+        "key_0",
+        "key_1",
+        "key_2",
+        "key_0",
+        "key_1",
+        "key_2",
+        "key_0",
+        "key_1",
+        "key_2",
+        "key_0",
+        "key_1",
+        "key_2",
+        "key_0",
+        "key_1",
+        "key_2",
+        "key_0",
+        "key_1",
+        "key_2",
+        "key_0",
+        "key_1",
+        "key_2",
+        "key_0",
+        "key_1",
+        "key_2",
+        "key_0",
+        "key_1",
+        "key_2",
+        "key_0",
+        "key_1",
+        "key_2",
+        "key_0",
+        "key_1",
+        "key_2",
+        "key_0",
+        "key_1",
+        "key_2",
+        "key_0",
+        "key_1",
+        "key_2",
+        "key_0",
+        "key_1",
+        "key_2",
+        "key_0",
+        "key_1",
+        "key_2",
+        "key_0",
+        "key_1",
+        "key_2",
+        "key_0",
+        "key_1",
+        "key_2",
+        "key_0",
+        "key_1",
+        "key_2",
+        "key_0",
+        "key_1",
+        "key_2",
+        "key_0",
+        "key_1",
+        "key_2",
+        "key_0",
+        "key_1",
+        "key_2",
+        "key_0",
+        "key_1",
+        "key_2",
+        "key_0",
+        "key_1",
+        "key_2",
+        "key_0",
+        "key_1",
+        "key_2",
+        "key_0",
+        "key_1",
+        "key_2",
+        "key_0",
+        "key_1",
+        "key_2",
+        "key_0",
+        "key_1",
+        "key_2",
+        "key_0",
+        "key_1",
+        "key_2",
+        "key_0",
+        "key_1",
+        "key_2",
+        "key_0",
+        "key_1",
+        "key_2",
+        "key_0",
+        "key_1",
+        "key_2",
+        "key_0",
+        "key_1",
+        "key_2",
+        "key_0",
+        "key_1",
+        "key_2",
+        "key_0",
+        "key_1",
+        "key_2",
+        "key_0",
+        "key_1",
+        "key_2",
+        "key_0",
+        "key_1",
+        "key_2",
+        "key_0",
+        "key_1",
+        "key_2",
+        "key_0",
+        "key_1",
+        "key_2",
+        "key_0",
+        "key_1",
+        "key_2",
+        "key_0",
+        "key_1",
+        "key_2",
+        "key_0",
+        "key_1",
+        "key_2",
+        "key_0",
+        "key_1",
+        "key_2",
+        "key_0",
+        "key_1",
+        "key_2",
+        "key_0",
+        "key_1",
+        "key_2",
+        "key_0",
+        "key_1",
+        "key_2",
+        "key_0",
+        "key_1",
+        "key_2",
+        "key_0",
+        "key_1",
+        "key_2",
+        "key_0",
+        "key_1",
+        "key_2",
+        "key_0",
+        "key_1",
+        "key_2",
+        "key_0",
+        "key_1",
+        "key_2",
+        "key_0",
+        "key_1",
+        "key_2",
+        "key_0",
+        "key_1",
+        "key_2",
+        "key_0",
+        "key_1",
+        "key_2",
+        "key_0",
+        "key_1",
+        "key_2",
+        "key_0",
+        "key_1",
+        "key_2",
+        "key_0",
+        "key_1",
+        "key_2",
+        "key_0",
+        "key_1",
+        "key_2",
+        "key_0",
+        "key_1",
+        "key_2",
+        "key_0",
+        "key_1",
+        "key_2",
+        "key_0",
+        "key_1",
+        "key_2",
+        "key_0",
+        "key_1",
+        "key_2",
+        "key_0",
+        "key_1",
+        "key_2",
+        "key_0",
+        "key_1",
+        "key_2",
+        "key_0",
+        "key_1",
+        "key_2",
+        "key_0",
+        "key_1",
+        "key_2",
+        "key_0",
+        "key_1",
+        "key_2",
+        "key_0",
+        "key_1",
+        "key_2",
+        "key_0",
+        "key_1",
+        "key_2",
+        "key_0",
+        "key_1",
+        "key_2",
+        "key_0",
+        "key_1",
+        "key_2",
+        "key_0",
+        "key_1",
+        "key_2",
+        "key_0",
+        "key_1",
+        "key_2",
+        "key_0",
+        "key_1",
+        "key_2",
+        "key_0",
+        "key_1",
+        "key_2",
+        "key_0",
+        "key_1",
+        "key_2",
+        "key_0",
+        "key_1",
+        "key_2",
+        "key_0",
+        "key_1",
+        "key_2",
+        "key_0",
+        "key_1",
+        "key_2",
+        "key_0",
+        "key_1",
+        "key_2",
+        "key_0",
+        "key_1",
+        "key_2",
+        "key_0",
+        "key_1",
+        "key_2",
+        "key_0",
+        "key_1",
+        "key_2",
+        "key_0",
+        "key_1",
+        "key_2",
+        "key_0",
+        "key_1",
+        "key_2",
+        "key_0",
+        "key_1",
+        "key_2",
+        "key_0",
+        "key_1",
+        "key_2",
+        "key_0",
+        "key_1",
+        "key_2",
+        "key_0",
+        "key_1",
+        "key_2",
+        "key_0",
+        "key_1",
+        "key_2",
+        "key_0",
+        "key_1",
+        "key_2",
+        "key_0",
+        "key_1",
+        "key_2",
+        "key_0",
+        "key_1",
+        "key_2",
+        "key_0",
+        "key_1",
+        "key_2",
+        "key_0",
+        "key_1",
+        "key_2",
+        "key_0",
+        "key_1",
+        "key_2",
+        "key_0",
+        "key_1",
+        "key_2",
+        "key_0",
+        "key_1",
+        "key_2",
+        "key_0",
+        "key_1",
+        "key_2",
+        "key_0",
+        "key_1",
+        "key_2",
+        "key_0",
+        "key_1",
+        "key_2",
+        "key_0",
+        "key_1",
+        "key_2",
+        "key_0",
+        "key_1",
+        "key_2",
+        "key_0",
+        "key_1",
+        "key_2",
+        "key_0",
+        "key_1",
+        "key_2",
+        "key_0",
+        "key_1",
+        "key_2",
+        "key_0",
+        "key_1",
+        "key_2",
+        "key_0",
+        "key_1",
+        "key_2",
+        "key_0",
+        "key_1",
+        "key_2",
+        "key_0",
+        "key_1",
+        "key_2",
+        "key_0",
+        "key_1",
+        "key_2",
+        "key_0",
+        "key_1",
+        "key_2",
+        "key_0",
+        "key_1",
+        "key_2",
+        "key_0",
+        "key_1",
+        "key_2",
+        "key_0",
+        "key_1",
+        "key_2",
+        "key_0",
+        "key_1",
+        "key_2",
+        "key_0",
+        "key_1",
+        "key_2",
+        "key_0",
+        "key_1",
+        "key_2",
+        "key_0",
+        "key_1",
+        "key_2",
+        "key_0",
+        "key_1",
+        "key_2",
+        "key_0",
+        "key_1",
+        "key_2",
+        "key_0",
+        "key_1",
+        "key_2",
+        "key_0",
+        "key_1",
+        "key_2",
+        "key_0",
+        "key_1",
+        "key_2",
+        "key_0",
+        "key_1",
+        "key_2",
+        "key_0",
+        "key_1",
+        "key_2",
+        "key_0",
+        "key_1",
+        "key_2",
+        "key_0",
+        "key_1",
+        "key_2",
+        "key_0",
+        "key_1",
+        "key_2",
+        "key_0",
+        "key_1",
+        "key_2",
+        "key_0",
+        "key_1",
+        "key_2",
+        "key_0",
+        "key_1",
+        "key_2",
+        "key_0",
+        "key_1",
+        "key_2",
+        "key_0",
+        "key_1",
+        "key_2",
+        "key_0",
+        "key_1",
+        "key_2",
+        "key_0",
+        "key_1",
+        "key_2",
+        "key_0",
+        "key_1",
+        "key_2",
+        "key_0",
+        "key_1",
+        "key_2",
+        "key_0",
+        "key_1",
+        "key_2",
+        "key_0",
+        "key_1",
+        "key_2",
+        "key_0",
+        "key_1",
+        "key_2",
+        "key_0",
+        "key_1",
+        "key_2",
+        "key_0",
+        "key_1",
+        "key_2",
+        "key_0",
+        "key_1",
+        "key_2",
+        "key_0",
+        "key_1",
+        "key_2",
+        "key_0",
+        "key_1",
+        "key_2",
+        "key_0",
+        "key_1",
+        "key_2",
+        "key_0",
+        "key_1",
+        "key_2",
+        "key_0",
+        "key_1",
+        "key_2",
+        "key_0",
+        "key_1",
+        "key_2",
+        "key_0",
+        "key_1",
+        "key_2",
+        "key_0",
+        "key_1",
+        "key_2",
+        "key_0",
+        "key_1",
+        "key_2",
+        "key_0",
+        "key_1",
+        "key_2",
+        "key_0",
+        "key_1",
+        "key_2",
+        "key_0",
+        "key_1",
+        "key_2",
+        "key_0",
+        "key_1",
+        "key_2",
+        "key_0",
+        "key_1",
+        "key_2",
+        "key_0",
+        "key_1",
+        "key_2",
+        "key_0",
+        "key_1",
+        "key_2",
+        "key_0",
+        "key_1",
+        "key_2",
+        "key_0",
+        "key_1",
+        "key_2",
+        "key_0",
+        "key_1",
+        "key_2",
+        "key_0",
+        "key_1",
+        "key_2",
+        "key_0",
+        "key_1",
+        "key_2",
+        "key_0",
+        "key_1",
+        "key_2",
+        "key_0",
+        "key_1",
+        "key_2",
+        "key_0",
+        "key_1",
+        "key_2",
+        "key_0",
+        "key_1",
+        "key_2",
+        "key_0",
+        "key_1",
+        "key_2",
+        "key_0",
+        "key_1",
+        "key_2",
+        "key_0",
+        "key_1",
+        "key_2",
+        "key_0",
+        "key_1",
+        "key_2",
+        "key_0",
+        "key_1",
+        "key_2",
+        "key_0",
+        "key_1",
+        "key_2",
+        "key_0",
+        "key_1",
+        "key_2",
+        "key_0",
+        "key_1",
+        "key_2",
+        "key_0",
+        "key_1",
+        "key_2",
+        "key_0",
+        "key_1",
+        "key_2",
+        "key_0",
+        "key_1",
+        "key_2",
+        "key_0",
+        "key_1",
+        "key_2",
+        "key_0",
+        "key_1",
+        "key_2",
+        "key_0",
+        "key_1",
+        "key_2",
+        "key_0",
+        "key_1",
+        "key_2",
+        "key_0",
+        "key_1",
+        "key_2",
+        "key_0",
+        "key_1",
+        "key_2",
+        "key_0",
+        "key_1",
+        "key_2",
+        "key_0",
+        "key_1",
+        "key_2",
+        "key_0",
+        "key_1",
+        "key_2",
+        "key_0",
+        "key_1",
+        "key_2",
+        "key_0",
+        "key_1",
+        "key_2",
+        "key_0",
+        "key_1",
+        "key_2",
+        "key_0",
+        "key_1",
+        "key_2",
+        "key_0",
+        "key_1",
+        "key_2",
+        "key_0",
+        "key_1",
+        "key_2",
+        "key_0",
+        "key_1",
+        "key_2",
+        "key_0",
+        "key_1",
+        "key_2",
+        "key_0",
+        "key_1",
+        "key_2",
+        "key_0",
+        "key_1",
+        "key_2",
+        "key_0",
+        "key_1",
+        "key_2",
+        "key_0",
+        "key_1",
+        "key_2",
+        "key_0",
+        "key_1",
+        "key_2",
+        "key_0",
+        "key_1",
+        "key_2",
+        "key_0",
+        "key_1",
+        "key_2",
+        "key_0",
+        "key_1",
+        "key_2",
+        "key_0",
+        "key_1",
+        "key_2",
+        "key_0",
+        "key_1",
+        "key_2",
+        "key_0",
+        "key_1",
+        "key_2",
+        "key_0",
+        "key_1",
+        "key_2",
+        "key_0",
+        "key_1",
+        "key_2",
+        "key_0",
+        "key_1",
+        "key_2",
+        "key_0",
+        "key_1",
+        "key_2",
+        "key_0",
+        "key_1",
+        "key_2",
+        "key_0",
+        "key_1",
+        "key_2",
+        "key_0",
+        "key_1",
+        "key_2",
+        "key_0",
+        "key_1",
+        "key_2",
+        "key_0",
+        "key_1",
+        "key_2",
+        "key_0",
+        "key_1",
+        "key_2",
+        "key_0",
+        "key_1",
+        "key_2",
+        "key_0",
+        "key_1",
+        "key_2",
+        "key_0",
+        "key_1",
+        "key_2",
+        "key_0",
+        "key_1",
+        "key_2",
+        "key_0",
+        "key_1",
+        "key_2",
+        "key_0",
+        "key_1",
+        "key_2",
+        "key_0",
+        "key_1",
+        "key_2",
+        "key_0",
+        "key_1",
+        "key_2",
+        "key_0",
+        "key_1",
+        "key_2",
+        "key_0",
+        "key_1",
+        "key_2",
+        "key_0",
+        "key_1",
+        "key_2",
+        "key_0",
+        "key_1",
+        "key_2",
+        "key_0",
+        "key_1",
+        "key_2",
+        "key_0",
+        "key_1",
+        "key_2",
+        "key_0",
+        "key_1",
+        "key_2",
+        "key_0",
+        "key_1",
+        "key_2",
+        "key_0",
+        "key_1",
+        "key_2",
+        "key_0",
+        "key_1",
+        "key_2",
+        "key_0",
+        "key_1",
+        "key_2",
+        "key_0",
+        "key_1",
+        "key_2",
+        "key_0",
+        "key_1",
+        "key_2",
+        "key_0",
+        "key_1",
+        "key_2",
+        "key_0",
+        "key_1",
+        "key_2",
+        "key_0",
+        "key_1",
+        "key_2",
+        "key_0",
+        "key_1",
+        "key_2",
+        "key_0",
+        "key_1",
+        "key_2",
+        "key_0",
+        "key_1",
+        "key_2",
+        "key_0",
+        "key_1",
+        "key_2",
+        "key_0",
+        "key_1",
+        "key_2"
+      ]
+    ]
+  ],
+  "metrics": {
+    "feasible": true,
+    "pattern_count": 1,
+    "pattern_changes": 0,
+    "mean_pattern_run_events": 1122,
+    "median_pattern_run_events": 1122,
+    "longest_pattern_run_events": 1122,
+    "minimum_reuse_ms": 83.31945279429576,
+    "mean_reuse_ms": 160.40296890833727,
+    "reuse_violations": 0,
+    "states_evaluated": 33
+  },
+  "pattern_change_indices": [],
+  "patterns": [
+    {
+      "start_event_index": 0,
+      "end_event_index": 1121,
+      "width": 3,
+      "cycle": [
+        "key_0",
+        "key_1",
+        "key_2"
+      ],
+      "event_count": 1122
+    }
+  ],
+  "events": [
+    {
+      "event_index": 0,
+      "due_s": 3.999333624280351,
+      "chord_size": 1,
+      "keys": [
+        "key_0"
+      ]
+    },
+    {
+      "event_index": 1,
+      "due_s": 4.020163490257674,
+      "chord_size": 1,
+      "keys": [
+        "key_1"
+      ]
+    },
+    {
+      "event_index": 2,
+      "due_s": 4.249291971548253,
+      "chord_size": 1,
+      "keys": [
+        "key_2"
+      ]
+    },
+    {
+      "event_index": 3,
+      "due_s": 4.270121837525576,
+      "chord_size": 1,
+      "keys": [
+        "key_0"
+      ]
+    },
+    {
+      "event_index": 4,
+      "due_s": 4.499250318816155,
+      "chord_size": 1,
+      "keys": [
+        "key_1"
+      ]
+    },
+    {
+      "event_index": 5,
+      "due_s": 4.5200801847934775,
+      "chord_size": 1,
+      "keys": [
+        "key_2"
+      ]
+    },
+    {
+      "event_index": 6,
+      "due_s": 4.749208666084057,
+      "chord_size": 1,
+      "keys": [
+        "key_0"
+      ]
+    },
+    {
+      "event_index": 7,
+      "due_s": 4.770038532061379,
+      "chord_size": 1,
+      "keys": [
+        "key_1"
+      ]
+    },
+    {
+      "event_index": 8,
+      "due_s": 4.999167013351959,
+      "chord_size": 1,
+      "keys": [
+        "key_2"
+      ]
+    },
+    {
+      "event_index": 9,
+      "due_s": 5.019996879329281,
+      "chord_size": 1,
+      "keys": [
+        "key_0"
+      ]
+    },
+    {
+      "event_index": 10,
+      "due_s": 5.2491253606198605,
+      "chord_size": 1,
+      "keys": [
+        "key_1"
+      ]
+    },
+    {
+      "event_index": 11,
+      "due_s": 5.269955226597183,
+      "chord_size": 1,
+      "keys": [
+        "key_2"
+      ]
+    },
+    {
+      "event_index": 12,
+      "due_s": 5.499083707887762,
+      "chord_size": 1,
+      "keys": [
+        "key_0"
+      ]
+    },
+    {
+      "event_index": 13,
+      "due_s": 5.519913573865085,
+      "chord_size": 1,
+      "keys": [
+        "key_1"
+      ]
+    },
+    {
+      "event_index": 14,
+      "due_s": 5.749042055155664,
+      "chord_size": 1,
+      "keys": [
+        "key_2"
+      ]
+    },
+    {
+      "event_index": 15,
+      "due_s": 5.769871921132987,
+      "chord_size": 1,
+      "keys": [
+        "key_0"
+      ]
+    },
+    {
+      "event_index": 16,
+      "due_s": 5.999000402423566,
+      "chord_size": 1,
+      "keys": [
+        "key_1"
+      ]
+    },
+    {
+      "event_index": 17,
+      "due_s": 6.019830268400889,
+      "chord_size": 1,
+      "keys": [
+        "key_2"
+      ]
+    },
+    {
+      "event_index": 18,
+      "due_s": 6.248958749691468,
+      "chord_size": 1,
+      "keys": [
+        "key_0"
+      ]
+    },
+    {
+      "event_index": 19,
+      "due_s": 6.269788615668791,
+      "chord_size": 1,
+      "keys": [
+        "key_1"
+      ]
+    },
+    {
+      "event_index": 20,
+      "due_s": 6.49891709695937,
+      "chord_size": 1,
+      "keys": [
+        "key_2"
+      ]
+    },
+    {
+      "event_index": 21,
+      "due_s": 6.519746962936693,
+      "chord_size": 1,
+      "keys": [
+        "key_0"
+      ]
+    },
+    {
+      "event_index": 22,
+      "due_s": 6.748875444227272,
+      "chord_size": 1,
+      "keys": [
+        "key_1"
+      ]
+    },
+    {
+      "event_index": 23,
+      "due_s": 6.7697053102045945,
+      "chord_size": 1,
+      "keys": [
+        "key_2"
+      ]
+    },
+    {
+      "event_index": 24,
+      "due_s": 6.998833791495174,
+      "chord_size": 1,
+      "keys": [
+        "key_0"
+      ]
+    },
+    {
+      "event_index": 25,
+      "due_s": 7.019663657472496,
+      "chord_size": 1,
+      "keys": [
+        "key_1"
+      ]
+    },
+    {
+      "event_index": 26,
+      "due_s": 7.248792138763076,
+      "chord_size": 1,
+      "keys": [
+        "key_2"
+      ]
+    },
+    {
+      "event_index": 27,
+      "due_s": 7.269622004740398,
+      "chord_size": 1,
+      "keys": [
+        "key_0"
+      ]
+    },
+    {
+      "event_index": 28,
+      "due_s": 7.4987504860309775,
+      "chord_size": 1,
+      "keys": [
+        "key_1"
+      ]
+    },
+    {
+      "event_index": 29,
+      "due_s": 7.5195803520083,
+      "chord_size": 1,
+      "keys": [
+        "key_2"
+      ]
+    },
+    {
+      "event_index": 30,
+      "due_s": 7.748708833298879,
+      "chord_size": 1,
+      "keys": [
+        "key_0"
+      ]
+    },
+    {
+      "event_index": 31,
+      "due_s": 7.769538699276202,
+      "chord_size": 1,
+      "keys": [
+        "key_1"
+      ]
+    },
+    {
+      "event_index": 32,
+      "due_s": 7.998667180566781,
+      "chord_size": 1,
+      "keys": [
+        "key_2"
+      ]
+    },
+    {
+      "event_index": 33,
+      "due_s": 8.019497046544103,
+      "chord_size": 1,
+      "keys": [
+        "key_0"
+      ]
+    },
+    {
+      "event_index": 34,
+      "due_s": 8.12364635568273,
+      "chord_size": 1,
+      "keys": [
+        "key_1"
+      ]
+    },
+    {
+      "event_index": 35,
+      "due_s": 8.248625529316682,
+      "chord_size": 1,
+      "keys": [
+        "key_2"
+      ]
+    },
+    {
+      "event_index": 36,
+      "due_s": 8.269455395294004,
+      "chord_size": 1,
+      "keys": [
+        "key_0"
+      ]
+    },
+    {
+      "event_index": 37,
+      "due_s": 8.373604704432632,
+      "chord_size": 1,
+      "keys": [
+        "key_1"
+      ]
+    },
+    {
+      "event_index": 38,
+      "due_s": 8.498583878066583,
+      "chord_size": 1,
+      "keys": [
+        "key_2"
+      ]
+    },
+    {
+      "event_index": 39,
+      "due_s": 8.519413744043906,
+      "chord_size": 1,
+      "keys": [
+        "key_0"
+      ]
+    },
+    {
+      "event_index": 40,
+      "due_s": 8.623563053182533,
+      "chord_size": 1,
+      "keys": [
+        "key_1"
+      ]
+    },
+    {
+      "event_index": 41,
+      "due_s": 8.748542226816484,
+      "chord_size": 1,
+      "keys": [
+        "key_2"
+      ]
+    },
+    {
+      "event_index": 42,
+      "due_s": 8.769372092793807,
+      "chord_size": 1,
+      "keys": [
+        "key_0"
+      ]
+    },
+    {
+      "event_index": 43,
+      "due_s": 8.873521401932434,
+      "chord_size": 1,
+      "keys": [
+        "key_1"
+      ]
+    },
+    {
+      "event_index": 44,
+      "due_s": 8.998500575566386,
+      "chord_size": 1,
+      "keys": [
+        "key_2"
+      ]
+    },
+    {
+      "event_index": 45,
+      "due_s": 9.019330441543708,
+      "chord_size": 1,
+      "keys": [
+        "key_0"
+      ]
+    },
+    {
+      "event_index": 46,
+      "due_s": 9.123479750682336,
+      "chord_size": 1,
+      "keys": [
+        "key_1"
+      ]
+    },
+    {
+      "event_index": 47,
+      "due_s": 9.248458924316287,
+      "chord_size": 1,
+      "keys": [
+        "key_2"
+      ]
+    },
+    {
+      "event_index": 48,
+      "due_s": 9.26928879029361,
+      "chord_size": 1,
+      "keys": [
+        "key_0"
+      ]
+    },
+    {
+      "event_index": 49,
+      "due_s": 9.373438099432237,
+      "chord_size": 1,
+      "keys": [
+        "key_1"
+      ]
+    },
+    {
+      "event_index": 50,
+      "due_s": 9.498417273066188,
+      "chord_size": 1,
+      "keys": [
+        "key_2"
+      ]
+    },
+    {
+      "event_index": 51,
+      "due_s": 9.519247139043511,
+      "chord_size": 1,
+      "keys": [
+        "key_0"
+      ]
+    },
+    {
+      "event_index": 52,
+      "due_s": 9.623396448182138,
+      "chord_size": 1,
+      "keys": [
+        "key_1"
+      ]
+    },
+    {
+      "event_index": 53,
+      "due_s": 9.74837562181609,
+      "chord_size": 1,
+      "keys": [
+        "key_2"
+      ]
+    },
+    {
+      "event_index": 54,
+      "due_s": 9.769205487793412,
+      "chord_size": 1,
+      "keys": [
+        "key_0"
+      ]
+    },
+    {
+      "event_index": 55,
+      "due_s": 9.87335479693204,
+      "chord_size": 1,
+      "keys": [
+        "key_1"
+      ]
+    },
+    {
+      "event_index": 56,
+      "due_s": 9.99833397056599,
+      "chord_size": 1,
+      "keys": [
+        "key_2"
+      ]
+    },
+    {
+      "event_index": 57,
+      "due_s": 10.019163836543314,
+      "chord_size": 1,
+      "keys": [
+        "key_0"
+      ]
+    },
+    {
+      "event_index": 58,
+      "due_s": 10.12331314568194,
+      "chord_size": 1,
+      "keys": [
+        "key_1"
+      ]
+    },
+    {
+      "event_index": 59,
+      "due_s": 10.248292319315892,
+      "chord_size": 1,
+      "keys": [
+        "key_2"
+      ]
+    },
+    {
+      "event_index": 60,
+      "due_s": 10.269122185293215,
+      "chord_size": 1,
+      "keys": [
+        "key_0"
+      ]
+    },
+    {
+      "event_index": 61,
+      "due_s": 10.373271494431842,
+      "chord_size": 1,
+      "keys": [
+        "key_1"
+      ]
+    },
+    {
+      "event_index": 62,
+      "due_s": 10.498250668065793,
+      "chord_size": 1,
+      "keys": [
+        "key_2"
+      ]
+    },
+    {
+      "event_index": 63,
+      "due_s": 10.519080534043116,
+      "chord_size": 1,
+      "keys": [
+        "key_0"
+      ]
+    },
+    {
+      "event_index": 64,
+      "due_s": 10.623229843181743,
+      "chord_size": 1,
+      "keys": [
+        "key_1"
+      ]
+    },
+    {
+      "event_index": 65,
+      "due_s": 10.748209016815695,
+      "chord_size": 1,
+      "keys": [
+        "key_2"
+      ]
+    },
+    {
+      "event_index": 66,
+      "due_s": 10.769038882793017,
+      "chord_size": 1,
+      "keys": [
+        "key_0"
+      ]
+    },
+    {
+      "event_index": 67,
+      "due_s": 10.873188191931645,
+      "chord_size": 1,
+      "keys": [
+        "key_1"
+      ]
+    },
+    {
+      "event_index": 68,
+      "due_s": 10.998167365565596,
+      "chord_size": 1,
+      "keys": [
+        "key_2"
+      ]
+    },
+    {
+      "event_index": 69,
+      "due_s": 11.018997231542919,
+      "chord_size": 1,
+      "keys": [
+        "key_0"
+      ]
+    },
+    {
+      "event_index": 70,
+      "due_s": 11.123146540681546,
+      "chord_size": 1,
+      "keys": [
+        "key_1"
+      ]
+    },
+    {
+      "event_index": 71,
+      "due_s": 11.248125714315497,
+      "chord_size": 1,
+      "keys": [
+        "key_2"
+      ]
+    },
+    {
+      "event_index": 72,
+      "due_s": 11.26895558029282,
+      "chord_size": 1,
+      "keys": [
+        "key_0"
+      ]
+    },
+    {
+      "event_index": 73,
+      "due_s": 11.373104889431447,
+      "chord_size": 1,
+      "keys": [
+        "key_1"
+      ]
+    },
+    {
+      "event_index": 74,
+      "due_s": 11.498084063065399,
+      "chord_size": 1,
+      "keys": [
+        "key_2"
+      ]
+    },
+    {
+      "event_index": 75,
+      "due_s": 11.518913929042721,
+      "chord_size": 1,
+      "keys": [
+        "key_0"
+      ]
+    },
+    {
+      "event_index": 76,
+      "due_s": 11.623063238181349,
+      "chord_size": 1,
+      "keys": [
+        "key_1"
+      ]
+    },
+    {
+      "event_index": 77,
+      "due_s": 11.7480424118153,
+      "chord_size": 1,
+      "keys": [
+        "key_2"
+      ]
+    },
+    {
+      "event_index": 78,
+      "due_s": 11.768872277792623,
+      "chord_size": 1,
+      "keys": [
+        "key_0"
+      ]
+    },
+    {
+      "event_index": 79,
+      "due_s": 11.87302158693125,
+      "chord_size": 1,
+      "keys": [
+        "key_1"
+      ]
+    },
+    {
+      "event_index": 80,
+      "due_s": 11.998000760565201,
+      "chord_size": 1,
+      "keys": [
+        "key_2"
+      ]
+    },
+    {
+      "event_index": 81,
+      "due_s": 12.018830626542524,
+      "chord_size": 1,
+      "keys": [
+        "key_0"
+      ]
+    },
+    {
+      "event_index": 82,
+      "due_s": 12.060490354051172,
+      "chord_size": 1,
+      "keys": [
+        "key_1"
+      ]
+    },
+    {
+      "event_index": 83,
+      "due_s": 12.122979934199153,
+      "chord_size": 1,
+      "keys": [
+        "key_2"
+      ]
+    },
+    {
+      "event_index": 84,
+      "due_s": 12.185469514347133,
+      "chord_size": 1,
+      "keys": [
+        "key_0"
+      ]
+    },
+    {
+      "event_index": 85,
+      "due_s": 12.247959103387107,
+      "chord_size": 1,
+      "keys": [
+        "key_1"
+      ]
+    },
+    {
+      "event_index": 86,
+      "due_s": 12.26878896936443,
+      "chord_size": 1,
+      "keys": [
+        "key_2"
+      ]
+    },
+    {
+      "event_index": 87,
+      "due_s": 12.310448687981085,
+      "chord_size": 1,
+      "keys": [
+        "key_0"
+      ]
+    },
+    {
+      "event_index": 88,
+      "due_s": 12.372938277021058,
+      "chord_size": 1,
+      "keys": [
+        "key_1"
+      ]
+    },
+    {
+      "event_index": 89,
+      "due_s": 12.435427866061032,
+      "chord_size": 1,
+      "keys": [
+        "key_2"
+      ]
+    },
+    {
+      "event_index": 90,
+      "due_s": 12.497917446209012,
+      "chord_size": 1,
+      "keys": [
+        "key_0"
+      ]
+    },
+    {
+      "event_index": 91,
+      "due_s": 12.518747312186335,
+      "chord_size": 1,
+      "keys": [
+        "key_1"
+      ]
+    },
+    {
+      "event_index": 92,
+      "due_s": 12.560407039694983,
+      "chord_size": 1,
+      "keys": [
+        "key_2"
+      ]
+    },
+    {
+      "event_index": 93,
+      "due_s": 12.622896619842964,
+      "chord_size": 1,
+      "keys": [
+        "key_0"
+      ]
+    },
+    {
+      "event_index": 94,
+      "due_s": 12.685386199990944,
+      "chord_size": 1,
+      "keys": [
+        "key_1"
+      ]
+    },
+    {
+      "event_index": 95,
+      "due_s": 12.747875789030918,
+      "chord_size": 1,
+      "keys": [
+        "key_2"
+      ]
+    },
+    {
+      "event_index": 96,
+      "due_s": 12.76870565500824,
+      "chord_size": 1,
+      "keys": [
+        "key_0"
+      ]
+    },
+    {
+      "event_index": 97,
+      "due_s": 12.810365373624895,
+      "chord_size": 1,
+      "keys": [
+        "key_1"
+      ]
+    },
+    {
+      "event_index": 98,
+      "due_s": 12.872854962664869,
+      "chord_size": 1,
+      "keys": [
+        "key_2"
+      ]
+    },
+    {
+      "event_index": 99,
+      "due_s": 12.935344551704842,
+      "chord_size": 1,
+      "keys": [
+        "key_0"
+      ]
+    },
+    {
+      "event_index": 100,
+      "due_s": 12.997834131852823,
+      "chord_size": 1,
+      "keys": [
+        "key_1"
+      ]
+    },
+    {
+      "event_index": 101,
+      "due_s": 13.018663997830146,
+      "chord_size": 1,
+      "keys": [
+        "key_2"
+      ]
+    },
+    {
+      "event_index": 102,
+      "due_s": 13.060323725338794,
+      "chord_size": 1,
+      "keys": [
+        "key_0"
+      ]
+    },
+    {
+      "event_index": 103,
+      "due_s": 13.122813305486774,
+      "chord_size": 1,
+      "keys": [
+        "key_1"
+      ]
+    },
+    {
+      "event_index": 104,
+      "due_s": 13.185302885634755,
+      "chord_size": 1,
+      "keys": [
+        "key_2"
+      ]
+    },
+    {
+      "event_index": 105,
+      "due_s": 13.247792474674728,
+      "chord_size": 1,
+      "keys": [
+        "key_0"
+      ]
+    },
+    {
+      "event_index": 106,
+      "due_s": 13.268622340652051,
+      "chord_size": 1,
+      "keys": [
+        "key_1"
+      ]
+    },
+    {
+      "event_index": 107,
+      "due_s": 13.310282059268706,
+      "chord_size": 1,
+      "keys": [
+        "key_2"
+      ]
+    },
+    {
+      "event_index": 108,
+      "due_s": 13.37277164830868,
+      "chord_size": 1,
+      "keys": [
+        "key_0"
+      ]
+    },
+    {
+      "event_index": 109,
+      "due_s": 13.435261237348653,
+      "chord_size": 1,
+      "keys": [
+        "key_1"
+      ]
+    },
+    {
+      "event_index": 110,
+      "due_s": 13.497750817496634,
+      "chord_size": 1,
+      "keys": [
+        "key_2"
+      ]
+    },
+    {
+      "event_index": 111,
+      "due_s": 13.518580683473957,
+      "chord_size": 1,
+      "keys": [
+        "key_0"
+      ]
+    },
+    {
+      "event_index": 112,
+      "due_s": 13.560240410982605,
+      "chord_size": 1,
+      "keys": [
+        "key_1"
+      ]
+    },
+    {
+      "event_index": 113,
+      "due_s": 13.622729991130585,
+      "chord_size": 1,
+      "keys": [
+        "key_2"
+      ]
+    },
+    {
+      "event_index": 114,
+      "due_s": 13.685219571278566,
+      "chord_size": 1,
+      "keys": [
+        "key_0"
+      ]
+    },
+    {
+      "event_index": 115,
+      "due_s": 13.74770916031854,
+      "chord_size": 1,
+      "keys": [
+        "key_1"
+      ]
+    },
+    {
+      "event_index": 116,
+      "due_s": 13.768539026295862,
+      "chord_size": 1,
+      "keys": [
+        "key_2"
+      ]
+    },
+    {
+      "event_index": 117,
+      "due_s": 13.810198744912517,
+      "chord_size": 1,
+      "keys": [
+        "key_0"
+      ]
+    },
+    {
+      "event_index": 118,
+      "due_s": 13.87268833395249,
+      "chord_size": 1,
+      "keys": [
+        "key_1"
+      ]
+    },
+    {
+      "event_index": 119,
+      "due_s": 13.935177922992464,
+      "chord_size": 1,
+      "keys": [
+        "key_2"
+      ]
+    },
+    {
+      "event_index": 120,
+      "due_s": 13.997667503140445,
+      "chord_size": 1,
+      "keys": [
+        "key_0"
+      ]
+    },
+    {
+      "event_index": 121,
+      "due_s": 14.018497369117767,
+      "chord_size": 1,
+      "keys": [
+        "key_1"
+      ]
+    },
+    {
+      "event_index": 122,
+      "due_s": 14.060157096626416,
+      "chord_size": 1,
+      "keys": [
+        "key_2"
+      ]
+    },
+    {
+      "event_index": 123,
+      "due_s": 14.122646676774396,
+      "chord_size": 1,
+      "keys": [
+        "key_0"
+      ]
+    },
+    {
+      "event_index": 124,
+      "due_s": 14.185136256922377,
+      "chord_size": 1,
+      "keys": [
+        "key_1"
+      ]
+    },
+    {
+      "event_index": 125,
+      "due_s": 14.24762584596235,
+      "chord_size": 1,
+      "keys": [
+        "key_2"
+      ]
+    },
+    {
+      "event_index": 126,
+      "due_s": 14.268455711939673,
+      "chord_size": 1,
+      "keys": [
+        "key_0"
+      ]
+    },
+    {
+      "event_index": 127,
+      "due_s": 14.310115430556328,
+      "chord_size": 1,
+      "keys": [
+        "key_1"
+      ]
+    },
+    {
+      "event_index": 128,
+      "due_s": 14.372605019596302,
+      "chord_size": 1,
+      "keys": [
+        "key_2"
+      ]
+    },
+    {
+      "event_index": 129,
+      "due_s": 14.435094608636275,
+      "chord_size": 1,
+      "keys": [
+        "key_0"
+      ]
+    },
+    {
+      "event_index": 130,
+      "due_s": 14.497584188784256,
+      "chord_size": 1,
+      "keys": [
+        "key_1"
+      ]
+    },
+    {
+      "event_index": 131,
+      "due_s": 14.518414054761578,
+      "chord_size": 1,
+      "keys": [
+        "key_2"
+      ]
+    },
+    {
+      "event_index": 132,
+      "due_s": 14.560073782270226,
+      "chord_size": 1,
+      "keys": [
+        "key_0"
+      ]
+    },
+    {
+      "event_index": 133,
+      "due_s": 14.622563362418207,
+      "chord_size": 1,
+      "keys": [
+        "key_1"
+      ]
+    },
+    {
+      "event_index": 134,
+      "due_s": 14.685052942566188,
+      "chord_size": 1,
+      "keys": [
+        "key_2"
+      ]
+    },
+    {
+      "event_index": 135,
+      "due_s": 14.747542531606161,
+      "chord_size": 1,
+      "keys": [
+        "key_0"
+      ]
+    },
+    {
+      "event_index": 136,
+      "due_s": 14.768372397583484,
+      "chord_size": 1,
+      "keys": [
+        "key_1"
+      ]
+    },
+    {
+      "event_index": 137,
+      "due_s": 14.810032116200139,
+      "chord_size": 1,
+      "keys": [
+        "key_2"
+      ]
+    },
+    {
+      "event_index": 138,
+      "due_s": 14.872521705240112,
+      "chord_size": 1,
+      "keys": [
+        "key_0"
+      ]
+    },
+    {
+      "event_index": 139,
+      "due_s": 14.935011294280086,
+      "chord_size": 1,
+      "keys": [
+        "key_1"
+      ]
+    },
+    {
+      "event_index": 140,
+      "due_s": 14.997500874428066,
+      "chord_size": 1,
+      "keys": [
+        "key_2"
+      ]
+    },
+    {
+      "event_index": 141,
+      "due_s": 15.01833074040539,
+      "chord_size": 1,
+      "keys": [
+        "key_0"
+      ]
+    },
+    {
+      "event_index": 142,
+      "due_s": 15.059990467914037,
+      "chord_size": 1,
+      "keys": [
+        "key_1"
+      ]
+    },
+    {
+      "event_index": 143,
+      "due_s": 15.122480048062018,
+      "chord_size": 1,
+      "keys": [
+        "key_2"
+      ]
+    },
+    {
+      "event_index": 144,
+      "due_s": 15.184969628209998,
+      "chord_size": 1,
+      "keys": [
+        "key_0"
+      ]
+    },
+    {
+      "event_index": 145,
+      "due_s": 15.247459217249972,
+      "chord_size": 1,
+      "keys": [
+        "key_1"
+      ]
+    },
+    {
+      "event_index": 146,
+      "due_s": 15.268289083227295,
+      "chord_size": 1,
+      "keys": [
+        "key_2"
+      ]
+    },
+    {
+      "event_index": 147,
+      "due_s": 15.30994880184395,
+      "chord_size": 1,
+      "keys": [
+        "key_0"
+      ]
+    },
+    {
+      "event_index": 148,
+      "due_s": 15.372438390883923,
+      "chord_size": 1,
+      "keys": [
+        "key_1"
+      ]
+    },
+    {
+      "event_index": 149,
+      "due_s": 15.434927979923897,
+      "chord_size": 1,
+      "keys": [
+        "key_2"
+      ]
+    },
+    {
+      "event_index": 150,
+      "due_s": 15.497417560071877,
+      "chord_size": 1,
+      "keys": [
+        "key_0"
+      ]
+    },
+    {
+      "event_index": 151,
+      "due_s": 15.5182474260492,
+      "chord_size": 1,
+      "keys": [
+        "key_1"
+      ]
+    },
+    {
+      "event_index": 152,
+      "due_s": 15.559907153557848,
+      "chord_size": 1,
+      "keys": [
+        "key_2"
+      ]
+    },
+    {
+      "event_index": 153,
+      "due_s": 15.622396733705829,
+      "chord_size": 1,
+      "keys": [
+        "key_0"
+      ]
+    },
+    {
+      "event_index": 154,
+      "due_s": 15.68488631385381,
+      "chord_size": 1,
+      "keys": [
+        "key_1"
+      ]
+    },
+    {
+      "event_index": 155,
+      "due_s": 15.747375902893783,
+      "chord_size": 1,
+      "keys": [
+        "key_2"
+      ]
+    },
+    {
+      "event_index": 156,
+      "due_s": 15.768205768871105,
+      "chord_size": 1,
+      "keys": [
+        "key_0"
+      ]
+    },
+    {
+      "event_index": 157,
+      "due_s": 15.80986548748776,
+      "chord_size": 1,
+      "keys": [
+        "key_1"
+      ]
+    },
+    {
+      "event_index": 158,
+      "due_s": 15.872355076527734,
+      "chord_size": 1,
+      "keys": [
+        "key_2"
+      ]
+    },
+    {
+      "event_index": 159,
+      "due_s": 15.934844665567708,
+      "chord_size": 1,
+      "keys": [
+        "key_0"
+      ]
+    },
+    {
+      "event_index": 160,
+      "due_s": 15.997334245715688,
+      "chord_size": 1,
+      "keys": [
+        "key_1"
+      ]
+    },
+    {
+      "event_index": 161,
+      "due_s": 16.028579039124175,
+      "chord_size": 1,
+      "keys": [
+        "key_2"
+      ]
+    },
+    {
+      "event_index": 162,
+      "due_s": 16.05982383253266,
+      "chord_size": 1,
+      "keys": [
+        "key_0"
+      ]
+    },
+    {
+      "event_index": 163,
+      "due_s": 16.091068625941148,
+      "chord_size": 1,
+      "keys": [
+        "key_1"
+      ]
+    },
+    {
+      "event_index": 164,
+      "due_s": 16.122313419349634,
+      "chord_size": 1,
+      "keys": [
+        "key_2"
+      ]
+    },
+    {
+      "event_index": 165,
+      "due_s": 16.15355821275812,
+      "chord_size": 1,
+      "keys": [
+        "key_0"
+      ]
+    },
+    {
+      "event_index": 166,
+      "due_s": 16.184803006166607,
+      "chord_size": 1,
+      "keys": [
+        "key_1"
+      ]
+    },
+    {
+      "event_index": 167,
+      "due_s": 16.216047799575094,
+      "chord_size": 1,
+      "keys": [
+        "key_2"
+      ]
+    },
+    {
+      "event_index": 168,
+      "due_s": 16.24729259298358,
+      "chord_size": 1,
+      "keys": [
+        "key_0"
+      ]
+    },
+    {
+      "event_index": 169,
+      "due_s": 16.278537386392067,
+      "chord_size": 1,
+      "keys": [
+        "key_1"
+      ]
+    },
+    {
+      "event_index": 170,
+      "due_s": 16.309782179800553,
+      "chord_size": 1,
+      "keys": [
+        "key_2"
+      ]
+    },
+    {
+      "event_index": 171,
+      "due_s": 16.34102697320904,
+      "chord_size": 1,
+      "keys": [
+        "key_0"
+      ]
+    },
+    {
+      "event_index": 172,
+      "due_s": 16.372271766617526,
+      "chord_size": 1,
+      "keys": [
+        "key_1"
+      ]
+    },
+    {
+      "event_index": 173,
+      "due_s": 16.403516560026013,
+      "chord_size": 1,
+      "keys": [
+        "key_2"
+      ]
+    },
+    {
+      "event_index": 174,
+      "due_s": 16.4347613534345,
+      "chord_size": 1,
+      "keys": [
+        "key_0"
+      ]
+    },
+    {
+      "event_index": 175,
+      "due_s": 16.466006146842986,
+      "chord_size": 1,
+      "keys": [
+        "key_1"
+      ]
+    },
+    {
+      "event_index": 176,
+      "due_s": 16.497250940251472,
+      "chord_size": 1,
+      "keys": [
+        "key_2"
+      ]
+    },
+    {
+      "event_index": 177,
+      "due_s": 16.52849573365996,
+      "chord_size": 1,
+      "keys": [
+        "key_0"
+      ]
+    },
+    {
+      "event_index": 178,
+      "due_s": 16.559740527068445,
+      "chord_size": 1,
+      "keys": [
+        "key_1"
+      ]
+    },
+    {
+      "event_index": 179,
+      "due_s": 16.590985320476932,
+      "chord_size": 1,
+      "keys": [
+        "key_2"
+      ]
+    },
+    {
+      "event_index": 180,
+      "due_s": 16.62223011388542,
+      "chord_size": 1,
+      "keys": [
+        "key_0"
+      ]
+    },
+    {
+      "event_index": 181,
+      "due_s": 16.653474907293905,
+      "chord_size": 1,
+      "keys": [
+        "key_1"
+      ]
+    },
+    {
+      "event_index": 182,
+      "due_s": 16.68471970070239,
+      "chord_size": 1,
+      "keys": [
+        "key_2"
+      ]
+    },
+    {
+      "event_index": 183,
+      "due_s": 16.715964494110878,
+      "chord_size": 1,
+      "keys": [
+        "key_0"
+      ]
+    },
+    {
+      "event_index": 184,
+      "due_s": 16.747209287519365,
+      "chord_size": 1,
+      "keys": [
+        "key_1"
+      ]
+    },
+    {
+      "event_index": 185,
+      "due_s": 16.77845408092785,
+      "chord_size": 1,
+      "keys": [
+        "key_2"
+      ]
+    },
+    {
+      "event_index": 186,
+      "due_s": 16.809698874336338,
+      "chord_size": 1,
+      "keys": [
+        "key_0"
+      ]
+    },
+    {
+      "event_index": 187,
+      "due_s": 16.840943667744824,
+      "chord_size": 1,
+      "keys": [
+        "key_1"
+      ]
+    },
+    {
+      "event_index": 188,
+      "due_s": 16.87218846115331,
+      "chord_size": 1,
+      "keys": [
+        "key_2"
+      ]
+    },
+    {
+      "event_index": 189,
+      "due_s": 16.903433254561797,
+      "chord_size": 1,
+      "keys": [
+        "key_0"
+      ]
+    },
+    {
+      "event_index": 190,
+      "due_s": 16.934678047970284,
+      "chord_size": 1,
+      "keys": [
+        "key_1"
+      ]
+    },
+    {
+      "event_index": 191,
+      "due_s": 16.96592284137877,
+      "chord_size": 1,
+      "keys": [
+        "key_2"
+      ]
+    },
+    {
+      "event_index": 192,
+      "due_s": 16.997167634787257,
+      "chord_size": 1,
+      "keys": [
+        "key_0"
+      ]
+    },
+    {
+      "event_index": 193,
+      "due_s": 17.028412428195743,
+      "chord_size": 1,
+      "keys": [
+        "key_1"
+      ]
+    },
+    {
+      "event_index": 194,
+      "due_s": 17.05965722160423,
+      "chord_size": 1,
+      "keys": [
+        "key_2"
+      ]
+    },
+    {
+      "event_index": 195,
+      "due_s": 17.090902015012716,
+      "chord_size": 1,
+      "keys": [
+        "key_0"
+      ]
+    },
+    {
+      "event_index": 196,
+      "due_s": 17.122146808421203,
+      "chord_size": 1,
+      "keys": [
+        "key_1"
+      ]
+    },
+    {
+      "event_index": 197,
+      "due_s": 17.15339160182969,
+      "chord_size": 1,
+      "keys": [
+        "key_2"
+      ]
+    },
+    {
+      "event_index": 198,
+      "due_s": 17.184636395238176,
+      "chord_size": 1,
+      "keys": [
+        "key_0"
+      ]
+    },
+    {
+      "event_index": 199,
+      "due_s": 17.215881188646662,
+      "chord_size": 1,
+      "keys": [
+        "key_1"
+      ]
+    },
+    {
+      "event_index": 200,
+      "due_s": 17.24712598205515,
+      "chord_size": 1,
+      "keys": [
+        "key_2"
+      ]
+    },
+    {
+      "event_index": 201,
+      "due_s": 17.278370775463635,
+      "chord_size": 1,
+      "keys": [
+        "key_0"
+      ]
+    },
+    {
+      "event_index": 202,
+      "due_s": 17.309615568872122,
+      "chord_size": 1,
+      "keys": [
+        "key_1"
+      ]
+    },
+    {
+      "event_index": 203,
+      "due_s": 17.34086036228061,
+      "chord_size": 1,
+      "keys": [
+        "key_2"
+      ]
+    },
+    {
+      "event_index": 204,
+      "due_s": 17.372105155689095,
+      "chord_size": 1,
+      "keys": [
+        "key_0"
+      ]
+    },
+    {
+      "event_index": 205,
+      "due_s": 17.40334994909758,
+      "chord_size": 1,
+      "keys": [
+        "key_1"
+      ]
+    },
+    {
+      "event_index": 206,
+      "due_s": 17.434594742506068,
+      "chord_size": 1,
+      "keys": [
+        "key_2"
+      ]
+    },
+    {
+      "event_index": 207,
+      "due_s": 17.465839535914554,
+      "chord_size": 1,
+      "keys": [
+        "key_0"
+      ]
+    },
+    {
+      "event_index": 208,
+      "due_s": 17.49708432932304,
+      "chord_size": 1,
+      "keys": [
+        "key_1"
+      ]
+    },
+    {
+      "event_index": 209,
+      "due_s": 17.528329122731527,
+      "chord_size": 1,
+      "keys": [
+        "key_2"
+      ]
+    },
+    {
+      "event_index": 210,
+      "due_s": 17.559573916140014,
+      "chord_size": 1,
+      "keys": [
+        "key_0"
+      ]
+    },
+    {
+      "event_index": 211,
+      "due_s": 17.5908187095485,
+      "chord_size": 1,
+      "keys": [
+        "key_1"
+      ]
+    },
+    {
+      "event_index": 212,
+      "due_s": 17.622063502956987,
+      "chord_size": 1,
+      "keys": [
+        "key_2"
+      ]
+    },
+    {
+      "event_index": 213,
+      "due_s": 17.653308296365473,
+      "chord_size": 1,
+      "keys": [
+        "key_0"
+      ]
+    },
+    {
+      "event_index": 214,
+      "due_s": 17.68455308977396,
+      "chord_size": 1,
+      "keys": [
+        "key_1"
+      ]
+    },
+    {
+      "event_index": 215,
+      "due_s": 17.715797883182447,
+      "chord_size": 1,
+      "keys": [
+        "key_2"
+      ]
+    },
+    {
+      "event_index": 216,
+      "due_s": 17.747042676590933,
+      "chord_size": 1,
+      "keys": [
+        "key_0"
+      ]
+    },
+    {
+      "event_index": 217,
+      "due_s": 17.77828746999942,
+      "chord_size": 1,
+      "keys": [
+        "key_1"
+      ]
+    },
+    {
+      "event_index": 218,
+      "due_s": 17.809532263407906,
+      "chord_size": 1,
+      "keys": [
+        "key_2"
+      ]
+    },
+    {
+      "event_index": 219,
+      "due_s": 17.840777056816393,
+      "chord_size": 1,
+      "keys": [
+        "key_0"
+      ]
+    },
+    {
+      "event_index": 220,
+      "due_s": 17.87202185022488,
+      "chord_size": 1,
+      "keys": [
+        "key_1"
+      ]
+    },
+    {
+      "event_index": 221,
+      "due_s": 17.903266643633366,
+      "chord_size": 1,
+      "keys": [
+        "key_2"
+      ]
+    },
+    {
+      "event_index": 222,
+      "due_s": 17.934511437041852,
+      "chord_size": 1,
+      "keys": [
+        "key_0"
+      ]
+    },
+    {
+      "event_index": 223,
+      "due_s": 17.96575623045034,
+      "chord_size": 1,
+      "keys": [
+        "key_1"
+      ]
+    },
+    {
+      "event_index": 224,
+      "due_s": 17.997001023858825,
+      "chord_size": 1,
+      "keys": [
+        "key_2"
+      ]
+    },
+    {
+      "event_index": 225,
+      "due_s": 18.02824581726731,
+      "chord_size": 1,
+      "keys": [
+        "key_0"
+      ]
+    },
+    {
+      "event_index": 226,
+      "due_s": 18.059490610675798,
+      "chord_size": 1,
+      "keys": [
+        "key_1"
+      ]
+    },
+    {
+      "event_index": 227,
+      "due_s": 18.090735404084285,
+      "chord_size": 1,
+      "keys": [
+        "key_2"
+      ]
+    },
+    {
+      "event_index": 228,
+      "due_s": 18.12198019749277,
+      "chord_size": 1,
+      "keys": [
+        "key_0"
+      ]
+    },
+    {
+      "event_index": 229,
+      "due_s": 18.153224990901258,
+      "chord_size": 1,
+      "keys": [
+        "key_1"
+      ]
+    },
+    {
+      "event_index": 230,
+      "due_s": 18.184469784309744,
+      "chord_size": 1,
+      "keys": [
+        "key_2"
+      ]
+    },
+    {
+      "event_index": 231,
+      "due_s": 18.21571457771823,
+      "chord_size": 1,
+      "keys": [
+        "key_0"
+      ]
+    },
+    {
+      "event_index": 232,
+      "due_s": 18.246959371126717,
+      "chord_size": 1,
+      "keys": [
+        "key_1"
+      ]
+    },
+    {
+      "event_index": 233,
+      "due_s": 18.278204164535204,
+      "chord_size": 1,
+      "keys": [
+        "key_2"
+      ]
+    },
+    {
+      "event_index": 234,
+      "due_s": 18.30944895794369,
+      "chord_size": 1,
+      "keys": [
+        "key_0"
+      ]
+    },
+    {
+      "event_index": 235,
+      "due_s": 18.340693751352177,
+      "chord_size": 1,
+      "keys": [
+        "key_1"
+      ]
+    },
+    {
+      "event_index": 236,
+      "due_s": 18.371938544760663,
+      "chord_size": 1,
+      "keys": [
+        "key_2"
+      ]
+    },
+    {
+      "event_index": 237,
+      "due_s": 18.40318333816915,
+      "chord_size": 1,
+      "keys": [
+        "key_0"
+      ]
+    },
+    {
+      "event_index": 238,
+      "due_s": 18.434428131577636,
+      "chord_size": 1,
+      "keys": [
+        "key_1"
+      ]
+    },
+    {
+      "event_index": 239,
+      "due_s": 18.465672924986123,
+      "chord_size": 1,
+      "keys": [
+        "key_2"
+      ]
+    },
+    {
+      "event_index": 240,
+      "due_s": 18.49691771839461,
+      "chord_size": 1,
+      "keys": [
+        "key_0"
+      ]
+    },
+    {
+      "event_index": 241,
+      "due_s": 18.528162511803096,
+      "chord_size": 1,
+      "keys": [
+        "key_1"
+      ]
+    },
+    {
+      "event_index": 242,
+      "due_s": 18.559407305211582,
+      "chord_size": 1,
+      "keys": [
+        "key_2"
+      ]
+    },
+    {
+      "event_index": 243,
+      "due_s": 18.59065209862007,
+      "chord_size": 1,
+      "keys": [
+        "key_0"
+      ]
+    },
+    {
+      "event_index": 244,
+      "due_s": 18.621896892028555,
+      "chord_size": 1,
+      "keys": [
+        "key_1"
+      ]
+    },
+    {
+      "event_index": 245,
+      "due_s": 18.653141685437042,
+      "chord_size": 1,
+      "keys": [
+        "key_2"
+      ]
+    },
+    {
+      "event_index": 246,
+      "due_s": 18.68438647884553,
+      "chord_size": 1,
+      "keys": [
+        "key_0"
+      ]
+    },
+    {
+      "event_index": 247,
+      "due_s": 18.715631272254015,
+      "chord_size": 1,
+      "keys": [
+        "key_1"
+      ]
+    },
+    {
+      "event_index": 248,
+      "due_s": 18.7468760656625,
+      "chord_size": 1,
+      "keys": [
+        "key_2"
+      ]
+    },
+    {
+      "event_index": 249,
+      "due_s": 18.778120859070988,
+      "chord_size": 1,
+      "keys": [
+        "key_0"
+      ]
+    },
+    {
+      "event_index": 250,
+      "due_s": 18.809365652479475,
+      "chord_size": 1,
+      "keys": [
+        "key_1"
+      ]
+    },
+    {
+      "event_index": 251,
+      "due_s": 18.84061044588796,
+      "chord_size": 1,
+      "keys": [
+        "key_2"
+      ]
+    },
+    {
+      "event_index": 252,
+      "due_s": 18.871855239296448,
+      "chord_size": 1,
+      "keys": [
+        "key_0"
+      ]
+    },
+    {
+      "event_index": 253,
+      "due_s": 18.903100032704934,
+      "chord_size": 1,
+      "keys": [
+        "key_1"
+      ]
+    },
+    {
+      "event_index": 254,
+      "due_s": 18.93434482611342,
+      "chord_size": 1,
+      "keys": [
+        "key_2"
+      ]
+    },
+    {
+      "event_index": 255,
+      "due_s": 18.965589619521907,
+      "chord_size": 1,
+      "keys": [
+        "key_0"
+      ]
+    },
+    {
+      "event_index": 256,
+      "due_s": 18.996834412930394,
+      "chord_size": 1,
+      "keys": [
+        "key_1"
+      ]
+    },
+    {
+      "event_index": 257,
+      "due_s": 19.02807920633888,
+      "chord_size": 1,
+      "keys": [
+        "key_2"
+      ]
+    },
+    {
+      "event_index": 258,
+      "due_s": 19.059323999747367,
+      "chord_size": 1,
+      "keys": [
+        "key_0"
+      ]
+    },
+    {
+      "event_index": 259,
+      "due_s": 19.090568793155853,
+      "chord_size": 1,
+      "keys": [
+        "key_1"
+      ]
+    },
+    {
+      "event_index": 260,
+      "due_s": 19.12181358656434,
+      "chord_size": 1,
+      "keys": [
+        "key_2"
+      ]
+    },
+    {
+      "event_index": 261,
+      "due_s": 19.153058379972826,
+      "chord_size": 1,
+      "keys": [
+        "key_0"
+      ]
+    },
+    {
+      "event_index": 262,
+      "due_s": 19.184303173381313,
+      "chord_size": 1,
+      "keys": [
+        "key_1"
+      ]
+    },
+    {
+      "event_index": 263,
+      "due_s": 19.2155479667898,
+      "chord_size": 1,
+      "keys": [
+        "key_2"
+      ]
+    },
+    {
+      "event_index": 264,
+      "due_s": 19.246792760198286,
+      "chord_size": 1,
+      "keys": [
+        "key_0"
+      ]
+    },
+    {
+      "event_index": 265,
+      "due_s": 19.278037553606772,
+      "chord_size": 1,
+      "keys": [
+        "key_1"
+      ]
+    },
+    {
+      "event_index": 266,
+      "due_s": 19.30928234701526,
+      "chord_size": 1,
+      "keys": [
+        "key_2"
+      ]
+    },
+    {
+      "event_index": 267,
+      "due_s": 19.340527140423745,
+      "chord_size": 1,
+      "keys": [
+        "key_0"
+      ]
+    },
+    {
+      "event_index": 268,
+      "due_s": 19.371771933832232,
+      "chord_size": 1,
+      "keys": [
+        "key_1"
+      ]
+    },
+    {
+      "event_index": 269,
+      "due_s": 19.40301672724072,
+      "chord_size": 1,
+      "keys": [
+        "key_2"
+      ]
+    },
+    {
+      "event_index": 270,
+      "due_s": 19.434261520649205,
+      "chord_size": 1,
+      "keys": [
+        "key_0"
+      ]
+    },
+    {
+      "event_index": 271,
+      "due_s": 19.46550631405769,
+      "chord_size": 1,
+      "keys": [
+        "key_1"
+      ]
+    },
+    {
+      "event_index": 272,
+      "due_s": 19.496751107466178,
+      "chord_size": 1,
+      "keys": [
+        "key_2"
+      ]
+    },
+    {
+      "event_index": 273,
+      "due_s": 19.527995900874664,
+      "chord_size": 1,
+      "keys": [
+        "key_0"
+      ]
+    },
+    {
+      "event_index": 274,
+      "due_s": 19.55924069428315,
+      "chord_size": 1,
+      "keys": [
+        "key_1"
+      ]
+    },
+    {
+      "event_index": 275,
+      "due_s": 19.590485487691637,
+      "chord_size": 1,
+      "keys": [
+        "key_2"
+      ]
+    },
+    {
+      "event_index": 276,
+      "due_s": 19.621730281100124,
+      "chord_size": 1,
+      "keys": [
+        "key_0"
+      ]
+    },
+    {
+      "event_index": 277,
+      "due_s": 19.65297507450861,
+      "chord_size": 1,
+      "keys": [
+        "key_1"
+      ]
+    },
+    {
+      "event_index": 278,
+      "due_s": 19.684219867917097,
+      "chord_size": 1,
+      "keys": [
+        "key_2"
+      ]
+    },
+    {
+      "event_index": 279,
+      "due_s": 19.715464661325584,
+      "chord_size": 1,
+      "keys": [
+        "key_0"
+      ]
+    },
+    {
+      "event_index": 280,
+      "due_s": 19.74670945473407,
+      "chord_size": 1,
+      "keys": [
+        "key_1"
+      ]
+    },
+    {
+      "event_index": 281,
+      "due_s": 19.777954248142557,
+      "chord_size": 1,
+      "keys": [
+        "key_2"
+      ]
+    },
+    {
+      "event_index": 282,
+      "due_s": 19.809199041551043,
+      "chord_size": 1,
+      "keys": [
+        "key_0"
+      ]
+    },
+    {
+      "event_index": 283,
+      "due_s": 19.84044383495953,
+      "chord_size": 1,
+      "keys": [
+        "key_1"
+      ]
+    },
+    {
+      "event_index": 284,
+      "due_s": 19.871688628368016,
+      "chord_size": 1,
+      "keys": [
+        "key_2"
+      ]
+    },
+    {
+      "event_index": 285,
+      "due_s": 19.902933421776503,
+      "chord_size": 1,
+      "keys": [
+        "key_0"
+      ]
+    },
+    {
+      "event_index": 286,
+      "due_s": 19.93417821518499,
+      "chord_size": 1,
+      "keys": [
+        "key_1"
+      ]
+    },
+    {
+      "event_index": 287,
+      "due_s": 19.965423008593476,
+      "chord_size": 1,
+      "keys": [
+        "key_2"
+      ]
+    },
+    {
+      "event_index": 288,
+      "due_s": 19.996667802001962,
+      "chord_size": 1,
+      "keys": [
+        "key_0"
+      ]
+    },
+    {
+      "event_index": 289,
+      "due_s": 20.017497667979285,
+      "chord_size": 1,
+      "keys": [
+        "key_1"
+      ]
+    },
+    {
+      "event_index": 290,
+      "due_s": 20.059157395487933,
+      "chord_size": 1,
+      "keys": [
+        "key_2"
+      ]
+    },
+    {
+      "event_index": 291,
+      "due_s": 20.12164697563591,
+      "chord_size": 1,
+      "keys": [
+        "key_0"
+      ]
+    },
+    {
+      "event_index": 292,
+      "due_s": 20.18413655578389,
+      "chord_size": 1,
+      "keys": [
+        "key_1"
+      ]
+    },
+    {
+      "event_index": 293,
+      "due_s": 20.246626144823864,
+      "chord_size": 1,
+      "keys": [
+        "key_2"
+      ]
+    },
+    {
+      "event_index": 294,
+      "due_s": 20.267456010801187,
+      "chord_size": 1,
+      "keys": [
+        "key_0"
+      ]
+    },
+    {
+      "event_index": 295,
+      "due_s": 20.30911572941784,
+      "chord_size": 1,
+      "keys": [
+        "key_1"
+      ]
+    },
+    {
+      "event_index": 296,
+      "due_s": 20.371605318457814,
+      "chord_size": 1,
+      "keys": [
+        "key_2"
+      ]
+    },
+    {
+      "event_index": 297,
+      "due_s": 20.434094907497787,
+      "chord_size": 1,
+      "keys": [
+        "key_0"
+      ]
+    },
+    {
+      "event_index": 298,
+      "due_s": 20.496584487645766,
+      "chord_size": 1,
+      "keys": [
+        "key_1"
+      ]
+    },
+    {
+      "event_index": 299,
+      "due_s": 20.51741435362309,
+      "chord_size": 1,
+      "keys": [
+        "key_2"
+      ]
+    },
+    {
+      "event_index": 300,
+      "due_s": 20.559074081131737,
+      "chord_size": 1,
+      "keys": [
+        "key_0"
+      ]
+    },
+    {
+      "event_index": 301,
+      "due_s": 20.621563661279716,
+      "chord_size": 1,
+      "keys": [
+        "key_1"
+      ]
+    },
+    {
+      "event_index": 302,
+      "due_s": 20.684053241427694,
+      "chord_size": 1,
+      "keys": [
+        "key_2"
+      ]
+    },
+    {
+      "event_index": 303,
+      "due_s": 20.746542830467668,
+      "chord_size": 1,
+      "keys": [
+        "key_0"
+      ]
+    },
+    {
+      "event_index": 304,
+      "due_s": 20.76737269644499,
+      "chord_size": 1,
+      "keys": [
+        "key_1"
+      ]
+    },
+    {
+      "event_index": 305,
+      "due_s": 20.809032415061644,
+      "chord_size": 1,
+      "keys": [
+        "key_2"
+      ]
+    },
+    {
+      "event_index": 306,
+      "due_s": 20.871522004101617,
+      "chord_size": 1,
+      "keys": [
+        "key_0"
+      ]
+    },
+    {
+      "event_index": 307,
+      "due_s": 20.93401159314159,
+      "chord_size": 1,
+      "keys": [
+        "key_1"
+      ]
+    },
+    {
+      "event_index": 308,
+      "due_s": 20.99650117328957,
+      "chord_size": 1,
+      "keys": [
+        "key_2"
+      ]
+    },
+    {
+      "event_index": 309,
+      "due_s": 21.017331039266892,
+      "chord_size": 1,
+      "keys": [
+        "key_0"
+      ]
+    },
+    {
+      "event_index": 310,
+      "due_s": 21.05899076677554,
+      "chord_size": 1,
+      "keys": [
+        "key_1"
+      ]
+    },
+    {
+      "event_index": 311,
+      "due_s": 21.12148034692352,
+      "chord_size": 1,
+      "keys": [
+        "key_2"
+      ]
+    },
+    {
+      "event_index": 312,
+      "due_s": 21.183969927071498,
+      "chord_size": 1,
+      "keys": [
+        "key_0"
+      ]
+    },
+    {
+      "event_index": 313,
+      "due_s": 21.24645951611147,
+      "chord_size": 1,
+      "keys": [
+        "key_1"
+      ]
+    },
+    {
+      "event_index": 314,
+      "due_s": 21.267289382088794,
+      "chord_size": 1,
+      "keys": [
+        "key_2"
+      ]
+    },
+    {
+      "event_index": 315,
+      "due_s": 21.308949100705448,
+      "chord_size": 1,
+      "keys": [
+        "key_0"
+      ]
+    },
+    {
+      "event_index": 316,
+      "due_s": 21.37143868974542,
+      "chord_size": 1,
+      "keys": [
+        "key_1"
+      ]
+    },
+    {
+      "event_index": 317,
+      "due_s": 21.433928278785395,
+      "chord_size": 1,
+      "keys": [
+        "key_2"
+      ]
+    },
+    {
+      "event_index": 318,
+      "due_s": 21.496417858933373,
+      "chord_size": 1,
+      "keys": [
+        "key_0"
+      ]
+    },
+    {
+      "event_index": 319,
+      "due_s": 21.517247724910696,
+      "chord_size": 1,
+      "keys": [
+        "key_1"
+      ]
+    },
+    {
+      "event_index": 320,
+      "due_s": 21.558907452419344,
+      "chord_size": 1,
+      "keys": [
+        "key_2"
+      ]
+    },
+    {
+      "event_index": 321,
+      "due_s": 21.621397032567323,
+      "chord_size": 1,
+      "keys": [
+        "key_0"
+      ]
+    },
+    {
+      "event_index": 322,
+      "due_s": 21.683886612715302,
+      "chord_size": 1,
+      "keys": [
+        "key_1"
+      ]
+    },
+    {
+      "event_index": 323,
+      "due_s": 21.746376201755275,
+      "chord_size": 1,
+      "keys": [
+        "key_2"
+      ]
+    },
+    {
+      "event_index": 324,
+      "due_s": 21.767206067732598,
+      "chord_size": 1,
+      "keys": [
+        "key_0"
+      ]
+    },
+    {
+      "event_index": 325,
+      "due_s": 21.80886578634925,
+      "chord_size": 1,
+      "keys": [
+        "key_1"
+      ]
+    },
+    {
+      "event_index": 326,
+      "due_s": 21.871355375389225,
+      "chord_size": 1,
+      "keys": [
+        "key_2"
+      ]
+    },
+    {
+      "event_index": 327,
+      "due_s": 21.9338449644292,
+      "chord_size": 1,
+      "keys": [
+        "key_0"
+      ]
+    },
+    {
+      "event_index": 328,
+      "due_s": 21.996334544577177,
+      "chord_size": 1,
+      "keys": [
+        "key_1"
+      ]
+    },
+    {
+      "event_index": 329,
+      "due_s": 22.0171644105545,
+      "chord_size": 1,
+      "keys": [
+        "key_2"
+      ]
+    },
+    {
+      "event_index": 330,
+      "due_s": 22.058824138063148,
+      "chord_size": 1,
+      "keys": [
+        "key_0"
+      ]
+    },
+    {
+      "event_index": 331,
+      "due_s": 22.121313718211127,
+      "chord_size": 1,
+      "keys": [
+        "key_1"
+      ]
+    },
+    {
+      "event_index": 332,
+      "due_s": 22.183803298359106,
+      "chord_size": 1,
+      "keys": [
+        "key_2"
+      ]
+    },
+    {
+      "event_index": 333,
+      "due_s": 22.24629288739908,
+      "chord_size": 1,
+      "keys": [
+        "key_0"
+      ]
+    },
+    {
+      "event_index": 334,
+      "due_s": 22.267122753376402,
+      "chord_size": 1,
+      "keys": [
+        "key_1"
+      ]
+    },
+    {
+      "event_index": 335,
+      "due_s": 22.308782471993055,
+      "chord_size": 1,
+      "keys": [
+        "key_2"
+      ]
+    },
+    {
+      "event_index": 336,
+      "due_s": 22.37127206103303,
+      "chord_size": 1,
+      "keys": [
+        "key_0"
+      ]
+    },
+    {
+      "event_index": 337,
+      "due_s": 22.433761650073002,
+      "chord_size": 1,
+      "keys": [
+        "key_1"
+      ]
+    },
+    {
+      "event_index": 338,
+      "due_s": 22.49625123022098,
+      "chord_size": 1,
+      "keys": [
+        "key_2"
+      ]
+    },
+    {
+      "event_index": 339,
+      "due_s": 22.517081096198304,
+      "chord_size": 1,
+      "keys": [
+        "key_0"
+      ]
+    },
+    {
+      "event_index": 340,
+      "due_s": 22.55874082370695,
+      "chord_size": 1,
+      "keys": [
+        "key_1"
+      ]
+    },
+    {
+      "event_index": 341,
+      "due_s": 22.62123040385493,
+      "chord_size": 1,
+      "keys": [
+        "key_2"
+      ]
+    },
+    {
+      "event_index": 342,
+      "due_s": 22.68371998400291,
+      "chord_size": 1,
+      "keys": [
+        "key_0"
+      ]
+    },
+    {
+      "event_index": 343,
+      "due_s": 22.746209573042883,
+      "chord_size": 1,
+      "keys": [
+        "key_1"
+      ]
+    },
+    {
+      "event_index": 344,
+      "due_s": 22.767039439020206,
+      "chord_size": 1,
+      "keys": [
+        "key_2"
+      ]
+    },
+    {
+      "event_index": 345,
+      "due_s": 22.80869915763686,
+      "chord_size": 1,
+      "keys": [
+        "key_0"
+      ]
+    },
+    {
+      "event_index": 346,
+      "due_s": 22.871188746676832,
+      "chord_size": 1,
+      "keys": [
+        "key_1"
+      ]
+    },
+    {
+      "event_index": 347,
+      "due_s": 22.933678335716806,
+      "chord_size": 1,
+      "keys": [
+        "key_2"
+      ]
+    },
+    {
+      "event_index": 348,
+      "due_s": 22.996167915864785,
+      "chord_size": 1,
+      "keys": [
+        "key_0"
+      ]
+    },
+    {
+      "event_index": 349,
+      "due_s": 23.016997781842107,
+      "chord_size": 1,
+      "keys": [
+        "key_1"
+      ]
+    },
+    {
+      "event_index": 350,
+      "due_s": 23.058657509350756,
+      "chord_size": 1,
+      "keys": [
+        "key_2"
+      ]
+    },
+    {
+      "event_index": 351,
+      "due_s": 23.121147089498734,
+      "chord_size": 1,
+      "keys": [
+        "key_0"
+      ]
+    },
+    {
+      "event_index": 352,
+      "due_s": 23.183636669646713,
+      "chord_size": 1,
+      "keys": [
+        "key_1"
+      ]
+    },
+    {
+      "event_index": 353,
+      "due_s": 23.246126258686687,
+      "chord_size": 1,
+      "keys": [
+        "key_2"
+      ]
+    },
+    {
+      "event_index": 354,
+      "due_s": 23.26695612466401,
+      "chord_size": 1,
+      "keys": [
+        "key_0"
+      ]
+    },
+    {
+      "event_index": 355,
+      "due_s": 23.308615843280663,
+      "chord_size": 1,
+      "keys": [
+        "key_1"
+      ]
+    },
+    {
+      "event_index": 356,
+      "due_s": 23.371105432320636,
+      "chord_size": 1,
+      "keys": [
+        "key_2"
+      ]
+    },
+    {
+      "event_index": 357,
+      "due_s": 23.43359502136061,
+      "chord_size": 1,
+      "keys": [
+        "key_0"
+      ]
+    },
+    {
+      "event_index": 358,
+      "due_s": 23.49608460150859,
+      "chord_size": 1,
+      "keys": [
+        "key_1"
+      ]
+    },
+    {
+      "event_index": 359,
+      "due_s": 23.51691446748591,
+      "chord_size": 1,
+      "keys": [
+        "key_2"
+      ]
+    },
+    {
+      "event_index": 360,
+      "due_s": 23.55857419499456,
+      "chord_size": 1,
+      "keys": [
+        "key_0"
+      ]
+    },
+    {
+      "event_index": 361,
+      "due_s": 23.621063775142538,
+      "chord_size": 1,
+      "keys": [
+        "key_1"
+      ]
+    },
+    {
+      "event_index": 362,
+      "due_s": 23.683553355290517,
+      "chord_size": 1,
+      "keys": [
+        "key_2"
+      ]
+    },
+    {
+      "event_index": 363,
+      "due_s": 23.74604294433049,
+      "chord_size": 1,
+      "keys": [
+        "key_0"
+      ]
+    },
+    {
+      "event_index": 364,
+      "due_s": 23.766872810307813,
+      "chord_size": 1,
+      "keys": [
+        "key_1"
+      ]
+    },
+    {
+      "event_index": 365,
+      "due_s": 23.808532528924466,
+      "chord_size": 1,
+      "keys": [
+        "key_2"
+      ]
+    },
+    {
+      "event_index": 366,
+      "due_s": 23.87102211796444,
+      "chord_size": 1,
+      "keys": [
+        "key_0"
+      ]
+    },
+    {
+      "event_index": 367,
+      "due_s": 23.933511707004413,
+      "chord_size": 1,
+      "keys": [
+        "key_1"
+      ]
+    },
+    {
+      "event_index": 368,
+      "due_s": 23.996001287152392,
+      "chord_size": 1,
+      "keys": [
+        "key_2"
+      ]
+    },
+    {
+      "event_index": 369,
+      "due_s": 24.016831153129715,
+      "chord_size": 1,
+      "keys": [
+        "key_0"
+      ]
+    },
+    {
+      "event_index": 370,
+      "due_s": 24.120980462268342,
+      "chord_size": 1,
+      "keys": [
+        "key_1"
+      ]
+    },
+    {
+      "event_index": 371,
+      "due_s": 24.24595963590229,
+      "chord_size": 1,
+      "keys": [
+        "key_2"
+      ]
+    },
+    {
+      "event_index": 372,
+      "due_s": 24.266789501879614,
+      "chord_size": 1,
+      "keys": [
+        "key_0"
+      ]
+    },
+    {
+      "event_index": 373,
+      "due_s": 24.37093881101824,
+      "chord_size": 1,
+      "keys": [
+        "key_1"
+      ]
+    },
+    {
+      "event_index": 374,
+      "due_s": 24.49591798465219,
+      "chord_size": 1,
+      "keys": [
+        "key_2"
+      ]
+    },
+    {
+      "event_index": 375,
+      "due_s": 24.516747850629514,
+      "chord_size": 1,
+      "keys": [
+        "key_0"
+      ]
+    },
+    {
+      "event_index": 376,
+      "due_s": 24.62089715976814,
+      "chord_size": 1,
+      "keys": [
+        "key_1"
+      ]
+    },
+    {
+      "event_index": 377,
+      "due_s": 24.74587633340209,
+      "chord_size": 1,
+      "keys": [
+        "key_2"
+      ]
+    },
+    {
+      "event_index": 378,
+      "due_s": 24.766706199379414,
+      "chord_size": 1,
+      "keys": [
+        "key_0"
+      ]
+    },
+    {
+      "event_index": 379,
+      "due_s": 24.87085550851804,
+      "chord_size": 1,
+      "keys": [
+        "key_1"
+      ]
+    },
+    {
+      "event_index": 380,
+      "due_s": 24.99583468215199,
+      "chord_size": 1,
+      "keys": [
+        "key_2"
+      ]
+    },
+    {
+      "event_index": 381,
+      "due_s": 25.016664548129313,
+      "chord_size": 1,
+      "keys": [
+        "key_0"
+      ]
+    },
+    {
+      "event_index": 382,
+      "due_s": 25.12081385726794,
+      "chord_size": 1,
+      "keys": [
+        "key_1"
+      ]
+    },
+    {
+      "event_index": 383,
+      "due_s": 25.24579303090189,
+      "chord_size": 1,
+      "keys": [
+        "key_2"
+      ]
+    },
+    {
+      "event_index": 384,
+      "due_s": 25.266622896879213,
+      "chord_size": 1,
+      "keys": [
+        "key_0"
+      ]
+    },
+    {
+      "event_index": 385,
+      "due_s": 25.37077220601784,
+      "chord_size": 1,
+      "keys": [
+        "key_1"
+      ]
+    },
+    {
+      "event_index": 386,
+      "due_s": 25.49575137965179,
+      "chord_size": 1,
+      "keys": [
+        "key_2"
+      ]
+    },
+    {
+      "event_index": 387,
+      "due_s": 25.516581245629112,
+      "chord_size": 1,
+      "keys": [
+        "key_0"
+      ]
+    },
+    {
+      "event_index": 388,
+      "due_s": 25.62073055476774,
+      "chord_size": 1,
+      "keys": [
+        "key_1"
+      ]
+    },
+    {
+      "event_index": 389,
+      "due_s": 25.74570972840169,
+      "chord_size": 1,
+      "keys": [
+        "key_2"
+      ]
+    },
+    {
+      "event_index": 390,
+      "due_s": 25.76653959437901,
+      "chord_size": 1,
+      "keys": [
+        "key_0"
+      ]
+    },
+    {
+      "event_index": 391,
+      "due_s": 25.87068890351764,
+      "chord_size": 1,
+      "keys": [
+        "key_1"
+      ]
+    },
+    {
+      "event_index": 392,
+      "due_s": 25.99566807715159,
+      "chord_size": 1,
+      "keys": [
+        "key_2"
+      ]
+    },
+    {
+      "event_index": 393,
+      "due_s": 26.01649794312891,
+      "chord_size": 1,
+      "keys": [
+        "key_0"
+      ]
+    },
+    {
+      "event_index": 394,
+      "due_s": 26.12064725226754,
+      "chord_size": 1,
+      "keys": [
+        "key_1"
+      ]
+    },
+    {
+      "event_index": 395,
+      "due_s": 26.245626425901488,
+      "chord_size": 1,
+      "keys": [
+        "key_2"
+      ]
+    },
+    {
+      "event_index": 396,
+      "due_s": 26.26645629187881,
+      "chord_size": 1,
+      "keys": [
+        "key_0"
+      ]
+    },
+    {
+      "event_index": 397,
+      "due_s": 26.370605601017438,
+      "chord_size": 1,
+      "keys": [
+        "key_1"
+      ]
+    },
+    {
+      "event_index": 398,
+      "due_s": 26.495584774651388,
+      "chord_size": 1,
+      "keys": [
+        "key_2"
+      ]
+    },
+    {
+      "event_index": 399,
+      "due_s": 26.51641464062871,
+      "chord_size": 1,
+      "keys": [
+        "key_0"
+      ]
+    },
+    {
+      "event_index": 400,
+      "due_s": 26.620563949767337,
+      "chord_size": 1,
+      "keys": [
+        "key_1"
+      ]
+    },
+    {
+      "event_index": 401,
+      "due_s": 26.745543123401287,
+      "chord_size": 1,
+      "keys": [
+        "key_2"
+      ]
+    },
+    {
+      "event_index": 402,
+      "due_s": 26.76637298937861,
+      "chord_size": 1,
+      "keys": [
+        "key_0"
+      ]
+    },
+    {
+      "event_index": 403,
+      "due_s": 26.870522298517237,
+      "chord_size": 1,
+      "keys": [
+        "key_1"
+      ]
+    },
+    {
+      "event_index": 404,
+      "due_s": 26.995501472151187,
+      "chord_size": 1,
+      "keys": [
+        "key_2"
+      ]
+    },
+    {
+      "event_index": 405,
+      "due_s": 27.01633133812851,
+      "chord_size": 1,
+      "keys": [
+        "key_0"
+      ]
+    },
+    {
+      "event_index": 406,
+      "due_s": 27.120480647267136,
+      "chord_size": 1,
+      "keys": [
+        "key_1"
+      ]
+    },
+    {
+      "event_index": 407,
+      "due_s": 27.245459820901086,
+      "chord_size": 1,
+      "keys": [
+        "key_2"
+      ]
+    },
+    {
+      "event_index": 408,
+      "due_s": 27.26628968687841,
+      "chord_size": 1,
+      "keys": [
+        "key_0"
+      ]
+    },
+    {
+      "event_index": 409,
+      "due_s": 27.370438996017036,
+      "chord_size": 1,
+      "keys": [
+        "key_1"
+      ]
+    },
+    {
+      "event_index": 410,
+      "due_s": 27.495418169650986,
+      "chord_size": 1,
+      "keys": [
+        "key_2"
+      ]
+    },
+    {
+      "event_index": 411,
+      "due_s": 27.51624803562831,
+      "chord_size": 1,
+      "keys": [
+        "key_0"
+      ]
+    },
+    {
+      "event_index": 412,
+      "due_s": 27.620397344766936,
+      "chord_size": 1,
+      "keys": [
+        "key_1"
+      ]
+    },
+    {
+      "event_index": 413,
+      "due_s": 27.745376518400885,
+      "chord_size": 1,
+      "keys": [
+        "key_2"
+      ]
+    },
+    {
+      "event_index": 414,
+      "due_s": 27.766206384378208,
+      "chord_size": 1,
+      "keys": [
+        "key_0"
+      ]
+    },
+    {
+      "event_index": 415,
+      "due_s": 27.870355693516835,
+      "chord_size": 1,
+      "keys": [
+        "key_1"
+      ]
+    },
+    {
+      "event_index": 416,
+      "due_s": 27.995334867150785,
+      "chord_size": 1,
+      "keys": [
+        "key_2"
+      ]
+    },
+    {
+      "event_index": 417,
+      "due_s": 28.016164733128107,
+      "chord_size": 1,
+      "keys": [
+        "key_0"
+      ]
+    },
+    {
+      "event_index": 418,
+      "due_s": 28.057824460636756,
+      "chord_size": 1,
+      "keys": [
+        "key_1"
+      ]
+    },
+    {
+      "event_index": 419,
+      "due_s": 28.120314040784734,
+      "chord_size": 1,
+      "keys": [
+        "key_2"
+      ]
+    },
+    {
+      "event_index": 420,
+      "due_s": 28.182803620932713,
+      "chord_size": 1,
+      "keys": [
+        "key_0"
+      ]
+    },
+    {
+      "event_index": 421,
+      "due_s": 28.245293209972687,
+      "chord_size": 1,
+      "keys": [
+        "key_1"
+      ]
+    },
+    {
+      "event_index": 422,
+      "due_s": 28.26612307595001,
+      "chord_size": 1,
+      "keys": [
+        "key_2"
+      ]
+    },
+    {
+      "event_index": 423,
+      "due_s": 28.307782794566663,
+      "chord_size": 1,
+      "keys": [
+        "key_0"
+      ]
+    },
+    {
+      "event_index": 424,
+      "due_s": 28.370272383606636,
+      "chord_size": 1,
+      "keys": [
+        "key_1"
+      ]
+    },
+    {
+      "event_index": 425,
+      "due_s": 28.43276197264661,
+      "chord_size": 1,
+      "keys": [
+        "key_2"
+      ]
+    },
+    {
+      "event_index": 426,
+      "due_s": 28.49525155279459,
+      "chord_size": 1,
+      "keys": [
+        "key_0"
+      ]
+    },
+    {
+      "event_index": 427,
+      "due_s": 28.51608141877191,
+      "chord_size": 1,
+      "keys": [
+        "key_1"
+      ]
+    },
+    {
+      "event_index": 428,
+      "due_s": 28.55774114628056,
+      "chord_size": 1,
+      "keys": [
+        "key_2"
+      ]
+    },
+    {
+      "event_index": 429,
+      "due_s": 28.620230726428538,
+      "chord_size": 1,
+      "keys": [
+        "key_0"
+      ]
+    },
+    {
+      "event_index": 430,
+      "due_s": 28.682720306576517,
+      "chord_size": 1,
+      "keys": [
+        "key_1"
+      ]
+    },
+    {
+      "event_index": 431,
+      "due_s": 28.74520989561649,
+      "chord_size": 1,
+      "keys": [
+        "key_2"
+      ]
+    },
+    {
+      "event_index": 432,
+      "due_s": 28.766039761593813,
+      "chord_size": 1,
+      "keys": [
+        "key_0"
+      ]
+    },
+    {
+      "event_index": 433,
+      "due_s": 28.807699480210466,
+      "chord_size": 1,
+      "keys": [
+        "key_1"
+      ]
+    },
+    {
+      "event_index": 434,
+      "due_s": 28.87018906925044,
+      "chord_size": 1,
+      "keys": [
+        "key_2"
+      ]
+    },
+    {
+      "event_index": 435,
+      "due_s": 28.932678658290413,
+      "chord_size": 1,
+      "keys": [
+        "key_0"
+      ]
+    },
+    {
+      "event_index": 436,
+      "due_s": 28.995168238438392,
+      "chord_size": 1,
+      "keys": [
+        "key_1"
+      ]
+    },
+    {
+      "event_index": 437,
+      "due_s": 29.015998104415715,
+      "chord_size": 1,
+      "keys": [
+        "key_2"
+      ]
+    },
+    {
+      "event_index": 438,
+      "due_s": 29.057657831924363,
+      "chord_size": 1,
+      "keys": [
+        "key_0"
+      ]
+    },
+    {
+      "event_index": 439,
+      "due_s": 29.120147412072342,
+      "chord_size": 1,
+      "keys": [
+        "key_1"
+      ]
+    },
+    {
+      "event_index": 440,
+      "due_s": 29.18263699222032,
+      "chord_size": 1,
+      "keys": [
+        "key_2"
+      ]
+    },
+    {
+      "event_index": 441,
+      "due_s": 29.245126581260294,
+      "chord_size": 1,
+      "keys": [
+        "key_0"
+      ]
+    },
+    {
+      "event_index": 442,
+      "due_s": 29.265956447237617,
+      "chord_size": 1,
+      "keys": [
+        "key_1"
+      ]
+    },
+    {
+      "event_index": 443,
+      "due_s": 29.30761616585427,
+      "chord_size": 1,
+      "keys": [
+        "key_2"
+      ]
+    },
+    {
+      "event_index": 444,
+      "due_s": 29.370105754894244,
+      "chord_size": 1,
+      "keys": [
+        "key_0"
+      ]
+    },
+    {
+      "event_index": 445,
+      "due_s": 29.432595343934217,
+      "chord_size": 1,
+      "keys": [
+        "key_1"
+      ]
+    },
+    {
+      "event_index": 446,
+      "due_s": 29.495084924082196,
+      "chord_size": 1,
+      "keys": [
+        "key_2"
+      ]
+    },
+    {
+      "event_index": 447,
+      "due_s": 29.51591479005952,
+      "chord_size": 1,
+      "keys": [
+        "key_0"
+      ]
+    },
+    {
+      "event_index": 448,
+      "due_s": 29.557574517568167,
+      "chord_size": 1,
+      "keys": [
+        "key_1"
+      ]
+    },
+    {
+      "event_index": 449,
+      "due_s": 29.620064097716146,
+      "chord_size": 1,
+      "keys": [
+        "key_2"
+      ]
+    },
+    {
+      "event_index": 450,
+      "due_s": 29.682553677864124,
+      "chord_size": 1,
+      "keys": [
+        "key_0"
+      ]
+    },
+    {
+      "event_index": 451,
+      "due_s": 29.745043266904098,
+      "chord_size": 1,
+      "keys": [
+        "key_1"
+      ]
+    },
+    {
+      "event_index": 452,
+      "due_s": 29.76587313288142,
+      "chord_size": 1,
+      "keys": [
+        "key_2"
+      ]
+    },
+    {
+      "event_index": 453,
+      "due_s": 29.807532851498074,
+      "chord_size": 1,
+      "keys": [
+        "key_0"
+      ]
+    },
+    {
+      "event_index": 454,
+      "due_s": 29.870022440538047,
+      "chord_size": 1,
+      "keys": [
+        "key_1"
+      ]
+    },
+    {
+      "event_index": 455,
+      "due_s": 29.93251202957802,
+      "chord_size": 1,
+      "keys": [
+        "key_2"
+      ]
+    },
+    {
+      "event_index": 456,
+      "due_s": 29.995001609726,
+      "chord_size": 1,
+      "keys": [
+        "key_0"
+      ]
+    },
+    {
+      "event_index": 457,
+      "due_s": 30.015831475703322,
+      "chord_size": 1,
+      "keys": [
+        "key_1"
+      ]
+    },
+    {
+      "event_index": 458,
+      "due_s": 30.05749120321197,
+      "chord_size": 1,
+      "keys": [
+        "key_2"
+      ]
+    },
+    {
+      "event_index": 459,
+      "due_s": 30.11998078335995,
+      "chord_size": 1,
+      "keys": [
+        "key_0"
+      ]
+    },
+    {
+      "event_index": 460,
+      "due_s": 30.182470363507928,
+      "chord_size": 1,
+      "keys": [
+        "key_1"
+      ]
+    },
+    {
+      "event_index": 461,
+      "due_s": 30.2449599525479,
+      "chord_size": 1,
+      "keys": [
+        "key_2"
+      ]
+    },
+    {
+      "event_index": 462,
+      "due_s": 30.265789818525224,
+      "chord_size": 1,
+      "keys": [
+        "key_0"
+      ]
+    },
+    {
+      "event_index": 463,
+      "due_s": 30.307449537141878,
+      "chord_size": 1,
+      "keys": [
+        "key_1"
+      ]
+    },
+    {
+      "event_index": 464,
+      "due_s": 30.36993912618185,
+      "chord_size": 1,
+      "keys": [
+        "key_2"
+      ]
+    },
+    {
+      "event_index": 465,
+      "due_s": 30.432428715221825,
+      "chord_size": 1,
+      "keys": [
+        "key_0"
+      ]
+    },
+    {
+      "event_index": 466,
+      "due_s": 30.494918295369803,
+      "chord_size": 1,
+      "keys": [
+        "key_1"
+      ]
+    },
+    {
+      "event_index": 467,
+      "due_s": 30.515748161347126,
+      "chord_size": 1,
+      "keys": [
+        "key_2"
+      ]
+    },
+    {
+      "event_index": 468,
+      "due_s": 30.557407888855774,
+      "chord_size": 1,
+      "keys": [
+        "key_0"
+      ]
+    },
+    {
+      "event_index": 469,
+      "due_s": 30.619897469003753,
+      "chord_size": 1,
+      "keys": [
+        "key_1"
+      ]
+    },
+    {
+      "event_index": 470,
+      "due_s": 30.682387049151732,
+      "chord_size": 1,
+      "keys": [
+        "key_2"
+      ]
+    },
+    {
+      "event_index": 471,
+      "due_s": 30.744876638191705,
+      "chord_size": 1,
+      "keys": [
+        "key_0"
+      ]
+    },
+    {
+      "event_index": 472,
+      "due_s": 30.765706504169028,
+      "chord_size": 1,
+      "keys": [
+        "key_1"
+      ]
+    },
+    {
+      "event_index": 473,
+      "due_s": 30.80736622278568,
+      "chord_size": 1,
+      "keys": [
+        "key_2"
+      ]
+    },
+    {
+      "event_index": 474,
+      "due_s": 30.869855811825655,
+      "chord_size": 1,
+      "keys": [
+        "key_0"
+      ]
+    },
+    {
+      "event_index": 475,
+      "due_s": 30.93234540086563,
+      "chord_size": 1,
+      "keys": [
+        "key_1"
+      ]
+    },
+    {
+      "event_index": 476,
+      "due_s": 30.994834981013607,
+      "chord_size": 1,
+      "keys": [
+        "key_2"
+      ]
+    },
+    {
+      "event_index": 477,
+      "due_s": 31.01566484699093,
+      "chord_size": 1,
+      "keys": [
+        "key_0"
+      ]
+    },
+    {
+      "event_index": 478,
+      "due_s": 31.057324574499578,
+      "chord_size": 1,
+      "keys": [
+        "key_1"
+      ]
+    },
+    {
+      "event_index": 479,
+      "due_s": 31.119814154647557,
+      "chord_size": 1,
+      "keys": [
+        "key_2"
+      ]
+    },
+    {
+      "event_index": 480,
+      "due_s": 31.182303734795536,
+      "chord_size": 1,
+      "keys": [
+        "key_0"
+      ]
+    },
+    {
+      "event_index": 481,
+      "due_s": 31.24479332383551,
+      "chord_size": 1,
+      "keys": [
+        "key_1"
+      ]
+    },
+    {
+      "event_index": 482,
+      "due_s": 31.265623189812832,
+      "chord_size": 1,
+      "keys": [
+        "key_2"
+      ]
+    },
+    {
+      "event_index": 483,
+      "due_s": 31.307282908429485,
+      "chord_size": 1,
+      "keys": [
+        "key_0"
+      ]
+    },
+    {
+      "event_index": 484,
+      "due_s": 31.36977249746946,
+      "chord_size": 1,
+      "keys": [
+        "key_1"
+      ]
+    },
+    {
+      "event_index": 485,
+      "due_s": 31.432262086509432,
+      "chord_size": 1,
+      "keys": [
+        "key_2"
+      ]
+    },
+    {
+      "event_index": 486,
+      "due_s": 31.49475166665741,
+      "chord_size": 1,
+      "keys": [
+        "key_0"
+      ]
+    },
+    {
+      "event_index": 487,
+      "due_s": 31.515581532634734,
+      "chord_size": 1,
+      "keys": [
+        "key_1"
+      ]
+    },
+    {
+      "event_index": 488,
+      "due_s": 31.557241260143382,
+      "chord_size": 1,
+      "keys": [
+        "key_2"
+      ]
+    },
+    {
+      "event_index": 489,
+      "due_s": 31.61973084029136,
+      "chord_size": 1,
+      "keys": [
+        "key_0"
+      ]
+    },
+    {
+      "event_index": 490,
+      "due_s": 31.68222042043934,
+      "chord_size": 1,
+      "keys": [
+        "key_1"
+      ]
+    },
+    {
+      "event_index": 491,
+      "due_s": 31.744710009479313,
+      "chord_size": 1,
+      "keys": [
+        "key_2"
+      ]
+    },
+    {
+      "event_index": 492,
+      "due_s": 31.765539875456636,
+      "chord_size": 1,
+      "keys": [
+        "key_0"
+      ]
+    },
+    {
+      "event_index": 493,
+      "due_s": 31.80719959407329,
+      "chord_size": 1,
+      "keys": [
+        "key_1"
+      ]
+    },
+    {
+      "event_index": 494,
+      "due_s": 31.869689183113262,
+      "chord_size": 1,
+      "keys": [
+        "key_2"
+      ]
+    },
+    {
+      "event_index": 495,
+      "due_s": 31.932178772153236,
+      "chord_size": 1,
+      "keys": [
+        "key_0"
+      ]
+    },
+    {
+      "event_index": 496,
+      "due_s": 31.994668352301215,
+      "chord_size": 1,
+      "keys": [
+        "key_1"
+      ]
+    },
+    {
+      "event_index": 497,
+      "due_s": 32.0259131457097,
+      "chord_size": 1,
+      "keys": [
+        "key_2"
+      ]
+    },
+    {
+      "event_index": 498,
+      "due_s": 32.05715793911819,
+      "chord_size": 1,
+      "keys": [
+        "key_0"
+      ]
+    },
+    {
+      "event_index": 499,
+      "due_s": 32.08840273252668,
+      "chord_size": 1,
+      "keys": [
+        "key_1"
+      ]
+    },
+    {
+      "event_index": 500,
+      "due_s": 32.11964752593517,
+      "chord_size": 1,
+      "keys": [
+        "key_2"
+      ]
+    },
+    {
+      "event_index": 501,
+      "due_s": 32.15089231934366,
+      "chord_size": 1,
+      "keys": [
+        "key_0"
+      ]
+    },
+    {
+      "event_index": 502,
+      "due_s": 32.18213711275215,
+      "chord_size": 1,
+      "keys": [
+        "key_1"
+      ]
+    },
+    {
+      "event_index": 503,
+      "due_s": 32.21338190616064,
+      "chord_size": 1,
+      "keys": [
+        "key_2"
+      ]
+    },
+    {
+      "event_index": 504,
+      "due_s": 32.24462669956913,
+      "chord_size": 1,
+      "keys": [
+        "key_0"
+      ]
+    },
+    {
+      "event_index": 505,
+      "due_s": 32.27587149297762,
+      "chord_size": 1,
+      "keys": [
+        "key_1"
+      ]
+    },
+    {
+      "event_index": 506,
+      "due_s": 32.30711628638611,
+      "chord_size": 1,
+      "keys": [
+        "key_2"
+      ]
+    },
+    {
+      "event_index": 507,
+      "due_s": 32.3383610797946,
+      "chord_size": 1,
+      "keys": [
+        "key_0"
+      ]
+    },
+    {
+      "event_index": 508,
+      "due_s": 32.36960587320309,
+      "chord_size": 1,
+      "keys": [
+        "key_1"
+      ]
+    },
+    {
+      "event_index": 509,
+      "due_s": 32.40085066661158,
+      "chord_size": 1,
+      "keys": [
+        "key_2"
+      ]
+    },
+    {
+      "event_index": 510,
+      "due_s": 32.43209546002007,
+      "chord_size": 1,
+      "keys": [
+        "key_0"
+      ]
+    },
+    {
+      "event_index": 511,
+      "due_s": 32.46334025342856,
+      "chord_size": 1,
+      "keys": [
+        "key_1"
+      ]
+    },
+    {
+      "event_index": 512,
+      "due_s": 32.49458504683705,
+      "chord_size": 1,
+      "keys": [
+        "key_2"
+      ]
+    },
+    {
+      "event_index": 513,
+      "due_s": 32.52582984024554,
+      "chord_size": 1,
+      "keys": [
+        "key_0"
+      ]
+    },
+    {
+      "event_index": 514,
+      "due_s": 32.55707463365403,
+      "chord_size": 1,
+      "keys": [
+        "key_1"
+      ]
+    },
+    {
+      "event_index": 515,
+      "due_s": 32.58831942706252,
+      "chord_size": 1,
+      "keys": [
+        "key_2"
+      ]
+    },
+    {
+      "event_index": 516,
+      "due_s": 32.61956422047101,
+      "chord_size": 1,
+      "keys": [
+        "key_0"
+      ]
+    },
+    {
+      "event_index": 517,
+      "due_s": 32.6508090138795,
+      "chord_size": 1,
+      "keys": [
+        "key_1"
+      ]
+    },
+    {
+      "event_index": 518,
+      "due_s": 32.68205380728799,
+      "chord_size": 1,
+      "keys": [
+        "key_2"
+      ]
+    },
+    {
+      "event_index": 519,
+      "due_s": 32.71329860069648,
+      "chord_size": 1,
+      "keys": [
+        "key_0"
+      ]
+    },
+    {
+      "event_index": 520,
+      "due_s": 32.74454339410497,
+      "chord_size": 1,
+      "keys": [
+        "key_1"
+      ]
+    },
+    {
+      "event_index": 521,
+      "due_s": 32.77578818751346,
+      "chord_size": 1,
+      "keys": [
+        "key_2"
+      ]
+    },
+    {
+      "event_index": 522,
+      "due_s": 32.80703298092195,
+      "chord_size": 1,
+      "keys": [
+        "key_0"
+      ]
+    },
+    {
+      "event_index": 523,
+      "due_s": 32.83827777433044,
+      "chord_size": 1,
+      "keys": [
+        "key_1"
+      ]
+    },
+    {
+      "event_index": 524,
+      "due_s": 32.86952256773893,
+      "chord_size": 1,
+      "keys": [
+        "key_2"
+      ]
+    },
+    {
+      "event_index": 525,
+      "due_s": 32.90076736114742,
+      "chord_size": 1,
+      "keys": [
+        "key_0"
+      ]
+    },
+    {
+      "event_index": 526,
+      "due_s": 32.93201215455591,
+      "chord_size": 1,
+      "keys": [
+        "key_1"
+      ]
+    },
+    {
+      "event_index": 527,
+      "due_s": 32.9632569479644,
+      "chord_size": 1,
+      "keys": [
+        "key_2"
+      ]
+    },
+    {
+      "event_index": 528,
+      "due_s": 32.99450174137289,
+      "chord_size": 1,
+      "keys": [
+        "key_0"
+      ]
+    },
+    {
+      "event_index": 529,
+      "due_s": 33.02574653478138,
+      "chord_size": 1,
+      "keys": [
+        "key_1"
+      ]
+    },
+    {
+      "event_index": 530,
+      "due_s": 33.05699132818987,
+      "chord_size": 1,
+      "keys": [
+        "key_2"
+      ]
+    },
+    {
+      "event_index": 531,
+      "due_s": 33.088236121598364,
+      "chord_size": 1,
+      "keys": [
+        "key_0"
+      ]
+    },
+    {
+      "event_index": 532,
+      "due_s": 33.119480915006854,
+      "chord_size": 1,
+      "keys": [
+        "key_1"
+      ]
+    },
+    {
+      "event_index": 533,
+      "due_s": 33.150725708415344,
+      "chord_size": 1,
+      "keys": [
+        "key_2"
+      ]
+    },
+    {
+      "event_index": 534,
+      "due_s": 33.181970501823834,
+      "chord_size": 1,
+      "keys": [
+        "key_0"
+      ]
+    },
+    {
+      "event_index": 535,
+      "due_s": 33.213215295232324,
+      "chord_size": 1,
+      "keys": [
+        "key_1"
+      ]
+    },
+    {
+      "event_index": 536,
+      "due_s": 33.244460088640814,
+      "chord_size": 1,
+      "keys": [
+        "key_2"
+      ]
+    },
+    {
+      "event_index": 537,
+      "due_s": 33.275704882049304,
+      "chord_size": 1,
+      "keys": [
+        "key_0"
+      ]
+    },
+    {
+      "event_index": 538,
+      "due_s": 33.306949675457794,
+      "chord_size": 1,
+      "keys": [
+        "key_1"
+      ]
+    },
+    {
+      "event_index": 539,
+      "due_s": 33.338194468866284,
+      "chord_size": 1,
+      "keys": [
+        "key_2"
+      ]
+    },
+    {
+      "event_index": 540,
+      "due_s": 33.369439262274774,
+      "chord_size": 1,
+      "keys": [
+        "key_0"
+      ]
+    },
+    {
+      "event_index": 541,
+      "due_s": 33.400684055683264,
+      "chord_size": 1,
+      "keys": [
+        "key_1"
+      ]
+    },
+    {
+      "event_index": 542,
+      "due_s": 33.431928849091754,
+      "chord_size": 1,
+      "keys": [
+        "key_2"
+      ]
+    },
+    {
+      "event_index": 543,
+      "due_s": 33.463173642500244,
+      "chord_size": 1,
+      "keys": [
+        "key_0"
+      ]
+    },
+    {
+      "event_index": 544,
+      "due_s": 33.494418435908734,
+      "chord_size": 1,
+      "keys": [
+        "key_1"
+      ]
+    },
+    {
+      "event_index": 545,
+      "due_s": 33.525663229317225,
+      "chord_size": 1,
+      "keys": [
+        "key_2"
+      ]
+    },
+    {
+      "event_index": 546,
+      "due_s": 33.556908022725715,
+      "chord_size": 1,
+      "keys": [
+        "key_0"
+      ]
+    },
+    {
+      "event_index": 547,
+      "due_s": 33.588152816134205,
+      "chord_size": 1,
+      "keys": [
+        "key_1"
+      ]
+    },
+    {
+      "event_index": 548,
+      "due_s": 33.619397609542695,
+      "chord_size": 1,
+      "keys": [
+        "key_2"
+      ]
+    },
+    {
+      "event_index": 549,
+      "due_s": 33.650642402951185,
+      "chord_size": 1,
+      "keys": [
+        "key_0"
+      ]
+    },
+    {
+      "event_index": 550,
+      "due_s": 33.681887196359675,
+      "chord_size": 1,
+      "keys": [
+        "key_1"
+      ]
+    },
+    {
+      "event_index": 551,
+      "due_s": 33.713131989768165,
+      "chord_size": 1,
+      "keys": [
+        "key_2"
+      ]
+    },
+    {
+      "event_index": 552,
+      "due_s": 33.744376783176655,
+      "chord_size": 1,
+      "keys": [
+        "key_0"
+      ]
+    },
+    {
+      "event_index": 553,
+      "due_s": 33.775621576585145,
+      "chord_size": 1,
+      "keys": [
+        "key_1"
+      ]
+    },
+    {
+      "event_index": 554,
+      "due_s": 33.806866369993635,
+      "chord_size": 1,
+      "keys": [
+        "key_2"
+      ]
+    },
+    {
+      "event_index": 555,
+      "due_s": 33.838111163402125,
+      "chord_size": 1,
+      "keys": [
+        "key_0"
+      ]
+    },
+    {
+      "event_index": 556,
+      "due_s": 33.869355956810615,
+      "chord_size": 1,
+      "keys": [
+        "key_1"
+      ]
+    },
+    {
+      "event_index": 557,
+      "due_s": 33.900600750219105,
+      "chord_size": 1,
+      "keys": [
+        "key_2"
+      ]
+    },
+    {
+      "event_index": 558,
+      "due_s": 33.931845543627595,
+      "chord_size": 1,
+      "keys": [
+        "key_0"
+      ]
+    },
+    {
+      "event_index": 559,
+      "due_s": 33.963090337036085,
+      "chord_size": 1,
+      "keys": [
+        "key_1"
+      ]
+    },
+    {
+      "event_index": 560,
+      "due_s": 33.994335130444576,
+      "chord_size": 1,
+      "keys": [
+        "key_2"
+      ]
+    },
+    {
+      "event_index": 561,
+      "due_s": 34.025579923853066,
+      "chord_size": 1,
+      "keys": [
+        "key_0"
+      ]
+    },
+    {
+      "event_index": 562,
+      "due_s": 34.056824717261556,
+      "chord_size": 1,
+      "keys": [
+        "key_1"
+      ]
+    },
+    {
+      "event_index": 563,
+      "due_s": 34.088069510670046,
+      "chord_size": 1,
+      "keys": [
+        "key_2"
+      ]
+    },
+    {
+      "event_index": 564,
+      "due_s": 34.119314304078536,
+      "chord_size": 1,
+      "keys": [
+        "key_0"
+      ]
+    },
+    {
+      "event_index": 565,
+      "due_s": 34.150559097487026,
+      "chord_size": 1,
+      "keys": [
+        "key_1"
+      ]
+    },
+    {
+      "event_index": 566,
+      "due_s": 34.181803890895516,
+      "chord_size": 1,
+      "keys": [
+        "key_2"
+      ]
+    },
+    {
+      "event_index": 567,
+      "due_s": 34.213048684304006,
+      "chord_size": 1,
+      "keys": [
+        "key_0"
+      ]
+    },
+    {
+      "event_index": 568,
+      "due_s": 34.244293477712496,
+      "chord_size": 1,
+      "keys": [
+        "key_1"
+      ]
+    },
+    {
+      "event_index": 569,
+      "due_s": 34.275538271120986,
+      "chord_size": 1,
+      "keys": [
+        "key_2"
+      ]
+    },
+    {
+      "event_index": 570,
+      "due_s": 34.306783064529476,
+      "chord_size": 1,
+      "keys": [
+        "key_0"
+      ]
+    },
+    {
+      "event_index": 571,
+      "due_s": 34.338027857937966,
+      "chord_size": 1,
+      "keys": [
+        "key_1"
+      ]
+    },
+    {
+      "event_index": 572,
+      "due_s": 34.369272651346456,
+      "chord_size": 1,
+      "keys": [
+        "key_2"
+      ]
+    },
+    {
+      "event_index": 573,
+      "due_s": 34.400517444754946,
+      "chord_size": 1,
+      "keys": [
+        "key_0"
+      ]
+    },
+    {
+      "event_index": 574,
+      "due_s": 34.43176223816344,
+      "chord_size": 1,
+      "keys": [
+        "key_1"
+      ]
+    },
+    {
+      "event_index": 575,
+      "due_s": 34.46300703157193,
+      "chord_size": 1,
+      "keys": [
+        "key_2"
+      ]
+    },
+    {
+      "event_index": 576,
+      "due_s": 34.49425182498042,
+      "chord_size": 1,
+      "keys": [
+        "key_0"
+      ]
+    },
+    {
+      "event_index": 577,
+      "due_s": 34.52549661838891,
+      "chord_size": 1,
+      "keys": [
+        "key_1"
+      ]
+    },
+    {
+      "event_index": 578,
+      "due_s": 34.5567414117974,
+      "chord_size": 1,
+      "keys": [
+        "key_2"
+      ]
+    },
+    {
+      "event_index": 579,
+      "due_s": 34.58798620520589,
+      "chord_size": 1,
+      "keys": [
+        "key_0"
+      ]
+    },
+    {
+      "event_index": 580,
+      "due_s": 34.61923099861438,
+      "chord_size": 1,
+      "keys": [
+        "key_1"
+      ]
+    },
+    {
+      "event_index": 581,
+      "due_s": 34.65047579202287,
+      "chord_size": 1,
+      "keys": [
+        "key_2"
+      ]
+    },
+    {
+      "event_index": 582,
+      "due_s": 34.68172058543136,
+      "chord_size": 1,
+      "keys": [
+        "key_0"
+      ]
+    },
+    {
+      "event_index": 583,
+      "due_s": 34.71296537883985,
+      "chord_size": 1,
+      "keys": [
+        "key_1"
+      ]
+    },
+    {
+      "event_index": 584,
+      "due_s": 34.74421017224834,
+      "chord_size": 1,
+      "keys": [
+        "key_2"
+      ]
+    },
+    {
+      "event_index": 585,
+      "due_s": 34.77545496565683,
+      "chord_size": 1,
+      "keys": [
+        "key_0"
+      ]
+    },
+    {
+      "event_index": 586,
+      "due_s": 34.80669975906532,
+      "chord_size": 1,
+      "keys": [
+        "key_1"
+      ]
+    },
+    {
+      "event_index": 587,
+      "due_s": 34.83794455247381,
+      "chord_size": 1,
+      "keys": [
+        "key_2"
+      ]
+    },
+    {
+      "event_index": 588,
+      "due_s": 34.8691893458823,
+      "chord_size": 1,
+      "keys": [
+        "key_0"
+      ]
+    },
+    {
+      "event_index": 589,
+      "due_s": 34.90043413929079,
+      "chord_size": 1,
+      "keys": [
+        "key_1"
+      ]
+    },
+    {
+      "event_index": 590,
+      "due_s": 34.93167893269928,
+      "chord_size": 1,
+      "keys": [
+        "key_2"
+      ]
+    },
+    {
+      "event_index": 591,
+      "due_s": 34.96292372610777,
+      "chord_size": 1,
+      "keys": [
+        "key_0"
+      ]
+    },
+    {
+      "event_index": 592,
+      "due_s": 34.99416851951626,
+      "chord_size": 1,
+      "keys": [
+        "key_1"
+      ]
+    },
+    {
+      "event_index": 593,
+      "due_s": 35.02541331292475,
+      "chord_size": 1,
+      "keys": [
+        "key_2"
+      ]
+    },
+    {
+      "event_index": 594,
+      "due_s": 35.05665810633324,
+      "chord_size": 1,
+      "keys": [
+        "key_0"
+      ]
+    },
+    {
+      "event_index": 595,
+      "due_s": 35.08790289974173,
+      "chord_size": 1,
+      "keys": [
+        "key_1"
+      ]
+    },
+    {
+      "event_index": 596,
+      "due_s": 35.11914769315022,
+      "chord_size": 1,
+      "keys": [
+        "key_2"
+      ]
+    },
+    {
+      "event_index": 597,
+      "due_s": 35.15039248655871,
+      "chord_size": 1,
+      "keys": [
+        "key_0"
+      ]
+    },
+    {
+      "event_index": 598,
+      "due_s": 35.1816372799672,
+      "chord_size": 1,
+      "keys": [
+        "key_1"
+      ]
+    },
+    {
+      "event_index": 599,
+      "due_s": 35.21288207337569,
+      "chord_size": 1,
+      "keys": [
+        "key_2"
+      ]
+    },
+    {
+      "event_index": 600,
+      "due_s": 35.24412686678418,
+      "chord_size": 1,
+      "keys": [
+        "key_0"
+      ]
+    },
+    {
+      "event_index": 601,
+      "due_s": 35.27537166019267,
+      "chord_size": 1,
+      "keys": [
+        "key_1"
+      ]
+    },
+    {
+      "event_index": 602,
+      "due_s": 35.30661645360116,
+      "chord_size": 1,
+      "keys": [
+        "key_2"
+      ]
+    },
+    {
+      "event_index": 603,
+      "due_s": 35.33786124700965,
+      "chord_size": 1,
+      "keys": [
+        "key_0"
+      ]
+    },
+    {
+      "event_index": 604,
+      "due_s": 35.36910604041814,
+      "chord_size": 1,
+      "keys": [
+        "key_1"
+      ]
+    },
+    {
+      "event_index": 605,
+      "due_s": 35.40035083382663,
+      "chord_size": 1,
+      "keys": [
+        "key_2"
+      ]
+    },
+    {
+      "event_index": 606,
+      "due_s": 35.43159562723512,
+      "chord_size": 1,
+      "keys": [
+        "key_0"
+      ]
+    },
+    {
+      "event_index": 607,
+      "due_s": 35.46284042064361,
+      "chord_size": 1,
+      "keys": [
+        "key_1"
+      ]
+    },
+    {
+      "event_index": 608,
+      "due_s": 35.4940852140521,
+      "chord_size": 1,
+      "keys": [
+        "key_2"
+      ]
+    },
+    {
+      "event_index": 609,
+      "due_s": 35.52533000746059,
+      "chord_size": 1,
+      "keys": [
+        "key_0"
+      ]
+    },
+    {
+      "event_index": 610,
+      "due_s": 35.55657480086908,
+      "chord_size": 1,
+      "keys": [
+        "key_1"
+      ]
+    },
+    {
+      "event_index": 611,
+      "due_s": 35.58781959427757,
+      "chord_size": 1,
+      "keys": [
+        "key_2"
+      ]
+    },
+    {
+      "event_index": 612,
+      "due_s": 35.61906438768606,
+      "chord_size": 1,
+      "keys": [
+        "key_0"
+      ]
+    },
+    {
+      "event_index": 613,
+      "due_s": 35.65030918109455,
+      "chord_size": 1,
+      "keys": [
+        "key_1"
+      ]
+    },
+    {
+      "event_index": 614,
+      "due_s": 35.68155397450304,
+      "chord_size": 1,
+      "keys": [
+        "key_2"
+      ]
+    },
+    {
+      "event_index": 615,
+      "due_s": 35.71279876791153,
+      "chord_size": 1,
+      "keys": [
+        "key_0"
+      ]
+    },
+    {
+      "event_index": 616,
+      "due_s": 35.74404356132002,
+      "chord_size": 1,
+      "keys": [
+        "key_1"
+      ]
+    },
+    {
+      "event_index": 617,
+      "due_s": 35.77528835472851,
+      "chord_size": 1,
+      "keys": [
+        "key_2"
+      ]
+    },
+    {
+      "event_index": 618,
+      "due_s": 35.806533148137,
+      "chord_size": 1,
+      "keys": [
+        "key_0"
+      ]
+    },
+    {
+      "event_index": 619,
+      "due_s": 35.83777794154549,
+      "chord_size": 1,
+      "keys": [
+        "key_1"
+      ]
+    },
+    {
+      "event_index": 620,
+      "due_s": 35.86902273495398,
+      "chord_size": 1,
+      "keys": [
+        "key_2"
+      ]
+    },
+    {
+      "event_index": 621,
+      "due_s": 35.90026752836247,
+      "chord_size": 1,
+      "keys": [
+        "key_0"
+      ]
+    },
+    {
+      "event_index": 622,
+      "due_s": 35.93151232177096,
+      "chord_size": 1,
+      "keys": [
+        "key_1"
+      ]
+    },
+    {
+      "event_index": 623,
+      "due_s": 35.96275711517945,
+      "chord_size": 1,
+      "keys": [
+        "key_2"
+      ]
+    },
+    {
+      "event_index": 624,
+      "due_s": 35.99400190858794,
+      "chord_size": 1,
+      "keys": [
+        "key_0"
+      ]
+    },
+    {
+      "event_index": 625,
+      "due_s": 36.01483177456526,
+      "chord_size": 1,
+      "keys": [
+        "key_1"
+      ]
+    },
+    {
+      "event_index": 626,
+      "due_s": 36.05649150207391,
+      "chord_size": 1,
+      "keys": [
+        "key_2"
+      ]
+    },
+    {
+      "event_index": 627,
+      "due_s": 36.11898108222189,
+      "chord_size": 1,
+      "keys": [
+        "key_0"
+      ]
+    },
+    {
+      "event_index": 628,
+      "due_s": 36.181470662369875,
+      "chord_size": 1,
+      "keys": [
+        "key_1"
+      ]
+    },
+    {
+      "event_index": 629,
+      "due_s": 36.24396025140985,
+      "chord_size": 1,
+      "keys": [
+        "key_2"
+      ]
+    },
+    {
+      "event_index": 630,
+      "due_s": 36.26479011738717,
+      "chord_size": 1,
+      "keys": [
+        "key_0"
+      ]
+    },
+    {
+      "event_index": 631,
+      "due_s": 36.30644983600383,
+      "chord_size": 1,
+      "keys": [
+        "key_1"
+      ]
+    },
+    {
+      "event_index": 632,
+      "due_s": 36.368939425043806,
+      "chord_size": 1,
+      "keys": [
+        "key_2"
+      ]
+    },
+    {
+      "event_index": 633,
+      "due_s": 36.43142901408378,
+      "chord_size": 1,
+      "keys": [
+        "key_0"
+      ]
+    },
+    {
+      "event_index": 634,
+      "due_s": 36.493918594231765,
+      "chord_size": 1,
+      "keys": [
+        "key_1"
+      ]
+    },
+    {
+      "event_index": 635,
+      "due_s": 36.514748460209084,
+      "chord_size": 1,
+      "keys": [
+        "key_2"
+      ]
+    },
+    {
+      "event_index": 636,
+      "due_s": 36.556408187717736,
+      "chord_size": 1,
+      "keys": [
+        "key_0"
+      ]
+    },
+    {
+      "event_index": 637,
+      "due_s": 36.61889776786572,
+      "chord_size": 1,
+      "keys": [
+        "key_1"
+      ]
+    },
+    {
+      "event_index": 638,
+      "due_s": 36.6813873480137,
+      "chord_size": 1,
+      "keys": [
+        "key_2"
+      ]
+    },
+    {
+      "event_index": 639,
+      "due_s": 36.74387693705368,
+      "chord_size": 1,
+      "keys": [
+        "key_0"
+      ]
+    },
+    {
+      "event_index": 640,
+      "due_s": 36.764706803031,
+      "chord_size": 1,
+      "keys": [
+        "key_1"
+      ]
+    },
+    {
+      "event_index": 641,
+      "due_s": 36.806366521647654,
+      "chord_size": 1,
+      "keys": [
+        "key_2"
+      ]
+    },
+    {
+      "event_index": 642,
+      "due_s": 36.86885611068763,
+      "chord_size": 1,
+      "keys": [
+        "key_0"
+      ]
+    },
+    {
+      "event_index": 643,
+      "due_s": 36.93134569972761,
+      "chord_size": 1,
+      "keys": [
+        "key_1"
+      ]
+    },
+    {
+      "event_index": 644,
+      "due_s": 36.99383527987559,
+      "chord_size": 1,
+      "keys": [
+        "key_2"
+      ]
+    },
+    {
+      "event_index": 645,
+      "due_s": 37.01466514585291,
+      "chord_size": 1,
+      "keys": [
+        "key_0"
+      ]
+    },
+    {
+      "event_index": 646,
+      "due_s": 37.05632487336156,
+      "chord_size": 1,
+      "keys": [
+        "key_1"
+      ]
+    },
+    {
+      "event_index": 647,
+      "due_s": 37.11881445350954,
+      "chord_size": 1,
+      "keys": [
+        "key_2"
+      ]
+    },
+    {
+      "event_index": 648,
+      "due_s": 37.181304033657526,
+      "chord_size": 1,
+      "keys": [
+        "key_0"
+      ]
+    },
+    {
+      "event_index": 649,
+      "due_s": 37.2437936226975,
+      "chord_size": 1,
+      "keys": [
+        "key_1"
+      ]
+    },
+    {
+      "event_index": 650,
+      "due_s": 37.26462348867482,
+      "chord_size": 1,
+      "keys": [
+        "key_2"
+      ]
+    },
+    {
+      "event_index": 651,
+      "due_s": 37.30628320729148,
+      "chord_size": 1,
+      "keys": [
+        "key_0"
+      ]
+    },
+    {
+      "event_index": 652,
+      "due_s": 37.368772796331456,
+      "chord_size": 1,
+      "keys": [
+        "key_1"
+      ]
+    },
+    {
+      "event_index": 653,
+      "due_s": 37.43126238537143,
+      "chord_size": 1,
+      "keys": [
+        "key_2"
+      ]
+    },
+    {
+      "event_index": 654,
+      "due_s": 37.493751965519415,
+      "chord_size": 1,
+      "keys": [
+        "key_0"
+      ]
+    },
+    {
+      "event_index": 655,
+      "due_s": 37.514581831496734,
+      "chord_size": 1,
+      "keys": [
+        "key_1"
+      ]
+    },
+    {
+      "event_index": 656,
+      "due_s": 37.556241559005386,
+      "chord_size": 1,
+      "keys": [
+        "key_2"
+      ]
+    },
+    {
+      "event_index": 657,
+      "due_s": 37.61873113915337,
+      "chord_size": 1,
+      "keys": [
+        "key_0"
+      ]
+    },
+    {
+      "event_index": 658,
+      "due_s": 37.68122071930135,
+      "chord_size": 1,
+      "keys": [
+        "key_1"
+      ]
+    },
+    {
+      "event_index": 659,
+      "due_s": 37.74371030834133,
+      "chord_size": 1,
+      "keys": [
+        "key_2"
+      ]
+    },
+    {
+      "event_index": 660,
+      "due_s": 37.76454017431865,
+      "chord_size": 1,
+      "keys": [
+        "key_0"
+      ]
+    },
+    {
+      "event_index": 661,
+      "due_s": 37.806199892935304,
+      "chord_size": 1,
+      "keys": [
+        "key_1"
+      ]
+    },
+    {
+      "event_index": 662,
+      "due_s": 37.86868948197528,
+      "chord_size": 1,
+      "keys": [
+        "key_2"
+      ]
+    },
+    {
+      "event_index": 663,
+      "due_s": 37.93117907101526,
+      "chord_size": 1,
+      "keys": [
+        "key_0"
+      ]
+    },
+    {
+      "event_index": 664,
+      "due_s": 37.99366865116324,
+      "chord_size": 1,
+      "keys": [
+        "key_1"
+      ]
+    },
+    {
+      "event_index": 665,
+      "due_s": 38.01449851714056,
+      "chord_size": 1,
+      "keys": [
+        "key_2"
+      ]
+    },
+    {
+      "event_index": 666,
+      "due_s": 38.05615824464921,
+      "chord_size": 1,
+      "keys": [
+        "key_0"
+      ]
+    },
+    {
+      "event_index": 667,
+      "due_s": 38.11864782479719,
+      "chord_size": 1,
+      "keys": [
+        "key_1"
+      ]
+    },
+    {
+      "event_index": 668,
+      "due_s": 38.181137404945176,
+      "chord_size": 1,
+      "keys": [
+        "key_2"
+      ]
+    },
+    {
+      "event_index": 669,
+      "due_s": 38.24362699398515,
+      "chord_size": 1,
+      "keys": [
+        "key_0"
+      ]
+    },
+    {
+      "event_index": 670,
+      "due_s": 38.26445685996247,
+      "chord_size": 1,
+      "keys": [
+        "key_1"
+      ]
+    },
+    {
+      "event_index": 671,
+      "due_s": 38.30611657857913,
+      "chord_size": 1,
+      "keys": [
+        "key_2"
+      ]
+    },
+    {
+      "event_index": 672,
+      "due_s": 38.368606167619106,
+      "chord_size": 1,
+      "keys": [
+        "key_0"
+      ]
+    },
+    {
+      "event_index": 673,
+      "due_s": 38.43109575665908,
+      "chord_size": 1,
+      "keys": [
+        "key_1"
+      ]
+    },
+    {
+      "event_index": 674,
+      "due_s": 38.493585336807065,
+      "chord_size": 1,
+      "keys": [
+        "key_2"
+      ]
+    },
+    {
+      "event_index": 675,
+      "due_s": 38.514415202784384,
+      "chord_size": 1,
+      "keys": [
+        "key_0"
+      ]
+    },
+    {
+      "event_index": 676,
+      "due_s": 38.556074930293036,
+      "chord_size": 1,
+      "keys": [
+        "key_1"
+      ]
+    },
+    {
+      "event_index": 677,
+      "due_s": 38.61856451044102,
+      "chord_size": 1,
+      "keys": [
+        "key_2"
+      ]
+    },
+    {
+      "event_index": 678,
+      "due_s": 38.681054090589,
+      "chord_size": 1,
+      "keys": [
+        "key_0"
+      ]
+    },
+    {
+      "event_index": 679,
+      "due_s": 38.74354367962898,
+      "chord_size": 1,
+      "keys": [
+        "key_1"
+      ]
+    },
+    {
+      "event_index": 680,
+      "due_s": 38.7643735456063,
+      "chord_size": 1,
+      "keys": [
+        "key_2"
+      ]
+    },
+    {
+      "event_index": 681,
+      "due_s": 38.806033264222954,
+      "chord_size": 1,
+      "keys": [
+        "key_0"
+      ]
+    },
+    {
+      "event_index": 682,
+      "due_s": 38.86852285326293,
+      "chord_size": 1,
+      "keys": [
+        "key_1"
+      ]
+    },
+    {
+      "event_index": 683,
+      "due_s": 38.93101244230291,
+      "chord_size": 1,
+      "keys": [
+        "key_2"
+      ]
+    },
+    {
+      "event_index": 684,
+      "due_s": 38.99350202245089,
+      "chord_size": 1,
+      "keys": [
+        "key_0"
+      ]
+    },
+    {
+      "event_index": 685,
+      "due_s": 39.01433188842821,
+      "chord_size": 1,
+      "keys": [
+        "key_1"
+      ]
+    },
+    {
+      "event_index": 686,
+      "due_s": 39.05599161593686,
+      "chord_size": 1,
+      "keys": [
+        "key_2"
+      ]
+    },
+    {
+      "event_index": 687,
+      "due_s": 39.11848119608484,
+      "chord_size": 1,
+      "keys": [
+        "key_0"
+      ]
+    },
+    {
+      "event_index": 688,
+      "due_s": 39.180970776232826,
+      "chord_size": 1,
+      "keys": [
+        "key_1"
+      ]
+    },
+    {
+      "event_index": 689,
+      "due_s": 39.2434603652728,
+      "chord_size": 1,
+      "keys": [
+        "key_2"
+      ]
+    },
+    {
+      "event_index": 690,
+      "due_s": 39.26429023125012,
+      "chord_size": 1,
+      "keys": [
+        "key_0"
+      ]
+    },
+    {
+      "event_index": 691,
+      "due_s": 39.30594994986678,
+      "chord_size": 1,
+      "keys": [
+        "key_1"
+      ]
+    },
+    {
+      "event_index": 692,
+      "due_s": 39.368439538906756,
+      "chord_size": 1,
+      "keys": [
+        "key_2"
+      ]
+    },
+    {
+      "event_index": 693,
+      "due_s": 39.43092912794673,
+      "chord_size": 1,
+      "keys": [
+        "key_0"
+      ]
+    },
+    {
+      "event_index": 694,
+      "due_s": 39.493418708094715,
+      "chord_size": 1,
+      "keys": [
+        "key_1"
+      ]
+    },
+    {
+      "event_index": 695,
+      "due_s": 39.514248574072035,
+      "chord_size": 1,
+      "keys": [
+        "key_2"
+      ]
+    },
+    {
+      "event_index": 696,
+      "due_s": 39.555908301580686,
+      "chord_size": 1,
+      "keys": [
+        "key_0"
+      ]
+    },
+    {
+      "event_index": 697,
+      "due_s": 39.61839788172867,
+      "chord_size": 1,
+      "keys": [
+        "key_1"
+      ]
+    },
+    {
+      "event_index": 698,
+      "due_s": 39.68088746187665,
+      "chord_size": 1,
+      "keys": [
+        "key_2"
+      ]
+    },
+    {
+      "event_index": 699,
+      "due_s": 39.74337705091663,
+      "chord_size": 1,
+      "keys": [
+        "key_0"
+      ]
+    },
+    {
+      "event_index": 700,
+      "due_s": 39.76420691689395,
+      "chord_size": 1,
+      "keys": [
+        "key_1"
+      ]
+    },
+    {
+      "event_index": 701,
+      "due_s": 39.805866635510604,
+      "chord_size": 1,
+      "keys": [
+        "key_2"
+      ]
+    },
+    {
+      "event_index": 702,
+      "due_s": 39.86835622455058,
+      "chord_size": 1,
+      "keys": [
+        "key_0"
+      ]
+    },
+    {
+      "event_index": 703,
+      "due_s": 39.93084581359056,
+      "chord_size": 1,
+      "keys": [
+        "key_1"
+      ]
+    },
+    {
+      "event_index": 704,
+      "due_s": 39.99333539373854,
+      "chord_size": 1,
+      "keys": [
+        "key_2"
+      ]
+    },
+    {
+      "event_index": 705,
+      "due_s": 40.01416525971586,
+      "chord_size": 1,
+      "keys": [
+        "key_0"
+      ]
+    },
+    {
+      "event_index": 706,
+      "due_s": 40.11831456885449,
+      "chord_size": 1,
+      "keys": [
+        "key_1"
+      ]
+    },
+    {
+      "event_index": 707,
+      "due_s": 40.24329374248844,
+      "chord_size": 1,
+      "keys": [
+        "key_2"
+      ]
+    },
+    {
+      "event_index": 708,
+      "due_s": 40.26412360846576,
+      "chord_size": 1,
+      "keys": [
+        "key_0"
+      ]
+    },
+    {
+      "event_index": 709,
+      "due_s": 40.368272917604386,
+      "chord_size": 1,
+      "keys": [
+        "key_1"
+      ]
+    },
+    {
+      "event_index": 710,
+      "due_s": 40.49325209123834,
+      "chord_size": 1,
+      "keys": [
+        "key_2"
+      ]
+    },
+    {
+      "event_index": 711,
+      "due_s": 40.51408195721566,
+      "chord_size": 1,
+      "keys": [
+        "key_0"
+      ]
+    },
+    {
+      "event_index": 712,
+      "due_s": 40.618231266354286,
+      "chord_size": 1,
+      "keys": [
+        "key_1"
+      ]
+    },
+    {
+      "event_index": 713,
+      "due_s": 40.74321043998824,
+      "chord_size": 1,
+      "keys": [
+        "key_2"
+      ]
+    },
+    {
+      "event_index": 714,
+      "due_s": 40.76404030596556,
+      "chord_size": 1,
+      "keys": [
+        "key_0"
+      ]
+    },
+    {
+      "event_index": 715,
+      "due_s": 40.868189615104185,
+      "chord_size": 1,
+      "keys": [
+        "key_1"
+      ]
+    },
+    {
+      "event_index": 716,
+      "due_s": 40.99316878873814,
+      "chord_size": 1,
+      "keys": [
+        "key_2"
+      ]
+    },
+    {
+      "event_index": 717,
+      "due_s": 41.01399865471546,
+      "chord_size": 1,
+      "keys": [
+        "key_0"
+      ]
+    },
+    {
+      "event_index": 718,
+      "due_s": 41.118147963854085,
+      "chord_size": 1,
+      "keys": [
+        "key_1"
+      ]
+    },
+    {
+      "event_index": 719,
+      "due_s": 41.24312713748804,
+      "chord_size": 1,
+      "keys": [
+        "key_2"
+      ]
+    },
+    {
+      "event_index": 720,
+      "due_s": 41.26395700346536,
+      "chord_size": 1,
+      "keys": [
+        "key_0"
+      ]
+    },
+    {
+      "event_index": 721,
+      "due_s": 41.368106312603985,
+      "chord_size": 1,
+      "keys": [
+        "key_1"
+      ]
+    },
+    {
+      "event_index": 722,
+      "due_s": 41.49308548623794,
+      "chord_size": 1,
+      "keys": [
+        "key_2"
+      ]
+    },
+    {
+      "event_index": 723,
+      "due_s": 41.51391535221526,
+      "chord_size": 1,
+      "keys": [
+        "key_0"
+      ]
+    },
+    {
+      "event_index": 724,
+      "due_s": 41.618064661353884,
+      "chord_size": 1,
+      "keys": [
+        "key_1"
+      ]
+    },
+    {
+      "event_index": 725,
+      "due_s": 41.74304383498784,
+      "chord_size": 1,
+      "keys": [
+        "key_2"
+      ]
+    },
+    {
+      "event_index": 726,
+      "due_s": 41.763873700965156,
+      "chord_size": 1,
+      "keys": [
+        "key_0"
+      ]
+    },
+    {
+      "event_index": 727,
+      "due_s": 41.868023010103784,
+      "chord_size": 1,
+      "keys": [
+        "key_1"
+      ]
+    },
+    {
+      "event_index": 728,
+      "due_s": 41.99300218373774,
+      "chord_size": 1,
+      "keys": [
+        "key_2"
+      ]
+    },
+    {
+      "event_index": 729,
+      "due_s": 42.013832049715056,
+      "chord_size": 1,
+      "keys": [
+        "key_0"
+      ]
+    },
+    {
+      "event_index": 730,
+      "due_s": 42.11798135885368,
+      "chord_size": 1,
+      "keys": [
+        "key_1"
+      ]
+    },
+    {
+      "event_index": 731,
+      "due_s": 42.242960532487636,
+      "chord_size": 1,
+      "keys": [
+        "key_2"
+      ]
+    },
+    {
+      "event_index": 732,
+      "due_s": 42.263790398464955,
+      "chord_size": 1,
+      "keys": [
+        "key_0"
+      ]
+    },
+    {
+      "event_index": 733,
+      "due_s": 42.36793970760358,
+      "chord_size": 1,
+      "keys": [
+        "key_1"
+      ]
+    },
+    {
+      "event_index": 734,
+      "due_s": 42.492918881237536,
+      "chord_size": 1,
+      "keys": [
+        "key_2"
+      ]
+    },
+    {
+      "event_index": 735,
+      "due_s": 42.513748747214855,
+      "chord_size": 1,
+      "keys": [
+        "key_0"
+      ]
+    },
+    {
+      "event_index": 736,
+      "due_s": 42.61789805635348,
+      "chord_size": 1,
+      "keys": [
+        "key_1"
+      ]
+    },
+    {
+      "event_index": 737,
+      "due_s": 42.742877229987435,
+      "chord_size": 1,
+      "keys": [
+        "key_2"
+      ]
+    },
+    {
+      "event_index": 738,
+      "due_s": 42.763707095964755,
+      "chord_size": 1,
+      "keys": [
+        "key_0"
+      ]
+    },
+    {
+      "event_index": 739,
+      "due_s": 42.86785640510338,
+      "chord_size": 1,
+      "keys": [
+        "key_1"
+      ]
+    },
+    {
+      "event_index": 740,
+      "due_s": 42.992835578737335,
+      "chord_size": 1,
+      "keys": [
+        "key_2"
+      ]
+    },
+    {
+      "event_index": 741,
+      "due_s": 43.013665444714654,
+      "chord_size": 1,
+      "keys": [
+        "key_0"
+      ]
+    },
+    {
+      "event_index": 742,
+      "due_s": 43.11781475385328,
+      "chord_size": 1,
+      "keys": [
+        "key_1"
+      ]
+    },
+    {
+      "event_index": 743,
+      "due_s": 43.242793927487234,
+      "chord_size": 1,
+      "keys": [
+        "key_2"
+      ]
+    },
+    {
+      "event_index": 744,
+      "due_s": 43.263623793464554,
+      "chord_size": 1,
+      "keys": [
+        "key_0"
+      ]
+    },
+    {
+      "event_index": 745,
+      "due_s": 43.36777310260318,
+      "chord_size": 1,
+      "keys": [
+        "key_1"
+      ]
+    },
+    {
+      "event_index": 746,
+      "due_s": 43.492752276237134,
+      "chord_size": 1,
+      "keys": [
+        "key_2"
+      ]
+    },
+    {
+      "event_index": 747,
+      "due_s": 43.51358214221445,
+      "chord_size": 1,
+      "keys": [
+        "key_0"
+      ]
+    },
+    {
+      "event_index": 748,
+      "due_s": 43.61773145135308,
+      "chord_size": 1,
+      "keys": [
+        "key_1"
+      ]
+    },
+    {
+      "event_index": 749,
+      "due_s": 43.74271062498703,
+      "chord_size": 1,
+      "keys": [
+        "key_2"
+      ]
+    },
+    {
+      "event_index": 750,
+      "due_s": 43.76354049096435,
+      "chord_size": 1,
+      "keys": [
+        "key_0"
+      ]
+    },
+    {
+      "event_index": 751,
+      "due_s": 43.86768980010298,
+      "chord_size": 1,
+      "keys": [
+        "key_1"
+      ]
+    },
+    {
+      "event_index": 752,
+      "due_s": 43.99266897373693,
+      "chord_size": 1,
+      "keys": [
+        "key_2"
+      ]
+    },
+    {
+      "event_index": 753,
+      "due_s": 44.01349883971425,
+      "chord_size": 1,
+      "keys": [
+        "key_0"
+      ]
+    },
+    {
+      "event_index": 754,
+      "due_s": 44.055158567222904,
+      "chord_size": 1,
+      "keys": [
+        "key_1"
+      ]
+    },
+    {
+      "event_index": 755,
+      "due_s": 44.117648147370886,
+      "chord_size": 1,
+      "keys": [
+        "key_2"
+      ]
+    },
+    {
+      "event_index": 756,
+      "due_s": 44.18013772751887,
+      "chord_size": 1,
+      "keys": [
+        "key_0"
+      ]
+    },
+    {
+      "event_index": 757,
+      "due_s": 44.242627316558846,
+      "chord_size": 1,
+      "keys": [
+        "key_1"
+      ]
+    },
+    {
+      "event_index": 758,
+      "due_s": 44.263457182536165,
+      "chord_size": 1,
+      "keys": [
+        "key_2"
+      ]
+    },
+    {
+      "event_index": 759,
+      "due_s": 44.30511690115282,
+      "chord_size": 1,
+      "keys": [
+        "key_0"
+      ]
+    },
+    {
+      "event_index": 760,
+      "due_s": 44.3676064901928,
+      "chord_size": 1,
+      "keys": [
+        "key_1"
+      ]
+    },
+    {
+      "event_index": 761,
+      "due_s": 44.430096079232776,
+      "chord_size": 1,
+      "keys": [
+        "key_2"
+      ]
+    },
+    {
+      "event_index": 762,
+      "due_s": 44.49258565938076,
+      "chord_size": 1,
+      "keys": [
+        "key_0"
+      ]
+    },
+    {
+      "event_index": 763,
+      "due_s": 44.51341552535808,
+      "chord_size": 1,
+      "keys": [
+        "key_1"
+      ]
+    },
+    {
+      "event_index": 764,
+      "due_s": 44.55507525286673,
+      "chord_size": 1,
+      "keys": [
+        "key_2"
+      ]
+    },
+    {
+      "event_index": 765,
+      "due_s": 44.61756483301471,
+      "chord_size": 1,
+      "keys": [
+        "key_0"
+      ]
+    },
+    {
+      "event_index": 766,
+      "due_s": 44.68005441316269,
+      "chord_size": 1,
+      "keys": [
+        "key_1"
+      ]
+    },
+    {
+      "event_index": 767,
+      "due_s": 44.74254400220267,
+      "chord_size": 1,
+      "keys": [
+        "key_2"
+      ]
+    },
+    {
+      "event_index": 768,
+      "due_s": 44.76337386817999,
+      "chord_size": 1,
+      "keys": [
+        "key_0"
+      ]
+    },
+    {
+      "event_index": 769,
+      "due_s": 44.80503358679665,
+      "chord_size": 1,
+      "keys": [
+        "key_1"
+      ]
+    },
+    {
+      "event_index": 770,
+      "due_s": 44.867523175836624,
+      "chord_size": 1,
+      "keys": [
+        "key_2"
+      ]
+    },
+    {
+      "event_index": 771,
+      "due_s": 44.9300127648766,
+      "chord_size": 1,
+      "keys": [
+        "key_0"
+      ]
+    },
+    {
+      "event_index": 772,
+      "due_s": 44.99250234502458,
+      "chord_size": 1,
+      "keys": [
+        "key_1"
+      ]
+    },
+    {
+      "event_index": 773,
+      "due_s": 45.0133322110019,
+      "chord_size": 1,
+      "keys": [
+        "key_2"
+      ]
+    },
+    {
+      "event_index": 774,
+      "due_s": 45.054991938510554,
+      "chord_size": 1,
+      "keys": [
+        "key_0"
+      ]
+    },
+    {
+      "event_index": 775,
+      "due_s": 45.117481518658536,
+      "chord_size": 1,
+      "keys": [
+        "key_1"
+      ]
+    },
+    {
+      "event_index": 776,
+      "due_s": 45.17997109880652,
+      "chord_size": 1,
+      "keys": [
+        "key_2"
+      ]
+    },
+    {
+      "event_index": 777,
+      "due_s": 45.242460687846496,
+      "chord_size": 1,
+      "keys": [
+        "key_0"
+      ]
+    },
+    {
+      "event_index": 778,
+      "due_s": 45.263290553823815,
+      "chord_size": 1,
+      "keys": [
+        "key_1"
+      ]
+    },
+    {
+      "event_index": 779,
+      "due_s": 45.30495027244047,
+      "chord_size": 1,
+      "keys": [
+        "key_2"
+      ]
+    },
+    {
+      "event_index": 780,
+      "due_s": 45.36743986148045,
+      "chord_size": 1,
+      "keys": [
+        "key_0"
+      ]
+    },
+    {
+      "event_index": 781,
+      "due_s": 45.429929450520426,
+      "chord_size": 1,
+      "keys": [
+        "key_1"
+      ]
+    },
+    {
+      "event_index": 782,
+      "due_s": 45.49241903066841,
+      "chord_size": 1,
+      "keys": [
+        "key_2"
+      ]
+    },
+    {
+      "event_index": 783,
+      "due_s": 45.51324889664573,
+      "chord_size": 1,
+      "keys": [
+        "key_0"
+      ]
+    },
+    {
+      "event_index": 784,
+      "due_s": 45.55490862415438,
+      "chord_size": 1,
+      "keys": [
+        "key_1"
+      ]
+    },
+    {
+      "event_index": 785,
+      "due_s": 45.61739820430236,
+      "chord_size": 1,
+      "keys": [
+        "key_2"
+      ]
+    },
+    {
+      "event_index": 786,
+      "due_s": 45.679887784450344,
+      "chord_size": 1,
+      "keys": [
+        "key_0"
+      ]
+    },
+    {
+      "event_index": 787,
+      "due_s": 45.74237737349032,
+      "chord_size": 1,
+      "keys": [
+        "key_1"
+      ]
+    },
+    {
+      "event_index": 788,
+      "due_s": 45.76320723946764,
+      "chord_size": 1,
+      "keys": [
+        "key_2"
+      ]
+    },
+    {
+      "event_index": 789,
+      "due_s": 45.8048669580843,
+      "chord_size": 1,
+      "keys": [
+        "key_0"
+      ]
+    },
+    {
+      "event_index": 790,
+      "due_s": 45.867356547124274,
+      "chord_size": 1,
+      "keys": [
+        "key_1"
+      ]
+    },
+    {
+      "event_index": 791,
+      "due_s": 45.92984613616425,
+      "chord_size": 1,
+      "keys": [
+        "key_2"
+      ]
+    },
+    {
+      "event_index": 792,
+      "due_s": 45.99233571631223,
+      "chord_size": 1,
+      "keys": [
+        "key_0"
+      ]
+    },
+    {
+      "event_index": 793,
+      "due_s": 46.01316558228955,
+      "chord_size": 1,
+      "keys": [
+        "key_1"
+      ]
+    },
+    {
+      "event_index": 794,
+      "due_s": 46.054825309798204,
+      "chord_size": 1,
+      "keys": [
+        "key_2"
+      ]
+    },
+    {
+      "event_index": 795,
+      "due_s": 46.117314889946186,
+      "chord_size": 1,
+      "keys": [
+        "key_0"
+      ]
+    },
+    {
+      "event_index": 796,
+      "due_s": 46.17980447009417,
+      "chord_size": 1,
+      "keys": [
+        "key_1"
+      ]
+    },
+    {
+      "event_index": 797,
+      "due_s": 46.242294059134146,
+      "chord_size": 1,
+      "keys": [
+        "key_2"
+      ]
+    },
+    {
+      "event_index": 798,
+      "due_s": 46.263123925111465,
+      "chord_size": 1,
+      "keys": [
+        "key_0"
+      ]
+    },
+    {
+      "event_index": 799,
+      "due_s": 46.30478364372812,
+      "chord_size": 1,
+      "keys": [
+        "key_1"
+      ]
+    },
+    {
+      "event_index": 800,
+      "due_s": 46.3672732327681,
+      "chord_size": 1,
+      "keys": [
+        "key_2"
+      ]
+    },
+    {
+      "event_index": 801,
+      "due_s": 46.429762821808076,
+      "chord_size": 1,
+      "keys": [
+        "key_0"
+      ]
+    },
+    {
+      "event_index": 802,
+      "due_s": 46.49225240195606,
+      "chord_size": 1,
+      "keys": [
+        "key_1"
+      ]
+    },
+    {
+      "event_index": 803,
+      "due_s": 46.51308226793338,
+      "chord_size": 1,
+      "keys": [
+        "key_2"
+      ]
+    },
+    {
+      "event_index": 804,
+      "due_s": 46.55474199544203,
+      "chord_size": 1,
+      "keys": [
+        "key_0"
+      ]
+    },
+    {
+      "event_index": 805,
+      "due_s": 46.61723157559001,
+      "chord_size": 1,
+      "keys": [
+        "key_1"
+      ]
+    },
+    {
+      "event_index": 806,
+      "due_s": 46.679721155737994,
+      "chord_size": 1,
+      "keys": [
+        "key_2"
+      ]
+    },
+    {
+      "event_index": 807,
+      "due_s": 46.74221074477797,
+      "chord_size": 1,
+      "keys": [
+        "key_0"
+      ]
+    },
+    {
+      "event_index": 808,
+      "due_s": 46.76304061075529,
+      "chord_size": 1,
+      "keys": [
+        "key_1"
+      ]
+    },
+    {
+      "event_index": 809,
+      "due_s": 46.80470032937195,
+      "chord_size": 1,
+      "keys": [
+        "key_2"
+      ]
+    },
+    {
+      "event_index": 810,
+      "due_s": 46.867189918411924,
+      "chord_size": 1,
+      "keys": [
+        "key_0"
+      ]
+    },
+    {
+      "event_index": 811,
+      "due_s": 46.9296795074519,
+      "chord_size": 1,
+      "keys": [
+        "key_1"
+      ]
+    },
+    {
+      "event_index": 812,
+      "due_s": 46.99216908759988,
+      "chord_size": 1,
+      "keys": [
+        "key_2"
+      ]
+    },
+    {
+      "event_index": 813,
+      "due_s": 47.0129989535772,
+      "chord_size": 1,
+      "keys": [
+        "key_0"
+      ]
+    },
+    {
+      "event_index": 814,
+      "due_s": 47.054658681085854,
+      "chord_size": 1,
+      "keys": [
+        "key_1"
+      ]
+    },
+    {
+      "event_index": 815,
+      "due_s": 47.11714826123384,
+      "chord_size": 1,
+      "keys": [
+        "key_2"
+      ]
+    },
+    {
+      "event_index": 816,
+      "due_s": 47.17963784138182,
+      "chord_size": 1,
+      "keys": [
+        "key_0"
+      ]
+    },
+    {
+      "event_index": 817,
+      "due_s": 47.242127430421796,
+      "chord_size": 1,
+      "keys": [
+        "key_1"
+      ]
+    },
+    {
+      "event_index": 818,
+      "due_s": 47.262957296399115,
+      "chord_size": 1,
+      "keys": [
+        "key_2"
+      ]
+    },
+    {
+      "event_index": 819,
+      "due_s": 47.30461701501577,
+      "chord_size": 1,
+      "keys": [
+        "key_0"
+      ]
+    },
+    {
+      "event_index": 820,
+      "due_s": 47.36710660405575,
+      "chord_size": 1,
+      "keys": [
+        "key_1"
+      ]
+    },
+    {
+      "event_index": 821,
+      "due_s": 47.429596193095726,
+      "chord_size": 1,
+      "keys": [
+        "key_2"
+      ]
+    },
+    {
+      "event_index": 822,
+      "due_s": 47.49208577324371,
+      "chord_size": 1,
+      "keys": [
+        "key_0"
+      ]
+    },
+    {
+      "event_index": 823,
+      "due_s": 47.51291563922103,
+      "chord_size": 1,
+      "keys": [
+        "key_1"
+      ]
+    },
+    {
+      "event_index": 824,
+      "due_s": 47.55457536672968,
+      "chord_size": 1,
+      "keys": [
+        "key_2"
+      ]
+    },
+    {
+      "event_index": 825,
+      "due_s": 47.61706494687766,
+      "chord_size": 1,
+      "keys": [
+        "key_0"
+      ]
+    },
+    {
+      "event_index": 826,
+      "due_s": 47.679554527025644,
+      "chord_size": 1,
+      "keys": [
+        "key_1"
+      ]
+    },
+    {
+      "event_index": 827,
+      "due_s": 47.74204411606562,
+      "chord_size": 1,
+      "keys": [
+        "key_2"
+      ]
+    },
+    {
+      "event_index": 828,
+      "due_s": 47.76287398204294,
+      "chord_size": 1,
+      "keys": [
+        "key_0"
+      ]
+    },
+    {
+      "event_index": 829,
+      "due_s": 47.8045337006596,
+      "chord_size": 1,
+      "keys": [
+        "key_1"
+      ]
+    },
+    {
+      "event_index": 830,
+      "due_s": 47.867023289699574,
+      "chord_size": 1,
+      "keys": [
+        "key_2"
+      ]
+    },
+    {
+      "event_index": 831,
+      "due_s": 47.92951287873955,
+      "chord_size": 1,
+      "keys": [
+        "key_0"
+      ]
+    },
+    {
+      "event_index": 832,
+      "due_s": 47.992002458887534,
+      "chord_size": 1,
+      "keys": [
+        "key_1"
+      ]
+    },
+    {
+      "event_index": 833,
+      "due_s": 48.023247252296024,
+      "chord_size": 1,
+      "keys": [
+        "key_2"
+      ]
+    },
+    {
+      "event_index": 834,
+      "due_s": 48.054492045704514,
+      "chord_size": 1,
+      "keys": [
+        "key_0"
+      ]
+    },
+    {
+      "event_index": 835,
+      "due_s": 48.085736839113004,
+      "chord_size": 1,
+      "keys": [
+        "key_1"
+      ]
+    },
+    {
+      "event_index": 836,
+      "due_s": 48.116981632521494,
+      "chord_size": 1,
+      "keys": [
+        "key_2"
+      ]
+    },
+    {
+      "event_index": 837,
+      "due_s": 48.148226425929984,
+      "chord_size": 1,
+      "keys": [
+        "key_0"
+      ]
+    },
+    {
+      "event_index": 838,
+      "due_s": 48.179471219338474,
+      "chord_size": 1,
+      "keys": [
+        "key_1"
+      ]
+    },
+    {
+      "event_index": 839,
+      "due_s": 48.210716012746964,
+      "chord_size": 1,
+      "keys": [
+        "key_2"
+      ]
+    },
+    {
+      "event_index": 840,
+      "due_s": 48.241960806155454,
+      "chord_size": 1,
+      "keys": [
+        "key_0"
+      ]
+    },
+    {
+      "event_index": 841,
+      "due_s": 48.273205599563944,
+      "chord_size": 1,
+      "keys": [
+        "key_1"
+      ]
+    },
+    {
+      "event_index": 842,
+      "due_s": 48.304450392972434,
+      "chord_size": 1,
+      "keys": [
+        "key_2"
+      ]
+    },
+    {
+      "event_index": 843,
+      "due_s": 48.335695186380924,
+      "chord_size": 1,
+      "keys": [
+        "key_0"
+      ]
+    },
+    {
+      "event_index": 844,
+      "due_s": 48.366939979789414,
+      "chord_size": 1,
+      "keys": [
+        "key_1"
+      ]
+    },
+    {
+      "event_index": 845,
+      "due_s": 48.398184773197904,
+      "chord_size": 1,
+      "keys": [
+        "key_2"
+      ]
+    },
+    {
+      "event_index": 846,
+      "due_s": 48.429429566606395,
+      "chord_size": 1,
+      "keys": [
+        "key_0"
+      ]
+    },
+    {
+      "event_index": 847,
+      "due_s": 48.460674360014885,
+      "chord_size": 1,
+      "keys": [
+        "key_1"
+      ]
+    },
+    {
+      "event_index": 848,
+      "due_s": 48.491919153423375,
+      "chord_size": 1,
+      "keys": [
+        "key_2"
+      ]
+    },
+    {
+      "event_index": 849,
+      "due_s": 48.523163946831865,
+      "chord_size": 1,
+      "keys": [
+        "key_0"
+      ]
+    },
+    {
+      "event_index": 850,
+      "due_s": 48.554408740240355,
+      "chord_size": 1,
+      "keys": [
+        "key_1"
+      ]
+    },
+    {
+      "event_index": 851,
+      "due_s": 48.585653533648845,
+      "chord_size": 1,
+      "keys": [
+        "key_2"
+      ]
+    },
+    {
+      "event_index": 852,
+      "due_s": 48.616898327057335,
+      "chord_size": 1,
+      "keys": [
+        "key_0"
+      ]
+    },
+    {
+      "event_index": 853,
+      "due_s": 48.648143120465825,
+      "chord_size": 1,
+      "keys": [
+        "key_1"
+      ]
+    },
+    {
+      "event_index": 854,
+      "due_s": 48.679387913874315,
+      "chord_size": 1,
+      "keys": [
+        "key_2"
+      ]
+    },
+    {
+      "event_index": 855,
+      "due_s": 48.710632707282805,
+      "chord_size": 1,
+      "keys": [
+        "key_0"
+      ]
+    },
+    {
+      "event_index": 856,
+      "due_s": 48.741877500691295,
+      "chord_size": 1,
+      "keys": [
+        "key_1"
+      ]
+    },
+    {
+      "event_index": 857,
+      "due_s": 48.773122294099785,
+      "chord_size": 1,
+      "keys": [
+        "key_2"
+      ]
+    },
+    {
+      "event_index": 858,
+      "due_s": 48.804367087508275,
+      "chord_size": 1,
+      "keys": [
+        "key_0"
+      ]
+    },
+    {
+      "event_index": 859,
+      "due_s": 48.835611880916765,
+      "chord_size": 1,
+      "keys": [
+        "key_1"
+      ]
+    },
+    {
+      "event_index": 860,
+      "due_s": 48.866856674325255,
+      "chord_size": 1,
+      "keys": [
+        "key_2"
+      ]
+    },
+    {
+      "event_index": 861,
+      "due_s": 48.898101467733746,
+      "chord_size": 1,
+      "keys": [
+        "key_0"
+      ]
+    },
+    {
+      "event_index": 862,
+      "due_s": 48.929346261142236,
+      "chord_size": 1,
+      "keys": [
+        "key_1"
+      ]
+    },
+    {
+      "event_index": 863,
+      "due_s": 48.960591054550726,
+      "chord_size": 1,
+      "keys": [
+        "key_2"
+      ]
+    },
+    {
+      "event_index": 864,
+      "due_s": 48.991835847959216,
+      "chord_size": 1,
+      "keys": [
+        "key_0"
+      ]
+    },
+    {
+      "event_index": 865,
+      "due_s": 49.023080641367706,
+      "chord_size": 1,
+      "keys": [
+        "key_1"
+      ]
+    },
+    {
+      "event_index": 866,
+      "due_s": 49.054325434776196,
+      "chord_size": 1,
+      "keys": [
+        "key_2"
+      ]
+    },
+    {
+      "event_index": 867,
+      "due_s": 49.085570228184686,
+      "chord_size": 1,
+      "keys": [
+        "key_0"
+      ]
+    },
+    {
+      "event_index": 868,
+      "due_s": 49.116815021593176,
+      "chord_size": 1,
+      "keys": [
+        "key_1"
+      ]
+    },
+    {
+      "event_index": 869,
+      "due_s": 49.148059815001666,
+      "chord_size": 1,
+      "keys": [
+        "key_2"
+      ]
+    },
+    {
+      "event_index": 870,
+      "due_s": 49.179304608410156,
+      "chord_size": 1,
+      "keys": [
+        "key_0"
+      ]
+    },
+    {
+      "event_index": 871,
+      "due_s": 49.210549401818646,
+      "chord_size": 1,
+      "keys": [
+        "key_1"
+      ]
+    },
+    {
+      "event_index": 872,
+      "due_s": 49.241794195227136,
+      "chord_size": 1,
+      "keys": [
+        "key_2"
+      ]
+    },
+    {
+      "event_index": 873,
+      "due_s": 49.273038988635626,
+      "chord_size": 1,
+      "keys": [
+        "key_0"
+      ]
+    },
+    {
+      "event_index": 874,
+      "due_s": 49.304283782044116,
+      "chord_size": 1,
+      "keys": [
+        "key_1"
+      ]
+    },
+    {
+      "event_index": 875,
+      "due_s": 49.33552857545261,
+      "chord_size": 1,
+      "keys": [
+        "key_2"
+      ]
+    },
+    {
+      "event_index": 876,
+      "due_s": 49.3667733688611,
+      "chord_size": 1,
+      "keys": [
+        "key_0"
+      ]
+    },
+    {
+      "event_index": 877,
+      "due_s": 49.39801816226959,
+      "chord_size": 1,
+      "keys": [
+        "key_1"
+      ]
+    },
+    {
+      "event_index": 878,
+      "due_s": 49.42926295567808,
+      "chord_size": 1,
+      "keys": [
+        "key_2"
+      ]
+    },
+    {
+      "event_index": 879,
+      "due_s": 49.46050774908657,
+      "chord_size": 1,
+      "keys": [
+        "key_0"
+      ]
+    },
+    {
+      "event_index": 880,
+      "due_s": 49.49175254249506,
+      "chord_size": 1,
+      "keys": [
+        "key_1"
+      ]
+    },
+    {
+      "event_index": 881,
+      "due_s": 49.52299733590355,
+      "chord_size": 1,
+      "keys": [
+        "key_2"
+      ]
+    },
+    {
+      "event_index": 882,
+      "due_s": 49.55424212931204,
+      "chord_size": 1,
+      "keys": [
+        "key_0"
+      ]
+    },
+    {
+      "event_index": 883,
+      "due_s": 49.58548692272053,
+      "chord_size": 1,
+      "keys": [
+        "key_1"
+      ]
+    },
+    {
+      "event_index": 884,
+      "due_s": 49.61673171612902,
+      "chord_size": 1,
+      "keys": [
+        "key_2"
+      ]
+    },
+    {
+      "event_index": 885,
+      "due_s": 49.64797650953751,
+      "chord_size": 1,
+      "keys": [
+        "key_0"
+      ]
+    },
+    {
+      "event_index": 886,
+      "due_s": 49.679221302946,
+      "chord_size": 1,
+      "keys": [
+        "key_1"
+      ]
+    },
+    {
+      "event_index": 887,
+      "due_s": 49.71046609635449,
+      "chord_size": 1,
+      "keys": [
+        "key_2"
+      ]
+    },
+    {
+      "event_index": 888,
+      "due_s": 49.74171088976298,
+      "chord_size": 1,
+      "keys": [
+        "key_0"
+      ]
+    },
+    {
+      "event_index": 889,
+      "due_s": 49.77295568317147,
+      "chord_size": 1,
+      "keys": [
+        "key_1"
+      ]
+    },
+    {
+      "event_index": 890,
+      "due_s": 49.80420047657996,
+      "chord_size": 1,
+      "keys": [
+        "key_2"
+      ]
+    },
+    {
+      "event_index": 891,
+      "due_s": 49.83544526998845,
+      "chord_size": 1,
+      "keys": [
+        "key_0"
+      ]
+    },
+    {
+      "event_index": 892,
+      "due_s": 49.86669006339694,
+      "chord_size": 1,
+      "keys": [
+        "key_1"
+      ]
+    },
+    {
+      "event_index": 893,
+      "due_s": 49.89793485680543,
+      "chord_size": 1,
+      "keys": [
+        "key_2"
+      ]
+    },
+    {
+      "event_index": 894,
+      "due_s": 49.92917965021392,
+      "chord_size": 1,
+      "keys": [
+        "key_0"
+      ]
+    },
+    {
+      "event_index": 895,
+      "due_s": 49.96042444362241,
+      "chord_size": 1,
+      "keys": [
+        "key_1"
+      ]
+    },
+    {
+      "event_index": 896,
+      "due_s": 49.9916692370309,
+      "chord_size": 1,
+      "keys": [
+        "key_2"
+      ]
+    },
+    {
+      "event_index": 897,
+      "due_s": 50.02291403043939,
+      "chord_size": 1,
+      "keys": [
+        "key_0"
+      ]
+    },
+    {
+      "event_index": 898,
+      "due_s": 50.05415882384788,
+      "chord_size": 1,
+      "keys": [
+        "key_1"
+      ]
+    },
+    {
+      "event_index": 899,
+      "due_s": 50.08540361725637,
+      "chord_size": 1,
+      "keys": [
+        "key_2"
+      ]
+    },
+    {
+      "event_index": 900,
+      "due_s": 50.11664841066486,
+      "chord_size": 1,
+      "keys": [
+        "key_0"
+      ]
+    },
+    {
+      "event_index": 901,
+      "due_s": 50.14789320407335,
+      "chord_size": 1,
+      "keys": [
+        "key_1"
+      ]
+    },
+    {
+      "event_index": 902,
+      "due_s": 50.17913799748184,
+      "chord_size": 1,
+      "keys": [
+        "key_2"
+      ]
+    },
+    {
+      "event_index": 903,
+      "due_s": 50.21038279089033,
+      "chord_size": 1,
+      "keys": [
+        "key_0"
+      ]
+    },
+    {
+      "event_index": 904,
+      "due_s": 50.24162758429882,
+      "chord_size": 1,
+      "keys": [
+        "key_1"
+      ]
+    },
+    {
+      "event_index": 905,
+      "due_s": 50.27287237770731,
+      "chord_size": 1,
+      "keys": [
+        "key_2"
+      ]
+    },
+    {
+      "event_index": 906,
+      "due_s": 50.3041171711158,
+      "chord_size": 1,
+      "keys": [
+        "key_0"
+      ]
+    },
+    {
+      "event_index": 907,
+      "due_s": 50.33536196452429,
+      "chord_size": 1,
+      "keys": [
+        "key_1"
+      ]
+    },
+    {
+      "event_index": 908,
+      "due_s": 50.36660675793278,
+      "chord_size": 1,
+      "keys": [
+        "key_2"
+      ]
+    },
+    {
+      "event_index": 909,
+      "due_s": 50.39785155134127,
+      "chord_size": 1,
+      "keys": [
+        "key_0"
+      ]
+    },
+    {
+      "event_index": 910,
+      "due_s": 50.42909634474976,
+      "chord_size": 1,
+      "keys": [
+        "key_1"
+      ]
+    },
+    {
+      "event_index": 911,
+      "due_s": 50.46034113815825,
+      "chord_size": 1,
+      "keys": [
+        "key_2"
+      ]
+    },
+    {
+      "event_index": 912,
+      "due_s": 50.49158593156674,
+      "chord_size": 1,
+      "keys": [
+        "key_0"
+      ]
+    },
+    {
+      "event_index": 913,
+      "due_s": 50.52283072497523,
+      "chord_size": 1,
+      "keys": [
+        "key_1"
+      ]
+    },
+    {
+      "event_index": 914,
+      "due_s": 50.55407551838372,
+      "chord_size": 1,
+      "keys": [
+        "key_2"
+      ]
+    },
+    {
+      "event_index": 915,
+      "due_s": 50.58532031179221,
+      "chord_size": 1,
+      "keys": [
+        "key_0"
+      ]
+    },
+    {
+      "event_index": 916,
+      "due_s": 50.6165651052007,
+      "chord_size": 1,
+      "keys": [
+        "key_1"
+      ]
+    },
+    {
+      "event_index": 917,
+      "due_s": 50.64780989860919,
+      "chord_size": 1,
+      "keys": [
+        "key_2"
+      ]
+    },
+    {
+      "event_index": 918,
+      "due_s": 50.67905469201768,
+      "chord_size": 1,
+      "keys": [
+        "key_0"
+      ]
+    },
+    {
+      "event_index": 919,
+      "due_s": 50.71029948542617,
+      "chord_size": 1,
+      "keys": [
+        "key_1"
+      ]
+    },
+    {
+      "event_index": 920,
+      "due_s": 50.74154427883466,
+      "chord_size": 1,
+      "keys": [
+        "key_2"
+      ]
+    },
+    {
+      "event_index": 921,
+      "due_s": 50.77278907224315,
+      "chord_size": 1,
+      "keys": [
+        "key_0"
+      ]
+    },
+    {
+      "event_index": 922,
+      "due_s": 50.80403386565164,
+      "chord_size": 1,
+      "keys": [
+        "key_1"
+      ]
+    },
+    {
+      "event_index": 923,
+      "due_s": 50.83527865906013,
+      "chord_size": 1,
+      "keys": [
+        "key_2"
+      ]
+    },
+    {
+      "event_index": 924,
+      "due_s": 50.86652345246862,
+      "chord_size": 1,
+      "keys": [
+        "key_0"
+      ]
+    },
+    {
+      "event_index": 925,
+      "due_s": 50.89776824587711,
+      "chord_size": 1,
+      "keys": [
+        "key_1"
+      ]
+    },
+    {
+      "event_index": 926,
+      "due_s": 50.9290130392856,
+      "chord_size": 1,
+      "keys": [
+        "key_2"
+      ]
+    },
+    {
+      "event_index": 927,
+      "due_s": 50.96025783269409,
+      "chord_size": 1,
+      "keys": [
+        "key_0"
+      ]
+    },
+    {
+      "event_index": 928,
+      "due_s": 50.99150262610258,
+      "chord_size": 1,
+      "keys": [
+        "key_1"
+      ]
+    },
+    {
+      "event_index": 929,
+      "due_s": 51.02274741951107,
+      "chord_size": 1,
+      "keys": [
+        "key_2"
+      ]
+    },
+    {
+      "event_index": 930,
+      "due_s": 51.05399221291956,
+      "chord_size": 1,
+      "keys": [
+        "key_0"
+      ]
+    },
+    {
+      "event_index": 931,
+      "due_s": 51.08523700632805,
+      "chord_size": 1,
+      "keys": [
+        "key_1"
+      ]
+    },
+    {
+      "event_index": 932,
+      "due_s": 51.11648179973654,
+      "chord_size": 1,
+      "keys": [
+        "key_2"
+      ]
+    },
+    {
+      "event_index": 933,
+      "due_s": 51.14772659314503,
+      "chord_size": 1,
+      "keys": [
+        "key_0"
+      ]
+    },
+    {
+      "event_index": 934,
+      "due_s": 51.17897138655352,
+      "chord_size": 1,
+      "keys": [
+        "key_1"
+      ]
+    },
+    {
+      "event_index": 935,
+      "due_s": 51.21021617996201,
+      "chord_size": 1,
+      "keys": [
+        "key_2"
+      ]
+    },
+    {
+      "event_index": 936,
+      "due_s": 51.2414609733705,
+      "chord_size": 1,
+      "keys": [
+        "key_0"
+      ]
+    },
+    {
+      "event_index": 937,
+      "due_s": 51.27270576677899,
+      "chord_size": 1,
+      "keys": [
+        "key_1"
+      ]
+    },
+    {
+      "event_index": 938,
+      "due_s": 51.30395056018748,
+      "chord_size": 1,
+      "keys": [
+        "key_2"
+      ]
+    },
+    {
+      "event_index": 939,
+      "due_s": 51.33519535359597,
+      "chord_size": 1,
+      "keys": [
+        "key_0"
+      ]
+    },
+    {
+      "event_index": 940,
+      "due_s": 51.36644014700446,
+      "chord_size": 1,
+      "keys": [
+        "key_1"
+      ]
+    },
+    {
+      "event_index": 941,
+      "due_s": 51.39768494041295,
+      "chord_size": 1,
+      "keys": [
+        "key_2"
+      ]
+    },
+    {
+      "event_index": 942,
+      "due_s": 51.42892973382144,
+      "chord_size": 1,
+      "keys": [
+        "key_0"
+      ]
+    },
+    {
+      "event_index": 943,
+      "due_s": 51.46017452722993,
+      "chord_size": 1,
+      "keys": [
+        "key_1"
+      ]
+    },
+    {
+      "event_index": 944,
+      "due_s": 51.49141932063842,
+      "chord_size": 1,
+      "keys": [
+        "key_2"
+      ]
+    },
+    {
+      "event_index": 945,
+      "due_s": 51.52266411404691,
+      "chord_size": 1,
+      "keys": [
+        "key_0"
+      ]
+    },
+    {
+      "event_index": 946,
+      "due_s": 51.5539089074554,
+      "chord_size": 1,
+      "keys": [
+        "key_1"
+      ]
+    },
+    {
+      "event_index": 947,
+      "due_s": 51.58515370086389,
+      "chord_size": 1,
+      "keys": [
+        "key_2"
+      ]
+    },
+    {
+      "event_index": 948,
+      "due_s": 51.61639849427238,
+      "chord_size": 1,
+      "keys": [
+        "key_0"
+      ]
+    },
+    {
+      "event_index": 949,
+      "due_s": 51.64764328768087,
+      "chord_size": 1,
+      "keys": [
+        "key_1"
+      ]
+    },
+    {
+      "event_index": 950,
+      "due_s": 51.67888808108936,
+      "chord_size": 1,
+      "keys": [
+        "key_2"
+      ]
+    },
+    {
+      "event_index": 951,
+      "due_s": 51.71013287449785,
+      "chord_size": 1,
+      "keys": [
+        "key_0"
+      ]
+    },
+    {
+      "event_index": 952,
+      "due_s": 51.74137766790634,
+      "chord_size": 1,
+      "keys": [
+        "key_1"
+      ]
+    },
+    {
+      "event_index": 953,
+      "due_s": 51.77262246131483,
+      "chord_size": 1,
+      "keys": [
+        "key_2"
+      ]
+    },
+    {
+      "event_index": 954,
+      "due_s": 51.80386725472332,
+      "chord_size": 1,
+      "keys": [
+        "key_0"
+      ]
+    },
+    {
+      "event_index": 955,
+      "due_s": 51.83511204813181,
+      "chord_size": 1,
+      "keys": [
+        "key_1"
+      ]
+    },
+    {
+      "event_index": 956,
+      "due_s": 51.8663568415403,
+      "chord_size": 1,
+      "keys": [
+        "key_2"
+      ]
+    },
+    {
+      "event_index": 957,
+      "due_s": 51.89760163494879,
+      "chord_size": 1,
+      "keys": [
+        "key_0"
+      ]
+    },
+    {
+      "event_index": 958,
+      "due_s": 51.92884642835728,
+      "chord_size": 1,
+      "keys": [
+        "key_1"
+      ]
+    },
+    {
+      "event_index": 959,
+      "due_s": 51.96009122176577,
+      "chord_size": 1,
+      "keys": [
+        "key_2"
+      ]
+    },
+    {
+      "event_index": 960,
+      "due_s": 51.99133601517426,
+      "chord_size": 1,
+      "keys": [
+        "key_0"
+      ]
+    },
+    {
+      "event_index": 961,
+      "due_s": 52.01216588115158,
+      "chord_size": 1,
+      "keys": [
+        "key_1"
+      ]
+    },
+    {
+      "event_index": 962,
+      "due_s": 52.05382560866023,
+      "chord_size": 1,
+      "keys": [
+        "key_2"
+      ]
+    },
+    {
+      "event_index": 963,
+      "due_s": 52.116315188808215,
+      "chord_size": 1,
+      "keys": [
+        "key_0"
+      ]
+    },
+    {
+      "event_index": 964,
+      "due_s": 52.1788047689562,
+      "chord_size": 1,
+      "keys": [
+        "key_1"
+      ]
+    },
+    {
+      "event_index": 965,
+      "due_s": 52.241294357996175,
+      "chord_size": 1,
+      "keys": [
+        "key_2"
+      ]
+    },
+    {
+      "event_index": 966,
+      "due_s": 52.262124223973494,
+      "chord_size": 1,
+      "keys": [
+        "key_0"
+      ]
+    },
+    {
+      "event_index": 967,
+      "due_s": 52.30378394259015,
+      "chord_size": 1,
+      "keys": [
+        "key_1"
+      ]
+    },
+    {
+      "event_index": 968,
+      "due_s": 52.36627353163013,
+      "chord_size": 1,
+      "keys": [
+        "key_2"
+      ]
+    },
+    {
+      "event_index": 969,
+      "due_s": 52.428763120670105,
+      "chord_size": 1,
+      "keys": [
+        "key_0"
+      ]
+    },
+    {
+      "event_index": 970,
+      "due_s": 52.49125270081809,
+      "chord_size": 1,
+      "keys": [
+        "key_1"
+      ]
+    },
+    {
+      "event_index": 971,
+      "due_s": 52.51208256679541,
+      "chord_size": 1,
+      "keys": [
+        "key_2"
+      ]
+    },
+    {
+      "event_index": 972,
+      "due_s": 52.55374229430406,
+      "chord_size": 1,
+      "keys": [
+        "key_0"
+      ]
+    },
+    {
+      "event_index": 973,
+      "due_s": 52.61623187445204,
+      "chord_size": 1,
+      "keys": [
+        "key_1"
+      ]
+    },
+    {
+      "event_index": 974,
+      "due_s": 52.67872145460002,
+      "chord_size": 1,
+      "keys": [
+        "key_2"
+      ]
+    },
+    {
+      "event_index": 975,
+      "due_s": 52.74121104364,
+      "chord_size": 1,
+      "keys": [
+        "key_0"
+      ]
+    },
+    {
+      "event_index": 976,
+      "due_s": 52.76204090961732,
+      "chord_size": 1,
+      "keys": [
+        "key_1"
+      ]
+    },
+    {
+      "event_index": 977,
+      "due_s": 52.803700628233976,
+      "chord_size": 1,
+      "keys": [
+        "key_2"
+      ]
+    },
+    {
+      "event_index": 978,
+      "due_s": 52.86619021727395,
+      "chord_size": 1,
+      "keys": [
+        "key_0"
+      ]
+    },
+    {
+      "event_index": 979,
+      "due_s": 52.92867980631393,
+      "chord_size": 1,
+      "keys": [
+        "key_1"
+      ]
+    },
+    {
+      "event_index": 980,
+      "due_s": 52.99116938646191,
+      "chord_size": 1,
+      "keys": [
+        "key_2"
+      ]
+    },
+    {
+      "event_index": 981,
+      "due_s": 53.01199925243923,
+      "chord_size": 1,
+      "keys": [
+        "key_0"
+      ]
+    },
+    {
+      "event_index": 982,
+      "due_s": 53.05365897994788,
+      "chord_size": 1,
+      "keys": [
+        "key_1"
+      ]
+    },
+    {
+      "event_index": 983,
+      "due_s": 53.116148560095866,
+      "chord_size": 1,
+      "keys": [
+        "key_2"
+      ]
+    },
+    {
+      "event_index": 984,
+      "due_s": 53.17863814024385,
+      "chord_size": 1,
+      "keys": [
+        "key_0"
+      ]
+    },
+    {
+      "event_index": 985,
+      "due_s": 53.241127729283825,
+      "chord_size": 1,
+      "keys": [
+        "key_1"
+      ]
+    },
+    {
+      "event_index": 986,
+      "due_s": 53.261957595261144,
+      "chord_size": 1,
+      "keys": [
+        "key_2"
+      ]
+    },
+    {
+      "event_index": 987,
+      "due_s": 53.3036173138778,
+      "chord_size": 1,
+      "keys": [
+        "key_0"
+      ]
+    },
+    {
+      "event_index": 988,
+      "due_s": 53.36610690291778,
+      "chord_size": 1,
+      "keys": [
+        "key_1"
+      ]
+    },
+    {
+      "event_index": 989,
+      "due_s": 53.428596491957755,
+      "chord_size": 1,
+      "keys": [
+        "key_2"
+      ]
+    },
+    {
+      "event_index": 990,
+      "due_s": 53.49108607210574,
+      "chord_size": 1,
+      "keys": [
+        "key_0"
+      ]
+    },
+    {
+      "event_index": 991,
+      "due_s": 53.51191593808306,
+      "chord_size": 1,
+      "keys": [
+        "key_1"
+      ]
+    },
+    {
+      "event_index": 992,
+      "due_s": 53.55357566559171,
+      "chord_size": 1,
+      "keys": [
+        "key_2"
+      ]
+    },
+    {
+      "event_index": 993,
+      "due_s": 53.61606524573969,
+      "chord_size": 1,
+      "keys": [
+        "key_0"
+      ]
+    },
+    {
+      "event_index": 994,
+      "due_s": 53.67855482588767,
+      "chord_size": 1,
+      "keys": [
+        "key_1"
+      ]
+    },
+    {
+      "event_index": 995,
+      "due_s": 53.74104441492765,
+      "chord_size": 1,
+      "keys": [
+        "key_2"
+      ]
+    },
+    {
+      "event_index": 996,
+      "due_s": 53.76187428090497,
+      "chord_size": 1,
+      "keys": [
+        "key_0"
+      ]
+    },
+    {
+      "event_index": 997,
+      "due_s": 53.803533999521626,
+      "chord_size": 1,
+      "keys": [
+        "key_1"
+      ]
+    },
+    {
+      "event_index": 998,
+      "due_s": 53.8660235885616,
+      "chord_size": 1,
+      "keys": [
+        "key_2"
+      ]
+    },
+    {
+      "event_index": 999,
+      "due_s": 53.92851317760158,
+      "chord_size": 1,
+      "keys": [
+        "key_0"
+      ]
+    },
+    {
+      "event_index": 1000,
+      "due_s": 53.99100275774956,
+      "chord_size": 1,
+      "keys": [
+        "key_1"
+      ]
+    },
+    {
+      "event_index": 1001,
+      "due_s": 54.01183262372688,
+      "chord_size": 1,
+      "keys": [
+        "key_2"
+      ]
+    },
+    {
+      "event_index": 1002,
+      "due_s": 54.05349235123553,
+      "chord_size": 1,
+      "keys": [
+        "key_0"
+      ]
+    },
+    {
+      "event_index": 1003,
+      "due_s": 54.115981931383516,
+      "chord_size": 1,
+      "keys": [
+        "key_1"
+      ]
+    },
+    {
+      "event_index": 1004,
+      "due_s": 54.1784715115315,
+      "chord_size": 1,
+      "keys": [
+        "key_2"
+      ]
+    },
+    {
+      "event_index": 1005,
+      "due_s": 54.240961100571475,
+      "chord_size": 1,
+      "keys": [
+        "key_0"
+      ]
+    },
+    {
+      "event_index": 1006,
+      "due_s": 54.261790966548794,
+      "chord_size": 1,
+      "keys": [
+        "key_1"
+      ]
+    },
+    {
+      "event_index": 1007,
+      "due_s": 54.30345068516545,
+      "chord_size": 1,
+      "keys": [
+        "key_2"
+      ]
+    },
+    {
+      "event_index": 1008,
+      "due_s": 54.36594027420543,
+      "chord_size": 1,
+      "keys": [
+        "key_0"
+      ]
+    },
+    {
+      "event_index": 1009,
+      "due_s": 54.428429863245405,
+      "chord_size": 1,
+      "keys": [
+        "key_1"
+      ]
+    },
+    {
+      "event_index": 1010,
+      "due_s": 54.49091944339339,
+      "chord_size": 1,
+      "keys": [
+        "key_2"
+      ]
+    },
+    {
+      "event_index": 1011,
+      "due_s": 54.51174930937071,
+      "chord_size": 1,
+      "keys": [
+        "key_0"
+      ]
+    },
+    {
+      "event_index": 1012,
+      "due_s": 54.55340903687936,
+      "chord_size": 1,
+      "keys": [
+        "key_1"
+      ]
+    },
+    {
+      "event_index": 1013,
+      "due_s": 54.61589861702734,
+      "chord_size": 1,
+      "keys": [
+        "key_2"
+      ]
+    },
+    {
+      "event_index": 1014,
+      "due_s": 54.67838819717532,
+      "chord_size": 1,
+      "keys": [
+        "key_0"
+      ]
+    },
+    {
+      "event_index": 1015,
+      "due_s": 54.7408777862153,
+      "chord_size": 1,
+      "keys": [
+        "key_1"
+      ]
+    },
+    {
+      "event_index": 1016,
+      "due_s": 54.76170765219262,
+      "chord_size": 1,
+      "keys": [
+        "key_2"
+      ]
+    },
+    {
+      "event_index": 1017,
+      "due_s": 54.803367370809276,
+      "chord_size": 1,
+      "keys": [
+        "key_0"
+      ]
+    },
+    {
+      "event_index": 1018,
+      "due_s": 54.86585695984925,
+      "chord_size": 1,
+      "keys": [
+        "key_1"
+      ]
+    },
+    {
+      "event_index": 1019,
+      "due_s": 54.92834654888923,
+      "chord_size": 1,
+      "keys": [
+        "key_2"
+      ]
+    },
+    {
+      "event_index": 1020,
+      "due_s": 54.99083612903721,
+      "chord_size": 1,
+      "keys": [
+        "key_0"
+      ]
+    },
+    {
+      "event_index": 1021,
+      "due_s": 55.01166599501453,
+      "chord_size": 1,
+      "keys": [
+        "key_1"
+      ]
+    },
+    {
+      "event_index": 1022,
+      "due_s": 55.053325722523184,
+      "chord_size": 1,
+      "keys": [
+        "key_2"
+      ]
+    },
+    {
+      "event_index": 1023,
+      "due_s": 55.115815302671166,
+      "chord_size": 1,
+      "keys": [
+        "key_0"
+      ]
+    },
+    {
+      "event_index": 1024,
+      "due_s": 55.17830488281915,
+      "chord_size": 1,
+      "keys": [
+        "key_1"
+      ]
+    },
+    {
+      "event_index": 1025,
+      "due_s": 55.240794471859125,
+      "chord_size": 1,
+      "keys": [
+        "key_2"
+      ]
+    },
+    {
+      "event_index": 1026,
+      "due_s": 55.261624337836444,
+      "chord_size": 1,
+      "keys": [
+        "key_0"
+      ]
+    },
+    {
+      "event_index": 1027,
+      "due_s": 55.3032840564531,
+      "chord_size": 1,
+      "keys": [
+        "key_1"
+      ]
+    },
+    {
+      "event_index": 1028,
+      "due_s": 55.36577364549308,
+      "chord_size": 1,
+      "keys": [
+        "key_2"
+      ]
+    },
+    {
+      "event_index": 1029,
+      "due_s": 55.428263234533055,
+      "chord_size": 1,
+      "keys": [
+        "key_0"
+      ]
+    },
+    {
+      "event_index": 1030,
+      "due_s": 55.49075281468104,
+      "chord_size": 1,
+      "keys": [
+        "key_1"
+      ]
+    },
+    {
+      "event_index": 1031,
+      "due_s": 55.51158268065836,
+      "chord_size": 1,
+      "keys": [
+        "key_2"
+      ]
+    },
+    {
+      "event_index": 1032,
+      "due_s": 55.55324240816701,
+      "chord_size": 1,
+      "keys": [
+        "key_0"
+      ]
+    },
+    {
+      "event_index": 1033,
+      "due_s": 55.61573198831499,
+      "chord_size": 1,
+      "keys": [
+        "key_1"
+      ]
+    },
+    {
+      "event_index": 1034,
+      "due_s": 55.67822156846297,
+      "chord_size": 1,
+      "keys": [
+        "key_2"
+      ]
+    },
+    {
+      "event_index": 1035,
+      "due_s": 55.74071115750295,
+      "chord_size": 1,
+      "keys": [
+        "key_0"
+      ]
+    },
+    {
+      "event_index": 1036,
+      "due_s": 55.76154102348027,
+      "chord_size": 1,
+      "keys": [
+        "key_1"
+      ]
+    },
+    {
+      "event_index": 1037,
+      "due_s": 55.80320074209693,
+      "chord_size": 1,
+      "keys": [
+        "key_2"
+      ]
+    },
+    {
+      "event_index": 1038,
+      "due_s": 55.8656903311369,
+      "chord_size": 1,
+      "keys": [
+        "key_0"
+      ]
+    },
+    {
+      "event_index": 1039,
+      "due_s": 55.92817992017688,
+      "chord_size": 1,
+      "keys": [
+        "key_1"
+      ]
+    },
+    {
+      "event_index": 1040,
+      "due_s": 55.99066950032486,
+      "chord_size": 1,
+      "keys": [
+        "key_2"
+      ]
+    },
+    {
+      "event_index": 1041,
+      "due_s": 56.01149936630218,
+      "chord_size": 1,
+      "keys": [
+        "key_0"
+      ]
+    },
+    {
+      "event_index": 1042,
+      "due_s": 56.11564867544081,
+      "chord_size": 1,
+      "keys": [
+        "key_1"
+      ]
+    },
+    {
+      "event_index": 1043,
+      "due_s": 56.24062784907476,
+      "chord_size": 1,
+      "keys": [
+        "key_2"
+      ]
+    },
+    {
+      "event_index": 1044,
+      "due_s": 56.26145771505208,
+      "chord_size": 1,
+      "keys": [
+        "key_0"
+      ]
+    },
+    {
+      "event_index": 1045,
+      "due_s": 56.36560702419071,
+      "chord_size": 1,
+      "keys": [
+        "key_1"
+      ]
+    },
+    {
+      "event_index": 1046,
+      "due_s": 56.49058619782466,
+      "chord_size": 1,
+      "keys": [
+        "key_2"
+      ]
+    },
+    {
+      "event_index": 1047,
+      "due_s": 56.51141606380198,
+      "chord_size": 1,
+      "keys": [
+        "key_0"
+      ]
+    },
+    {
+      "event_index": 1048,
+      "due_s": 56.61556537294061,
+      "chord_size": 1,
+      "keys": [
+        "key_1"
+      ]
+    },
+    {
+      "event_index": 1049,
+      "due_s": 56.74054454657456,
+      "chord_size": 1,
+      "keys": [
+        "key_2"
+      ]
+    },
+    {
+      "event_index": 1050,
+      "due_s": 56.76137441255188,
+      "chord_size": 1,
+      "keys": [
+        "key_0"
+      ]
+    },
+    {
+      "event_index": 1051,
+      "due_s": 56.86552372169051,
+      "chord_size": 1,
+      "keys": [
+        "key_1"
+      ]
+    },
+    {
+      "event_index": 1052,
+      "due_s": 56.99050289532446,
+      "chord_size": 1,
+      "keys": [
+        "key_2"
+      ]
+    },
+    {
+      "event_index": 1053,
+      "due_s": 57.01133276130178,
+      "chord_size": 1,
+      "keys": [
+        "key_0"
+      ]
+    },
+    {
+      "event_index": 1054,
+      "due_s": 57.11548207044041,
+      "chord_size": 1,
+      "keys": [
+        "key_1"
+      ]
+    },
+    {
+      "event_index": 1055,
+      "due_s": 57.24046124407436,
+      "chord_size": 1,
+      "keys": [
+        "key_2"
+      ]
+    },
+    {
+      "event_index": 1056,
+      "due_s": 57.26129111005168,
+      "chord_size": 1,
+      "keys": [
+        "key_0"
+      ]
+    },
+    {
+      "event_index": 1057,
+      "due_s": 57.36544041919031,
+      "chord_size": 1,
+      "keys": [
+        "key_1"
+      ]
+    },
+    {
+      "event_index": 1058,
+      "due_s": 57.49041959282426,
+      "chord_size": 1,
+      "keys": [
+        "key_2"
+      ]
+    },
+    {
+      "event_index": 1059,
+      "due_s": 57.51124945880158,
+      "chord_size": 1,
+      "keys": [
+        "key_0"
+      ]
+    },
+    {
+      "event_index": 1060,
+      "due_s": 57.615398767940206,
+      "chord_size": 1,
+      "keys": [
+        "key_1"
+      ]
+    },
+    {
+      "event_index": 1061,
+      "due_s": 57.74037794157416,
+      "chord_size": 1,
+      "keys": [
+        "key_2"
+      ]
+    },
+    {
+      "event_index": 1062,
+      "due_s": 57.76120780755148,
+      "chord_size": 1,
+      "keys": [
+        "key_0"
+      ]
+    },
+    {
+      "event_index": 1063,
+      "due_s": 57.865357116690106,
+      "chord_size": 1,
+      "keys": [
+        "key_1"
+      ]
+    },
+    {
+      "event_index": 1064,
+      "due_s": 57.99033629032406,
+      "chord_size": 1,
+      "keys": [
+        "key_2"
+      ]
+    },
+    {
+      "event_index": 1065,
+      "due_s": 58.01116615630138,
+      "chord_size": 1,
+      "keys": [
+        "key_0"
+      ]
+    },
+    {
+      "event_index": 1066,
+      "due_s": 58.115315465440005,
+      "chord_size": 1,
+      "keys": [
+        "key_1"
+      ]
+    },
+    {
+      "event_index": 1067,
+      "due_s": 58.24029463907396,
+      "chord_size": 1,
+      "keys": [
+        "key_2"
+      ]
+    },
+    {
+      "event_index": 1068,
+      "due_s": 58.26112450505128,
+      "chord_size": 1,
+      "keys": [
+        "key_0"
+      ]
+    },
+    {
+      "event_index": 1069,
+      "due_s": 58.365273814189905,
+      "chord_size": 1,
+      "keys": [
+        "key_1"
+      ]
+    },
+    {
+      "event_index": 1070,
+      "due_s": 58.49025298782386,
+      "chord_size": 1,
+      "keys": [
+        "key_2"
+      ]
+    },
+    {
+      "event_index": 1071,
+      "due_s": 58.51108285380118,
+      "chord_size": 1,
+      "keys": [
+        "key_0"
+      ]
+    },
+    {
+      "event_index": 1072,
+      "due_s": 58.615232162939805,
+      "chord_size": 1,
+      "keys": [
+        "key_1"
+      ]
+    },
+    {
+      "event_index": 1073,
+      "due_s": 58.74021133657376,
+      "chord_size": 1,
+      "keys": [
+        "key_2"
+      ]
+    },
+    {
+      "event_index": 1074,
+      "due_s": 58.76104120255108,
+      "chord_size": 1,
+      "keys": [
+        "key_0"
+      ]
+    },
+    {
+      "event_index": 1075,
+      "due_s": 58.865190511689704,
+      "chord_size": 1,
+      "keys": [
+        "key_1"
+      ]
+    },
+    {
+      "event_index": 1076,
+      "due_s": 58.99016968532366,
+      "chord_size": 1,
+      "keys": [
+        "key_2"
+      ]
+    },
+    {
+      "event_index": 1077,
+      "due_s": 59.010999551300976,
+      "chord_size": 1,
+      "keys": [
+        "key_0"
+      ]
+    },
+    {
+      "event_index": 1078,
+      "due_s": 59.115148860439604,
+      "chord_size": 1,
+      "keys": [
+        "key_1"
+      ]
+    },
+    {
+      "event_index": 1079,
+      "due_s": 59.24012803407356,
+      "chord_size": 1,
+      "keys": [
+        "key_2"
+      ]
+    },
+    {
+      "event_index": 1080,
+      "due_s": 59.260957900050876,
+      "chord_size": 1,
+      "keys": [
+        "key_0"
+      ]
+    },
+    {
+      "event_index": 1081,
+      "due_s": 59.3651072091895,
+      "chord_size": 1,
+      "keys": [
+        "key_1"
+      ]
+    },
+    {
+      "event_index": 1082,
+      "due_s": 59.490086382823456,
+      "chord_size": 1,
+      "keys": [
+        "key_2"
+      ]
+    },
+    {
+      "event_index": 1083,
+      "due_s": 59.510916248800775,
+      "chord_size": 1,
+      "keys": [
+        "key_0"
+      ]
+    },
+    {
+      "event_index": 1084,
+      "due_s": 59.6150655579394,
+      "chord_size": 1,
+      "keys": [
+        "key_1"
+      ]
+    },
+    {
+      "event_index": 1085,
+      "due_s": 59.740044731573356,
+      "chord_size": 1,
+      "keys": [
+        "key_2"
+      ]
+    },
+    {
+      "event_index": 1086,
+      "due_s": 59.760874597550675,
+      "chord_size": 1,
+      "keys": [
+        "key_0"
+      ]
+    },
+    {
+      "event_index": 1087,
+      "due_s": 59.8650239066893,
+      "chord_size": 1,
+      "keys": [
+        "key_1"
+      ]
+    },
+    {
+      "event_index": 1088,
+      "due_s": 59.990003080323255,
+      "chord_size": 1,
+      "keys": [
+        "key_2"
+      ]
+    },
+    {
+      "event_index": 1089,
+      "due_s": 60.010832946300575,
+      "chord_size": 1,
+      "keys": [
+        "key_0"
+      ]
+    },
+    {
+      "event_index": 1090,
+      "due_s": 60.239961427591155,
+      "chord_size": 1,
+      "keys": [
+        "key_1"
+      ]
+    },
+    {
+      "event_index": 1091,
+      "due_s": 60.260791293568474,
+      "chord_size": 1,
+      "keys": [
+        "key_2"
+      ]
+    },
+    {
+      "event_index": 1092,
+      "due_s": 60.489919774859054,
+      "chord_size": 1,
+      "keys": [
+        "key_0"
+      ]
+    },
+    {
+      "event_index": 1093,
+      "due_s": 60.51074964083637,
+      "chord_size": 1,
+      "keys": [
+        "key_1"
+      ]
+    },
+    {
+      "event_index": 1094,
+      "due_s": 60.73987812212695,
+      "chord_size": 1,
+      "keys": [
+        "key_2"
+      ]
+    },
+    {
+      "event_index": 1095,
+      "due_s": 60.76070798810427,
+      "chord_size": 1,
+      "keys": [
+        "key_0"
+      ]
+    },
+    {
+      "event_index": 1096,
+      "due_s": 60.98983646939485,
+      "chord_size": 1,
+      "keys": [
+        "key_1"
+      ]
+    },
+    {
+      "event_index": 1097,
+      "due_s": 61.01066633537217,
+      "chord_size": 1,
+      "keys": [
+        "key_2"
+      ]
+    },
+    {
+      "event_index": 1098,
+      "due_s": 61.23979481666275,
+      "chord_size": 1,
+      "keys": [
+        "key_0"
+      ]
+    },
+    {
+      "event_index": 1099,
+      "due_s": 61.26062468264007,
+      "chord_size": 1,
+      "keys": [
+        "key_1"
+      ]
+    },
+    {
+      "event_index": 1100,
+      "due_s": 61.48975316393065,
+      "chord_size": 1,
+      "keys": [
+        "key_2"
+      ]
+    },
+    {
+      "event_index": 1101,
+      "due_s": 61.51058302990797,
+      "chord_size": 1,
+      "keys": [
+        "key_0"
+      ]
+    },
+    {
+      "event_index": 1102,
+      "due_s": 61.73971151119855,
+      "chord_size": 1,
+      "keys": [
+        "key_1"
+      ]
+    },
+    {
+      "event_index": 1103,
+      "due_s": 61.76054137717587,
+      "chord_size": 1,
+      "keys": [
+        "key_2"
+      ]
+    },
+    {
+      "event_index": 1104,
+      "due_s": 61.98966985846645,
+      "chord_size": 1,
+      "keys": [
+        "key_0"
+      ]
+    },
+    {
+      "event_index": 1105,
+      "due_s": 62.01049972444377,
+      "chord_size": 1,
+      "keys": [
+        "key_1"
+      ]
+    },
+    {
+      "event_index": 1106,
+      "due_s": 62.23962820573435,
+      "chord_size": 1,
+      "keys": [
+        "key_2"
+      ]
+    },
+    {
+      "event_index": 1107,
+      "due_s": 62.26045807171167,
+      "chord_size": 1,
+      "keys": [
+        "key_0"
+      ]
+    },
+    {
+      "event_index": 1108,
+      "due_s": 62.48958655300225,
+      "chord_size": 1,
+      "keys": [
+        "key_1"
+      ]
+    },
+    {
+      "event_index": 1109,
+      "due_s": 62.51041641897957,
+      "chord_size": 1,
+      "keys": [
+        "key_2"
+      ]
+    },
+    {
+      "event_index": 1110,
+      "due_s": 62.73954490027015,
+      "chord_size": 1,
+      "keys": [
+        "key_0"
+      ]
+    },
+    {
+      "event_index": 1111,
+      "due_s": 62.760374766247466,
+      "chord_size": 1,
+      "keys": [
+        "key_1"
+      ]
+    },
+    {
+      "event_index": 1112,
+      "due_s": 62.989503247538046,
+      "chord_size": 1,
+      "keys": [
+        "key_2"
+      ]
+    },
+    {
+      "event_index": 1113,
+      "due_s": 63.010333113515365,
+      "chord_size": 1,
+      "keys": [
+        "key_0"
+      ]
+    },
+    {
+      "event_index": 1114,
+      "due_s": 63.239461594805945,
+      "chord_size": 1,
+      "keys": [
+        "key_1"
+      ]
+    },
+    {
+      "event_index": 1115,
+      "due_s": 63.260291460783264,
+      "chord_size": 1,
+      "keys": [
+        "key_2"
+      ]
+    },
+    {
+      "event_index": 1116,
+      "due_s": 63.489419942073845,
+      "chord_size": 1,
+      "keys": [
+        "key_0"
+      ]
+    },
+    {
+      "event_index": 1117,
+      "due_s": 63.510249808051164,
+      "chord_size": 1,
+      "keys": [
+        "key_1"
+      ]
+    },
+    {
+      "event_index": 1118,
+      "due_s": 63.739378289341744,
+      "chord_size": 1,
+      "keys": [
+        "key_2"
+      ]
+    },
+    {
+      "event_index": 1119,
+      "due_s": 63.76020815531906,
+      "chord_size": 1,
+      "keys": [
+        "key_0"
+      ]
+    },
+    {
+      "event_index": 1120,
+      "due_s": 63.98933663660964,
+      "chord_size": 1,
+      "keys": [
+        "key_1"
+      ]
+    },
+    {
+      "event_index": 1121,
+      "due_s": 64.01016650258697,
+      "chord_size": 1,
+      "keys": [
+        "key_2"
+      ]
+    }
+  ],
+  "student_inputs": "Oracle event times, chord sizes, declared logical key set only",
+  "motor_used": false,
+  "network_used": false,
+  "training_performed": false
+}
