@@ -1,0 +1,40 @@
+{
+  "format": "dmdogo-v04-final-summary",
+  "chart_sha256": "04981e92f74288b8aac7286e83420b933036d2caead9c157bc33b706779ad1b1",
+  "checkpoint_sha256": "CCA1BFCC2D8E2988EEABF602A57211C8D8B66A54BFBBCBE0E3A9409EC167D2D8",
+  "source": "artifacts/dmdogo-v04/bool-full-r2/comparison-v04.json",
+  "viewer": "artifacts/dmdogo-v04/bool-full-r2/replay-v04.html",
+  "telemetry": "artifacts/dmdogo-v04/bool-full-r2/telemetry-v04.json",
+  "policies": {
+    "free": {"hits": 1122, "x": 94.059715, "mae_ms": 16.699232, "signed_ms": 16.670070, "switches": 526, "thumb": 228, "fixed_fast": "8/381"},
+    "continuity": {"hits": 1122, "x": 91.671123, "mae_ms": 17.255505, "signed_ms": 17.227111, "switches": 405, "thumb": 64, "fixed_fast": "35/381"},
+    "continuity_v03": {"hits": 1122, "x": 93.324421, "mae_ms": 16.738842, "signed_ms": 16.698590, "switches": 413, "thumb": 161, "fixed_fast": "4/381"},
+    "latency_only": {"hits": 1122, "x": 100.0, "mae_ms": 4.861032, "signed_ms": 4.827824, "switches": 527, "thumb": 209, "fixed_fast": "2/381", "prediction_mae_ms": 0.444742},
+    "planning_only": {"hits": 1122, "x": 93.101604, "mae_ms": 17.243367, "signed_ms": 17.221763, "switches": 553, "thumb": 205, "fixed_fast": "4/381", "evaluated_candidates": 19419, "replans": 76, "discards": 268},
+    "integrated_v04": {"hits": 1122, "x": 100.0, "mae_ms": 4.885002, "signed_ms": 4.849214, "switches": 517, "thumb": 197, "fixed_fast": "3/381", "prediction_mae_ms": 0.451872, "evaluated_candidates": 22029, "replans": 166, "discards": 372}
+  },
+  "all_arms": {"misses": 0, "too_early": 0, "overload": false, "keydowns": 1122},
+  "verification": {
+    "focused_pytest": {"passed": 60, "warnings": 0, "seconds": 11.20},
+    "full_pytest": {"passed": 2140, "warnings": 1, "seconds": 202.74},
+    "new_warnings": 0
+  },
+  "verdicts": {
+    "motor_latency_hypothesis": "SUPPORTED_FOR_CAUSAL_LATENCY_POLICY",
+    "identical_fingering_latency_ablation": "BLOCKED_BY_LIVE_ELIGIBILITY_AT_EVENT_109",
+    "multi_event_planner_hypothesis": "NOT_SUPPORTED_BY_FIXED_V01_PLANNER",
+    "integrated_timing": "PASS",
+    "integrated_naturalness": "FAIL_V02_TARGET",
+    "hard_realtime_10ms": "UNVERIFIED_MAX_RUNTIME_EXCEEDS_PERIOD"
+  },
+  "frozen_sha256": {
+    "motor_n_key_py": "8F098EE6B37DF37B3F8DF28BF0CB561B21319DD20DFA54A628A88506DD793556",
+    "motor_contact_16k_py": "A3D3896280FA62EB4FD79CCDF13628D996EE6BE99B6D9502FED71071027BB9C8",
+    "profiles_py": "E8090878C60E20D6F1A46E4C32E3E2B63C7E798D924843EC10DECC47FA680140"
+  },
+  "artifact_sha256": {
+    "comparison": "4D05EF2194D64E13A8F592742FDBE56FB0FDDCABFC6D94C2F63CE5A7A0EFF0D8",
+    "viewer": "83C2D5A3DF5C4C5B19AD465794CD9BBF37C7F75C1F382E9912A382FA6183009B",
+    "telemetry": "75E5FEFD645A70FEF4CA2F468A5179BC2698907CAB132BF6837B4EC8D6F31A8F"
+  }
+}
