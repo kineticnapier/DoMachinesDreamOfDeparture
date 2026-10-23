@@ -50,8 +50,13 @@ The first 20.83ms doublets are assigned as independent L1-L2 and R1-R2
 gestures with alternating hand workload, rather than a global eight-axis
 pattern. Repetition itself is not disallowed or proof of poor fingering.
 
-These results do not establish better physical X, Hit or human-like style.
-All v0.8 physical metrics remain unmeasured.
+These offline results do not establish human-like style.
+Subsequently, the user ran a complete frozen v0.8 physical episode on the
+same Train bool chart: 1,122/1,122 Hit, X 100%, timing MAE 4.500752ms,
+0 local replans, 0 deferrals, 0 overload (termination chart_complete).
+See docs/dmdogo-v08-frozen-baseline.json and
+docs/dmdogo-v08-freeze-generalization.md for the reference and protocol.
+These outcomes are still single-chart observations, not generalization proof.
 
 ## Windows verification
 
@@ -94,7 +99,8 @@ Do not run Validation20 or FINAL without explicit approval.
 ## Verification caveat
 
 Eight focused planner tests passed locally with synthetic examples. The
-full integrated repository tests and Windows physical simulation are not
-claimed as executed. Genuine human-likeness evaluation will require aligned
+full integrated repository tests were not executed in the assistant's
+environment; the complete Train bool Windows physical simulation was later
+executed by the user, with results recorded in the frozen reference. Genuine human-likeness evaluation will require aligned
 human finger-key recordings from consenting participants, not only Hit rate
 or reduced exact eight-period recurrence.
