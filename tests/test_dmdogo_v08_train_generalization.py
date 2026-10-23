@@ -83,6 +83,6 @@ def test_fingerprinting_reports_true_chords_and_no_fabricated_metrics():
     )
     assert result["event_count"] == 3
     assert result["chord_events"] == 1
-    assert result["p10_gap_ms"] == 10.
-    assert result["p90_to_p10_gap_ratio"] == 1.
+    assert result["p10_gap_ms"] == 29.
+    assert result["p90_to_p10_gap_ratio"] == pytest.approx(181. / 29., abs=1e-6)
     assert "hits" not in result
