@@ -105,3 +105,28 @@ def test_first_gap_pause_starts_new_segment():
     segments = scheduler._segments(events)
     assert segments[0] == events[:1]
     assert segments[1][0] == events[1]
+
+
+@pytest.mark.parametrize("time", [float("nan"), float("inf"), -float("inf")])
+def test_nonfinite_event_time_fails_closed(time):
+    result = PatternFirstScheduler(
+        ("a", "b"), minimum_reuse_s=.08,
+    ).schedule(_events([0.0, time]))
+    assert not result.feasible
+    assert result.failure_reason == "non_finite_event_time"
+
+
+@pytest.mark.parametrize("reuse", [float("nan"), float("inf"), -1.0])
+def test_nonfinite_or_negative_reuse_configuration_is_rejected(reuse):
+    with pytest.raises(ValueError):
+        PatternFirstScheduler(("a", "b"), minimum_reuse_s=reuse)
+
+
+def test_zero_minimum_reuse_does_not_reuse_key_for_simultaneous_events():
+    scheduler = PatternFirstScheduler(
+        ("a", "b", "c"), minimum_reuse_s=0.0,
+    )
+    result = scheduler.schedule(_events([0.0, 0.0, .2], [2, 1, 1]))
+    assert result.feasible
+    assert set(result.assignments[0]).isdisjoint(result.assignments[1])
+    assert result.patterns[0].width == 3
