@@ -27,7 +27,12 @@ def _natural(value, *, zero_ok: bool = True) -> bool:
 
 def _finite(value, *, min_value: float | None = None,
             max_value: float | None = None) -> bool:
-    if type(value) not in (float, int) or not isfinite(value):
+    if type(value) not in (float, int):
+        return False
+    try:
+        if not isfinite(value):
+            return False
+    except (OverflowError, ValueError):
         return False
     return ((min_value is None or value >= min_value)
             and (max_value is None or value <= max_value))
@@ -78,7 +83,8 @@ def _valid_provenance(proof: dict | None, case: dict, summary: dict,
     source = proof["source"]
     if (proof.get("format") != WRAPPER_FORMAT
             or proof.get("state") != "success"
-            or proof.get("runner_exit_code") != 0
+            or type(proof.get("runner_exit_code")) is not int
+            or proof["runner_exit_code"] != 0
             or proof.get("chart_sha256") != case["sha256"]
             or source.get("frozen_source_commit") != frozen_head
             or source.get("code_digest") != frozen_code_digest
