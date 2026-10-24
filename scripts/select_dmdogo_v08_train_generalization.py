@@ -15,6 +15,8 @@ from pathlib import Path
 from statistics import median
 import subprocess
 
+from dmdogo_v08_provenance import frozen_code_digest, verify_source_tree
+
 from dmdod.adofai.chart import load_adofai
 from dmdod.adofai.playable import build_playable_segment
 from dmdod.adofai.timing import compile_adofai
@@ -110,10 +112,12 @@ def select_cases(records: list[dict], count: int = DEFAULT_CASES) -> list[dict]:
 
 
 def make_manifest(records: list[dict], skipped: list[dict],
-                  *, train_root: str, baseline_excluded: int = 0) -> dict:
+                  *, train_root: str, baseline_excluded: int = 0,
+                  code_digest: str | None = None) -> dict:
     return {
         "format": "dmdogo-v08-frozen-train-generalization-manifest-v1",
         "frozen_implementation_commit": FROZEN_HEAD,
+        "frozen_code_digest": code_digest,
         "frozen_file_blobs": {
             "planner": FROZEN_PLANNER_BLOB, "runner": FROZEN_RUNNER_BLOB,
         },
@@ -166,6 +170,7 @@ def main() -> None:
     args = parser.parse_args()
     try:
         verify_frozen_code(Path(__file__).resolve().parents[1])
+        verification = verify_source_tree(Path(__file__).resolve().parents[1])
     except (OSError, subprocess.CalledProcessError, RuntimeError) as exc:
         parser.error(str(exc))
     root = args.train_root.resolve()
@@ -207,7 +212,8 @@ def main() -> None:
                 "detail": str(exc)[:200],
             })
     manifest = make_manifest(records, skipped, train_root=str(root),
-                             baseline_excluded=baseline_excluded)
+                             baseline_excluded=baseline_excluded,
+                             code_digest=verification["code_digest"])
     if not manifest["cases"]:
         parser.error("no eligible non-baseline Train charts; no output written")
     args.output.parent.mkdir(parents=True, exist_ok=True)
