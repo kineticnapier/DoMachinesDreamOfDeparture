@@ -1,5 +1,15 @@
 # DMDOGO v0.8 — Frozen baseline and Train generalization
 
+**2026-10-24 REVIEW UPDATE:** The direct physical-run and collate
+commands later in this document are now **historical, not verified
+generalization procedures**. They omit mandatory execution-provenance
+sidecars and the old reporter could accept corrupt metrics. Use
+[Codex review remediation](dmdogo-v08-codex-review-remediation.md) for
+the revised create-once r2 manifest, verified outer runner,
+one-to-one gesture audit and strict reporter. The frozen v0.8 Planner
+and Motor remain unmodified.
+
+
 ## Frozen reference
 
 Full physical Train bool, supplied by the user:
