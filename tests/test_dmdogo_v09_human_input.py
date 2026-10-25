@@ -41,7 +41,7 @@ def test_existing_recorder_log_can_be_normalized_without_alignment_claim(tmp_pat
 @pytest.mark.parametrize("tamper", [
     "nonfinite", "negative", "unsorted", "wrong_finger",
     "changed_axis", "wrong_timebase", "false_verified_alignment",
-    "empty_records", "wrong_sha",
+    "empty_records", "wrong_sha", "different_valid_axis", "spoofed_finger_observation",
 ])
 def test_unsafe_human_source_assumptions_rejected(tamper):
     rows = [
@@ -69,6 +69,10 @@ def test_unsafe_human_source_assumptions_rejected(tamper):
         payload["records"] = []
     elif tamper == "wrong_sha":
         payload["chart_sha256"] = "unknown"
+    elif tamper == "different_valid_axis":
+        payload["records"][0]["axis_proxy"] = "right_1"
+    elif tamper == "spoofed_finger_observation":
+        payload["finger_verification"]["independent_finger_observation"] = True
     with pytest.raises(ValueError):
         validate_normalized(payload)
 
