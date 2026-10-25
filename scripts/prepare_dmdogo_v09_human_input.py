@@ -13,7 +13,9 @@ from math import isfinite
 from pathlib import Path
 import re
 
-from compare_fingering_human_log_v011 import parse_human_log
+from compare_fingering_human_log_v011 import (
+    EXPECTED_FINGER, HUMAN_KEY_AXIS, parse_human_log,
+)
 
 FORMAT = "dmdogo-v09-human-keypress-input-v1"
 SHA256_RE = re.compile(r"^[a-fA-F0-9]{64}$")
@@ -81,6 +83,11 @@ def validate_normalized(payload: dict) -> None:
             or alignment.get("event_correspondence_verified") is not False
             or alignment.get("oracle_time_offset_ms") is not None):
         raise ValueError("legacy capture must remain unverified")
+    verification = payload.get("finger_verification")
+    if (not isinstance(verification, dict)
+            or verification.get("method") != "fixed_declaration_from_legacy_key_map"
+            or verification.get("independent_finger_observation") is not False):
+        raise ValueError("legacy mapping is not an observed-finger source")
     records = payload.get("records")
     if not isinstance(records, list) or not records:
         raise ValueError("human log has no presses")
@@ -104,7 +111,10 @@ def validate_normalized(payload: dict) -> None:
                 or entry.get("axis_proxy") not in ALLOWED_AXES
                 or entry.get("finger_label") not in ALLOWED_FINGERS
                 or entry.get("finger_label_evidence") !=
-                "declared_key_mapping_not_observed"):
+                "declared_key_mapping_not_observed"
+                or entry["recorder_key"] not in HUMAN_KEY_AXIS
+                or entry["axis_proxy"] != HUMAN_KEY_AXIS[entry["recorder_key"]]
+                or entry["finger_label"] != EXPECTED_FINGER[entry["recorder_key"]]):
             raise ValueError(f"invalid/invented key or finger mapping at {i}")
 
 
