@@ -12,7 +12,7 @@ if str(SCRIPTS) not in sys.path:
 from dmdod.planning.gesture_chunk_planner_v08 import (
     GestureChunkPlannerV08, GestureEvent, _candidate_gestures,
 )
-from analyze_dmdogo_v09_h04_beam_decisions import (
+from audit_dmdogo_v09_h04_beam_decisions import (
     TERMS, State, _expand, _quick_at_join, _chunk_record, audit_beam,
 )
 
