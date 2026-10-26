@@ -27,7 +27,7 @@ Three settings are compared:
 - **Frozen axes, frozen boundary**: observed v0.8 result; flag present
   by study selection.
 - **Replanned axes, same original boundary**: H0.2's
-  \`same_boundary_surrogate\`, recomputed in H0.3 with the **same
+  `same_boundary_surrogate`, recomputed in H0.3 with the **same
   independent local optimizer**, pinned outside-chart assignments and
   80ms abstract same-axis reuse.
 - **Replanned axes, changed boundary**: all H0.2 alternatives, verified
@@ -44,8 +44,8 @@ within-chunk grammar.
 
 H0.3 deliberately makes **no claim** that one run over only 22
 conditioned-on-flag examples identifies a causal effect. Its labels
-\`replanning_alone_suffices_for_this_flag\` and
-\`partition_associated_under_same_surrogate\` are descriptive and
+`replanning_alone_suffices_for_this_flag` and
+`partition_associated_under_same_surrogate` are descriptive and
 do not indicate human-likeness.
 
 ## Run on Windows
@@ -58,13 +58,13 @@ cd F:\dev\DoMachinesDreamOfDeparture
 
 uv run pytest -q tests/test_dmdogo_v09_h03_boundary_controls.py
 
-uv run python scripts/analyze_dmdogo_v09_h03_boundary_controls.py  `
-  --manifest "reports/dmdogo-v08-train-selection-r2.json"  `
-  --verified-report "reports/dmdogo-v08-train-report-r4.json"  `
-  --h0-report "reports/dmdogo-v09-h0-train-style-r1.json"  `
-  --h01-report "reports/dmdogo-v09-h01-train-conditions-r2.json"  `
-  --h02-report "reports/dmdogo-v09-h02-boundary-cf-r1.json"  `
-  --results-root "artifacts/dmdogo-v08/train-generalization-r2"  `
+uv run python scripts/analyze_dmdogo_v09_h03_boundary_controls.py `
+  --manifest "reports/dmdogo-v08-train-selection-r2.json" `
+  --verified-report "reports/dmdogo-v08-train-report-r4.json" `
+  --h0-report "reports/dmdogo-v09-h0-train-style-r1.json" `
+  --h01-report "reports/dmdogo-v09-h01-train-conditions-r2.json" `
+  --h02-report "reports/dmdogo-v09-h02-boundary-cf-r1.json" `
+  --results-root "artifacts/dmdogo-v08/train-generalization-r2" `
   --output "reports/dmdogo-v09-h03-boundary-controls-r1.json"
 ~~~
 
@@ -109,4 +109,4 @@ surrogate-vs-surrogate costs can be compared.
 - No preferred-fingering score, reward model or NN training.
 - No claims of causal identification, Motor feasibility, or real-time performance.
 - No changes to the Planner, Motor, Timing, runner, existing outputs or
-  the locally modified \`prestige1.toml\`.
+  the locally modified `prestige1.toml`.
