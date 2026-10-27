@@ -25,7 +25,7 @@ from audit_dmdogo_v09_h04_beam_decisions import _oracle_events
 from audit_dmdogo_v09_h05_nonquick_suffix import _next, _seed_state, _cost_terms
 from audit_dmdogo_v09_h06_improved_suffix import FORMAT as H06_FORMAT
 from audit_dmdogo_v09_h08_protected_quota import (
-    BEAM_WIDTH, TARGET_TAG, _candidate_target, _describe,
+    FORMAT as H08_FORMAT, BEAM_WIDTH, TARGET_TAG, _candidate_target, _describe,
     choose_quota,
 )
 from audit_dmdogo_v09_h07_shadow_lane import (
@@ -269,6 +269,7 @@ def _validate_reports(checked: dict, manifest: dict, h06: dict,
                       h08: dict, h010: dict, h06_path: Path,
                       h08_path: Path) -> list[dict]:
     if (h06.get("format") != H06_FORMAT
+            or h08.get("format") != H08_FORMAT
             or h010.get("format") != H010_FORMAT
             or h010.get("beam_width") != BEAM_WIDTH
             or h010.get("protected_minimum_quota") != QUOTA
@@ -294,8 +295,31 @@ def _validate_reports(checked: dict, manifest: dict, h06: dict,
             or h010["aggregate"]["previously_improved_7"]["target_count"] != 7
             or h010["aggregate"]["previously_nonimproved_15"]["target_count"] != 15):
         raise ValueError("target cohorts no longer match the saved H0.10 census")
-    return [{c["chart_sha256"]: c for c in report["cases"]}
+    maps = [{c["chart_sha256"]: c for c in report["cases"]}
             for report in (h06, h08, h010)]
+    # H0.10's original seven results must agree with the actual H0.8
+    # report too, not only with H0.10's saved aggregates.
+    for sha in required:
+        c06, c08, c010 = [m[sha] for m in maps]
+        saved08 = {tuple(e["flag_pair"]): e for e in c08["targets"]}
+        saved010 = {tuple(e["flag_pair"]): e for e in c010["targets"]}
+        if (len(saved08) != len(c08["targets"])
+                or len(saved010) != len(c010["targets"])
+                or len(saved08) != c06["improved_count"]
+                or len(saved010) != c06["targeted_count"]):
+            raise ValueError("H0.6/H0.8/H0.10 per-chart cohort mismatch")
+        for entry in c06["evidence"]:
+            pair = tuple(entry["flag_pair"])
+            if pair not in saved010:
+                raise ValueError("H0.10 is missing a targeted seam")
+            if entry["improved_final_cost"]:
+                if (pair not in saved08
+                        or saved010[pair]["quota8_result"]
+                        != saved08[pair]["variants"]["8"]):
+                    raise ValueError("H0.10 seven-case control differs from H0.8")
+            elif pair in saved08:
+                raise ValueError("H0.8 included a previously nonimproved seam")
+    return maps
 
 
 def _aggregate(rows: list[dict]) -> dict:
