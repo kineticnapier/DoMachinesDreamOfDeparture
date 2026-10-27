@@ -15,6 +15,7 @@ from dmdod.planning.gesture_chunk_planner_v08 import (
 )
 from audit_dmdogo_v09_h05_nonquick_suffix import _next, _seed_state
 from audit_dmdogo_v09_h04_beam_decisions import _chunk_record
+import audit_dmdogo_v09_h07_shadow_lane as h07
 from audit_dmdogo_v09_h07_shadow_lane import (
     BEAM_WIDTH, Proposal, choose_beam, _delta_flags, trace_one_slot,
 )
@@ -189,3 +190,11 @@ def test_precise_frozen_objective_must_match_saved_rounded_cost():
             expected_cost=plan.metrics["beam_cost"],
             expected_evaluated=plan.candidates_evaluated,
             reference_final_cost=plan.metrics["beam_cost"] + .01)
+
+
+def test_cli_path_type_is_pathlib_not_beam_state():
+    # Regression: a class named Path previously shadowed pathlib.Path,
+    # making argparse reject every --manifest path before file I/O.
+    assert h07.Path is Path
+    assert h07.BeamPath is not Path
+    assert h07.Path("reports/source.json").as_posix() == "reports/source.json"
