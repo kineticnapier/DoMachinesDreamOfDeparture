@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import sys
+import json
 from pathlib import Path
 
 import pytest
@@ -161,3 +162,30 @@ def test_wrong_source_beam_cost_rejected():
             events, frozen, target,
             expected_cost=plan.metrics["beam_cost"] + 1.,
             expected_evaluated=plan.candidates_evaluated)
+
+def test_committed_h06_selected_cohort_schema_is_supported():
+    report = json.loads((
+        Path(__file__).resolve().parents[1]
+        / "reports/dmdogo-v09-h06-improved-suffix-r2.json"
+    ).read_text(encoding="utf-8"))
+    selected = [
+        e for chart in report["cases"] for e in chart["evidence"]
+        if e["improved_final_cost"]
+    ]
+    assert len(selected) == report["aggregate"]["improved_final_cost_count"] == 7
+    for entry in selected:
+        assert entry["beam_lineage"]["join_expanded_rank"] >= 1
+        assert entry["nonquick_gesture_family"]
+        assert entry["nonquick_axes"]
+        assert entry["cost"]["final_delta"] < 0
+        assert round(entry["cost"]["original_v08_final"], 6) > 0
+
+
+def test_precise_frozen_objective_must_match_saved_rounded_cost():
+    events, plan, frozen, target = _synthetic_target()
+    with pytest.raises(ValueError, match="high-precision original cost"):
+        trace_one_slot(
+            events, frozen, target,
+            expected_cost=plan.metrics["beam_cost"],
+            expected_evaluated=plan.candidates_evaluated,
+            reference_final_cost=plan.metrics["beam_cost"] + .01)
