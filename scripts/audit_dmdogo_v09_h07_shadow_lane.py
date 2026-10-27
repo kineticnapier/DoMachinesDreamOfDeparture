@@ -43,7 +43,7 @@ class Node:
 
 
 @dataclass(slots=True)
-class Path:
+class BeamPath:
     state: Branch
     node: Node | None
 
@@ -161,7 +161,7 @@ def trace_one_slot(events, frozen_chunks: list[dict],
     if target["nonquick_join_expanded_rank"] < 1:
         raise ValueError("invalid H0.5 nonquick expanded rank")
 
-    states = [Path(_seed_state(events[0].due_s), None)]
+    states = [BeamPath(_seed_state(events[0].due_s), None)]
     total_candidates_before_join = 0
     protected_first_rank = None
     rescue_windows = []
@@ -219,7 +219,7 @@ def trace_one_slot(events, frozen_chunks: list[dict],
                 rescue_windows.append(win_id)
             if not status["protected_feasible"] and protected_dead_window is None:
                 protected_dead_window = win_id
-        states = [Path(p.state, Node(p.parent, p.chunk)) for p in keep]
+        states = [BeamPath(p.state, Node(p.parent, p.chunk)) for p in keep]
     if not protected_started:
         raise ValueError("targeted alternative was never selected")
 
@@ -230,7 +230,7 @@ def trace_one_slot(events, frozen_chunks: list[dict],
     if protected_dead_window is None and not chosen_protected:
         raise ValueError("tag disappeared without accounting for infeasibility")
 
-    def characterize(state: Path | None):
+    def characterize(state: BeamPath | None):
         if state is None:
             return None
         chunks = _path_chunks(state.node)
