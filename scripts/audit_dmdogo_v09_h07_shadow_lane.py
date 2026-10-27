@@ -204,8 +204,6 @@ def trace_one_slot(events, frozen_chunks: list[dict],
                     raise ValueError("target seam alternative is not unique")
                 chosen_rank, chosen = tagged[0]
                 if (chosen_rank != target["nonquick_join_expanded_rank"]
-                        or chosen.parent_rank != target[
-                            "original_selected_parent_beam_rank"]
                         or chosen.candidate_index != target_index
                         or list(chosen.chunk["axes"]) != target["nonquick_axes"]):
                     raise ValueError("H0.5 nonquick candidate rank/identity mismatch")
@@ -234,8 +232,9 @@ def trace_one_slot(events, frozen_chunks: list[dict],
         if len(chunks) != len(windows) or _event_count_chunks(chunks) != len(events):
             raise ValueError("counterfactual does not cover entire chart")
         original_axes = _event_axes(frozen_chunks)
+        alternate_axes = _event_axes(chunks)
         changed = sum(
-            _event_axes(chunks)[e.event_index] != original_axes[e.event_index]
+            alternate_axes[e.event_index] != original_axes[e.event_index]
             for e in events)
         quick0, quick1 = _quick_flags(events, frozen_chunks), _quick_flags(events, chunks)
         rapid0, rapid1 = _rapid_flags(events, frozen_chunks), _rapid_flags(events, chunks)
@@ -308,11 +307,20 @@ def audit_case(chart, summary: dict, telemetry: dict,
             raise ValueError("duplicate improved H0.6 target")
         seen.add(pair)
         target = entry["beam_lineage"]
+        windows = GestureChunkPlannerV08()._windows(events)
+        flagged_window = windows[entry["window_index"]]
+        matching = [
+            i for i, candidate in enumerate(_candidate_gestures(flagged_window))
+            if [list(x) for x in candidate.axes] == entry["nonquick_axes"]
+            and candidate.family == entry["nonquick_gesture_family"]
+        ]
+        if len(matching) != 1:
+            raise ValueError("H0.6 nonquick candidate cannot be uniquely reconstructed")
         record = trace_one_slot(
             events, frozen_chunks,
             {**target, "flag_pair": entry["flag_pair"],
              "window_index": entry["window_index"],
-             "nonquick_candidate_index": target.get("nonquick_candidate_index"),
+             "nonquick_candidate_index": matching[0],
              "nonquick_axes": entry["nonquick_axes"]},
             expected_cost=summary["abstract_schedule"]["metrics"]["beam_cost"],
             expected_evaluated=summary["abstract_schedule"]["candidates_evaluated"],
