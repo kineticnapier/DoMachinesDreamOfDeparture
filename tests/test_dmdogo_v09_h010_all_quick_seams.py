@@ -155,3 +155,13 @@ def test_committed_h06_census_22_and_7_plus_15():
 def test_quota_and_frozen_beam_constants():
     assert h010.BEAM_WIDTH == 24
     assert h010.QUOTA == 8
+
+
+def test_zero_value_fields_are_always_present_in_cohort_summaries():
+    row = _row(delta=-.5)
+    aggregate = h010.summarize([row])
+    assert aggregate["winner_higher_cost"] == 0
+    assert aggregate["winner_roughly_equal_cost"] == 0
+    assert aggregate["winner_new_quick_flag_count_across_independent_runs"] == 0
+    assert aggregate["best_protected_higher_cost"] == 0
+    assert aggregate["best_protected_new_rapid_flag_count_across_independent_runs"] == 0
