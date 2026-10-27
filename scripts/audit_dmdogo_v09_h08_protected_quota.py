@@ -8,7 +8,6 @@ Quota 1 must reproduce the saved H0.7 report before anything is written.
 """
 
 import argparse
-from collections import Counter
 import json
 from pathlib import Path
 
@@ -112,8 +111,6 @@ def _candidate_target(h06_entry, windows) -> dict:
         "nonquick_candidate_index": eligible[0][0],
         "nonquick_axes": h06_entry["nonquick_axes"],
         "nonquick_join_expanded_rank": lineage["join_expanded_rank"],
-        "original_selected_parent_beam_rank": h06_entry[
-            "beam_lineage"]["join_expanded_rank"],  # Rank below is tracked directly.
     }
 
 
