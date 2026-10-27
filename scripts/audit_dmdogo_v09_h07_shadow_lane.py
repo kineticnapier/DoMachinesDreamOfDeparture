@@ -133,7 +133,8 @@ def _delta_flags(original: dict, candidate: dict) -> dict:
 
 def trace_one_slot(events, frozen_chunks: list[dict],
                    target: dict, *, expected_cost: float,
-                   expected_evaluated: int) -> dict:
+                   expected_evaluated: int,
+                   reference_final_cost: float | None = None) -> dict:
     """Original beam up to the target; independent protected selection thereafter."""
     planner = GestureChunkPlannerV08()
     windows = planner._windows(events)
@@ -145,6 +146,10 @@ def trace_one_slot(events, frozen_chunks: list[dict],
             or canonical.candidates_evaluated != expected_evaluated
             or canonical.metrics["beam_cost"] != expected_cost):
         raise ValueError("frozen v0.8 Planner/source mismatch")
+    if reference_final_cost is None:
+        reference_final_cost = expected_cost
+    if round(reference_final_cost, 6) != expected_cost:
+        raise ValueError("H0.6 high-precision original cost disagrees with v0.8")
 
     target_window = target["window_index"]
     join_pair = target["flag_pair"]
@@ -244,7 +249,7 @@ def trace_one_slot(events, frozen_chunks: list[dict],
         return {
             "final_cost": round(state.state.score, 9),
             "delta_cost_vs_frozen_v08": round(
-                state.state.score - expected_cost, 9),
+                state.state.score - reference_final_cost, 9),
             "is_from_protected_lineage": TARGET_TAG in state.state.tags,
             "changed_event_assignment_count": changed,
             "quick": _delta_flags(quick0, quick1),
@@ -325,6 +330,7 @@ def audit_case(chart, summary: dict, telemetry: dict,
              "nonquick_axes": entry["nonquick_axes"]},
             expected_cost=summary["abstract_schedule"]["metrics"]["beam_cost"],
             expected_evaluated=summary["abstract_schedule"]["candidates_evaluated"],
+            reference_final_cost=entry["cost"]["original_v08_final"],
         )
         record["h06_forced_final_delta"] = entry["cost"]["final_delta"]
         record["h06_forced_changed_event_count"] = entry[
