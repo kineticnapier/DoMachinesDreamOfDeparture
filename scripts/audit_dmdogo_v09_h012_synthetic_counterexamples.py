@@ -247,6 +247,16 @@ def audit_one(trial: int) -> dict:
             expected_cost=plan.metrics["beam_cost"],
             expected_evaluated=plan.candidates_evaluated,
             reference_final_cost=original_score)
+        if not full["protected_descendants_reached_terminal"]:
+            # The H0.9 diagnostic requires a tagged terminal survivor.
+            # Count this predeclared untestable case explicitly instead of
+            # silently excluding or misclassifying it as a successful rule.
+            outcome["skipped_targets"].append({
+                "window_index": join,
+                "reason": "full_quota8_protected_lineage_extinct",
+                "candidate_rank": target["nonquick_join_expanded_rank"],
+            })
+            continue
         diagnostic = trace_window_mechanism(
             events, chunks, target, quota=QUOTA)
         compare_exact_h08(diagnostic, full)
