@@ -146,8 +146,36 @@ def summarize(rows: list[dict]) -> dict:
         if row["best_protected_effects"] is not None:
             tagged_deltas.append(row["best_protected_effects"][
                 "delta_cost_vs_v08"])
+    # Counter omits never-incremented values (especially important for the
+    # 15 previously nonimproved cases). Keep the public schema fixed even
+    # when a group has zero improved/protected/flag counts.
+    mandatory = (
+        "target_count", "terminal_protected_survivors",
+        "rescue_windows", "displaced_untagged_slots",
+        "ever_underfilled_quota_windows",
+        "winner_lower_cost", "winner_higher_cost",
+        "winner_roughly_equal_cost", "winner_is_protected",
+        "winner_target_quick_removed",
+        "best_protected_lower_cost", "best_protected_higher_cost",
+        "best_protected_roughly_equal_cost",
+        "best_protected_target_quick_removed",
+        "winner_new_quick_flag_count_across_independent_runs",
+        "winner_removed_quick_flag_count_across_independent_runs",
+        "winner_new_rapid_flag_count_across_independent_runs",
+        "winner_removed_rapid_flag_count_across_independent_runs",
+        "best_protected_new_quick_flag_count_across_independent_runs",
+        "best_protected_removed_quick_flag_count_across_independent_runs",
+        "best_protected_new_rapid_flag_count_across_independent_runs",
+        "best_protected_removed_rapid_flag_count_across_independent_runs",
+        "winner_introduces_quick_flag", "winner_introduces_rapid_flag",
+        "best_protected_introduces_quick_flag",
+        "best_protected_introduces_rapid_flag",
+        "winner_abstract_reuse_violations",
+        "best_protected_abstract_reuse_violations",
+    )
     return {
-        **dict(sorted(tally.items())),
+        **dict(sorted({key: tally[key] for key in
+                       (*mandatory, *tally.keys())}.items())),
         "winner_cost_delta_distribution": _distribution(all_cost_deltas),
         "best_protected_cost_delta_distribution": _distribution(tagged_deltas),
         "winner_changed_events_distribution": _distribution(
