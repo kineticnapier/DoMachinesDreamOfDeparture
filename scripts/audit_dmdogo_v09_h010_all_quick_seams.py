@@ -51,6 +51,18 @@ def _target_missing(quick_changes: dict, pair: tuple[int, int]) -> bool:
     return pair in removed and pair not in added
 
 
+def verify_improving_reference(entry: dict, result: dict, saved: dict) -> None:
+    """Fail closed on any previously known quota-8 outcome discrepancy."""
+    if not entry["improved_final_cost"]:
+        raise ValueError("H0.8 reference can only cover the original seven")
+    if (result != saved["variants"][str(QUOTA)]
+            or saved["h06_forced_suffix_final_delta"]
+            != entry["cost"]["final_delta"]):
+        raise ValueError(
+            "H0.10 previously known improving target does not reproduce "
+            "saved H0.8 quota-8 outcome and H0.6 baseline")
+
+
 def _measure(path: dict | None, pair: tuple[int, int]) -> dict | None:
     if path is None:
         return None
@@ -190,13 +202,7 @@ def audit_case(chart: Path, summary: dict, telemetry: dict,
             reference_final_cost=entry["cost"]["original_v08_final"],
         )
         if entry["improved_final_cost"]:
-            saved = h08_by_pair[pair]
-            if result != saved["variants"][str(QUOTA)]:
-                raise ValueError(
-                    "H0.10 previously known improving target is not "
-                    "identical to saved H0.8 quota-8 outcome")
-            if saved["h06_forced_suffix_final_delta"] != entry["cost"]["final_delta"]:
-                raise ValueError("H0.8 forced-suffix H0.6 cost baseline differs")
+            verify_improving_reference(entry, result, h08_by_pair[pair])
         elif pair in h08_by_pair:
             raise ValueError("H0.6 nonimproved case already selected in H0.8")
 
