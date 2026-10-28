@@ -205,6 +205,19 @@ def _source_trial_map(h015: dict, name: str) -> dict[int, dict]:
     return by_id
 
 
+def reconcile_h015_targets(saved: dict, original: dict) -> list[tuple[int, dict, dict]]:
+    """Preserve H0.15's explicitly selected target subset, never expand it."""
+    if saved["target_count"] != len(saved["targets"]):
+        raise ValueError("saved H0.15 target count mismatch")
+    historical = {x["window_index"]: x for x in saved["targets"]}
+    all_original = {x["window_index"]: x for x in original["targets"]}
+    if (not historical or len(historical) != len(saved["targets"])
+            or len(all_original) != len(original["targets"])
+            or not set(historical).issubset(all_original)):
+        raise ValueError("H0.15 targeted join windows changed")
+    return [(wi, row, all_original[wi]) for wi, row in historical.items()]
+
+
 def inspect_trial(trial_id: int, saved: dict) -> dict:
     """Reproduce original H0.15 outcomes, then compute stronger bounds."""
     original = audit_one(trial_id)
@@ -219,20 +232,10 @@ def inspect_trial(trial_id: int, saved: dict) -> dict:
     windows = planner._windows(events)
     chunks = [_chunk_record(x) for x in plan.chunks]
     incumbent = original_precise_cost(events, plan, windows, chunks)
-    by_join = {row["window_index"]: row for row in saved["targets"]}
-    original_by_join = {
-        row["window_index"]: row for row in original["targets"]}
-    if (len(by_join) != len(saved["targets"])
-            or len(original_by_join) != len(original["targets"])
-            or not set(by_join).issubset(original_by_join)
-            or not by_join):
-        raise ValueError("H0.15 targeted join windows changed")
-    # H0.15's known-regret cohort selected only the one regret seam
-    # in each of 4115 and 4127; survey trials retained both seams.
-    # Do not silently expand the historical target census.
+    # H0.15 inspected only the known regret seam in each of 4115/4127,
+    # but both candidate seams in the 16 fixed-survey trials.
     outputs = []
-    for join, historical in by_join.items():
-        source = original_by_join[join]
+    for join, historical, source in reconcile_h015_targets(saved, original):
         target = select_alternative(events, chunks, windows, join)
         if (target != source["target"]
                 or target["flag_pair"] != historical["flag_pair"]
