@@ -91,6 +91,11 @@ class VisibleCounterRenderer:
         if not isfinite(capture_latency_s) or capture_latency_s < 0.0:
             raise ValueError("capture latency must be finite and non-negative")
         self.contract = contract
+        # Internal-only and fixture-only categories must never enter the HUD.
+        self._confirmed_categories = frozenset(
+            category for category, evidence in contract.evidence
+            if evidence is CounterVisibilityEvidence.USER_CONFIRMED_VISIBLE
+        )
         self.display_latency_s = float(display_latency_s)
         self.capture_latency_s = float(capture_latency_s)
         self._counters = {label: 0 for label in contract.labels}
@@ -105,6 +110,13 @@ class VisibleCounterRenderer:
         label = self.contract.mapping.get(str(event.category))
         if label is None:
             return CounterRenderDiagnostic(False, "category is not in the visible contract", str(event.category), float(event.occurred_at_s))
+        if str(event.category) not in self._confirmed_categories:
+            return CounterRenderDiagnostic(
+                False,
+                "category has no user-confirmed visibility evidence",
+                str(event.category),
+                float(event.occurred_at_s),
+            )
         self._pending.append(event)
         self._pending.sort(key=lambda item: item.occurred_at_s)
         return CounterRenderDiagnostic(True, "queued for visible rendering", str(event.category), float(event.occurred_at_s))
