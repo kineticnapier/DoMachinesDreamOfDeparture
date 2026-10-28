@@ -234,6 +234,7 @@ from dmdod.training.human_visible_curriculum import (
     BETA_SCHEDULE,
     TRAINING_MODE,
     _check_validation_context,
+    _checkpoint_payload,
     _check_validation_summary,
     _train_identity,
     _train_identity_verified_for_output,
@@ -679,3 +680,33 @@ def test_resume_train_identity_rejects_malformed_saved_entries(tmp_path):
 
 def test_resume_train_identity_provenance_fresh_run_is_verified():
     assert _train_identity_verified_for_output({"training_mode": "other"})
+
+
+def test_curriculum_checkpoint_persists_train_identity_and_unverified_lineage(tmp_path):
+    model, optimizer = _small_resume_model_and_optimizer()
+    prepared, config, summary = _tiny_resume_context(tmp_path, model, optimizer)
+    model.checkpoint_metadata = lambda: {}
+    config.as_dict = lambda: {
+        "run": {"dataset": config.run.dataset},
+        "data": {"anchor_limit": 20, "validation_limit": 20},
+    }
+
+    def make_payload():
+        return _checkpoint_payload(
+            prepared, config, model, optimizer,
+            epoch=2, level=0, validation_streak=0, catastrophic_streak=0,
+            baseline_summary=summary, current_summary=summary,
+            best_summary=summary, best_checkpoint_path=prepared.output_checkpoint,
+            best_epoch=2, best_beta=1.0, transition_epochs_remaining=0,
+            history=[], stopped_reason="running-best",
+            checkpoint_role="selected-best",
+        )
+
+    fresh = make_payload()
+    assert fresh["human_visible_train_identity"] == _train_identity(prepared)
+    assert fresh["human_visible_train_identity_verified"] is True
+
+    prepared.parent["human_visible_train_identity_verified"] = False
+    migrated = make_payload()
+    assert migrated["human_visible_train_identity"] == _train_identity(prepared)
+    assert migrated["human_visible_train_identity_verified"] is False
