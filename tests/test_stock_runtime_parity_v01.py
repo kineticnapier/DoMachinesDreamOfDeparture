@@ -1,6 +1,8 @@
 import json
 from pathlib import Path
 
+import pytest
+
 from dmdod.research.stock_runtime_parity_v01 import compare_runtime_to_reference, extract_runtime_transitions
 from dmdod.research.stock_runtime_trace_v02 import load_runtime_jsonl_v02, parse_runtime_jsonl_v02
 
@@ -47,3 +49,55 @@ def test_song_time_is_never_substituted_with_virtual_frame_grid() -> None:
     session = load_runtime_jsonl_v02(FIXTURE)[0]
     rows = extract_runtime_transitions(session)
     assert rows[0].song_time_s is None
+
+@pytest.mark.parametrize("source,canonical", [
+    ("TooEarly", "too_early"),
+    ("too_early", "too_early"),
+    ("VeryEarly", "very_early"),
+    ("very_early", "very_early"),
+    ("EarlyPerfect", "early_perfect"),
+    ("early_perfect", "early_perfect"),
+    ("LatePerfect", "late_perfect"),
+    ("late_perfect", "late_perfect"),
+    ("VeryLate", "very_late"),
+    ("TooLate", "too_late"),
+    ("FailMiss", "fail_miss"),
+    ("Perfect", "perfect"),
+])
+def test_runtime_category_matches_stock_reference(source, canonical):
+    def row(sequence, hook, *, kind="judgement", **extra):
+        return json.dumps({
+            "type": "event", "session_id": "synthetic",
+            "sequence": sequence, "frame": 1,
+            "realtime_s": 1.0 + sequence * 0.001,
+            "kind": kind, "no_fail": True, "hook": hook, **extra,
+        })
+
+    session = parse_runtime_jsonl_v02([
+        json.dumps({
+            "type": "stock_runtime_probe_header",
+            "session_id": "synthetic", "evidence_kind": "synthetic_fixture",
+        }),
+        row(0, "HitInputEvent", kind="key_down"),
+        row(1, "AddHit", judgement=source),
+        row(2, "SwitchChosen", hook_phase="postfix",
+            floor_before_evaluator_only=1, floor_after_evaluator_only=2),
+    ])[0]
+    reference = {"no_fail": {
+        "automatic_transitions": [],
+        "event_37_90": [{
+            "keydown_at_s": 3.0,
+            "stock_target_ordinal": 0,
+            "stock_judgement": canonical,
+            "stock_current_floor_before": 1,
+            "stock_current_floor_after": 2,
+        }],
+    }}
+    result = compare_runtime_to_reference(
+        session, reference, floor_to_target={2: 0},
+    )
+    assert result["comparisons"][0]["fields"]["judgement"] == "MATCH"
+    assert result["comparisons"][0]["fields"]["target_ordinal"] == "MATCH"
+    assert not result["explicit_mismatch"]
+    # A synthetic fixture cannot establish runtime parity.
+    assert result["verdict"] == "RUNTIME_PARITY_UNVERIFIED"
