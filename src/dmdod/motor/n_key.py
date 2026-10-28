@@ -16,6 +16,7 @@ formula is defined so the 4K case is numerically equivalent to FourFingerBody.
 """
 
 from dataclasses import dataclass, replace
+from math import isfinite
 
 from dmdod.motor.body import BilateralState, FingerConfig, FingerState, HandConfig, HandState
 from dmdod.motor.keyboard import KeyConfig, KeyEvent, KeyState
@@ -427,6 +428,8 @@ class NKeyMotorEnv:
         values = action.as_tuple()
         if len(values) != self.key_count:
             raise ValueError(f"expected {self.key_count} action values, got {len(values)}")
+        if any(not isfinite(value) for value in values):
+            raise ValueError("N-key motor commands must be finite")
         clamped = NKeyAction(tuple(max(-1.0, min(1.0, value)) for value in values))
         if not self.capture_physics_trace:
             return self._step_held_exact(clamped)

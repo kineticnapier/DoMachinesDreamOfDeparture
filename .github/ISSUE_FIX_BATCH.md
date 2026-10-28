@@ -42,3 +42,21 @@ This branch is the single working branch for accumulating verified fixes to open
 Do not mark either issue fixed or use `Fixes #...` until regression checks pass.
 Frozen research reports, HUD-only constraints, timing constants and checkpoint
 formats were not intentionally changed.
+
+## Additional changes awaiting repository test verification (2026-10-28)
+
+- Refs #13 — Reject non-finite commands in 2K and N-Key Motor before physics advances,
+  preserving existing finite-value clipping and integration. Added both-side,
+  both-trace-path, and non-finite regression cases.
+  - Run: `python -m pytest -q tests/test_motor_env.py tests/test_n_key_capacity.py`
+  - Status: code and regression tests committed; **repository tests not executed**.
+  - Classification: correctness fix for invalid inputs, not behavior-preserving.
+- Refs #14 — Track finalized misses by target index rather than timestamp,
+  preserving one judgement per equal-time target and repeated finalize() behavior.
+  Added same-time, all-missed, and distinct-time regression tests.
+  - Run: `python -m pytest -q tests/test_timing_evaluator.py tests/test_rhythm_env.py`
+  - Status: code and regression tests committed; **repository tests not executed**.
+  - Classification: evaluator record correctness fix; hit assignment unchanged.
+
+No training, live ADOFAI, performance or GPU measurement was performed for these changes.
+Do not use issue-closing keywords before repository regression tests and applicable verification.

@@ -165,3 +165,21 @@ def test_n_key_calibration_matches_existing_4k_single_press_latency() -> None:
         },
         abs=1e-12,
     )
+
+@pytest.mark.parametrize("bad", [float("nan"), float("inf"), float("-inf")])
+@pytest.mark.parametrize("axis", [0, 7])
+@pytest.mark.parametrize("trace", [False, True])
+def test_nonfinite_n_key_action_rejected_before_physics(bad, axis, trace):
+    env = NKeyMotorEnv(8)
+    before = env.reset()
+    before_diagnostics = env.diagnostics()
+    env.capture_physics_trace = trace
+    commands = [0.0] * 8
+    commands[axis] = bad
+
+    with pytest.raises(ValueError, match="finite"):
+        env.step(NKeyAction(tuple(commands)))
+
+    assert env.observe() == before
+    assert env.diagnostics() == before_diagnostics
+    assert env.last_transition is None

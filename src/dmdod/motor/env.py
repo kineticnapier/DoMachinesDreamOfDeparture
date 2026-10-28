@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from math import isfinite
 from typing import Protocol
 
 from dmdod.motor.fast import step_held_exact
@@ -122,6 +123,8 @@ class MotorEnv:
         )
 
     def step(self, action: MotorAction) -> MotorTransition:
+        if not isfinite(action.left) or not isfinite(action.right):
+            raise ValueError("motor commands must be finite")
         left = max(-1.0, min(1.0, action.left))
         right = max(-1.0, min(1.0, action.right))
         raw_events = step_held_exact(
