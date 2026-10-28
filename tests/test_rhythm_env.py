@@ -74,3 +74,38 @@ def test_third_undecayed_too_early_is_replaced_by_fail_overload():
     )
     # XAcc: (0.2 + 0.2 + 0.0) / 3.
     assert stats.x_accuracy_percent == pytest.approx(100.0 * 0.4 / 3.0)
+
+
+
+def test_fail_on_miss_stops_after_first_expired_rhythm_target():
+    from dmdod.envs.rhythm import RewardConfig
+
+    env = RhythmMotorEnv(
+        make_regular_targets(bpm=120.0, count=3),
+        bpm=120.0,
+        reward_config=RewardConfig(fail_on_miss=True),
+    )
+    env.reset()
+    assert env._expire_misses(float("inf")) == -env.reward_config.miss_penalty
+    assert env._failed_on_miss
+    assert env.stats.misses == env.stats.fail_misses == 1
+    assert env.hit_margins == (TimingJudgement.FAIL_MISS,)
+    assert env._expire_misses(float("inf")) == 0.0
+    assert env.stats.misses == 1
+    assert env.hit_margins == (TimingJudgement.FAIL_MISS,)
+
+
+def test_no_fail_mode_keeps_all_expired_rhythm_targets():
+    from dmdod.envs.rhythm import RewardConfig
+
+    env = RhythmMotorEnv(
+        make_regular_targets(bpm=120.0, count=3),
+        bpm=120.0,
+        reward_config=RewardConfig(fail_on_miss=False),
+    )
+    env.reset()
+    assert env._expire_misses(float("inf")) == -3 * env.reward_config.miss_penalty
+    assert not env._failed_on_miss
+    assert env.stats.misses == env.stats.fail_misses == 3
+    assert env.hit_margins == (TimingJudgement.FAIL_MISS,) * 3
+    assert env._expire_misses(float("inf")) == 0.0
