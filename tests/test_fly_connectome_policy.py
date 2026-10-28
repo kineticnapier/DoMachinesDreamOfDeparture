@@ -206,3 +206,82 @@ def test_fly_connectome_projection_seed_is_reproducible(tmp_path) -> None:
     assert torch.equal(first.input_projection, second.input_projection)
     assert not torch.equal(first.input_projection, third.input_projection)
     _assert_sparse_equal(first.recurrent_weight, second.recurrent_weight)
+
+
+def test_fly_connectome_no_grad_recurrent_state_is_not_reused(tmp_path) -> None:
+    path, _ = _core(tmp_path)
+    torch.manual_seed(123)
+    model = NKeyFlyConnectomeActorCritic(
+        input_dim=6, key_count=4, core_path=path, sensory_dim=3,
+        projection_seed=11,
+    )
+    observations = torch.randn(4, 6)
+    initial = model.initial_state(torch.device("cpu"))
+
+    state = initial
+    no_grad_means = []
+    no_grad_values = []
+    with torch.no_grad():
+        for observation in observations:
+            previous_state = state
+            previous_snapshot = previous_state.clone()
+            mean, _, value, state = model.forward_step(observation, state)
+            # In particular, the second step must not overwrite state1.
+            assert torch.equal(previous_state, previous_snapshot)
+            no_grad_means.append(mean)
+            no_grad_values.append(value)
+
+    grad_state = initial
+    grad_means = []
+    grad_values = []
+    for observation in observations:
+        mean, _, value, grad_state = model.forward_step(observation, grad_state)
+        grad_means.append(mean)
+        grad_values.append(value)
+
+    assert torch.allclose(state, grad_state, atol=1e-6, rtol=1e-5)
+    assert torch.allclose(
+        torch.stack(no_grad_means), torch.stack(grad_means),
+        atol=1e-6, rtol=1e-5,
+    )
+    assert torch.allclose(
+        torch.stack(no_grad_values), torch.stack(grad_values),
+        atol=1e-6, rtol=1e-5,
+    )
+
+    with torch.no_grad():
+        sequence_means, sequence_values, sequence_state = model.forward_sequence(
+            observations, initial,
+        )
+    assert torch.allclose(state, sequence_state, atol=1e-6, rtol=1e-5)
+    assert torch.allclose(
+        torch.stack(no_grad_means), sequence_means, atol=1e-6, rtol=1e-5,
+    )
+    assert torch.allclose(
+        torch.stack(no_grad_values), sequence_values, atol=1e-6, rtol=1e-5,
+    )
+    assert "_projection_no_grad_buffer" not in model.state_dict()
+
+
+def test_fly_connectome_deterministic_action_keeps_prior_state(tmp_path) -> None:
+    path, _ = _core(tmp_path)
+    torch.manual_seed(124)
+    model = NKeyFlyConnectomeActorCritic(
+        input_dim=6, key_count=4, core_path=path, sensory_dim=3,
+        projection_seed=11,
+    )
+    observations = torch.randn(3, 6)
+    initial = model.initial_state(torch.device("cpu"))
+
+    state = initial
+    with torch.inference_mode():
+        for observation in observations:
+            previous_state = state
+            previous_snapshot = state.clone()
+            _, state = model.deterministic_action(observation, state)
+            assert torch.equal(previous_state, previous_snapshot)
+
+    grad_state = initial
+    for observation in observations:
+        _, _, _, grad_state = model.forward_step(observation, grad_state)
+    assert torch.allclose(state, grad_state, atol=1e-6, rtol=1e-5)
