@@ -246,3 +246,30 @@ No training, live ADOFAI verification, or performance measurements were performe
   have not been run. This is a fail-closed verdict correctness change, not
   behavior-preserving; no historical results or checkpoints are overwritten.
   Keep Issue #1 open and PR #23 Draft. Use `Refs #1`, not `Fixes #1`.
+
+
+## Batch update — Refs #10 (2026-10-29)
+
+- Source: `src/dmdod/training/human_visible_curriculum.py` records ordered
+  Train chart SHA256 and start/end times, and checks them before restoring
+  the optimizer or writing a resumed checkpoint.
+- `src/dmdod/training/config.py` introduces
+  `[human_visible].allow_legacy_train_identity_resume = true` as an explicit
+  opt-in for old checkpoints with no Train identity or inherited unverified
+  Train history. Default is false. Resumed checkpoints keep a persistent
+  `human_visible_train_identity_verified = false` when prior Train history
+  cannot be proven, even after current anchors are recorded.
+- Regression tests: `tests/test_human_visible_curriculum.py` checks SHA,
+  time window, order, count, tolerance, malformed identity, legacy opt-in
+  and serialized provenance; `tests/test_training_config.py` checks
+  the new boolean configuration.
+- Run:
+  `python -m pytest -q tests/test_human_visible_curriculum.py tests/test_training_config.py`.
+- **Repository pytest NOT executed** (GitHub DNS inaccessible in container).
+  No actual training, checkpoint resume/save integration, live ADOFAI,
+  GPU or performance measurements were executed.
+- Classification: resume correctness and reproducibility fix, not a
+  behavior-preserving refactor; it deliberately refuses formerly unverified
+  resume configurations. Model weights, optimizer update math, HUD-only
+  observation, timing and frozen research results remain untouched.
+  Issue #10 stays open and PR #23 remains Draft; `Refs #10` only.
