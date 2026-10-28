@@ -181,6 +181,11 @@ class RhythmMotorEnv:
         self._total_reward = 0.0
         self._done = False
         self._failed_on_miss = False
+        # Monotone resolution cursors avoid rescanning resolved target prefixes.
+        self._next_unresolved_cursor = 0
+        self._miss_scan_cursor = 0
+        self._key_cursors: dict[str, int] = {}
+        self._remaining = 0
 
     def _resolve_bpm(self, bpm: float | None) -> float:
         if bpm is not None:
@@ -198,6 +203,10 @@ class RhythmMotorEnv:
         motor_observation = self.motor.reset()
         self._used = [False] * len(self._targets)
         self._missed = [False] * len(self._targets)
+        self._next_unresolved_cursor = 0
+        self._miss_scan_cursor = 0
+        self._key_cursors = {target.key: 0 for target in self._targets}
+        self._remaining = len(self._targets)
         self._errors_s = []
         self._hits = 0
         self._misses = 0
@@ -227,10 +236,11 @@ class RhythmMotorEnv:
         self._overload_clock_s = to_time_s
 
     def _next_unresolved_target_index(self) -> int | None:
-        for i, (used, missed) in enumerate(zip(self._used, self._missed)):
-            if not used and not missed:
-                return i
-        return None
+        i = self._next_unresolved_cursor
+        while i < len(self._targets) and (self._used[i] or self._missed[i]):
+            i += 1
+        self._next_unresolved_cursor = i
+        return i if i < len(self._targets) else None
 
     def _cue_observation(self, now_s: float) -> VisualCueObservation:
         target_index = self._next_unresolved_target_index()
@@ -238,10 +248,16 @@ class RhythmMotorEnv:
         return self._cue_encoder.observe(now_s, active_target_indices=active)
 
     def _next_target_index(self, key: str) -> int | None:
-        for i, target in enumerate(self._targets):
-            if self._used[i] or self._missed[i] or target.key != key:
-                continue
-            return i
+        if key not in self._key_cursors:
+            return None
+        i = self._key_cursors[key]
+        while i < len(self._targets):
+            target = self._targets[i]
+            if not self._used[i] and not self._missed[i] and target.key == key:
+                self._key_cursors[key] = i
+                return i
+            i += 1
+        self._key_cursors[key] = i
         return None
 
     def _classify(self, signed_error: float) -> TimingJudgement:
@@ -288,6 +304,7 @@ class RhythmMotorEnv:
             if not self._missed[target_index]:
                 self._missed[target_index] = True
                 self._misses += 1
+                self._remaining -= 1
                 if self.reward_config.fail_on_miss:
                     self._failed_on_miss = True
                 return -self.reward_config.miss_penalty
@@ -296,6 +313,7 @@ class RhythmMotorEnv:
         self._record_margin(judgement)
         self._used[target_index] = True
         self._hits += 1
+        self._remaining -= 1
         self._errors_s.append(signed_error)
         # Kept as a compatibility call; the DLL valid-hit path does not heal
         # the overload counter directly.
@@ -320,17 +338,25 @@ class RhythmMotorEnv:
             return 0.0
         reward = 0.0
         pass_window = self.timing_windows.pass_s
-        for i, target in enumerate(self._targets):
+        i = self._miss_scan_cursor
+        while i < len(self._targets):
+            target = self._targets[i]
             if self._used[i] or self._missed[i]:
+                i += 1
                 continue
-            if target.time_s + pass_window < now_s:
-                self._missed[i] = True
-                self._misses += 1
-                self._record_margin(TimingJudgement.FAIL_MISS)
-                reward -= self.reward_config.miss_penalty
-                if self.reward_config.fail_on_miss:
-                    self._failed_on_miss = True
-                    break
+            # Targets are sorted by time, so later ones cannot have expired.
+            if not target.time_s + pass_window < now_s:
+                break
+            self._missed[i] = True
+            self._misses += 1
+            self._remaining -= 1
+            self._record_margin(TimingJudgement.FAIL_MISS)
+            reward -= self.reward_config.miss_penalty
+            if self.reward_config.fail_on_miss:
+                self._failed_on_miss = True
+                break
+            i += 1
+        self._miss_scan_cursor = i
         return reward
 
     def observe(self) -> RhythmObservation:
@@ -358,7 +384,7 @@ class RhythmMotorEnv:
             reward += self._expire_misses(now)
         reward -= self.reward_config.effort_penalty * (abs(action.left) + abs(action.right))
 
-        all_resolved = all(used or missed for used, missed in zip(self._used, self._missed))
+        all_resolved = self._remaining == 0
         self._done = (
             self._failed_on_miss
             or self._overload.overloaded
