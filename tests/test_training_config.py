@@ -63,6 +63,7 @@ max_epochs = 7
 weight_decay = 0.0001
 grad_clip = 1.5
 seed = 99
+allow_legacy_train_identity_resume = true
 """,
         encoding="utf-8",
     )
@@ -96,6 +97,7 @@ seed = 99
     assert config.human_visible.max_epochs == 7
     assert config.human_visible.grad_clip == 1.5
     assert config.human_visible.seed == 99
+    assert config.human_visible.allow_legacy_train_identity_resume is True
 
 
 def test_invalid_radius_order_is_rejected(tmp_path) -> None:
@@ -268,3 +270,15 @@ def test_runner_rechecks_manually_constructed_config(tmp_path: Path) -> None:
     with pytest.raises(ValueError, match="same file"):
         _prepare(invalid)
     assert source.read_bytes() == b"original"
+
+
+def test_legacy_train_identity_opt_in_requires_boolean(tmp_path: Path) -> None:
+    path = tmp_path / "bad-legacy-identity.toml"
+    path.write_text(
+        'mode = "human_visible_curriculum_dagger"\n'
+        '[run]\ndataset = "x"\ncheckpoint = "in.pt"\noutput = "out.pt"\n'
+        '[human_visible]\nallow_legacy_train_identity_resume = "false"\n',
+        encoding="utf-8",
+    )
+    with pytest.raises(ValueError, match="allow_legacy_train_identity_resume"):
+        load_training_config(path)
