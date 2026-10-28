@@ -23,6 +23,7 @@ from audit_dmdogo_v09_h015_admissible_suffix_bound import (
 from audit_dmdogo_v09_h016_cold_block_lower_bounds import (
     FORMAT, FUTURE_BLOCK_MAX, GRACE, cold_block_lower_bound,
     cold_suffix_bounds, inspect_frontier, summarize, _source_trial_map,
+    reconcile_h015_targets,
 )
 
 
@@ -212,3 +213,23 @@ def test_not_a_new_pruning_policy():
     assert GRACE == 5
     assert FORMAT == "dmdogo-v09-h016-cold-block-lower-bounds-v1"
     assert GestureChunkPlannerV08().beam_width == 24
+
+
+def test_h015_historical_single_target_subset_is_not_expanded():
+    # Two H0.12 join candidates exist but H0.15 intentionally recorded
+    # only the known regret target for each historical failure.
+    original = {"targets": [
+        {"window_index": 8, "kind": "regret"},
+        {"window_index": 14, "kind": "other"},
+    ]}
+    saved = {"target_count": 1, "targets": [
+        {"window_index": 8, "kind": "regret"}]}
+    triples = reconcile_h015_targets(saved, original)
+    assert triples == [(8, saved["targets"][0], original["targets"][0])]
+    saved["target_count"] = 2
+    with pytest.raises(ValueError, match="target count"):
+        reconcile_h015_targets(saved, original)
+    saved = {"target_count": 1, "targets": [
+        {"window_index": 30, "kind": "wrong"}]}
+    with pytest.raises(ValueError, match="targeted join"):
+        reconcile_h015_targets(saved, original)
