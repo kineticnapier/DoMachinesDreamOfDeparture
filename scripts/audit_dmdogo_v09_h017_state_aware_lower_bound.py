@@ -364,11 +364,12 @@ def inspect_trial(trial_id: int, saved: dict) -> dict:
             raise ValueError("H0.17 target identity/cost mismatched")
         ref = replay_with_snapshots(
             events, chunks, target, policy="full_quota8")
+        tagged_cost = (
+            ref["terminal_best_tagged"]["final_cost"]
+            if ref["terminal_best_tagged"] is not None else None)
         if (ref["terminal_winner"]["final_cost"]
                 != source["baseline"]["full_quota8_cost"]
-                or ref["terminal_best_tagged"] is None
-                or ref["terminal_best_tagged"]["final_cost"]
-                != prior["tagged_final_cost"]):
+                or tagged_cost != prior["tagged_final_cost"]):
             raise ValueError("H0.17 full quota8 source differs")
         traces = tagged_grace_states(events, chunks, target)
         evaluated = compare_early(
@@ -389,7 +390,7 @@ def inspect_trial(trial_id: int, saved: dict) -> dict:
             "flag_pair": target["flag_pair"],
             "known_regret": source["counterexample"]["rule_regret"],
             "tagged_beats_v08": (
-                prior["tagged_final_cost"] < cost-EPS),
+                tagged_cost is not None and tagged_cost < cost-EPS),
             "new_certificates": evaluated["new_certificates"],
             "first_new_certificate_offset":
                 evaluated["first_new_certificate_offset"],
