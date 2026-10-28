@@ -151,6 +151,24 @@ def _alpha_sweep_grid(raw: dict) -> tuple[float, ...] | None:
     return alphas
 
 
+
+def validate_checkpoint_paths(checkpoint: str | Path, output: str | Path) -> None:
+    """Reject overwriting the source checkpoint, including path aliases.
+
+    Only compare resolved paths; retain the caller's original path spelling
+    for checkpoint metadata and relative-to-working-directory behavior.
+    """
+    source = Path(checkpoint).resolve()
+    destination = Path(output).resolve()
+    if source == destination or (
+        source.exists() and destination.exists() and source.samefile(destination)
+    ):
+        raise ValueError(
+            "[run].checkpoint and [run].output refer to the same file; "
+            "choose a separate output checkpoint to preserve the source"
+        )
+
+
 def load_training_config(path: str | Path) -> TrainingConfig:
     path = Path(path)
     with path.open("rb") as handle:
@@ -170,6 +188,7 @@ def load_training_config(path: str | Path) -> TrainingConfig:
         output=str(run_raw["output"]),
         device=str(run_raw.get("device", "auto")),
     )
+    validate_checkpoint_paths(run.checkpoint, run.output)
 
     data_raw = _section(raw, "data")
     data = DataConfig(
