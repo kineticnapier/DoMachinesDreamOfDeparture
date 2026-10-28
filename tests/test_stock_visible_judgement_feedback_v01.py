@@ -88,3 +88,30 @@ def test_contract_rejects_unmapped_labels_and_bad_events() -> None:
     renderer = VisibleCounterRenderer(_contract())
     with pytest.raises(ValueError):
         renderer.notify(StockJudgementNotification(0.0, "perfect", count=0))
+
+
+def test_unconfirmed_categories_never_increment_visible_counters() -> None:
+    renderer = VisibleCounterRenderer(_contract(fail_miss=True))
+    diagnostic = renderer.notify(StockJudgementNotification(0.05, "fail_miss"))
+    assert not diagnostic.accepted
+    assert "user-confirmed" in diagnostic.reason
+    assert dict(renderer.capture(0.10).counters)["fail_miss"] == 0
+
+    internal = VisibleCounterContract.build(
+        labels=("internal",),
+        category_to_label={"internal": "internal"},
+        evidence={"internal": CounterVisibilityEvidence.DLL_INTERNAL_COUNT_ONLY},
+    )
+    internal_renderer = VisibleCounterRenderer(internal)
+    assert not internal_renderer.notify(
+        StockJudgementNotification(0.05, "internal")
+    ).accepted
+    assert dict(internal_renderer.capture(0.10).counters)["internal"] == 0
+
+
+def test_user_confirmed_category_still_reaches_visible_counter() -> None:
+    renderer = VisibleCounterRenderer(_contract(fail_miss=True))
+    assert renderer.notify(
+        StockJudgementNotification(0.05, "perfect", count=2)
+    ).accepted
+    assert dict(renderer.capture(0.10).counters)["perfect"] == 2
