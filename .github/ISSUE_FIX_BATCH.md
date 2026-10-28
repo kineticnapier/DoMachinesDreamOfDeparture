@@ -106,3 +106,23 @@ No training, live ADOFAI verification, or performance measurements were performe
 - Classification: narrow resume correctness fix, not a behavior-preserving
   refactor. Existing optimizer parameter-group validation and checkpoint
   schema are unchanged. Keep `Refs #21` until verified.
+
+
+## Additional unverified fix — Refs #3 (2026-10-29)
+
+- `src/dmdod/training/config.py`: reject identical, resolved-path, symlink,
+  and hardlink aliases between `[run].checkpoint` and `[run].output`
+  before training begins, without changing stored path spellings.
+- `src/dmdod/training/runner.py`: repeat the check at `_prepare()`
+  for callers that construct `TrainingConfig` directly, before model loading.
+- `tests/test_training_config.py`: test same path in three training modes,
+  normalized `..` aliases, hardlinks, symlinks (skip when unsupported),
+  distinct output, and direct-runner validation.
+- Run: `python -m pytest -q tests/test_training_config.py`.
+- **Repository tests not executed**: the container cannot resolve github.com
+  to fetch the complete repository. No training, checkpoint overwriting,
+  live ADOFAI runtime, GPU, or performance measurement was performed.
+- Classification: source checkpoint protection / correctness change, not
+  behavior-preserving for previously accepted destructive configurations.
+  Training math, checkpoint format, saved path spelling, and HUD-only
+  constraints remain unchanged. Keep `Refs #3` until verified.
