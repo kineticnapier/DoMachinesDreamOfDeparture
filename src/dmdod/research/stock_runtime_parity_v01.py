@@ -249,7 +249,7 @@ def compare_runtime_to_reference(
         "song_time_alignment": {
             "offset_s": song_time_offset_s,
             "tolerance_s": song_time_tolerance_s,
-            "externally_calibrated": song_time_offset_s is not None,
+            "explicit_alignment_parameters_supplied": song_time_offset_s is not None,
         },
         "student_visible_fields": [],
     }
