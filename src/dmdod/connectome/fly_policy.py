@@ -151,7 +151,10 @@ class NKeyFlyConnectomeActorCritic(NKeyPolicyBase):
             injected = torch.mv(self.input_projection, encoded)
         else:
             torch.mv(self.input_projection, encoded, out=self._projection_no_grad_buffer)
-            injected = self._projection_no_grad_buffer
+            # The projection buffer is reused on the next step. Since
+            # _advance_injected modifies and returns injected as recurrent
+            # state, give each returned state independent storage.
+            injected = self._projection_no_grad_buffer.clone()
         return self._advance_injected(injected, state)
 
     def forward_step(self, x: torch.Tensor, state: torch.Tensor):
