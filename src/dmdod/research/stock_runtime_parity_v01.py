@@ -14,7 +14,15 @@ def _norm_judgement(value: object) -> str | None:
     if value is None:
         return None
     text = "".join(char for char in str(value).lower() if char.isalnum())
-    aliases = {"failmiss": "fail_miss", "verylate": "very_late", "toolate": "too_late"}
+    aliases = {
+        "failmiss": "fail_miss",
+        "tooearly": "too_early",
+        "veryearly": "very_early",
+        "earlyperfect": "early_perfect",
+        "lateperfect": "late_perfect",
+        "verylate": "very_late",
+        "toolate": "too_late",
+    }
     return aliases.get(text, text or None)
 
 
