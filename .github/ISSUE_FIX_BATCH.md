@@ -60,3 +60,25 @@ formats were not intentionally changed.
 
 No training, live ADOFAI, performance or GPU measurement was performed for these changes.
 Do not use issue-closing keywords before repository regression tests and applicable verification.
+
+## Additional fixes awaiting repository verification (2026-10-28)
+
+- Refs #16 — `src/dmdod/features/stock_visible_judgement_feedback_v01.py`:
+  reject privileged notifications for `DLL_INTERNAL_COUNT_ONLY` and
+  `TEST_FIXTURE_ONLY` categories, while keeping confirmed counters and
+  the existing frame schema unchanged.
+  Added regression cases in `tests/test_stock_visible_judgement_feedback_v01.py`.
+  - Run: `python -m pytest -q tests/test_stock_visible_judgement_feedback_v01.py`
+  - Status: source and tests committed; **repository tests not executed**.
+  - Classification: HUD-only observation contract correction; not behavior-preserving.
+- Refs #7 — `src/dmdod/training/human_visible_curriculum.py`:
+  verify recorded `early`, `keydowns`, and `overloaded` on resume,
+  while allowing old checkpoints that did not record those fields.
+  Added mismatch and legacy compatibility regression cases in
+  `tests/test_human_visible_curriculum.py`.
+  - Run: `python -m pytest -q tests/test_human_visible_curriculum.py`
+  - Status: source and tests committed; **repository tests not executed**.
+  - Classification: resume validation correctness fix; saved checkpoint
+    schema, optimizer state and ranking rules unchanged.
+
+No training, live ADOFAI verification, or performance measurements were performed.
