@@ -66,7 +66,7 @@ def test_preflight_keeps_loose_json_angledata_candidates(monkeypatch) -> None:
     ]
 
     def fake_download(candidate: TufCandidate, *, timeout_s: float = 60.0) -> bytes:
-        return b'{// comment\\n"angleData":[0,90,],"settings":{"bpm":120,},}'
+        return b'{// comment\n"angleData":[0,90,],"settings":{"bpm":120,},}'
 
     monkeypatch.setattr(preflight, "download_chart", fake_download)
     result = preflight.select_parser_compatible_dataset(

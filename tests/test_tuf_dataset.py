@@ -145,10 +145,10 @@ def test_copy_final_source_extracts_final_from_bundle_zip(tmp_path: Path):
 @pytest.mark.parametrize("raw", [
     b'{"angleData":[0,90],"settings":{"bpm":120}}',
     b'{"angleData":[0,90,],"settings":{"bpm":120,},}',
-    b'{// comment\\n"angleData":[0,90]}',
-    b'{"angleData":[0],"settings":{"songFilename":"line1\\nline2.ogg"}}'.replace(b"\\\\n", b"\\n"),
-    b"\\xff\\xfe" + '{"angleData":[0,90,]}'.encode("utf-16-le"),
-    b"\\xfe\\xff" + '{"angleData":[0,90,]}'.encode("utf-16-be"),
+    b'{// comment\n"angleData":[0,90]}',
+    b'{"angleData":[0],"settings":{"songFilename":"line1\nline2.ogg"}}',
+    b"\xff\xfe" + '{"angleData":[0,90,]}'.encode("utf-16-le"),
+    b"\xfe\xff" + '{"angleData":[0,90,]}'.encode("utf-16-be"),
 ])
 def test_download_chart_accepts_every_parser_supported_document_encoding(monkeypatch, raw):
     # A valid direct response must not be discarded in favor of the ZIP URL.
@@ -168,7 +168,7 @@ def test_download_chart_accepts_every_parser_supported_document_encoding(monkeyp
 
 def test_download_chart_accepts_loose_json_inside_zip(monkeypatch):
     candidate = _candidate(502)
-    chart = b"\\xff\\xfe" + '{/*note*/"angleData":[0,90,]}'.encode("utf-16-le")
+    chart = b"\xff\xfe" + '{/*note*/"angleData":[0,90,]}'.encode("utf-16-le")
     archive_data = io.BytesIO()
     with zipfile.ZipFile(archive_data, "w") as archive:
         archive.writestr("level.adofai", chart)

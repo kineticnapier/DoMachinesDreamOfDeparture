@@ -47,11 +47,11 @@ def load_adofai(path: str | Path) -> AdoFaiChart:
 
 def _decode_adofai_bytes(data: bytes) -> str:
     """Decode the same BOM variants accepted by the chart parser."""
-    if data.startswith(b"\\xef\\xbb\\xbf"):
+    if data.startswith(b"\xef\xbb\xbf"):
         return data[3:].decode("utf-8")
-    if data.startswith(b"\\xff\\xfe"):
+    if data.startswith(b"\xff\xfe"):
         return data[2:].decode("utf-16-le")
-    if data.startswith(b"\\xfe\\xff"):
+    if data.startswith(b"\xfe\xff"):
         return data[2:].decode("utf-16-be")
     return data.decode("utf-8")
 
