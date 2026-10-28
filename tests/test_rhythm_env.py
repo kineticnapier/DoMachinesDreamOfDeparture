@@ -202,3 +202,68 @@ def test_rhythm_long_target_list_is_consumed_once_by_miss_cursor():
     env.reset()
     assert env._remaining == 2000
     assert env._miss_scan_cursor == 0
+
+
+def test_rhythm_cursor_step_results_match_full_scan_reference():
+    from dmdod.envs.rhythm import RewardConfig
+
+    class FullScanReference(RhythmMotorEnv):
+        def _next_unresolved_target_index(self):
+            return next(
+                (i for i, (used, missed) in enumerate(zip(self._used, self._missed))
+                 if not used and not missed),
+                None,
+            )
+
+        def _next_target_index(self, key):
+            return next(
+                (i for i, target in enumerate(self._targets)
+                 if target.key == key and not self._used[i] and not self._missed[i]),
+                None,
+            )
+
+        def _expire_misses(self, now_s):
+            if self._failed_on_miss:
+                return 0.0
+            reward = 0.0
+            for i, target in enumerate(self._targets):
+                if self._used[i] or self._missed[i]:
+                    continue
+                if target.time_s + self.timing_windows.pass_s < now_s:
+                    self._missed[i] = True
+                    self._misses += 1
+                    self._remaining -= 1
+                    self._record_margin(TimingJudgement.FAIL_MISS)
+                    reward -= self.reward_config.miss_penalty
+                    if self.reward_config.fail_on_miss:
+                        self._failed_on_miss = True
+                        break
+            return reward
+
+    targets = [
+        TargetHit(0.3, "left"), TargetHit(0.5, "right"),
+        TargetHit(0.7, "left"), TargetHit(0.9, "right"),
+    ]
+    for fail_on_miss in (False, True):
+        config = RewardConfig(fail_on_miss=fail_on_miss)
+        fast = RhythmMotorEnv(targets, bpm=120.0, reward_config=config, perception_seed=42)
+        reference = FullScanReference(
+            targets, bpm=120.0, reward_config=config, perception_seed=42,
+        )
+        assert fast.reset() == reference.reset()
+        for frame in range(180):
+            # Exercise both idle expiry and repeated held/released Motor input.
+            left = 1.0 if 22 <= frame < 32 or 62 <= frame < 72 else 0.0
+            right = 1.0 if 42 <= frame < 52 or 82 <= frame < 92 else 0.0
+            action = MotorAction(left, right)
+            got = fast.step(action)
+            expected = reference.step(action)
+            assert got.reward == pytest.approx(expected.reward, abs=1e-12)
+            assert got.done == expected.done
+            assert got.observation == expected.observation
+            assert fast.hit_margins == reference.hit_margins
+            assert fast.stats == reference.stats
+            if got.done:
+                break
+        else:
+            pytest.fail("rhythm episode did not terminate")
