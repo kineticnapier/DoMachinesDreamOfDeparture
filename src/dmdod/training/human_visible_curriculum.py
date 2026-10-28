@@ -1207,7 +1207,18 @@ def _check_optimizer_state(optimizer: torch.optim.Optimizer, checkpoint: dict, m
     if previous_names is not None and previous_names != current_names:
         raise SystemExit("resume AdamW parameter names/order mismatch")
     saved_state = saved.get("state")
-    if not isinstance(saved_state, dict) or not saved_state:
+    if not isinstance(saved_state, dict):
+        raise SystemExit("resume AdamW has no optimizer moments")
+    # An initial selected-best checkpoint is saved before any optimizer step.
+    # Its empty AdamW moments are valid only for the pristine baseline.
+    pristine_baseline = (
+        curriculum_checkpoint_role(checkpoint) == "selected-best"
+        and checkpoint.get("human_visible_stopped_reason") == "baseline-validated"
+        and int(checkpoint.get("human_visible_epoch", -1)) == 0
+        and int(checkpoint.get("human_visible_best_epoch", -1)) == 0
+        and checkpoint.get("human_visible_history") == []
+    )
+    if not saved_state and not pristine_baseline:
         raise SystemExit("resume AdamW has no optimizer moments")
     expected_ids = {identifier for group in groups for identifier in group.get("params", [])}
     if not set(saved_state).issubset(expected_ids):
