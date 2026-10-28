@@ -235,6 +235,8 @@ No training, live ADOFAI verification, or performance measurements were performe
   `--song-time-offset-s` / `--song-time-tolerance-s` arguments; report the
   supplied values. These parameters are **not proof of actual calibration**.
   Derive them from independent live timing evidence, never the virtual 10ms grid.
+- Also preserve a valid `0.0` SwitchChosen song time instead of falling
+  back to the category event's timestamp (`None`-only fallback).
 - `tests/test_stock_runtime_parity_v01.py`: synthetic qualified-shaped live
   session exercises missing alignment, match, mismatch, missing timestamp,
   and invalid parameter pairs. This fixture is **not a live capture**.
