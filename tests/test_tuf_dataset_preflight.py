@@ -56,3 +56,22 @@ def test_preflight_rejects_pathdata_and_promotes_replacement(monkeypatch) -> Non
     assert 1 in rejected_ids
     assert 1 not in selected_ids
     assert len(selected_ids) == 2
+
+
+def test_preflight_keeps_loose_json_angledata_candidates(monkeypatch) -> None:
+    candidates = [
+        _candidate(11, score_clears=1000),
+        _candidate(12, score_clears=900),
+        _candidate(13, score_clears=800),
+    ]
+
+    def fake_download(candidate: TufCandidate, *, timeout_s: float = 60.0) -> bytes:
+        return b'{// comment\\n"angleData":[0,90,],"settings":{"bpm":120,},}'
+
+    monkeypatch.setattr(preflight, "download_chart", fake_download)
+    result = preflight.select_parser_compatible_dataset(
+        candidates, train_count=1, validation_count=1,
+    )
+    assert result.rejected == ()
+    assert len(result.selection.train) == 1
+    assert len(result.selection.validation) == 1

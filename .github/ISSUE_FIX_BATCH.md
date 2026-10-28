@@ -126,3 +126,19 @@ No training, live ADOFAI verification, or performance measurements were performe
   behavior-preserving for previously accepted destructive configurations.
   Training math, checkpoint format, saved path spelling, and HUD-only
   constraints remain unchanged. Keep `Refs #3` until verified.
+
+## Additional unverified fix — Refs #4 (2026-10-29)
+
+- `src/dmdod/adofai/chart.py`: share the existing UTF-8/UTF-16 BOM and
+  loose-JSON decoder between full chart parsing and document inspection.
+- `src/dmdod/data/tuf.py`: use that decoder for direct/ZIP chart acceptance;
+  keep legacy `pathData` recognizable until parser preflight rejects it.
+- `tests/test_tuf_dataset.py` and `tests/test_tuf_dataset_preflight.py`:
+  add direct, ZIP, malformed, legacy and parser-compatible loose-JSON cases.
+- Run: `python -m pytest -q tests/test_adofai_chart.py tests/test_tuf_dataset.py tests/test_tuf_dataset_preflight.py`.
+- **Repository tests not executed** (GitHub DNS unavailable in the execution
+  container); no real TUF downloads, training, ADOFAI runtime, GPU or
+  performance checks. Dataset membership can change for previously rejected
+  valid charts; do not overwrite historical selections or reports.
+- Classification: input acceptance correctness fix. Full chart parsing,
+  HUD-only constraints, checkpoint schema and judgement timing unchanged.
