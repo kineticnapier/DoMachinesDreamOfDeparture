@@ -50,7 +50,7 @@ def main() -> None:
         "song_time_alignment": {
             "offset_s": args.song_time_offset_s,
             "tolerance_s": args.song_time_tolerance_s,
-            "externally_calibrated": args.song_time_offset_s is not None,
+            "explicit_alignment_parameters_supplied": args.song_time_offset_s is not None,
         },
         "sessions": results, "production_changed": False,
     }
