@@ -222,3 +222,25 @@ No training, live ADOFAI verification, or performance measurements were performe
   repository regression and performance verification. No change to HUD-only
   inputs, judgement boundaries, rewards, checkpoints or frozen results.
   Keep PR #23 Draft and use `Refs #5`, not `Fixes #5`.
+
+
+## Refs #1 — song-time parity must be explicitly calibrated (2026-10-29)
+
+- `src/dmdod/research/stock_runtime_parity_v01.py`: an observed
+  `song_time_s` no longer counts as a match. Without explicitly supplied
+  alignment offset and tolerance, the time field is `UNKNOWN` and live
+  evidence cannot become `RUNTIME_PARITY_CONFIRMED`. With both parameters,
+  compare the time residual to the tolerance; mismatches are explicit.
+- `scripts/audit_phase33_stock_runtime_parity_v01.py`: optional paired
+  `--song-time-offset-s` / `--song-time-tolerance-s` arguments; report the
+  supplied values. These parameters are **not proof of actual calibration**.
+  Derive them from independent live timing evidence, never the virtual 10ms grid.
+- `tests/test_stock_runtime_parity_v01.py`: synthetic qualified-shaped live
+  session exercises missing alignment, match, mismatch, missing timestamp,
+  and invalid parameter pairs. This fixture is **not a live capture**.
+- Run: `python -m pytest -q tests/test_stock_runtime_parity_v01.py tests/test_stock_runtime_trace_v02.py`.
+- **Not verified:** repository pytest, Unity frame-phase calibration, actual
+  ADOFAI runtime trace, training, CUDA, and performance/memory measurements
+  have not been run. This is a fail-closed verdict correctness change, not
+  behavior-preserving; no historical results or checkpoints are overwritten.
+  Keep Issue #1 open and PR #23 Draft. Use `Refs #1`, not `Fixes #1`.
