@@ -710,3 +710,33 @@ def test_curriculum_checkpoint_persists_train_identity_and_unverified_lineage(tm
     migrated = make_payload()
     assert migrated["human_visible_train_identity"] == _train_identity(prepared)
     assert migrated["human_visible_train_identity_verified"] is False
+
+
+def test_selected_best_resume_checks_train_before_optimizer_restore_or_output(tmp_path):
+    model, optimizer = _small_resume_model_and_optimizer()
+    prepared, config, _ = _tiny_resume_context(tmp_path, model, optimizer)
+    del prepared.parent["human_visible_train_identity"]
+    original = copy.deepcopy(optimizer.state_dict())
+    with pytest.raises(SystemExit, match="allow_legacy_train_identity_resume"):
+        prepare_curriculum_start(prepared, config, model, optimizer)
+    assert not prepared.output_checkpoint.exists()
+    assert optimizer.state_dict()["state"].keys() == original["state"].keys()
+    config.human_visible.allow_legacy_train_identity_resume = True
+    with pytest.warns(RuntimeWarning, match="unverified historical Train"):
+        resumed = prepare_curriculum_start(prepared, config, model, optimizer)
+    assert resumed.role == "selected-best"
+    assert not _train_identity_verified_for_output(prepared.parent)
+
+
+def test_progress_resume_checks_both_progress_and_best_train_identity(tmp_path):
+    model, optimizer = _small_resume_model_and_optimizer()
+    prepared, config, _ = _tiny_resume_context(
+        tmp_path, model, optimizer, role="continuation-progress"
+    )
+    best = copy.deepcopy(prepared.parent)
+    best["human_visible_stopped_reason"] = "running-best"
+    best["human_visible_train_identity"][0]["chart_sha256"] = "different"
+    torch.save(best, prepared.output_checkpoint)
+    prepared.parent["human_visible_best_checkpoint_path"] = str(prepared.output_checkpoint)
+    with pytest.raises(SystemExit, match="Train anchor 0 chart SHA changed"):
+        prepare_curriculum_start(prepared, config, model, optimizer)
