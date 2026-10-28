@@ -159,7 +159,7 @@ class RealChartMotorEnv:
             if self._failed_on_miss:
                 break
             reward += self._score_event(event)
-            if self._overload.overloaded:
+            if self._failed_on_miss or self._overload.overloaded:
                 break
 
         now = transition.diagnostics.time_s
@@ -270,6 +270,8 @@ class RealChartMotorEnv:
         )
 
     def _expire_misses(self, now_s: float) -> float:
+        if self._failed_on_miss:
+            return 0.0
         reward = 0.0
         index = self._next_unresolved_cursor
         while index < len(self.segment.targets):
@@ -282,9 +284,10 @@ class RealChartMotorEnv:
                 self._misses += 1
                 self._record_margin(TimingJudgement.FAIL_MISS)
                 reward -= self.reward_config.miss_penalty
+                index += 1
                 if self.reward_config.fail_on_miss:
                     self._failed_on_miss = True
-                index += 1
+                    break
                 continue
             # Playable targets are time ordered, so no later target can expire
             # while this first unresolved target remains inside its window.
