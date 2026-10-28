@@ -137,13 +137,6 @@ def load_runtime_jsonl_v02(path: Path) -> tuple[TraceSession, ...]:
     return parse_runtime_jsonl_v02(path.read_text(encoding="utf-8-sig").splitlines())
 
 
-def _next_matching(events: tuple[TraceEvent, ...], start: int, kinds: set[str]) -> TraceEvent | None:
-    for event in events[start + 1:]:
-        if event.kind in kinds:
-            return event
-    return None
-
-
 def audit_trace_sessions(sessions: tuple[TraceSession, ...]) -> dict[str, object]:
     results: list[dict[str, object]] = []
     any_live = False
@@ -157,9 +150,29 @@ def audit_trace_sessions(sessions: tuple[TraceSession, ...]) -> dict[str, object
         keydown_pairs: list[dict[str, object]] = []
         auto_transitions: list[dict[str, object]] = []
         hit_text_delays: list[dict[str, object]] = []
-        for index, event in enumerate(session.events):
+        # Keep the earliest strictly later matching event for each event type.
+        # A reverse pass avoids repeated tuple slicing and forward rescans.
+        events = session.events
+        next_judgement_or_miss: list[TraceEvent | None] = [None] * len(events)
+        next_judgement: list[TraceEvent | None] = [None] * len(events)
+        next_visible: list[TraceEvent | None] = [None] * len(events)
+        later_judgement_or_miss: TraceEvent | None = None
+        later_judgement: TraceEvent | None = None
+        later_visible: TraceEvent | None = None
+        for index in range(len(events) - 1, -1, -1):
+            event = events[index]
+            next_judgement_or_miss[index] = later_judgement_or_miss
+            next_judgement[index] = later_judgement
+            next_visible[index] = later_visible
+            if event.kind in {"judgement", "auto_fail_miss"}:
+                later_judgement_or_miss = event
+            if event.kind == "judgement":
+                later_judgement = event
+            if event.kind in {"visible_judgement_signal", "counter_update"}:
+                later_visible = event
+        for index, event in enumerate(events):
             if event.kind == "key_down":
-                judged = _next_matching(session.events, index, {"judgement", "auto_fail_miss"})
+                judged = next_judgement_or_miss[index]
                 keydown_pairs.append({
                     "keydown_sequence": event.sequence,
                     "keydown_frame": event.frame,
@@ -168,7 +181,7 @@ def audit_trace_sessions(sessions: tuple[TraceSession, ...]) -> dict[str, object
                     "target_floor_evaluator_only": None if judged is None else judged.value("floor_evaluator_only"),
                 })
             if event.kind == "auto_fail_miss":
-                transitioned = _next_matching(session.events, index, {"judgement"})
+                transitioned = next_judgement[index]
                 auto_transitions.append({
                     "sequence": event.sequence,
                     "frame": event.frame,
@@ -176,7 +189,7 @@ def audit_trace_sessions(sessions: tuple[TraceSession, ...]) -> dict[str, object
                     "next_judgement_sequence": None if transitioned is None else transitioned.sequence,
                 })
             if event.kind == "add_hit":
-                visible = _next_matching(session.events, index, {"visible_judgement_signal", "counter_update"})
+                visible = next_visible[index]
                 hit_text_delays.append({
                     "add_hit_sequence": event.sequence,
                     "visible_sequence": None if visible is None else visible.sequence,
