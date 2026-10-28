@@ -174,3 +174,24 @@ No training, live ADOFAI verification, or performance measurements were performe
 - Source commit: `441f2329dc3952aedc4cea456e33b61cd205c223`. Test commits: `59cf6985cc8b9f62010e2cccb759000205abe433`, `834ff65c5a524f277a3b4c37198021c25ef117f7`.
 - Verify with: `python -m pytest -q tests/test_rhythm_env.py tests/test_perception.py`; compare step-by-step reward, cue, judgement history and termination with the old implementation. No benchmark has been run.
 - **Unverified:** repository pytest, training, actual ADOFAI runtime, CUDA/GPU and performance/memory measurements were not executed. This is an intended behavior-preserving performance change, but equivalence still requires verification. Keep Issue #19 open and PR #23 Draft; use `Refs #19`, not `Fixes #19`.
+
+
+## Batch update — Refs #15 (2026-10-29)
+
+- **Refs #15** — Replace repeated sort-on-insert and full-queue scans in
+  `StockFrameStateMachine` with a stable `heapq` priority queue, preserving
+  timestamp then insertion ordering, the `1e-12` frame cutoff, and
+  `pending_keydowns` presentation order.
+- Source commit: `dcad5a032a59a944a556ff5ab54222c1e19b8066`.
+  Regression tests commit: `d77a2aef9f49349a8a13e0d3cd94a20deabcbd09`.
+- Tests added to `tests/test_stock_frame_state_machine.py`: prequeued
+  out-of-order and equal-time inputs, frame cutoff tolerance, and 1,200
+  prequeued inputs with stable ordering.
+- Run: `python -m pytest -q tests/test_stock_frame_state_machine.py tests/test_stock_floor_state_machine.py tests/test_stock_runtime_parity_v01.py`.
+- **Repository pytest NOT run** (GitHub host unavailable to execution container).
+  An independent 1,000-scenario comparison of the old sorted-list selection
+  and new heap selection passed; this is **not** a repository regression result.
+  Live ADOFAI, training, GPU and performance/memory measurements NOT run.
+- Classification: intended behavior-preserving performance refactor, but
+  repository-level equivalence and actual speedup remain unverified.
+  Keep Issue #15 open, PR #23 Draft, and use `Refs #15`, not `Fixes #15`.
