@@ -316,6 +316,8 @@ class RhythmMotorEnv:
         )
 
     def _expire_misses(self, now_s: float) -> float:
+        if self._failed_on_miss:
+            return 0.0
         reward = 0.0
         pass_window = self.timing_windows.pass_s
         for i, target in enumerate(self._targets):
@@ -328,6 +330,7 @@ class RhythmMotorEnv:
                 reward -= self.reward_config.miss_penalty
                 if self.reward_config.fail_on_miss:
                     self._failed_on_miss = True
+                    break
         return reward
 
     def observe(self) -> RhythmObservation:
@@ -346,7 +349,7 @@ class RhythmMotorEnv:
             if self._failed_on_miss:
                 break
             reward += self._score_event(event)
-            if self._overload.overloaded:
+            if self._failed_on_miss or self._overload.overloaded:
                 break
 
         now = transition.diagnostics.time_s
