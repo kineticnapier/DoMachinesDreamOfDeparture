@@ -32,7 +32,7 @@ from audit_dmdogo_v09_h014_regret_autopsy import (
     FORMAT as H014_FORMAT, TARGET_IDS, replay_with_snapshots,
     verify_h013, verify_replay, QUOTA, EPS,
 )
-from audit_dmdogo_v09_h08_protected_quota import trace_quota
+from audit_dmdogo_v09_h08_protected_quota import BEAM_WIDTH, trace_quota
 from dmdogo_v08_provenance import sha256_file
 
 FORMAT = "dmdogo-v09-h015-admissible-suffix-bound-v1"
