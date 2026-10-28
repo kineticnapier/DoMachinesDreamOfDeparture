@@ -1,6 +1,10 @@
 from __future__ import annotations
 
-from dmdod.training.config import load_training_config
+from pathlib import Path
+
+import pytest
+
+from dmdod.training.config import load_training_config, validate_checkpoint_paths
 
 
 def test_load_training_config(tmp_path) -> None:
@@ -169,3 +173,98 @@ min_lr = 0.00001
         assert "human_visible.min_lr" in str(exc)
     else:
         raise AssertionError("invalid human-visible learning-rate order must fail")
+
+
+def _write_checkpoint_path_config(
+    tmp_path: Path, *, checkpoint: Path, output: Path, mode: str = "budget_action_trust"
+) -> Path:
+    config_file = tmp_path / "paths.toml"
+    config_file.write_text(
+        f'mode = "{mode}"\n\n'
+        f'[run]\ndataset = "unused"\n'
+        f'checkpoint = "{checkpoint.as_posix()}"\n'
+        f'output = "{output.as_posix()}"\n',
+        encoding="utf-8",
+    )
+    return config_file
+
+
+@pytest.mark.parametrize(
+    "mode",
+    ["budget_action_trust", "human_visible_dagger", "human_visible_curriculum_dagger"],
+)
+def test_checkpoint_source_cannot_be_output(tmp_path: Path, mode: str) -> None:
+    source = tmp_path / "source.pt"
+    source.write_bytes(b"original-checkpoint")
+    config_file = _write_checkpoint_path_config(
+        tmp_path, checkpoint=source, output=source, mode=mode
+    )
+    with pytest.raises(ValueError, match="same file"):
+        load_training_config(config_file)
+    assert source.read_bytes() == b"original-checkpoint"
+
+
+def test_checkpoint_alias_with_parent_segments_is_rejected(tmp_path: Path) -> None:
+    source = tmp_path / "source.pt"
+    source.write_bytes(b"original")
+    (tmp_path / "sub").mkdir()
+    alias = tmp_path / "sub" / ".." / "source.pt"
+    config_file = _write_checkpoint_path_config(
+        tmp_path, checkpoint=source, output=alias
+    )
+    with pytest.raises(ValueError, match="same file"):
+        load_training_config(config_file)
+
+
+def test_checkpoint_hardlink_alias_is_rejected(tmp_path: Path) -> None:
+    source = tmp_path / "source.pt"
+    source.write_bytes(b"original")
+    alias = tmp_path / "alias.pt"
+    try:
+        alias.hardlink_to(source)
+    except (OSError, NotImplementedError) as exc:
+        pytest.skip(f"hard links unavailable: {exc}")
+    with pytest.raises(ValueError, match="same file"):
+        validate_checkpoint_paths(source, alias)
+
+
+def test_checkpoint_symlink_alias_is_rejected(tmp_path: Path) -> None:
+    source = tmp_path / "source.pt"
+    source.write_bytes(b"original")
+    alias = tmp_path / "alias.pt"
+    try:
+        alias.symlink_to(source)
+    except (OSError, NotImplementedError) as exc:
+        pytest.skip(f"symbolic links unavailable: {exc}")
+    with pytest.raises(ValueError, match="same file"):
+        validate_checkpoint_paths(source, alias)
+
+
+def test_distinct_checkpoint_output_remains_allowed(tmp_path: Path) -> None:
+    source = tmp_path / "source.pt"
+    source.write_bytes(b"original")
+    output = tmp_path / "different.pt"
+    config_file = _write_checkpoint_path_config(
+        tmp_path, checkpoint=source, output=output
+    )
+    config = load_training_config(config_file)
+    assert config.run.checkpoint == str(source)
+    assert config.run.output == str(output)
+    assert source.read_bytes() == b"original"
+    assert not output.exists()
+
+
+def test_runner_rechecks_manually_constructed_config(tmp_path: Path) -> None:
+    from dataclasses import replace
+    from dmdod.training.runner import _prepare
+
+    source = tmp_path / "source.pt"
+    source.write_bytes(b"original")
+    config_file = _write_checkpoint_path_config(
+        tmp_path, checkpoint=source, output=tmp_path / "output.pt"
+    )
+    valid = load_training_config(config_file)
+    invalid = replace(valid, run=replace(valid.run, output=str(source)))
+    with pytest.raises(ValueError, match="same file"):
+        _prepare(invalid)
+    assert source.read_bytes() == b"original"
