@@ -77,6 +77,9 @@ class HumanVisibleConfig:
     weight_decay: float = 1e-4
     grad_clip: float = 1.0
     seed: int = 2401
+    # Explicit opt-in for pre-identity curriculum checkpoints. Never implies
+    # that their historical Train anchors were verified.
+    allow_legacy_train_identity_resume: bool = False
 
     # Optional diagnostic. Does not influence optimization or checkpoint ranking.
     alpha_sweep_enabled: bool = False
@@ -241,6 +244,9 @@ def load_training_config(path: str | Path) -> TrainingConfig:
     )
 
     visible_raw = _section(raw, "human_visible")
+    legacy_identity_opt_in = visible_raw.get("allow_legacy_train_identity_resume", False)
+    if type(legacy_identity_opt_in) is not bool:
+        raise ValueError("human_visible.allow_legacy_train_identity_resume must be boolean")
     human_visible = HumanVisibleConfig(
         updates_per_trial=int(visible_raw.get("updates_per_trial", 32)),
         lr=float(visible_raw.get("lr", 1e-4)),
@@ -260,6 +266,7 @@ def load_training_config(path: str | Path) -> TrainingConfig:
         weight_decay=float(visible_raw.get("weight_decay", 1e-4)),
         grad_clip=float(visible_raw.get("grad_clip", 1.0)),
         seed=int(visible_raw.get("seed", 2401)),
+        allow_legacy_train_identity_resume=legacy_identity_opt_in,
         alpha_sweep_enabled=bool(visible_raw.get("alpha_sweep_enabled", False)),
         alpha_sweep_alphas=_alpha_sweep_grid(visible_raw),
         alpha_sweep_compare_transitions=bool(
