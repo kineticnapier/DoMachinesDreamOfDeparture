@@ -500,3 +500,29 @@ def test_validation_identity_and_count_must_match():
 def test_limit_must_be_nonnegative():
     with pytest.raises(ValueError, match="non-negative"):
         format_catastrophic_anchor_diagnostics((), (), max_hit_drops=-1)
+
+
+def test_resume_validation_rejects_optional_recorded_counter_mismatches():
+    recorded = {
+        "anchors": 1, "targets": 5, "safe": 1, "hits": 2,
+        "x": 50.0, "pp": 40.0, "mae_ms": 22.0,
+        "early": 3, "keydowns": 8, "overloaded": False,
+    }
+    _check_validation_summary(dict(recorded), recorded)
+    for name, changed in (("early", 4), ("keydowns", 9), ("overloaded", True)):
+        with pytest.raises(SystemExit, match=f"fixed Validation mismatch: {name}"):
+            _check_validation_summary(dict(recorded, **{name: changed}), recorded)
+        actual_missing = dict(recorded)
+        del actual_missing[name]
+        with pytest.raises(SystemExit, match=f"fixed Validation mismatch: {name}"):
+            _check_validation_summary(actual_missing, recorded)
+
+
+def test_resume_validation_preserves_legacy_optional_counter_compatibility():
+    recorded = {
+        "anchors": 1, "targets": 5, "safe": 1, "hits": 2,
+        "x": 50.0, "pp": 40.0, "mae_ms": 22.0,
+    }
+    actual = dict(recorded, early=3, keydowns=8, overloaded=False)
+    _check_validation_summary(actual, recorded)
+    _check_validation_summary(dict(recorded), recorded)
