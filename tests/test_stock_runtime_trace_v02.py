@@ -6,6 +6,8 @@ from dmdod.research.stock_runtime_trace_v02 import (
     audit_trace_sessions,
     load_runtime_jsonl_v02,
     parse_runtime_jsonl_v02,
+    TraceEvent,
+    TraceSession,
 )
 
 
@@ -65,3 +67,77 @@ def test_internal_fields_never_become_student_output() -> None:
     result = audit_trace_sessions(load_runtime_jsonl_v02(FIXTURE))
     assert result["student_visible_fields"] == []
     assert result["evaluator_only"]
+
+
+class _NoSliceEvents(tuple):
+    """Reject event tuple slices so a quadratic lookup cannot slip back in."""
+
+    def __getitem__(self, index):
+        if isinstance(index, slice):
+            raise AssertionError("audit must not copy the remaining event tuple")
+        return super().__getitem__(index)
+
+
+def _synthetic_events(session_id: str, kinds: list[str]) -> _NoSliceEvents:
+    return _NoSliceEvents(
+        TraceEvent(
+            session_id=session_id,
+            sequence=index + 1,
+            frame=index + 1,
+            realtime_s=index * 0.01,
+            kind=kind,
+            no_fail=False,
+            hook="synthetic",
+            payload=(("judgement", kind), ("floor_evaluator_only", index)),
+        )
+        for index, kind in enumerate(kinds)
+    )
+
+
+def test_reverse_lookup_preserves_first_strictly_later_match_and_session_boundary() -> None:
+    kinds = [
+        "key_down", "auto_fail_miss", "judgement", "add_hit",
+        "counter_update", "visible_judgement_signal", "key_down",
+        "judgement", "add_hit", "visible_judgement_signal",
+        "auto_fail_miss", "add_hit", "key_down",
+    ]
+    first = TraceSession("first", "synthetic_fixture", None, None, _synthetic_events("first", kinds), ())
+    second = TraceSession(
+        "second", "synthetic_fixture", None, None,
+        _synthetic_events("second", ["judgement", "key_down"]), (),
+    )
+    result = audit_trace_sessions((first, second))
+    first_result, second_result = result["sessions"]
+
+    assert [pair["judgement_sequence"] for pair in first_result["keydown_judgement_pairs"]] == [2, 8, None]
+    assert [pair["judgement"] for pair in first_result["keydown_judgement_pairs"]] == [
+        "auto_fail_miss", "judgement", None,
+    ]
+    assert [item["next_judgement_sequence"] for item in first_result["auto_transitions"]] == [3, None]
+    assert [item["visible_sequence"] for item in first_result["hit_text_signal_delays"]] == [5, 10, None]
+    assert [item["signal_kind"] for item in first_result["hit_text_signal_delays"]] == [
+        "counter_update", "visible_judgement_signal", None,
+    ]
+    assert [item["delay_s"] for item in first_result["hit_text_signal_delays"][:2]] == pytest.approx([0.01, 0.01])
+    assert first_result["hit_text_signal_delays"][2]["delay_s"] is None
+    assert second_result["keydown_judgement_pairs"][0]["judgement_sequence"] is None
+    assert result["student_visible_fields"] == []
+    assert result["evaluator_only"] is True
+    assert result["runtime_parity"] == "RUNTIME_PARITY_UNVERIFIED"
+
+
+def test_reverse_lookup_handles_long_synthetic_session_without_tuple_slicing() -> None:
+    kinds = [
+        "key_down", "auto_fail_miss", "judgement",
+        "add_hit", "counter_update", "visible_judgement_signal",
+    ] * 400
+    session = TraceSession("long", "synthetic_fixture", None, None, _synthetic_events("long", kinds), ())
+    result = audit_trace_sessions((session,))["sessions"][0]
+
+    assert result["event_count"] == 2400
+    assert len(result["keydown_judgement_pairs"]) == 400
+    assert len(result["auto_transitions"]) == 400
+    assert len(result["hit_text_signal_delays"]) == 400
+    assert result["keydown_judgement_pairs"][-1]["judgement_sequence"] == 2396
+    assert result["auto_transitions"][-1]["next_judgement_sequence"] == 2397
+    assert result["hit_text_signal_delays"][-1]["visible_sequence"] == 2399
