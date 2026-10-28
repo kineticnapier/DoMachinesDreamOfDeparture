@@ -248,8 +248,8 @@ def test_distinct_checkpoint_output_remains_allowed(tmp_path: Path) -> None:
         tmp_path, checkpoint=source, output=output
     )
     config = load_training_config(config_file)
-    assert config.run.checkpoint == str(source)
-    assert config.run.output == str(output)
+    assert Path(config.run.checkpoint) == source
+    assert Path(config.run.output) == output
     assert source.read_bytes() == b"original"
     assert not output.exists()
 
