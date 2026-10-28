@@ -93,7 +93,7 @@ class CoupledContactRealChartEnv(RealChartMotorEnv):
             self._advance_overload(now)
             reward += self._expire_misses(now)
         reward -= self.reward_config.effort_penalty * sum(abs(x) for x in action.commands)
-        all_resolved = all(used or missed for used, missed in zip(self._used, self._missed))
+        all_resolved = self._all_targets_resolved()
         self._done = (self._failed_on_miss or self._overload.overloaded
                       or now >= self._episode_end_s or all_resolved)
         if self._done and now >= self._episode_end_s and not all_resolved:
