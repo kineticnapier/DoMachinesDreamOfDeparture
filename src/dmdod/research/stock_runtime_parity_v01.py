@@ -76,10 +76,13 @@ def extract_runtime_transitions(
             is_auto = pending_auto is not None and pending_auto.frame == event.frame
             key_event = pending_keydown if pending_keydown is not None and pending_keydown.frame == event.frame else None
             source = tuple(row.sequence for row in (pending_auto if is_auto else None, key_event, category_event, event) if row is not None)
+            transition_song_time = _song_time(event)
+            if transition_song_time is None:
+                transition_song_time = _song_time(category_event)
             result.append(RuntimeTransition(
                 kind="auto_miss" if is_auto else "key_down",
                 frame=event.frame,
-                song_time_s=_song_time(event) or _song_time(category_event),
+                song_time_s=transition_song_time,
                 realtime_s=event.realtime_s,
                 floor_before=before,
                 floor_after=after,
