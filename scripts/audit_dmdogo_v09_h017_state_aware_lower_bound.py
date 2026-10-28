@@ -34,8 +34,8 @@ from audit_dmdogo_v09_h015_admissible_suffix_bound import (
     verify_frozen_cost_source, certificate, EPS,
 )
 from audit_dmdogo_v09_h016_cold_block_lower_bounds import (
-    FORMAT as H016_FORMAT, QUOTA, GRACE,
-    cold_suffix_bounds, reconcile_h015_targets,
+    FORMAT as H016_FORMAT, QUOTA,
+    cold_suffix_bounds,
 )
 from audit_dmdogo_v09_h012_synthetic_counterexamples import (
     audit_one, generate, original_precise_cost, select_alternative,
@@ -217,8 +217,12 @@ def compare_early(sources: list[dict], snapshots: list[dict],
             raise ValueError("independently replayed tagged frontier differs")
         best_score = (min(x.score for x in si["tagged"])
                       if si["tagged"] else None)
+        # H0.16 used the H0.14 nine-decimal snapshot, so enforce
+        # byte-for-byte parity using the same rounded prefix. Exact
+        # unrounded Branch states remain available for lookahead.
         baseline = certificate(
-            best_score, floors["maximum"][wi+1], incumbent)
+            round(best_score, 9) if best_score is not None else None,
+            floors["maximum"][wi+1], incumbent)
         if any(baseline[key] != previous[key] for key in (
                 "applicable", "certified", "lower_bound",
                 "incumbent_cost", "margin_lb_minus_incumbent", "slack")):
