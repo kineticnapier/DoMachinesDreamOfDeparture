@@ -168,7 +168,7 @@ class RealChartMotorEnv:
             reward += self._expire_misses(now)
         reward -= self.reward_config.effort_penalty * (abs(action.left) + abs(action.right))
 
-        all_resolved = all(used or missed for used, missed in zip(self._used, self._missed))
+        all_resolved = self._all_targets_resolved()
         self._done = (
             self._failed_on_miss
             or self._overload.overloaded
@@ -184,6 +184,10 @@ class RealChartMotorEnv:
             reward,
             self._done,
         )
+
+    def _all_targets_resolved(self) -> bool:
+        """Check evaluator completion with the monotone unresolved cursor."""
+        return self._next_target_index() is None
 
     def _next_target_index(self) -> int | None:
         index = self._next_unresolved_cursor
