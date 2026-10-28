@@ -161,3 +161,9 @@ def test_known_counterexample_cannot_be_certified_in_full_quota8():
     assert target["release_rule_regret_in_existing_trial"]
     assert target["protected_terminal_beats_incumbent"]
     assert target["certificate"]["certified_frontier_windows"] == 0
+
+
+def test_h015_main_runtime_beam_width_symbol_is_defined():
+    import audit_dmdogo_v09_h015_admissible_suffix_bound as phase
+    assert phase.BEAM_WIDTH == 24
+    assert phase.QUOTA == 8
