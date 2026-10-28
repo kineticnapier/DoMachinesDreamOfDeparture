@@ -195,3 +195,30 @@ No training, live ADOFAI verification, or performance measurements were performe
 - Classification: intended behavior-preserving performance refactor, but
   repository-level equivalence and actual speedup remain unverified.
   Keep Issue #15 open, PR #23 Draft, and use `Refs #15`, not `Fixes #15`.
+
+## Partial implementation — Refs #5 (2026-10-29)
+
+- Shared `RealChartMotorEnv._all_targets_resolved()` uses the existing
+  monotone `_next_target_index()` cursor instead of scanning all resolved
+  targets from index zero on each step.
+- Applied in `src/dmdod/envs/real_chart.py`,
+  `src/dmdod/motor/capacity.py` (8K), and
+  `src/dmdod/envs/contact_chart_16k.py` (12-actuator/16-contact).
+- Added 6 parameterized cases (2 tests × 3 environments) in
+  `tests/test_real_chart_resolution_cursor.py` for partial resolution,
+  all-resolved termination, mixed used/missed, reset, and cursor/full-scan
+  equivalence after each monotone resolution.
+- Source commits: `30466218`, `23d6f08a`, `1a85965f`;
+  tests commit: `075ae5a9`.
+- Run: `python -m pytest -q tests/test_real_chart_resolution_cursor.py tests/test_real_chart_env.py tests/test_prestige1_autoplay_coupled_chart_audit.py`.
+- **Partial:** teacher capacity diagnostic `_unresolved_tail()` still
+  materializes the entire suffix on every step; no change was made to its
+  reservation/teacher input semantics. Issue #5 stays open.
+- **Not verified:** repository pytest could not run (container cannot resolve
+  github.com). Independent Python monotone cursor-vs-full-scan comparison
+  passed 111,600 updates, which does not validate simulator integration.
+  No training, live ADOFAI, GPU, memory or performance benchmarks were run.
+- Classification: intended behavior-preserving performance refactor, pending
+  repository regression and performance verification. No change to HUD-only
+  inputs, judgement boundaries, rewards, checkpoints or frozen results.
+  Keep PR #23 Draft and use `Refs #5`, not `Fixes #5`.
