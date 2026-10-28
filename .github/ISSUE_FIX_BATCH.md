@@ -142,3 +142,26 @@ No training, live ADOFAI verification, or performance measurements were performe
   valid charts; do not overwrite historical selections or reports.
 - Classification: input acceptance correctness fix. Full chart parsing,
   HUD-only constraints, checkpoint schema and judgement timing unchanged.
+
+
+## Additional unverified fix — Refs #11 (2026-10-29)
+
+- `src/dmdod/connectome/fly_policy.py`: clone the reused no-grad input
+  projection before the in-place recurrent update, so a previously returned
+  state is never overwritten by the next frame's input projection.
+- `tests/test_fly_connectome_policy.py`: add CPU multistep no-grad and
+  deterministic-action regression tests comparing grad-enabled steps and
+  `forward_sequence()`, checking previous-state immutability and confirming
+  the scratch buffer remains absent from the checkpoint state dict.
+- Run: `python -m pytest -q tests/test_fly_connectome_policy.py`.
+- **Repository pytest not executed** (container cannot resolve github.com to
+  fetch the full repository). A separate minimal PyTorch matrix example
+  reproduced the aliasing and verified that cloning avoids it; this is not
+  a repository regression test.
+- **Not run:** actual model training, ADOFAI runtime comparison, CUDA,
+  performance/memory benchmarks. The clone adds an allocation per step;
+  throughput and GPU memory impact remain unmeasured.
+- Classification: **inference correctness fix, not behavior-preserving**.
+  Model weights, checkpoint keys, HUD-only input, Motor and judgement timing
+  are unchanged. Historical inference benchmarks must not be overwritten.
+  Keep `Refs #11` until repository tests and impact checks pass.
