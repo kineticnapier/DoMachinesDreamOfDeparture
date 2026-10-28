@@ -260,8 +260,8 @@ No training, live ADOFAI verification, or performance measurements were performe
   `human_visible_train_identity_verified = false` when prior Train history
   cannot be proven, even after current anchors are recorded.
 - Regression tests: `tests/test_human_visible_curriculum.py` checks SHA,
-  time window, order, count, tolerance, malformed identity, legacy opt-in
-  and serialized provenance; `tests/test_training_config.py` checks
+  time window, order, count, tolerance, malformed identity, legacy opt-in,
+  selected-best/progress pre-restore rejection, and serialized provenance; `tests/test_training_config.py` checks
   the new boolean configuration.
 - Run:
   `python -m pytest -q tests/test_human_visible_curriculum.py tests/test_training_config.py`.
