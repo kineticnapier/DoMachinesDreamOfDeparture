@@ -3,8 +3,15 @@ from pathlib import Path
 
 import pytest
 
+from dmdod.research.stock_runtime_log_v01 import AUDITED_DLL_SHA256
 from dmdod.research.stock_runtime_parity_v01 import compare_runtime_to_reference, extract_runtime_transitions
-from dmdod.research.stock_runtime_trace_v02 import load_runtime_jsonl_v02, parse_runtime_jsonl_v02
+from dmdod.research.stock_runtime_trace_v02 import (
+    REQUIRED_HOOKS,
+    TraceEvent,
+    TraceSession,
+    load_runtime_jsonl_v02,
+    parse_runtime_jsonl_v02,
+)
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -101,3 +108,102 @@ def test_runtime_category_matches_stock_reference(source, canonical):
     assert not result["explicit_mismatch"]
     # A synthetic fixture cannot establish runtime parity.
     assert result["verdict"] == "RUNTIME_PARITY_UNVERIFIED"
+
+
+def _qualified_one_transition(
+    *, song_time_s: float | None = 3.261,
+) -> tuple[TraceSession, dict[str, object]]:
+    """Synthetic construction of a *qualified-shaped* live session for tests.
+
+    This is not an actual live capture and cannot validate external calibration.
+    """
+    def event(sequence: int, kind: str, hook: str, **payload: object) -> TraceEvent:
+        return TraceEvent(
+            session_id="qualified-test", sequence=sequence, frame=7,
+            realtime_s=1.0 + sequence * 0.001, kind=kind,
+            no_fail=True, hook=hook, payload=tuple(sorted(payload.items())),
+        )
+
+    timestamp = {} if song_time_s is None else {"song_time_evaluator_only": song_time_s}
+    events = [
+        event(0, "key_down", "HitInputEvent", **timestamp),
+        event(1, "judgement", "AddHit", judgement="Perfect", **timestamp),
+        event(
+            2, "judgement", "SwitchChosen", hook_phase="postfix",
+            floor_before_evaluator_only=1, floor_after_evaluator_only=2,
+            **timestamp,
+        ),
+    ]
+    for hook in sorted(REQUIRED_HOOKS - {"HitInputEvent", "AddHit", "SwitchChosen"}):
+        events.append(event(len(events), "probe", hook))
+    session = TraceSession(
+        session_id="qualified-test", evidence_kind="live_runtime",
+        dll_sha256=AUDITED_DLL_SHA256, game_build="test",
+        events=tuple(events), issues=(),
+    )
+    reference = {"no_fail": {
+        "automatic_transitions": [],
+        "event_37_90": [{
+            "keydown_at_s": 3.25,
+            "stock_target_ordinal": 0,
+            "stock_judgement": "perfect",
+            "stock_current_floor_before": 1,
+            "stock_current_floor_after": 2,
+        }],
+    }}
+    return session, reference
+
+
+def test_qualified_live_time_is_unknown_without_external_alignment() -> None:
+    session, reference = _qualified_one_transition()
+    result = compare_runtime_to_reference(
+        session, reference, floor_to_target={2: 0},
+    )
+    assert result["live_qualified"]
+    assert result["comparisons"][0]["fields"]["song_time_s"] == "UNKNOWN"
+    assert result["comparisons"][0]["song_time_delta_s"] == pytest.approx(0.011)
+    assert not result["complete"]
+    assert not result["explicit_mismatch"]
+    assert result["verdict"] == "RUNTIME_PARITY_UNVERIFIED"
+
+
+def test_qualified_live_time_requires_residual_within_explicit_tolerance() -> None:
+    session, reference = _qualified_one_transition()
+    matched = compare_runtime_to_reference(
+        session, reference, floor_to_target={2: 0},
+        song_time_offset_s=0.011, song_time_tolerance_s=0.0001,
+    )
+    assert matched["comparisons"][0]["fields"]["song_time_s"] == "MATCH"
+    assert matched["verdict"] == "RUNTIME_PARITY_CONFIRMED"
+    mismatched = compare_runtime_to_reference(
+        session, reference, floor_to_target={2: 0},
+        song_time_offset_s=0.0, song_time_tolerance_s=0.001,
+    )
+    assert mismatched["comparisons"][0]["fields"]["song_time_s"] == "MISMATCH"
+    assert mismatched["explicit_mismatch"]
+    assert mismatched["verdict"] == "RUNTIME_PARITY_MISMATCH"
+
+
+def test_qualified_live_missing_song_time_cannot_confirm() -> None:
+    session, reference = _qualified_one_transition(song_time_s=None)
+    result = compare_runtime_to_reference(
+        session, reference, floor_to_target={2: 0},
+        song_time_offset_s=0.0, song_time_tolerance_s=0.01,
+    )
+    assert result["comparisons"][0]["fields"]["song_time_s"] == "UNKNOWN"
+    assert result["verdict"] == "RUNTIME_PARITY_UNVERIFIED"
+
+
+@pytest.mark.parametrize("settings", [
+    {"song_time_offset_s": 0.0},
+    {"song_time_tolerance_s": 0.01},
+    {"song_time_offset_s": float("nan"), "song_time_tolerance_s": 0.01},
+    {"song_time_offset_s": 0.0, "song_time_tolerance_s": float("inf")},
+    {"song_time_offset_s": 0.0, "song_time_tolerance_s": -0.01},
+])
+def test_invalid_song_time_alignment_is_rejected(settings: dict[str, float]) -> None:
+    session, reference = _qualified_one_transition()
+    with pytest.raises(ValueError, match="song-time"):
+        compare_runtime_to_reference(
+            session, reference, floor_to_target={2: 0}, **settings,
+        )
