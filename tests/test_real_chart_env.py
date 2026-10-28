@@ -93,3 +93,38 @@ def test_segment_rebases_target_times_without_changing_chart_truth():
     assert segment.targets[0].chart_time_s == pytest.approx(start)
     assert segment.targets[0].episode_time_s == pytest.approx(0.0)
     assert segment.targets[-1].chart_time_s == pytest.approx(end)
+
+
+
+def test_fail_on_miss_stops_after_first_expired_real_chart_target():
+    from dmdod.envs.rhythm import RewardConfig
+    from dmdod.adofai_rules import TimingJudgement
+
+    segment = build_playable_segment(_compiled(), start_s=0.0, end_s=2.0)
+    assert len(segment.targets) >= 2
+    env = RealChartMotorEnv(segment, reward_config=RewardConfig(fail_on_miss=True))
+    env.reset()
+
+    assert env._expire_misses(float("inf")) == -env.reward_config.miss_penalty
+    assert env._failed_on_miss
+    assert env.stats.misses == env.stats.fail_misses == 1
+    assert env.hit_margins == (TimingJudgement.FAIL_MISS,)
+    assert env._next_target_index() == 1
+    assert env._expire_misses(float("inf")) == 0.0
+    assert env.stats.misses == 1
+    assert env.hit_margins == (TimingJudgement.FAIL_MISS,)
+
+
+def test_no_fail_mode_keeps_all_expired_real_chart_targets():
+    from dmdod.envs.rhythm import RewardConfig
+    from dmdod.adofai_rules import TimingJudgement
+
+    segment = build_playable_segment(_compiled(), start_s=0.0, end_s=2.0)
+    env = RealChartMotorEnv(segment, reward_config=RewardConfig(fail_on_miss=False))
+    env.reset()
+    count = len(segment.targets)
+    assert env._expire_misses(float("inf")) == -count * env.reward_config.miss_penalty
+    assert not env._failed_on_miss
+    assert env.stats.misses == env.stats.fail_misses == count
+    assert env.hit_margins == (TimingJudgement.FAIL_MISS,) * count
+    assert env._expire_misses(float("inf")) == 0.0
