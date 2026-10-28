@@ -165,3 +165,12 @@ No training, live ADOFAI verification, or performance measurements were performe
   Model weights, checkpoint keys, HUD-only input, Motor and judgement timing
   are unchanged. Historical inference benchmarks must not be overwritten.
   Keep `Refs #11` until repository tests and impact checks pass.
+
+
+## Refs #19 — Rhythm synthetic target cursor optimization (2026-10-29)
+
+- Implementation: `src/dmdod/envs/rhythm.py` now uses monotone unresolved, per-key, and expiration cursors plus a remaining-target count. It preserves sorted-target ordering, strict expiration boundaries, TooEarly non-consumption, TooLate and auto-Miss accounting, fail-on-first-Miss semantics from #18, and existing reward/done logic.
+- Regression coverage: three tests added in `tests/test_rhythm_env.py` for interleaved keys and non-consuming TooEarly, fail/no-fail and reset, and 2,000 ordered targets. Check against full-scan results and count invariants.
+- Source commit: `441f2329dc3952aedc4cea456e33b61cd205c223`. Test commit: `59cf6985cc8b9f62010e2cccb759000205abe433`.
+- Verify with: `python -m pytest -q tests/test_rhythm_env.py tests/test_perception.py`; compare step-by-step reward, cue, judgement history and termination with the old implementation. No benchmark has been run.
+- **Unverified:** repository pytest, training, actual ADOFAI runtime, CUDA/GPU and performance/memory measurements were not executed. This is an intended behavior-preserving performance change, but equivalence still requires verification. Keep Issue #19 open and PR #23 Draft; use `Refs #19`, not `Fixes #19`.
