@@ -82,3 +82,10 @@ Do not use issue-closing keywords before repository regression tests and applica
     schema, optimizer state and ranking rules unchanged.
 
 No training, live ADOFAI verification, or performance measurements were performed.
+
+## Additional unverified fix — Refs #18 (2026-10-28)
+
+- `src/dmdod/envs/real_chart.py` and `src/dmdod/envs/rhythm.py`: stop automatic Miss accounting at the first failure, guard repeated expiry, and break the evaluator event loop after TooLate.
+- `tests/test_real_chart_env.py` and `tests/test_rhythm_env.py`: four regression tests cover Fail and NoFail modes, repeated expiry, and remaining targets.
+- Run: `python -m pytest -q tests/test_real_chart_env.py tests/test_rhythm_env.py tests/test_stock_floor_state_machine.py`.
+- **Repository tests not run** (execution environment cannot resolve github.com to obtain the full repository); training, real ADOFAI parity and performance checks not run. Correctness change; preserve historical research results.
