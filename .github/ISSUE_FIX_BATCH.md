@@ -89,3 +89,20 @@ No training, live ADOFAI verification, or performance measurements were performe
 - `tests/test_real_chart_env.py` and `tests/test_rhythm_env.py`: four regression tests cover Fail and NoFail modes, repeated expiry, and remaining targets.
 - Run: `python -m pytest -q tests/test_real_chart_env.py tests/test_rhythm_env.py tests/test_stock_floor_state_machine.py`.
 - **Repository tests not run** (execution environment cannot resolve github.com to obtain the full repository); training, real ADOFAI parity and performance checks not run. Correctness change; preserve historical research results.
+
+## Additional unverified fix — Refs #21 (2026-10-29)
+
+- `src/dmdod/training/human_visible_curriculum.py`: accept empty AdamW
+  moments only for a pristine `selected-best` checkpoint with
+  `baseline-validated`, epoch=best_epoch=0 and an empty history.
+  Keep missing/invalid states and all trained/progress empty states rejected.
+- `tests/test_human_visible_curriculum.py`: three CPU regression tests for
+  pristine baseline resume, invalid empty/malformed states, and a progress
+  checkpoint referencing an unstepped baseline best.
+- Run: `python -m pytest -q tests/test_human_visible_curriculum.py`.
+- **Repository tests not executed** (the runtime cannot resolve github.com to
+  retrieve the complete repository); no training, ADOFAI runtime checks,
+  checkpoint migration, or performance measurements were performed.
+- Classification: narrow resume correctness fix, not a behavior-preserving
+  refactor. Existing optimizer parameter-group validation and checkpoint
+  schema are unchanged. Keep `Refs #21` until verified.
