@@ -1,4 +1,5 @@
 import json
+from dataclasses import replace
 from pathlib import Path
 
 import pytest
@@ -207,3 +208,18 @@ def test_invalid_song_time_alignment_is_rejected(settings: dict[str, float]) -> 
         compare_runtime_to_reference(
             session, reference, floor_to_target={2: 0}, **settings,
         )
+
+
+def test_zero_song_time_is_not_replaced_by_category_timestamp() -> None:
+    session, _ = _qualified_one_transition()
+    switch = session.events[2]
+    payload = dict(switch.payload)
+    payload["song_time_evaluator_only"] = 0.0
+    updated_switch = replace(switch, payload=tuple(sorted(payload.items())))
+    updated_session = replace(
+        session,
+        events=session.events[:2] + (updated_switch,) + session.events[3:],
+    )
+    transitions = extract_runtime_transitions(updated_session)
+    assert len(transitions) == 1
+    assert transitions[0].song_time_s == 0.0
