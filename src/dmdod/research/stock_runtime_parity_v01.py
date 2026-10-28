@@ -145,7 +145,21 @@ def compare_runtime_to_reference(
     phase20c: dict[str, object],
     *,
     floor_to_target: Mapping[int, int] | None = None,
+    song_time_offset_s: float | None = None,
+    song_time_tolerance_s: float | None = None,
 ) -> dict[str, object]:
+    """Compare evaluator-only transitions, failing closed without time alignment.
+
+    Offset and tolerance must be independently calibrated against live timing
+    evidence before use. The virtual 10ms Phase 20C grid is not calibration.
+    """
+    if (song_time_offset_s is None) != (song_time_tolerance_s is None):
+        raise ValueError("song-time offset and tolerance must be supplied together")
+    if song_time_offset_s is not None:
+        if not math.isfinite(song_time_offset_s):
+            raise ValueError("song-time offset must be finite")
+        if not math.isfinite(song_time_tolerance_s) or song_time_tolerance_s < 0:
+            raise ValueError("song-time tolerance must be finite and non-negative")
     no_fail_values = {event.no_fail for event in session.events}
     if len(no_fail_values) != 1:
         return {"verdict": "RUNTIME_PARITY_UNVERIFIED", "reason": "session mixes NoFail modes", "comparisons": []}
@@ -181,12 +195,30 @@ def compare_runtime_to_reference(
                 else:
                     fields[name] = "MISMATCH"
                     explicit_mismatch = True
-            if actual.song_time_s is None:
+            reference_time = wanted.get("song_time_s")
+            if actual.song_time_s is None or reference_time is None:
                 fields["song_time_s"] = "UNKNOWN"
                 complete = False
             else:
-                fields["song_time_s"] = "OBSERVED"
-                row["song_time_delta_s"] = actual.song_time_s - float(wanted["song_time_s"])
+                try:
+                    expected_time = float(reference_time)
+                except (TypeError, ValueError):
+                    expected_time = math.nan
+                if not math.isfinite(expected_time):
+                    fields["song_time_s"] = "UNKNOWN"
+                    complete = False
+                else:
+                    delta = actual.song_time_s - expected_time
+                    row["song_time_delta_s"] = delta
+                    if song_time_offset_s is None:
+                        # An observed timestamp is not evidence of parity.
+                        fields["song_time_s"] = "UNKNOWN"
+                        complete = False
+                    elif abs(delta - song_time_offset_s) <= song_time_tolerance_s:
+                        fields["song_time_s"] = "MATCH"
+                    else:
+                        fields["song_time_s"] = "MISMATCH"
+                        explicit_mismatch = True
             row["fields"] = fields
         comparisons.append(row)
     hooks = {event.hook for event in session.events}
@@ -197,7 +229,7 @@ def compare_runtime_to_reference(
         and REQUIRED_HOOKS <= hooks
     )
     if live_qualified and explicit_mismatch:
-        verdict, reason = "RUNTIME_PARITY_MISMATCH", "live qualified evidence contains an explicit state/category/order mismatch"
+        verdict, reason = "RUNTIME_PARITY_MISMATCH", "live qualified evidence contains an explicit state/category/order/time mismatch"
     elif live_qualified and complete and not explicit_mismatch:
         verdict, reason = "RUNTIME_PARITY_CONFIRMED", "all declared reference transitions and fields match live evidence"
     else:
@@ -214,5 +246,10 @@ def compare_runtime_to_reference(
         "explicit_mismatch": explicit_mismatch,
         "comparisons": comparisons,
         "uses_virtual_10ms_as_runtime_time": False,
+        "song_time_alignment": {
+            "offset_s": song_time_offset_s,
+            "tolerance_s": song_time_tolerance_s,
+            "externally_calibrated": song_time_offset_s is not None,
+        },
         "student_visible_fields": [],
     }
