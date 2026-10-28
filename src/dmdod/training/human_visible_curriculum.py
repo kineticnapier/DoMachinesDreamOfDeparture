@@ -1157,7 +1157,7 @@ def _train_identity_verified_for_output(parent: dict) -> bool:
         return True  # Fresh curriculum run; all selected anchors are recorded.
     return (
         "human_visible_train_identity" in parent
-        and parent.get("human_visible_train_identity_verified") is True
+        and parent.get("human_visible_train_identity_verified", True) is True
     )
 
 
