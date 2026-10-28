@@ -141,7 +141,7 @@ class NKeyRealChartMotorEnv(RealChartMotorEnv):
             reward += self._expire_misses(now)
         reward -= self.reward_config.effort_penalty * sum(abs(value) for value in action.values)
 
-        all_resolved = all(used or missed for used, missed in zip(self._used, self._missed))
+        all_resolved = self._all_targets_resolved()
         self._done = (
             self._failed_on_miss
             or self._overload.overloaded
