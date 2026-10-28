@@ -1172,6 +1172,18 @@ def _check_validation_summary(actual: dict, recorded: dict) -> None:
     for name in ("anchors", "targets", "safe", "hits"):
         if int(actual[name]) != int(recorded[name]):
             raise SystemExit(f"fixed Validation mismatch: {name}: {actual[name]} != {recorded[name]}")
+    # Older checkpoints may lack these fields. Validate them whenever they
+    # were recorded, without changing the saved ranking or checkpoint format.
+    for name in ("early", "keydowns", "overloaded"):
+        if name not in recorded:
+            continue
+        current = actual.get(name, "<missing>")
+        if name == "overloaded":
+            matches = isinstance(current, bool) and current == recorded[name]
+        else:
+            matches = isinstance(current, int) and not isinstance(current, bool) and current == recorded[name]
+        if not matches:
+            raise SystemExit(f"fixed Validation mismatch: {name}: {current} != {recorded[name]}")
     # Stored checkpoint stats are already rounded by the simulator pipeline.
     for name, tolerance in (("x", 0.05), ("pp", 0.05), ("mae_ms", 0.25)):
         a, b = float(actual[name]), float(recorded[name])
