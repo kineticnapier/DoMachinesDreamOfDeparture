@@ -285,6 +285,83 @@ def _tiny_resume_context(tmp_path, model, optimizer, *, role="selected-best"):
     return prepared, config, summary
 
 
+def _unstepped_resume_model_and_optimizer():
+    model = torch.nn.Sequential(torch.nn.Linear(3, 2), torch.nn.Linear(2, 1))
+    optimizer = torch.optim.AdamW(
+        [{"params": list(model[0].parameters()), "lr": 3e-5},
+         {"params": list(model[1].parameters()), "lr": 5e-5}],
+        weight_decay=1e-4,
+    )
+    assert optimizer.state_dict()["state"] == {}
+    return model, optimizer
+
+
+def _mark_pristine_baseline(checkpoint):
+    checkpoint.update({
+        "human_visible_checkpoint_role": "selected-best",
+        "human_visible_stopped_reason": "baseline-validated",
+        "human_visible_epoch": 0,
+        "human_visible_best_epoch": 0,
+        "human_visible_best_beta": BETA_SCHEDULE[0],
+        "human_visible_dagger_level": 0,
+        "human_visible_history": [],
+    })
+
+
+def test_pristine_baseline_selected_best_accepts_empty_adamw(tmp_path):
+    model, optimizer = _unstepped_resume_model_and_optimizer()
+    prepared, config, _ = _tiny_resume_context(tmp_path, model, optimizer)
+    _mark_pristine_baseline(prepared.parent)
+    start = prepare_curriculum_start(prepared, config, model, optimizer)
+    assert start.role == "selected-best"
+    assert start.epoch == start.best_epoch == 0
+    assert start.best_optimizer_state["state"] == {}
+    assert optimizer.state_dict()["state"] == {}
+
+
+def test_empty_adamw_is_rejected_outside_pristine_baseline(tmp_path):
+    model, optimizer = _unstepped_resume_model_and_optimizer()
+    prepared, _, _ = _tiny_resume_context(tmp_path, model, optimizer)
+    _mark_pristine_baseline(prepared.parent)
+    for changed in (
+        {"human_visible_stopped_reason": "running-best"},
+        {"human_visible_epoch": 1, "human_visible_best_epoch": 1},
+        {"human_visible_history": [{"epoch": 0, "selected_best": True}]},
+    ):
+        bad = copy.deepcopy(prepared.parent)
+        bad.update(changed)
+        with pytest.raises(SystemExit, match="no optimizer moments"):
+            _check_optimizer_state(optimizer, bad, model)
+    for bad_state in (None, [], "invalid"):
+        bad = copy.deepcopy(prepared.parent)
+        bad["human_visible_optimizer_state"]["state"] = bad_state
+        with pytest.raises(SystemExit, match="no optimizer moments"):
+            _check_optimizer_state(optimizer, bad, model)
+
+
+def test_progress_resume_can_reference_pristine_baseline(tmp_path):
+    model, optimizer = _small_resume_model_and_optimizer()
+    prepared, config, _ = _tiny_resume_context(
+        tmp_path, model, optimizer, role="continuation-progress"
+    )
+    baseline_model, baseline_optimizer = _unstepped_resume_model_and_optimizer()
+    best = copy.deepcopy(prepared.parent)
+    _mark_pristine_baseline(best)
+    best["model_state"] = {
+        name: tensor.detach().clone()
+        for name, tensor in baseline_model.state_dict().items()
+    }
+    best["human_visible_optimizer_state"] = copy.deepcopy(baseline_optimizer.state_dict())
+    torch.save(best, prepared.output_checkpoint)
+    prepared.parent["human_visible_best_checkpoint_path"] = str(prepared.output_checkpoint)
+    start = prepare_curriculum_start(prepared, config, model, optimizer)
+    assert start.role == "continuation-progress"
+    assert start.epoch == 2
+    assert start.best_epoch == 0
+    assert start.best_optimizer_state["state"] == {}
+    assert optimizer.state_dict()["state"]
+
+
 def test_old_selected_best_beta_is_read_from_matching_history(tmp_path):
     model, optim = _small_resume_model_and_optimizer()
     prepared, config, summary = _tiny_resume_context(tmp_path, model, optim)
