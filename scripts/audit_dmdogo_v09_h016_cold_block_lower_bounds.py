@@ -210,8 +210,8 @@ def inspect_trial(trial_id: int, saved: dict) -> dict:
     original = audit_one(trial_id)
     events, spec = generate(trial_id)
     if (original["generator"] != spec or saved["generator"] != spec
-            or saved["target_count"] != len(original["targets"])):
-        raise ValueError("synthetic trial generator or target count changed")
+            or saved["target_count"] != len(saved["targets"])):
+        raise ValueError("synthetic trial generator or saved target count changed")
     planner = GestureChunkPlannerV08()
     plan = planner.plan(events)
     if not plan.feasible:
@@ -220,14 +220,19 @@ def inspect_trial(trial_id: int, saved: dict) -> dict:
     chunks = [_chunk_record(x) for x in plan.chunks]
     incumbent = original_precise_cost(events, plan, windows, chunks)
     by_join = {row["window_index"]: row for row in saved["targets"]}
+    original_by_join = {
+        row["window_index"]: row for row in original["targets"]}
     if (len(by_join) != len(saved["targets"])
-            or set(by_join) != {
-                row["window_index"] for row in original["targets"]}):
+            or len(original_by_join) != len(original["targets"])
+            or not set(by_join).issubset(original_by_join)
+            or not by_join):
         raise ValueError("H0.15 targeted join windows changed")
+    # H0.15's known-regret cohort selected only the one regret seam
+    # in each of 4115 and 4127; survey trials retained both seams.
+    # Do not silently expand the historical target census.
     outputs = []
-    for source in original["targets"]:
-        join = source["window_index"]
-        historical = by_join[join]
+    for join, historical in by_join.items():
+        source = original_by_join[join]
         target = select_alternative(events, chunks, windows, join)
         if (target != source["target"]
                 or target["flag_pair"] != historical["flag_pair"]
