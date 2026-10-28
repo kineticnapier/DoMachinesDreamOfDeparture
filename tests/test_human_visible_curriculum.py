@@ -235,6 +235,8 @@ from dmdod.training.human_visible_curriculum import (
     TRAINING_MODE,
     _check_validation_context,
     _check_validation_summary,
+    _train_identity,
+    _train_identity_verified_for_output,
     _checkpoint_best_identity,
     _check_optimizer_state,
     _load_checked_optimizer,
@@ -277,11 +279,27 @@ def _tiny_resume_context(tmp_path, model, optimizer, *, role="selected-best"):
         "human_visible_validation_streak": 1,
         "human_visible_catastrophic_streak": 1,
     }
+    anchors = [
+        SimpleNamespace(chart_sha256="train-a", start_s=0.0, end_s=10.0),
+        SimpleNamespace(chart_sha256="train-b", start_s=5.0, end_s=15.0),
+    ]
+    old["human_visible_train_identity"] = [
+        {"chart_sha256": item.chart_sha256, "start_s": item.start_s, "end_s": item.end_s}
+        for item in anchors
+    ]
     data = SimpleNamespace(anchor_limit=20, validation_limit=20)
     run = SimpleNamespace(dataset=str(tmp_path / "dataset"))
-    config = SimpleNamespace(run=run, data=data, human_visible=SimpleNamespace(transition_epochs=3))
-    prepared = SimpleNamespace(parent=old, source_checkpoint=source, output_checkpoint=output,
-                               validation=[SimpleNamespace(chart_sha256="abc", start_s=0, end_s=10)])
+    config = SimpleNamespace(
+        run=run, data=data,
+        human_visible=SimpleNamespace(
+            transition_epochs=3, allow_legacy_train_identity_resume=False
+        ),
+    )
+    prepared = SimpleNamespace(
+        parent=old, source_checkpoint=source, output_checkpoint=output,
+        anchors=anchors,
+        validation=[SimpleNamespace(chart_sha256="abc", start_s=0, end_s=10)],
+    )
     return prepared, config, summary
 
 
@@ -603,3 +621,61 @@ def test_resume_validation_preserves_legacy_optional_counter_compatibility():
     actual = dict(recorded, early=3, keydowns=8, overloaded=False)
     _check_validation_summary(actual, recorded)
     _check_validation_summary(dict(recorded), recorded)
+
+
+def test_resume_train_identity_rejects_changed_sha_window_order_and_count(tmp_path):
+    model, optim = _small_resume_model_and_optimizer()
+    prepared, config, _ = _tiny_resume_context(tmp_path, model, optim)
+    _check_validation_context(prepared.parent, config, prepared)
+    assert _train_identity(prepared) == prepared.parent["human_visible_train_identity"]
+
+    for changed in (
+        [SimpleNamespace(chart_sha256="different", start_s=0.0, end_s=10.0), prepared.anchors[1]],
+        [SimpleNamespace(chart_sha256="train-a", start_s=0.1, end_s=10.0), prepared.anchors[1]],
+        [SimpleNamespace(chart_sha256="train-a", start_s=0.0, end_s=10.1), prepared.anchors[1]],
+        list(reversed(prepared.anchors)),
+        prepared.anchors[:1],
+    ):
+        prepared.anchors = changed
+        with pytest.raises(SystemExit, match="resume Train anchor"):
+            _check_validation_context(prepared.parent, config, prepared)
+    prepared.anchors = [
+        SimpleNamespace(chart_sha256="train-a", start_s=1e-9, end_s=10.0),
+        SimpleNamespace(chart_sha256="train-b", start_s=5.0, end_s=15.0),
+    ]
+    _check_validation_context(prepared.parent, config, prepared)
+
+
+def test_resume_train_identity_legacy_requires_opt_in_and_retains_unverified_lineage(tmp_path):
+    model, optim = _small_resume_model_and_optimizer()
+    prepared, config, _ = _tiny_resume_context(tmp_path, model, optim)
+    del prepared.parent["human_visible_train_identity"]
+    with pytest.raises(SystemExit, match="allow_legacy_train_identity_resume"):
+        _check_validation_context(prepared.parent, config, prepared)
+    assert not _train_identity_verified_for_output(prepared.parent)
+    config.human_visible.allow_legacy_train_identity_resume = True
+    with pytest.warns(RuntimeWarning, match="unverified historical Train"):
+        _check_validation_context(prepared.parent, config, prepared)
+    prepared.parent["human_visible_train_identity"] = _train_identity(prepared)
+    prepared.parent["human_visible_train_identity_verified"] = False
+    assert not _train_identity_verified_for_output(prepared.parent)
+    config.human_visible.allow_legacy_train_identity_resume = False
+    with pytest.raises(SystemExit, match="allow_legacy_train_identity_resume"):
+        _check_validation_context(prepared.parent, config, prepared)
+
+
+def test_resume_train_identity_rejects_malformed_saved_entries(tmp_path):
+    model, optim = _small_resume_model_and_optimizer()
+    prepared, config, _ = _tiny_resume_context(tmp_path, model, optim)
+    for bad in ({"chart_sha256": "train-a", "start_s": "nan", "end_s": 10.0},
+                {"chart_sha256": "train-a", "start_s": "invalid", "end_s": 10.0},
+                None):
+        prepared.parent["human_visible_train_identity"] = [
+            bad, {"chart_sha256": "train-b", "start_s": 5.0, "end_s": 15.0}
+        ]
+        with pytest.raises(SystemExit, match="resume Train anchor"):
+            _check_validation_context(prepared.parent, config, prepared)
+
+
+def test_resume_train_identity_provenance_fresh_run_is_verified():
+    assert _train_identity_verified_for_output({"training_mode": "other"})
