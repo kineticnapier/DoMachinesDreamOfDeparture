@@ -51,6 +51,24 @@ def test_display_latency_and_missing_capture_preserve_a_causal_interval() -> Non
     assert delta.event_interval_s == pytest.approx((2.010, 2.030))
 
 
+def test_visible_reset_restarts_capture_clock_and_discards_old_notifications() -> None:
+    renderer = VisibleCounterRenderer(_contract())
+    renderer.notify(StockJudgementNotification(9.9, "perfect"))
+    assert dict(renderer.capture(10.0).counters)["perfect"] == 1
+    renderer.notify(StockJudgementNotification(10.1, "perfect"))
+    renderer.reset_visible_counters()
+
+    first = renderer.capture(0.0)
+    assert dict(first.counters) == {
+        "perfect": 0, "very_late": 0, "fail_miss": 0,
+    }
+    renderer.notify(StockJudgementNotification(0.05, "perfect"))
+    assert dict(renderer.capture(0.1).counters)["perfect"] == 1
+
+    with pytest.raises(ValueError, match="capture timestamp moved backward"):
+        renderer.capture(0.09)
+
+
 def test_visible_reset_is_observed_as_reset_not_negative_judgement() -> None:
     renderer = VisibleCounterRenderer(_contract())
     observer = JudgementObserver(renderer.contract.labels)
