@@ -133,3 +133,54 @@ def test_user_confirmed_category_still_reaches_visible_counter() -> None:
         StockJudgementNotification(0.05, "perfect", count=2)
     ).accepted
     assert dict(renderer.capture(0.10).counters)["perfect"] == 2
+
+
+def test_visible_pending_heap_preserves_out_of_order_delayed_counts() -> None:
+    renderer = VisibleCounterRenderer(_contract(fail_miss=False), display_latency_s=0.01)
+    assert renderer.notify(StockJudgementNotification(0.30, "perfect", 2)).accepted
+    assert renderer.notify(StockJudgementNotification(0.20, "very_late", 3)).accepted
+    assert renderer.notify(StockJudgementNotification(0.20, "perfect", 1)).accepted
+
+    assert dict(renderer.capture(0.20).counters) == {"perfect": 0, "very_late": 0}
+    assert dict(renderer.capture(0.21).counters) == {"perfect": 1, "very_late": 3}
+    assert dict(renderer.capture(0.29).counters) == {"perfect": 1, "very_late": 3}
+    assert dict(renderer.capture(0.31).counters) == {"perfect": 3, "very_late": 3}
+    assert dict(renderer.capture(0.31).counters) == {"perfect": 3, "very_late": 3}
+
+
+def test_visible_pending_heap_preserves_one_picosecond_boundary() -> None:
+    renderer = VisibleCounterRenderer(_contract(fail_miss=False))
+    renderer.notify(StockJudgementNotification(0.2 + 0.5e-12, "perfect"))
+    renderer.notify(StockJudgementNotification(0.2 + 2.0e-12, "very_late"))
+    assert dict(renderer.capture(0.2).counters) == {"perfect": 1, "very_late": 0}
+    assert dict(renderer.capture(0.21).counters) == {"perfect": 1, "very_late": 1}
+    with pytest.raises(ValueError, match="capture timestamp moved backward"):
+        renderer.capture(0.20)
+
+
+def test_visible_pending_heap_large_batch_and_reset() -> None:
+    renderer = VisibleCounterRenderer(_contract(fail_miss=False))
+    expected = {"perfect": 0, "very_late": 0}
+    notifications = []
+    for index in range(2500):
+        category = "perfect" if index % 2 == 0 else "very_late"
+        count = 1 if category == "perfect" else 2
+        timestamp = 0.2 + (index % 17) * 0.01
+        notifications.append((timestamp, category, count))
+        assert renderer.notify(
+            StockJudgementNotification(timestamp, category, count)
+        ).accepted
+
+    for displayed in (0.1, 0.25, 0.35, 0.5):
+        expected = {
+            category: sum(
+                count for timestamp, label, count in notifications
+                if label == category and timestamp <= displayed + 1e-12
+            )
+            for category in expected
+        }
+        assert dict(renderer.capture(displayed).counters) == expected
+    renderer.reset_visible_counters()
+    assert dict(renderer.capture(0.0).counters) == {"perfect": 0, "very_late": 0}
+    renderer.notify(StockJudgementNotification(0.01, "perfect"))
+    assert dict(renderer.capture(0.02).counters) == {"perfect": 1, "very_late": 0}
