@@ -114,6 +114,10 @@ def targets_from_playable_segment(
     The speed used by ``scrPlanet.SwitchChosen`` belongs to the floor occupied
     before the hit.  Consequently an action on the destination floor (for
     example SetSpeed) must not retroactively change that hit's boundary.
+
+    ``initial_floor`` is evaluator-only state for an explicitly sliced
+    segment. Without it, skipped earlier ordinary floors remain unsupported
+    rather than being silently assumed to have been landed.
     """
 
     chart = segment.chart
