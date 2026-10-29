@@ -385,3 +385,13 @@ No training, live ADOFAI verification, or performance measurements were performe
   measurements were not run. The partial fix can change FailBar/reward near
   a floor BPM boundary; it is not a behavior-preserving refactor.
 - Keep Issue #12 open, PR #23 Draft; use `Refs #12` only, not `Fixes #12`.
+
+
+## Batch update — Refs #25 (2026-10-29)
+
+- **Refs #25** — Change `VisibleCounterRenderer` pending visible judgement notifications from append+full sort / full scan per capture to a stable min-heap keyed by (event time, insertion sequence). Preserve confirmed-visible categories, display/capture latencies, 1e-12 cutoff tolerance, reset and monotonic capture clock, and HUD-only output.
+- Source: `src/dmdod/features/stock_visible_judgement_feedback_v01.py` (commit `230d74facd5364b36b7a5f3d23a593327e2abb5a`).
+- Tests: `tests/test_stock_visible_judgement_feedback_v01.py` (commit `c55cdcd7857cfd3a796bff23b353f33aa5ad7efe`), 3 additional cases for out-of-order/same-time delayed notifications, strict capture boundary, 2,500 pending events and reset.
+- Run: `python -m pytest -q tests/test_stock_visible_judgement_feedback_v01.py tests/test_judgement_observer_v01.py`.
+- **Not verified:** repository pytest (container DNS cannot resolve github.com), training, live ADOFAI runtime, GPU, and performance/memory measurements. Independent old-list vs new-heap comparison: 2 standalone pytest cases passed (200 randomized sequences × 500 operations and boundary case); not a repository test.
+- Classification: intended behavior-preserving internal performance refactor. No judgement algorithm, HUD-only surface, Motor, checkpoint or frozen research result changes. Keep Issue #25 open, PR #23 Draft, and do not use `Fixes #25` pending full verification.
