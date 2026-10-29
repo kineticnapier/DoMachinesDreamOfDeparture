@@ -10,6 +10,7 @@ identity, target time, or scorer cursor state.
 
 from dataclasses import dataclass
 from enum import Enum
+from heapq import heappop, heappush
 from math import isfinite
 from typing import Mapping, Sequence
 
@@ -99,7 +100,10 @@ class VisibleCounterRenderer:
         self.display_latency_s = float(display_latency_s)
         self.capture_latency_s = float(capture_latency_s)
         self._counters = {label: 0 for label in contract.labels}
-        self._pending: list[StockJudgementNotification] = []
+        # Min-heap by occurrence time, with insertion order for equal times.
+        # This is internal to the renderer; no privileged ordering is exposed.
+        self._pending: list[tuple[float, int, StockJudgementNotification]] = []
+        self._pending_sequence = 0
         self._last_capture_s: float | None = None
 
     def notify(self, event: StockJudgementNotification) -> CounterRenderDiagnostic:
@@ -117,13 +121,14 @@ class VisibleCounterRenderer:
                 str(event.category),
                 float(event.occurred_at_s),
             )
-        self._pending.append(event)
-        self._pending.sort(key=lambda item: item.occurred_at_s)
+        self._pending_sequence += 1
+        heappush(self._pending, (event.occurred_at_s, self._pending_sequence, event))
         return CounterRenderDiagnostic(True, "queued for visible rendering", str(event.category), float(event.occurred_at_s))
 
     def reset_visible_counters(self) -> None:
         self._counters = {label: 0 for label in self.contract.labels}
         self._pending.clear()
+        self._pending_sequence = 0
         # A new episode can restart its display clock at zero.
         # Captures within an episode still reject backward timestamps.
         self._last_capture_s = None
@@ -135,14 +140,12 @@ class VisibleCounterRenderer:
         if self._last_capture_s is not None and displayed < self._last_capture_s:
             raise ValueError("capture timestamp moved backward")
         cutoff = displayed - self.display_latency_s
-        remaining: list[StockJudgementNotification] = []
         mapping = self.contract.mapping
-        for event in self._pending:
-            if event.occurred_at_s <= cutoff + 1e-12:
-                self._counters[mapping[event.category]] += event.count
-            else:
-                remaining.append(event)
-        self._pending = remaining
+        # Leave future events in the heap without scanning them each frame.
+        # Keep the original inclusive 1e-12 boundary unchanged.
+        while self._pending and self._pending[0][0] <= cutoff + 1e-12:
+            event = heappop(self._pending)[2]
+            self._counters[mapping[event.category]] += event.count
         self._last_capture_s = displayed
         return JudgementCounterFrame.from_mapping(
             observed_at_s=displayed + self.capture_latency_s,
