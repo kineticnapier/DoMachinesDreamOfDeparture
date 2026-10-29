@@ -311,3 +311,31 @@ No training, live ADOFAI verification, or performance measurements were performe
 - Run: `uv run pytest -q tests/test_dmdogo_h0_source_provenance.py tests/test_dmdogo_v09_h010_all_quick_seams.py tests/test_dmdogo_v09_h011_adaptive_release.py tests/test_dmdogo_v09_h012_synthetic_counterexamples.py`.
 - **Not verified:** repository pytest, actual report generation, training, ADOFAI live runtime, GPU and performance measurements were not run; checkout is unavailable. H0.13+ are not present on this work branch and remain **unimplemented**; do not copy newer research scripts from the diverged base.
 - Metadata-only intended behavior-preserving addition to newly generated reports; no frozen research outputs, timing, Motor, HUD-only observations, checkpoints or algorithms changed. Issue #6 remains open, PR #23 remains Draft; use `Refs #6`, not `Fixes #6`.
+
+
+## Batch update — Refs #20 (2026-10-29)
+
+- **Refs #20** — Added deterministic, bounded distinct-label enumeration in
+  `src/dmdod/planning/judgement_label_orders.py` (64 visible increments,
+  4,096 distinct-order expansions). Replaced factorial
+  `set(permutations(labels))` in all three HUD-only research estimators:
+  `judgement_state_estimator_v01.py`,
+  `persistent_judgement_state_estimator_v02.py`, and
+  `stock_persistent_judgement_state_estimator_v03.py`.
+- v01 now treats hitting `max_hypotheses` as an incomplete search rather
+  than claiming `MODEL_IDENTIFIED`; v02/v03 preserve an explicit UNKNOWN
+  remainder and return TRUNCATED on oversized visible/tied input order sets.
+  v02 preflights factorial permutations of tied KeyDowns.
+- Added `tests/test_judgement_label_orders.py` and regression cases to
+  `tests/test_judgement_state_estimator_v01.py`,
+  `tests/test_persistent_judgement_state_estimator_v02.py`, and
+  `tests/test_stock_persistent_judgement_state_estimator_v03.py`.
+- **Executed only:** 2 standalone helper pytest cases in a local reconstructed
+  copy; repository tests were **not run** (GitHub DNS unavailable in execution
+  container). Run:
+  `python -m pytest -q tests/test_judgement_label_orders.py tests/test_judgement_state_estimator_v01.py tests/test_persistent_judgement_state_estimator_v02.py tests/test_stock_persistent_judgement_state_estimator_v03.py`.
+- **Research behavior change:** oversized searches now conservatively abstain,
+  and enumeration order is deterministic; exact hypothesis IDs/order may differ.
+  Do not compare newly generated research results with frozen reports without
+  recording this change. No training, live ADOFAI, GPU, performance or memory
+  measurements were run. Keep Issue #20 open and PR #23 Draft; no `Fixes`.
