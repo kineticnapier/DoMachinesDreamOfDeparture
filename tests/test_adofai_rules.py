@@ -200,7 +200,6 @@ def test_multipress_counter_also_uses_strict_greater_than_one_fail_condition():
     assert overload.overloaded
 
 
-
 @pytest.mark.parametrize("bad", (float("nan"), float("inf"), float("-inf")))
 def test_overload_advance_rejects_nonfinite_beats_without_state_change(bad):
     counter = OverloadCounter(
