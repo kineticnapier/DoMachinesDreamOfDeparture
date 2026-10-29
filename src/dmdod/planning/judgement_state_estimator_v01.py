@@ -17,6 +17,7 @@ from dmdod.features.judgement_observer_v01 import (
     JudgementDeltaStatus,
 )
 from dmdod.planning.judgement_label_orders import (
+    MAX_ORDER_EXPANSIONS,
     MAX_VISIBLE_EVENTS,
     bounded_unique_orders,
 )
@@ -275,6 +276,7 @@ class JudgementStateEstimator:
         hypothesis_keys: set[tuple[tuple[str, str, str, str], ...]] = set()
         hypotheses: list[AttributionHypothesis] = []
         cap_reached = False
+        remaining_search_budget = MAX_ORDER_EXPANSIONS
         for label_order in orders:
             choices = [
                 self._candidate_events(keydown, label)
@@ -282,6 +284,15 @@ class JudgementStateEstimator:
             ]
             if any(not candidates for candidates in choices):
                 continue
+            # Count even incompatible products before allocation: a capped
+            # result must never imply that omitted assignments were impossible.
+            combinations = 1
+            for candidates in choices:
+                combinations *= len(candidates)
+            if combinations > remaining_search_budget:
+                cap_reached = True
+                break
+            remaining_search_budget -= combinations
             for selected in product(*choices):
                 selected_ids = tuple(event.local_id for event in selected)
                 if len(set(selected_ids)) != len(selected_ids):
@@ -328,7 +339,11 @@ class JudgementStateEstimator:
                 aligned_state_possible=True,
                 identifiable=False,
                 stock_identity_verified=False,
-                reason="no attribution fits the explicit simulator window model",
+                reason=(
+                    "attribution search truncated before complete enumeration"
+                    if cap_reached else
+                    "no attribution fits the explicit simulator window model"
+                ),
             )
 
         aligned_possible = any(

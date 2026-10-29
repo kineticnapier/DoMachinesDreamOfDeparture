@@ -468,6 +468,8 @@ class PersistentJudgementStateEstimator:
             )
         lower, upper = feedback.event_interval_s
         compatible: list[PersistentStateHypothesis] = []
+        remaining_search_budget = MAX_ORDER_EXPANSIONS
+        combination_budget_exceeded = False
         omitted_possible = False
         generation_capped = False
         for hypothesis in self._hypotheses:
@@ -593,6 +595,18 @@ class PersistentJudgementStateEstimator:
                     omitted_possible |= branch_omitted
                     if any(not choices for choices in event_choices):
                         continue
+                    # The number of distinct visible orders is bounded, but
+                    # each order can still expand into an enormous Cartesian
+                    # product of compatible predecessor events.
+                    combinations = 1
+                    for choices in event_choices:
+                        combinations *= len(choices)
+                    if combinations > remaining_search_budget:
+                        omitted_possible = True
+                        combination_budget_exceeded = True
+                        generation_capped = True
+                        break
+                    remaining_search_budget -= combinations
                     for selected in product(*event_choices):
                         resolving_ids = [
                             event.local_id for event, label in zip(selected, label_order)
@@ -640,6 +654,16 @@ class PersistentJudgementStateEstimator:
                             generation_capped = True
                             break
 
+        if not compatible and combination_budget_exceeded:
+            self._set_hypotheses(
+                self._hypotheses,
+                truncation_reason="attribution combination budget exceeded",
+            )
+            return self._estimate(
+                feedback.observed_at_s,
+                PersistentEstimateStatus.TRUNCATED,
+                "attribution combination budget exceeded; causal attribution unknown",
+            )
         if not compatible:
             # Do not silently resurrect discarded concrete histories.  A single
             # UNKNOWN continuation records model mismatch/observation loss.

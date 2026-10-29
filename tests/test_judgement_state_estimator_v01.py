@@ -196,3 +196,22 @@ def test_distinct_label_orders_exceeding_budget_abstain():
     ))
     assert result.status is EstimateStatus.AMBIGUOUS
     assert not result.identifiable
+
+
+def test_large_attribution_product_abstains_without_enumeration():
+    est = JudgementStateEstimator(
+        RepositoryWindowModel(0.025, 0.030, 0.065),
+        max_predecessors=6,
+    )
+    for index in range(7):
+        est.observe_timing(event(index, 1.0))
+        est.observe_keydown(keydown(f"k{index}", index, 1.0))
+    # 1 * 2 * ... * 7 = 5040 candidate combinations (>4096).
+    result = est.observe_judgement(delta(1.01, perfect=7))
+    assert result.status is EstimateStatus.AMBIGUOUS
+    assert not result.identifiable
+    assert result.hypotheses == ()
+    assert set(result.possible_unresolved_local_ids) == {
+        str(index) for index in range(7)
+    }
+    assert "truncated" in result.reason
