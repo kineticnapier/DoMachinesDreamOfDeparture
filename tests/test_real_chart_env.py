@@ -207,3 +207,22 @@ def test_overload_constant_bpm_and_equal_time_midspin_preserve_beats():
     assert env._beat_delta_between(0.1, 0.9) == pytest.approx(
         (0.9 - 0.1) * 120.0 / 60.0
     )
+
+
+def test_overload_six_beat_reset_at_floor_speed_boundary():
+    segment = _speed_change_segment()
+    boundary = segment.episode_time_from_chart(
+        segment.chart.floors[1].target_time_s
+    )
+    env = RealChartMotorEnv(segment)
+    env.reset()
+    env._overload_clock_s = boundary - 0.001
+    env._overload.multipress_reset_beats = (
+        env._overload.multipress_reset_after_beats - 0.001
+    )
+    env._overload.multipress_value = 1.0
+
+    env._advance_overload(boundary + 0.001)
+
+    assert env._overload.multipress_value == 0.0
+    assert env._overload.multipress_reset_beats == 0.0
