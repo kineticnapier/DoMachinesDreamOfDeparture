@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
+from math import isfinite
 
 
 @dataclass(frozen=True)
@@ -133,8 +134,8 @@ class TwoFingerBody:
         return 0
 
     def step(self, left_command: float, right_command: float, dt_s: float) -> tuple[FingerState, FingerState]:
-        if dt_s <= 0.0:
-            raise ValueError("dt_s must be positive")
+        if not isfinite(dt_s) or dt_s <= 0.0:
+            raise ValueError("dt_s must be finite and positive")
 
         commands = (self._clamp(left_command, -1.0, 1.0), self._clamp(right_command, -1.0, 1.0))
         configs = (self.config.left, self.config.right)
