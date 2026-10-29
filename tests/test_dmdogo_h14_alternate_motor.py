@@ -41,7 +41,7 @@ def fake_ready():
         {"source":"offline","physical_motor_evaluated":False,
          "human_likeness_verified":False})
     alternative=(
-        ("left_1",),("right_2",),("left_1",))
+        ("left_1",), ("right_2",), ("left_1",)
     )
     cand={
         "candidate_id":"sample-one",
