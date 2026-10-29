@@ -393,6 +393,8 @@ class OverloadCounter:
         """Valid hits do not directly heal either DLL fail-bar counter."""
 
     def advance_beats(self, beat_delta: float) -> None:
+        if not isfinite(beat_delta):
+            raise ValueError("beat_delta must be finite")
         if beat_delta < 0.0:
             raise ValueError("beat_delta must be non-negative")
         self.value = max(0.0, self.value - self.recovery_per_beat * beat_delta)
