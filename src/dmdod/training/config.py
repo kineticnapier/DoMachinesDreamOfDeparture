@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from dataclasses import asdict, dataclass
+from dataclasses import asdict, dataclass, fields
 from pathlib import Path
 import tomllib
 import math
@@ -322,6 +322,19 @@ def _validate(
     boundary_trust: BoundaryTrustConfig,
     human_visible: HumanVisibleConfig,
 ) -> None:
+    # TOML permits nan/inf; ordinary range comparisons cannot reject NaN.
+    # All scalar float settings are checked before the existing range checks.
+    for section_name, section in (
+        ("action_trust", action),
+        ("budget", budget),
+        ("trajectory_probe", trajectory_probe),
+        ("boundary_trust", boundary_trust),
+        ("human_visible", human_visible),
+    ):
+        for setting in fields(section):
+            value = getattr(section, setting.name)
+            if isinstance(value, float) and not math.isfinite(value):
+                raise ValueError(f"{section_name}.{setting.name} must be finite")
     if action.actor_steps <= 0:
         raise ValueError("action_trust.actor_steps must be positive")
     if action.lr <= 0.0 or action.min_lr <= 0.0:
