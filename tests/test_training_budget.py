@@ -1,6 +1,27 @@
 from __future__ import annotations
 
+import pytest
+
 from dmdod.training.budget import NonBestRestartController, TrustRadiusController
+
+
+@pytest.mark.parametrize("field", ("initial", "minimum", "reject_shrink", "safe_grow"))
+@pytest.mark.parametrize("bad", (float("nan"), float("inf"), float("-inf")))
+def test_trust_radius_rejects_nonfinite_parameters(field: str, bad: float) -> None:
+    values = dict(initial=0.01, minimum=0.001, reject_shrink=0.5, safe_grow=1.25)
+    values[field] = bad
+    with pytest.raises(ValueError, match=rf"{field} must be finite"):
+        TrustRadiusController.create(**values)
+
+
+def test_trust_radius_preserves_finite_parameter_behavior() -> None:
+    radius = TrustRadiusController.create(
+        initial=0.01, minimum=0.001, reject_shrink=0.5, safe_grow=1.25,
+    )
+    assert radius.current == 0.01
+    assert radius.reject()
+    assert radius.current == 0.005
+    assert radius.accept() == 0.00625
 
 
 def test_reject_tries_floor_exactly_once() -> None:
