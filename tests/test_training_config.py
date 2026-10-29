@@ -407,3 +407,53 @@ def test_integer_config_zero_boundaries_remain_valid(tmp_path: Path) -> None:
     assert config.human_visible.transition_epochs == 0
     assert config.human_visible.burn_in_steps == 0
     assert config.human_visible.seed == 0
+
+
+# These switches control training policy and optional diagnostics. Using
+# bool("false") would silently enable a switch and change experiment conditions.
+@pytest.mark.parametrize(
+    "section,key",
+    [
+        ("boundary_trust", "preserve_safe_only"),
+        ("human_visible", "alpha_sweep_enabled"),
+        ("human_visible", "alpha_sweep_compare_transitions"),
+        ("human_visible", "alpha_sweep_recovery_probe_enabled"),
+    ],
+)
+@pytest.mark.parametrize("literal", ('"false"', '"true"', "0", "1", "0.0", "1.0"))
+def test_training_boolean_switches_reject_implicit_conversion(
+    tmp_path: Path, section: str, key: str, literal: str
+) -> None:
+    path = tmp_path / "nonboolean-switch.toml"
+    path.write_text(
+        'mode = "human_visible_curriculum_dagger"\n'
+        '[run]\ndataset = "unused"\ncheckpoint = "in.pt"\noutput = "out.pt"\n'
+        f'[{section}]\n{key} = {literal}\n',
+        encoding="utf-8",
+    )
+    with pytest.raises(ValueError, match=rf"{section}\.{key} must be boolean"):
+        load_training_config(path)
+
+
+@pytest.mark.parametrize("enabled", (False, True))
+def test_training_boolean_switches_preserve_explicit_values(
+    tmp_path: Path, enabled: bool
+) -> None:
+    literal = "true" if enabled else "false"
+    path = tmp_path / "boolean-switches.toml"
+    path.write_text(
+        'mode = "human_visible_curriculum_dagger"\n'
+        '[run]\ndataset = "unused"\ncheckpoint = "in.pt"\noutput = "out.pt"\n'
+        f'[boundary_trust]\npreserve_safe_only = {literal}\n'
+        f'[human_visible]\nalpha_sweep_enabled = {literal}\n'
+        f'alpha_sweep_compare_transitions = {literal}\n'
+        f'alpha_sweep_recovery_probe_enabled = {literal}\n'
+        'alpha_sweep_expected_best = [0, 0, 0, 0]\n'
+        'alpha_sweep_expected_candidate = [0, 0, 0, 0]\n',
+        encoding="utf-8",
+    )
+    config = load_training_config(path)
+    assert config.boundary_trust.preserve_safe_only is enabled
+    assert config.human_visible.alpha_sweep_enabled is enabled
+    assert config.human_visible.alpha_sweep_compare_transitions is enabled
+    assert config.human_visible.alpha_sweep_recovery_probe_enabled is enabled
