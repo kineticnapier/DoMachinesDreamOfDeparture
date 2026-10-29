@@ -78,3 +78,19 @@ def test_nonbest_restart_controller_best_resets_streak() -> None:
     assert not controller.observe(selected_best=True)
     assert controller.streak == 0
     assert controller.restarts == 0
+
+
+@pytest.mark.parametrize(
+    "invalid", (0, -1, 2.5, 3.0, True, "3", float("nan"), float("inf")),
+)
+def test_nonbest_restart_controller_rejects_noninteger_limit(invalid) -> None:
+    with pytest.raises(ValueError, match="non-best restart limit must be a positive integer"):
+        NonBestRestartController.create(limit=invalid)
+
+
+def test_nonbest_restart_controller_keeps_exact_integer_limit() -> None:
+    controller = NonBestRestartController.create(limit=3)
+    assert controller.limit == 3
+    assert [controller.observe(selected_best=False) for _ in range(3)] == [
+        False, False, True,
+    ]
