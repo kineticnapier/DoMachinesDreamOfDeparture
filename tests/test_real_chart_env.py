@@ -128,3 +128,82 @@ def test_no_fail_mode_keeps_all_expired_real_chart_targets():
     assert env.stats.misses == env.stats.fail_misses == count
     assert env.hit_margins == (TimingJudgement.FAIL_MISS,) * count
     assert env._expire_misses(float("inf")) == 0.0
+
+
+def _speed_change_segment(*, pitch: float = 100.0):
+    chart = parse_adofai_text(
+        f"""
+        {{
+          "angleData": [0, 0, 0],
+          "settings": {{"bpm": 120, "pitch": {pitch}, "countdownTicks": 0}},
+          "actions": [
+            {{"floor": 1, "eventType": "SetSpeed", "speedType": "Bpm",
+              "beatsPerMinute": 240}}
+          ]
+        }}
+        """
+    )
+    return build_playable_segment(compile_adofai(chart))
+
+
+@pytest.mark.parametrize("pitch", [50.0, 100.0, 200.0])
+def test_overload_recovery_integrates_floor_speed_boundary(pitch: float):
+    segment = _speed_change_segment(pitch=pitch)
+    assert segment.chart.floors[0].bpm == pytest.approx(120.0)
+    assert segment.chart.floors[1].bpm == pytest.approx(240.0)
+    boundary = segment.episode_time_from_chart(
+        segment.chart.floors[1].target_time_s
+    )
+    env = RealChartMotorEnv(segment)
+    env.reset()
+    start_s, end_s = boundary - 0.001, boundary + 0.001
+    expected_beats = (0.001 * 120.0 + 0.001 * 240.0) * segment.pitch_ratio / 60.0
+    assert env._beat_delta_between(start_s, end_s) == pytest.approx(
+        expected_beats, abs=1e-12
+    )
+
+    env._overload_clock_s = start_s
+    env._advance_overload(end_s)
+    assert env._overload.multipress_reset_beats == pytest.approx(
+        expected_beats, abs=1e-12
+    )
+    assert env._overload_clock_s == end_s
+
+
+def test_overload_floor_boundary_one_step_equals_split_steps():
+    segment = _speed_change_segment()
+    boundary = segment.episode_time_from_chart(
+        segment.chart.floors[1].target_time_s
+    )
+    full = RealChartMotorEnv(segment)
+    split = RealChartMotorEnv(segment)
+    for env in (full, split):
+        env.reset()
+        env._overload_clock_s = boundary - 0.01
+        env._overload.value = 2.0
+        env._overload.multipress_value = 2.0
+
+    full._advance_overload(boundary + 0.01)
+    split._advance_overload(boundary)
+    split._advance_overload(boundary + 0.01)
+
+    assert full._overload.value == pytest.approx(split._overload.value)
+    assert full._overload.multipress_value == pytest.approx(
+        split._overload.multipress_value
+    )
+    assert full._overload.multipress_reset_beats == pytest.approx(
+        split._overload.multipress_reset_beats
+    )
+
+
+def test_overload_constant_bpm_and_equal_time_midspin_preserve_beats():
+    segment = build_playable_segment(_compiled(), start_s=0.0, end_s=2.0)
+    env = RealChartMotorEnv(segment)
+    env.reset()
+    # The fixture has a zero-duration Midspin and equal-time floor entries.
+    assert segment.chart.floors[1].target_time_s == pytest.approx(
+        segment.chart.floors[2].target_time_s
+    )
+    assert env._beat_delta_between(0.1, 0.9) == pytest.approx(
+        (0.9 - 0.1) * 120.0 / 60.0
+    )
