@@ -273,3 +273,13 @@ No training, live ADOFAI verification, or performance measurements were performe
   resume configurations. Model weights, optimizer update math, HUD-only
   observation, timing and frozen research results remain untouched.
   Issue #10 stays open and PR #23 remains Draft; `Refs #10` only.
+
+## Batch update — Refs #9 (2026-10-29)
+
+- Source: `src/dmdod/adofai/stock_floor_state_machine.py`, `targets_from_playable_segment(segment, *, initial_floor=None)`.
+- Explicit evaluator-only landed floor for a sliced segment is validated against the last input-bearing floor strictly before the segment start. Earlier ordinary floors no longer trigger a false omitted-floor flag when the caller provides the correct starting state.
+- Default `None` preserves the old conservative behavior; actual in-segment missing ordinary floors, unsupported branches and Midspin bridges remain checked. Existing callers remain unchanged. Pass the same initial floor to `StockFloorStateMachine`.
+- Added 5 regression tests to `tests/test_stock_floor_state_machine.py`: valid slice and Hit, invalid initial floors, omitted in-slice floor, full-chart equivalence, Midspin bridge.
+- Run: `python -m pytest -q tests/test_stock_floor_state_machine.py tests/test_stock_frame_state_machine.py tests/test_stock_runtime_parity_v01.py`.
+- **Not verified:** repository pytest, live ADOFAI runtime, training, GPU, performance/memory checks not executed. No parity or speed claims. This is an input-boundary correctness change, not a behavior-preserving refactor.
+- Issue: https://github.com/kineticnapier/DoMachinesDreamOfDeparture/issues/9. Keep Issue open and PR #23 Draft. Use `Refs #9`, not `Fixes #9`.
