@@ -457,3 +457,59 @@ def test_training_boolean_switches_preserve_explicit_values(
     assert config.human_visible.alpha_sweep_enabled is enabled
     assert config.human_visible.alpha_sweep_compare_transitions is enabled
     assert config.human_visible.alpha_sweep_recovery_probe_enabled is enabled
+
+
+# TOML bool is an int subclass in Python, and float("0.1") accepts strings.
+# Neither should silently become a learning rate, budget or diagnostic setting.
+@pytest.mark.parametrize(
+    "section,key",
+    [
+        ("action_trust", "lr"),
+        ("action_trust", "stay_coef"),
+        ("action_trust", "initial_action_rms"),
+        ("action_trust", "min_action_rms"),
+        ("action_trust", "min_lr"),
+        ("budget", "hours"),
+        ("budget", "reserve_minutes"),
+        ("budget", "reject_shrink"),
+        ("budget", "safe_grow"),
+        ("trajectory_probe", "candidate_action_rms"),
+        ("boundary_trust", "mismatch_grace_s"),
+        ("human_visible", "lr"),
+        ("human_visible", "min_lr"),
+        ("human_visible", "controller_lr"),
+        ("human_visible", "weight_decay"),
+        ("human_visible", "grad_clip"),
+    ],
+)
+@pytest.mark.parametrize("literal", ("true", "false", '"0.1"', '"1.25"'))
+def test_scalar_float_settings_reject_implicit_coercion(
+    tmp_path: Path, section: str, key: str, literal: str
+) -> None:
+    path = tmp_path / "bad-float-setting.toml"
+    path.write_text(
+        'mode = "human_visible_curriculum_dagger"\n'
+        '[run]\ndataset = "unused"\ncheckpoint = "in.pt"\noutput = "out.pt"\n'
+        f'[{section}]\n{key} = {literal}\n',
+        encoding="utf-8",
+    )
+    with pytest.raises(ValueError, match=rf"{section}\.{key} must be a TOML number"):
+        load_training_config(path)
+
+
+def test_scalar_float_settings_preserve_toml_integer_values(tmp_path: Path) -> None:
+    path = tmp_path / "integer-float-setting.toml"
+    path.write_text(
+        'mode = "human_visible_curriculum_dagger"\n'
+        '[run]\ndataset = "unused"\ncheckpoint = "in.pt"\noutput = "out.pt"\n'
+        '[action_trust]\nstay_coef = 2\n'
+        '[budget]\nhours = 2\n'
+        '[boundary_trust]\nmismatch_grace_s = 0\n'
+        '[human_visible]\nweight_decay = 0\n',
+        encoding="utf-8",
+    )
+    config = load_training_config(path)
+    assert config.action_trust.stay_coef == 2.0
+    assert config.budget.hours == 2.0
+    assert config.boundary_trust.mismatch_grace_s == 0.0
+    assert config.human_visible.weight_decay == 0.0
