@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from math import isfinite
 
 
 @dataclass(slots=True)
@@ -20,6 +21,14 @@ class TrustRadiusController:
         reject_shrink: float,
         safe_grow: float,
     ) -> "TrustRadiusController":
+        for name, value in (
+            ("initial", initial),
+            ("minimum", minimum),
+            ("reject_shrink", reject_shrink),
+            ("safe_grow", safe_grow),
+        ):
+            if not isfinite(value):
+                raise ValueError(f"{name} must be finite")
         if initial <= 0.0 or minimum <= 0.0:
             raise ValueError("trust radii must be positive")
         if minimum > initial:
