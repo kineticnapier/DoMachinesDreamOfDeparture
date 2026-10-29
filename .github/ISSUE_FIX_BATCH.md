@@ -339,3 +339,13 @@ No training, live ADOFAI verification, or performance measurements were performe
   Do not compare newly generated research results with frozen reports without
   recording this change. No training, live ADOFAI, GPU, performance or memory
   measurements were run. Keep Issue #20 open and PR #23 Draft; no `Fixes`.
+
+
+## 2026-10-29 — Refs #5: teacher capacity diagnostic tail (pending verification)
+
+- `src/dmdod/motor/capacity.py`: replace per-frame full unresolved-tail tuple with a bisected due window; keep valid future reservations visible to `CenterFirstNKeyTeacher.pipeline_action()` so the reservation cleanup rule remains unchanged.
+- `tests/test_n_key_capacity.py`: add three regression tests for future/stale reservations, stepwise old/new teacher and Motor equivalence, and end-to-end capacity-result comparison against the original full-tail behavior.
+- Commits: `0948368f243c1cd69e14f8810c9bdf6f5a3621df`, `acc2ff2ab66829f4f32c2b8b2b542d22a8a9b919`.
+- An **isolated** 5,000-case randomized comparison of due-token membership and future-reservation membership passed; this is not repository pytest.
+- Run: `python -m pytest -q tests/test_n_key_capacity.py tests/test_real_chart_resolution_cursor.py`.
+- **Unverified:** repository pytest, real N-Key capacity run, ADOFAI runtime parity, GPU, training, memory and performance benchmarks. Do not use `Fixes #5` or close the Issue yet. PR #23 remains Draft.
