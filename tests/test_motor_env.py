@@ -50,6 +50,7 @@ def test_nonfinite_motor_action_rejected_without_advancing_physics(bad, side):
     assert env.observe() == before
     assert env.diagnostics() == before_diagnostics
 
+
 @pytest.mark.parametrize("bad", (float("nan"), float("inf"), float("-inf")))
 def test_motor_env_rejects_nonfinite_control_clock(bad):
     with pytest.raises(ValueError, match="control_dt_s must be finite"):
