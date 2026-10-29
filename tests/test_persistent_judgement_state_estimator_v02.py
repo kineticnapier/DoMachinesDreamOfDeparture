@@ -230,3 +230,32 @@ def test_reservation_cancellation_and_timing_cancellation_are_recorded():
         status=TimingEventStatus.CANCELED,
     ))
     assert est.hypotheses[0].resolutions[0].kind == "cancellation"
+
+
+def test_eight_tied_keydowns_abstain_before_factorial_search():
+    est = estimator()
+    for index in range(8):
+        est.observe_timing(event(index, 1.0))
+    for index in range(8):
+        est.observe_keydown(key(f"k{index}", index, 1.0))
+    result = est.observe_judgement(delta(1.01, (0.99, 1.01), perfect=8))
+    assert result.status is PersistentEstimateStatus.TRUNCATED
+    assert not result.identifiable
+    assert any(row.unknown_search_remainder for row in result.hypotheses)
+
+
+def test_huge_visible_delta_is_truncated_before_expansion():
+    est = estimator()
+    result = est.observe_judgement(delta(1.01, (0.99, 1.01), perfect=100_000))
+    assert result.status is PersistentEstimateStatus.TRUNCATED
+    assert not result.search_complete
+    assert any(row.unknown_search_remainder for row in result.hypotheses)
+
+
+def test_many_distinct_labels_abstain_before_enumeration():
+    est = estimator()
+    result = est.observe_judgement(delta(
+        1.01, (0.99, 1.01), **{f"label_{index}": 1 for index in range(7)}
+    ))
+    assert result.status is PersistentEstimateStatus.TRUNCATED
+    assert not result.identifiable
