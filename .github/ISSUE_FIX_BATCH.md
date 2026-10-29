@@ -395,3 +395,11 @@ No training, live ADOFAI verification, or performance measurements were performe
 - Run: `python -m pytest -q tests/test_stock_visible_judgement_feedback_v01.py tests/test_judgement_observer_v01.py`.
 - **Not verified:** repository pytest (container DNS cannot resolve github.com), training, live ADOFAI runtime, GPU, and performance/memory measurements. Independent old-list vs new-heap comparison: 2 standalone pytest cases passed (200 randomized sequences × 500 operations and boundary case); not a repository test.
 - Classification: intended behavior-preserving internal performance refactor. No judgement algorithm, HUD-only surface, Motor, checkpoint or frozen research result changes. Keep Issue #25 open, PR #23 Draft, and do not use `Fixes #25` pending full verification.
+
+## Batch update — Refs #27: finite scalar training settings (2026-10-29)
+
+- **Refs #27** — `src/dmdod/training/config.py::_validate()` now rejects NaN/±Inf in scalar float values from the five TOML training setting sections before ordinary range checks. This is invalid-input correctness, not a change to normal optimization or a behavior-preserving refactor.
+- Source commit: `4316f034d29004933fac4bf156286257daefcc12`.
+- Regression: `tests/test_training_config.py` commit `5d10a4fcba18a8d2251cf236144291b4c3e8a16d`; 16 settings × 3 nonfinite inputs (48 parameterized cases) plus a finite-boundary compatibility case.
+- Run: `python -m pytest -q tests/test_training_config.py tests/test_human_visible_curriculum.py`.
+- **Not verified:** repository pytest, actual training, checkpoint resume, ADOFAI runtime, GPU and performance/memory measurements were not executed. A standalone Python standard-library TOML/dataclass finite-check smoke check passed 3 cases, not repository tests. Keep Issue #27 open, PR #23 Draft; no `Fixes #27`.
