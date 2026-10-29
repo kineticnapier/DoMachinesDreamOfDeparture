@@ -372,9 +372,10 @@ No training, live ADOFAI verification, or performance measurements were performe
   cadence. Existing per-floor effective BPM remains unchanged.
 - `tests/test_real_chart_env.py`: 5 new parameterized/individual test cases
   for 120→240 BPM floor transition (pitch 50/100/200%), one-step versus split
-  updates, and constant BPM across equal-time Midspin floor entries.
+  updates, constant BPM across equal-time Midspin floor entries, and the
+  six-beat Multipress reset boundary.
 - Source commit: `1b96c2fce74382e9956a5e06bcf8e02fe18bbad1`;
-  tests: `3f99f4abe58ed884c6781b64b6212b815630f301`.
+  tests: `3f99f4abe58ed884c6781b64b6212b815630f301`, additional six-beat test `d3cdc88f0d5e167947e9a2bce3834a901ea2eac4`.
 - Run: `python -m pytest -q tests/test_real_chart_env.py tests/test_n_key_capacity.py`.
 - **Unimplemented:** within-floor `SetSpeed(angleOffset>0)` still uses the
   compiler's averaged floor BPM; preserving exact sub-floor speed requires
