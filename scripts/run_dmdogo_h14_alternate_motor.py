@@ -410,7 +410,7 @@ def execute(ready: Prepared, *, wall_timeout_s: float) -> dict:
         "run_is_frozen_v08_baseline": False,
         "physical_motor_source": "unchanged_v08_runner_and_live_motor",
         "policy_source": "h11_reconstructed_single_seam_forced_suffix",
-        "comparison_to_original_is_controlled_runtime": (
+        "same_recorded_runtime_fingerprint_as_original": (
             preflight["same_runtime_fingerprint_as_original"]),
         "human_likeness_verified": False,
         "human_preference_measured": False,
@@ -492,6 +492,22 @@ def main() -> None:
         except subprocess.TimeoutExpired:
             rc=124
             state="outer_timeout"
+        if rc == 0:
+            # Successful process exit is not evidence unless the
+            # create-once experimental file is complete and matches.
+            try:
+                finished = read(args.output)
+                if (finished.get("format") != FORMAT
+                        or finished.get("stage") != "executed"
+                        or finished.get("candidate_id") != args.candidate_id
+                        or finished.get("alternate_motor_executed") is not True
+                        or finished.get("run_is_frozen_v08_baseline") is not False
+                        or not isinstance(finished.get("stats"), dict)
+                        or not isinstance(finished.get("physical"), dict)):
+                    raise ValueError("invalid executed Motor result")
+            except (OSError, ValueError, TypeError):
+                rc=1
+                state="invalid_worker_result"
         status={
             "format": STATUS_FORMAT,
             "candidate_id":args.candidate_id,
