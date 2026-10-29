@@ -112,6 +112,13 @@ def _section(raw: dict, name: str) -> dict:
     return value
 
 
+def _toml_string(value: object, *, name: str) -> str:
+    """Reject non-string TOML values for paths and other identifiers."""
+    if type(value) is not str:
+        raise ValueError(f"{name} must be a TOML string")
+    return value
+
+
 def _toml_boolean(value: object, *, name: str) -> bool:
     """Reject non-boolean TOML values instead of relying on truthiness."""
     if type(value) is not bool:
@@ -198,7 +205,7 @@ def load_training_config(path: str | Path) -> TrainingConfig:
     with path.open("rb") as handle:
         raw = tomllib.load(handle)
 
-    mode = str(raw.get("mode", "")).strip()
+    mode = _toml_string(raw.get("mode", ""), name="mode").strip()
     if not mode:
         raise ValueError("top-level 'mode' is required")
 
@@ -207,10 +214,10 @@ def load_training_config(path: str | Path) -> TrainingConfig:
     if missing:
         raise ValueError("[run] is missing: " + ", ".join(missing))
     run = RunConfig(
-        dataset=str(run_raw["dataset"]),
-        checkpoint=str(run_raw["checkpoint"]),
-        output=str(run_raw["output"]),
-        device=str(run_raw.get("device", "auto")),
+        dataset=_toml_string(run_raw["dataset"], name="run.dataset"),
+        checkpoint=_toml_string(run_raw["checkpoint"], name="run.checkpoint"),
+        output=_toml_string(run_raw["output"], name="run.output"),
+        device=_toml_string(run_raw.get("device", "auto"), name="run.device"),
     )
     validate_checkpoint_paths(run.checkpoint, run.output)
 
