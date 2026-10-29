@@ -164,3 +164,35 @@ def test_public_evidence_contract_contains_no_scorer_truth_fields():
     forbidden = {"target_index", "_used", "_missed", "truth_time_s", "scorer_cursor"}
     assert timing_fields.isdisjoint(forbidden)
     assert motor_fields.isdisjoint(forbidden)
+
+
+def test_hypothesis_cap_cannot_claim_unique_attribution():
+    est = JudgementStateEstimator(
+        RepositoryWindowModel(0.025, 0.030, 0.065),
+        max_hypotheses=1,
+    )
+    est.observe_timing(event(1, 1.0))
+    est.observe_timing(event(2, 1.0))
+    est.observe_keydown(keydown("one", 2, 1.0))
+    result = est.observe_judgement(delta(1.01, perfect=1))
+    assert result.status is EstimateStatus.AMBIGUOUS
+    assert not result.identifiable
+    assert result.aligned_state_possible
+    assert "2" in result.possible_unresolved_local_ids
+
+
+def test_huge_counter_delta_abstains_without_expanding_labels():
+    est = estimator()
+    result = est.observe_judgement(delta(1.01, perfect=100_000))
+    assert result.status is EstimateStatus.AMBIGUOUS
+    assert not result.identifiable
+    assert "truncated" in result.reason
+
+
+def test_distinct_label_orders_exceeding_budget_abstain():
+    est = estimator()
+    result = est.observe_judgement(delta(
+        1.01, **{f"label_{index}": 1 for index in range(7)}
+    ))
+    assert result.status is EstimateStatus.AMBIGUOUS
+    assert not result.identifiable
