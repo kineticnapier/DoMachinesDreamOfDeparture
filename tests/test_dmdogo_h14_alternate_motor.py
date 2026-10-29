@@ -165,8 +165,6 @@ def test_runner_symbol_is_swapped_once_and_original_restored(monkeypatch):
             minimum_reuse_s=REUSE_S)
         alt=planner.plan(ready.events)
         assert alt.assignments==ready.alternate_plan.assignments
-        with pytest.raises(ValueError,match="more than once"):
-            planner.plan(ready.events)
         seen["used"]=True
         return {
             "stats":{
@@ -202,6 +200,17 @@ def test_runner_symbol_is_swapped_once_and_original_restored(monkeypatch):
     assert result["stats"]["misses"] == 1
     assert result["human_likeness_verified"] is False
     assert h14.frozen_runner.GestureChunkPlannerV08 is real_symbol
+
+
+def test_one_shot_planner_rejects_second_plan_call():
+    ready=fake_ready()
+    slot=OneShotPlanner(ready)
+    proxy=slot.factory(minimum_reuse_s=REUSE_S)
+    assert proxy.plan(ready.events).assignments==ready.alternate_plan.assignments
+    assert slot.calls==1
+    with pytest.raises(ValueError,match="more than once"):
+        proxy.plan(ready.events)
+    assert slot.calls==2
 
 
 def test_runner_detects_wrong_actual_desired_axes(monkeypatch):
