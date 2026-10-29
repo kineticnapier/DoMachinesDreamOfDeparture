@@ -351,3 +351,59 @@ def test_nonbest_restart_limit_must_be_toml_integer(tmp_path, literal: str) -> N
     )
     with pytest.raises(ValueError, match="budget.max_nonbest_accepts must be an integer"):
         load_training_config(path)
+
+
+# TOML integers must not be silently truncated or coerced to booleans.
+# All listed fields previously used int(...) directly or through
+# _optional_positive_int, including values that control training budgets.
+@pytest.mark.parametrize(
+    "section,key",
+    [
+        ("data", "anchor_limit"),
+        ("data", "validation_limit"),
+        ("data", "chunk_steps"),
+        ("action_trust", "actor_steps"),
+        ("action_trust", "lr_backoffs"),
+        ("budget", "max_trials"),
+        ("human_visible", "updates_per_trial"),
+        ("human_visible", "updates_per_epoch"),
+        ("human_visible", "transition_updates_per_epoch"),
+        ("human_visible", "transition_epochs"),
+        ("human_visible", "burn_in_steps"),
+        ("human_visible", "supervised_steps"),
+        ("human_visible", "anchors_per_batch"),
+        ("human_visible", "progression_streak"),
+        ("human_visible", "catastrophic_patience"),
+        ("human_visible", "max_epochs"),
+        ("human_visible", "seed"),
+    ],
+)
+@pytest.mark.parametrize("literal", ("2.5", "3.0", "true", '"3"', "nan", "inf"))
+def test_integer_config_fields_reject_implicit_conversion(
+    tmp_path: Path, section: str, key: str, literal: str
+) -> None:
+    config_file = tmp_path / "noninteger.toml"
+    config_file.write_text(
+        'mode = "human_visible_curriculum_dagger"\n'
+        '[run]\ndataset = "unused"\ncheckpoint = "in.pt"\noutput = "out.pt"\n'
+        f'[{section}]\n{key} = {literal}\n',
+        encoding="utf-8",
+    )
+    with pytest.raises(ValueError, match=rf"{section}\.{key} must be an integer"):
+        load_training_config(config_file)
+
+
+def test_integer_config_zero_boundaries_remain_valid(tmp_path: Path) -> None:
+    config_file = tmp_path / "integer-boundaries.toml"
+    config_file.write_text(
+        'mode = "human_visible_curriculum_dagger"\n'
+        '[run]\ndataset = "unused"\ncheckpoint = "in.pt"\noutput = "out.pt"\n'
+        '[action_trust]\nlr_backoffs = 0\n'
+        '[human_visible]\ntransition_epochs = 0\nburn_in_steps = 0\nseed = 0\n',
+        encoding="utf-8",
+    )
+    config = load_training_config(config_file)
+    assert config.action_trust.lr_backoffs == 0
+    assert config.human_visible.transition_epochs == 0
+    assert config.human_visible.burn_in_steps == 0
+    assert config.human_visible.seed == 0
