@@ -420,3 +420,26 @@ No training, live ADOFAI verification, or performance measurements were performe
 - Run: `python -m pytest -q tests/test_training_budget.py tests/test_training_config.py`.
 - **Not verified:** repository pytest (GitHub DNS unavailable), real training/checkpoint resume, ADOFAI live runtime, GPU and performance/memory measurements. Isolated controller/TOML guard reproduction: 15 passed; not a repository test.
 - Classification: invalid-input correctness fix, not behavior-preserving for invalid inputs. Keep parent #31 open, PR #23 Draft, `Refs #31` only. Other integer coercions in `config.py` remain to be audited; do not mark them fixed.
+
+
+## Additional unverified fix — Refs #31 (2026-10-30, TOML integer settings)
+
+- `src/dmdod/training/config.py`: introduce `_toml_integer` and reject implicit
+  float/string/bool conversion for 17 integer fields in `[data]`,
+  `[action_trust]`, `[budget]`, and `[human_visible]`.
+  `budget.max_nonbest_accepts` already had its own strict check and is unchanged.
+  Preserve existing positive/non-negative constraints and valid integer values.
+- `tests/test_training_config.py`: add 102 parameterized rejection cases
+  (17 fields × 6 invalid TOML literals), plus a valid zero-boundary case.
+- Commits: `b98c1e65e520d69251e5174858906e5fd6d6bb13` (source),
+  `6ceedc5e7ffa917071e2b40197a80f0674e0e304` (tests).
+- Run: `python -m pytest -q tests/test_training_config.py tests/test_training_budget.py`.
+- **Repository pytest NOT run.** Only an isolated 11-case pytest for the
+  helper's TOML type behavior passed; this does not verify repository imports
+  or integration. Training, checkpoint resume, live ADOFAI, GPU, performance
+  and memory measurements were not performed.
+- Classification: invalid-input correctness fix (not behavior-preserving for
+  previously accepted fractional, string, or boolean values). Valid TOML
+  integer semantics, HUD-only inputs, judgement timings, checkpoint schema
+  and frozen research artifacts are intentionally unchanged.
+- Keep the parent Issue #31 open, this PR Draft, and `Refs #31` (not `Fixes`).
