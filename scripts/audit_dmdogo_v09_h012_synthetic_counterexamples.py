@@ -15,6 +15,7 @@ import hashlib
 import json
 import random
 from pathlib import Path
+from dmdogo_h0_source_provenance import capture_audit_source_provenance
 from statistics import mean
 
 from dmdod.planning.gesture_chunk_planner_v08 import (
@@ -389,6 +390,7 @@ def main():
         raise ValueError("no viable synthetic counterfactuals; refusing empty result")
     report = {
         "format": FORMAT,
+        "audit_source_provenance": capture_audit_source_provenance(Path(__file__).resolve().parents[1]),
         "generator_version": GENERATOR_VERSION,
         "base_seed": BASE_SEED,
         "tested_trial_count": args.trials,
