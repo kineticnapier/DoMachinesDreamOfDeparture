@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import pytest
+
 from dmdod.features.judgement_observer_v01 import (
     JudgementDelta,
     JudgementDeltaStatus,
@@ -215,3 +217,18 @@ def test_large_attribution_product_abstains_without_enumeration():
         str(index) for index in range(7)
     }
     assert "truncated" in result.reason
+
+
+@pytest.mark.parametrize("field", ("perfect_s", "early_late_perfect_s", "pass_s"))
+@pytest.mark.parametrize("bad", (float("nan"), float("inf"), float("-inf")))
+def test_repository_window_model_rejects_nonfinite_bounds(field: str, bad: float):
+    values = dict(perfect_s=0.025, early_late_perfect_s=0.030, pass_s=0.065)
+    values[field] = bad
+    with pytest.raises(ValueError, match="judgement windows must be finite"):
+        RepositoryWindowModel(**values)
+
+
+def test_repository_window_model_preserves_finite_boundary_behavior():
+    model = RepositoryWindowModel(0.025, 0.030, 0.065)
+    assert "perfect" in model.possible_labels(event(1, 1.0), 1.0)
+    assert "too_late" in model.possible_labels(event(1, 1.0), 1.1)
