@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
+from math import isfinite
 
 from dmdod.motor.body import FingerState, TwoFingerBody
 from dmdod.motor.keyboard import KeyEvent, TwoKeyKeyboard
@@ -11,8 +12,8 @@ class SimulationConfig:
     dt_s: float = 0.001
 
     def __post_init__(self) -> None:
-        if self.dt_s <= 0.0:
-            raise ValueError("dt_s must be positive")
+        if not isfinite(self.dt_s) or self.dt_s <= 0.0:
+            raise ValueError("dt_s must be finite and positive")
 
 
 @dataclass(frozen=True)
@@ -42,7 +43,7 @@ class Simulation:
         return StepResult(self.time_s, left, right, tuple(events))
 
     def run_constant(self, left_command: float, right_command: float, duration_s: float) -> list[StepResult]:
-        if duration_s < 0.0:
-            raise ValueError("duration_s must be non-negative")
+        if not isfinite(duration_s) or duration_s < 0.0:
+            raise ValueError("duration_s must be finite and non-negative")
         steps = round(duration_s / self.config.dt_s)
         return [self.step(left_command, right_command) for _ in range(steps)]
