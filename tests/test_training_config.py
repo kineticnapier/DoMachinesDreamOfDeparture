@@ -513,3 +513,53 @@ def test_scalar_float_settings_preserve_toml_integer_values(tmp_path: Path) -> N
     assert config.budget.hours == 2.0
     assert config.boundary_trust.mismatch_grace_s == 0.0
     assert config.human_visible.weight_decay == 0.0
+
+
+@pytest.mark.parametrize(
+    "field",
+    ("mode", "run.dataset", "run.checkpoint", "run.output", "run.device"),
+)
+@pytest.mark.parametrize("literal", ("true", "42", "0.5", '["x"]'))
+def test_run_identifiers_require_toml_strings(
+    tmp_path: Path, field: str, literal: str
+) -> None:
+    values = {
+        "mode": '"human_visible_dagger"',
+        "run.dataset": '"data/example"',
+        "run.checkpoint": '"in.pt"',
+        "run.output": '"out.pt"',
+        "run.device": '"cpu"',
+    }
+    values[field] = literal
+    path = tmp_path / "bad-run-field.toml"
+    path.write_text(
+        f'mode = {values["mode"]}\\n'
+        '[run]\\n'
+        f'dataset = {values["run.dataset"]}\\n'
+        f'checkpoint = {values["run.checkpoint"]}\\n'
+        f'output = {values["run.output"]}\\n'
+        f'device = {values["run.device"]}\\n',
+        encoding="utf-8",
+    )
+    with pytest.raises(ValueError) as exc:
+        load_training_config(path)
+    assert str(exc.value) == f"{field} must be a TOML string"
+
+
+def test_valid_run_strings_keep_existing_normalization(tmp_path: Path) -> None:
+    path = tmp_path / "valid-run-fields.toml"
+    path.write_text(
+        'mode = " human_visible_dagger "\\n'
+        '[run]\\n'
+        'dataset = "data/example"\\n'
+        'checkpoint = "in.pt"\\n'
+        'output = "out.pt"\\n'
+        'device = "cpu"\\n',
+        encoding="utf-8",
+    )
+    config = load_training_config(path)
+    assert config.mode == "human_visible_dagger"
+    assert config.run.dataset == "data/example"
+    assert config.run.checkpoint == "in.pt"
+    assert config.run.output == "out.pt"
+    assert config.run.device == "cpu"
