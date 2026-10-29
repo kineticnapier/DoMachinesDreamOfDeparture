@@ -533,12 +533,12 @@ def test_run_identifiers_require_toml_strings(
     values[field] = literal
     path = tmp_path / "bad-run-field.toml"
     path.write_text(
-        f'mode = {values["mode"]}\\n'
-        '[run]\\n'
-        f'dataset = {values["run.dataset"]}\\n'
-        f'checkpoint = {values["run.checkpoint"]}\\n'
-        f'output = {values["run.output"]}\\n'
-        f'device = {values["run.device"]}\\n',
+        f'mode = {values["mode"]}\n'
+        '[run]\n'
+        f'dataset = {values["run.dataset"]}\n'
+        f'checkpoint = {values["run.checkpoint"]}\n'
+        f'output = {values["run.output"]}\n'
+        f'device = {values["run.device"]}\n',
         encoding="utf-8",
     )
     with pytest.raises(ValueError) as exc:
@@ -549,12 +549,12 @@ def test_run_identifiers_require_toml_strings(
 def test_valid_run_strings_keep_existing_normalization(tmp_path: Path) -> None:
     path = tmp_path / "valid-run-fields.toml"
     path.write_text(
-        'mode = " human_visible_dagger "\\n'
-        '[run]\\n'
-        'dataset = "data/example"\\n'
-        'checkpoint = "in.pt"\\n'
-        'output = "out.pt"\\n'
-        'device = "cpu"\\n',
+        'mode = " human_visible_dagger "\n'
+        '[run]\n'
+        'dataset = "data/example"\n'
+        'checkpoint = "in.pt"\n'
+        'output = "out.pt"\n'
+        'device = "cpu"\n',
         encoding="utf-8",
     )
     config = load_training_config(path)
