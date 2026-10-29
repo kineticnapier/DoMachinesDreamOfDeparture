@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import math
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
@@ -236,9 +237,14 @@ def _optional_float_or_none(value: Any) -> float | None:
     if value is None or isinstance(value, bool):
         return None
     try:
-        return float(value)
+        parsed = float(value)
     except (TypeError, ValueError):
         return None
+    # JSON accepts NaN/Infinity and numeric strings can contain them too.
+    # Never pass non-finite chart values into geometry or Stock timing.
+    if not math.isfinite(parsed):
+        raise ValueError(f"ADOFAI numeric value must be finite: {value!r}")
+    return parsed
 
 
 def _optional_int(value: Any) -> int | None:
