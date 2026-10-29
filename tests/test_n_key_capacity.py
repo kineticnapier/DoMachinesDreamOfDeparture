@@ -183,3 +183,114 @@ def test_nonfinite_n_key_action_rejected_before_physics(bad, axis, trace):
     assert env.observe() == before
     assert env.diagnostics() == before_diagnostics
     assert env.last_transition is None
+
+
+def test_due_target_window_keeps_valid_future_reservations_without_tail_copy() -> None:
+    from types import SimpleNamespace
+    from dmdod.motor.capacity import _due_target_window, _target_token
+
+    targets = tuple(
+        SimpleNamespace(ordinal=i, floor_index=i + 1, episode_time_s=i * 0.1)
+        for i in range(8)
+    )
+    segment = SimpleNamespace(targets=targets)
+    reservations = {
+        "left_1": (_target_token(targets[6]), targets[6].episode_time_s),
+        "right_1": (_target_token(targets[1]), targets[1].episode_time_s),
+        "left_2": ((99, 99, 99.0), 99.0),
+    }
+    result = _due_target_window(segment, 2, 4, reservations)
+    assert result == (
+        (_target_token(targets[2]), targets[2].episode_time_s),
+        (_target_token(targets[3]), targets[3].episode_time_s),
+        (_target_token(targets[6]), targets[6].episode_time_s),
+    )
+    assert _due_target_window(segment, 2, 2, reservations) == (
+        (_target_token(targets[6]), targets[6].episode_time_s),
+    )
+
+
+def test_compact_due_window_matches_legacy_teacher_and_motor_step_by_step() -> None:
+    from bisect import bisect_right
+    from types import SimpleNamespace
+    from dmdod.motor.capacity import _due_target_window, _target_token
+
+    times = (0.10, 0.10, 0.16, 0.18, 0.25, 0.26, 0.40, 0.50)
+    targets = tuple(
+        SimpleNamespace(ordinal=i, floor_index=i + 1, episode_time_s=time_s)
+        for i, time_s in enumerate(times)
+    )
+    segment = SimpleNamespace(targets=targets)
+    old_motor = NKeyMotorEnv(4)
+    new_motor = NKeyMotorEnv(4)
+    old_observation = old_motor.reset()
+    new_observation = new_motor.reset()
+    old_teacher = CenterFirstNKeyTeacher(4)
+    new_teacher = CenterFirstNKeyTeacher(4)
+    future = (_target_token(targets[-1]), times[-1])
+    old_teacher._reservations["left_2"] = future
+    new_teacher._reservations["left_2"] = future
+    lead_s = 0.044
+    start = 0
+
+    for frame in range(70):
+        now_s = frame * 0.010
+        while start < len(times) and times[start] < now_s - 0.06:
+            start += 1
+        legacy = tuple(
+            (_target_token(target), float(target.episode_time_s))
+            for target in targets[start:]
+        )
+        due_end = bisect_right(times, now_s + lead_s, lo=start)
+        compact = _due_target_window(segment, start, due_end, new_teacher._reservations)
+        old_due = [token for token, target_time in legacy if now_s + lead_s >= target_time]
+        new_due = [token for token, _ in compact[: due_end - start]]
+        assert old_due == new_due
+
+        old_action = old_teacher.pipeline_action(
+            old_observation, now_s=now_s, targets=legacy, lead_s=lead_s
+        )
+        new_action = new_teacher.pipeline_action(
+            new_observation, now_s=now_s, targets=compact, lead_s=lead_s
+        )
+        assert new_action == old_action
+        assert new_teacher._reservations == old_teacher._reservations
+        old_transition = old_motor.step(old_action)
+        new_transition = new_motor.step(new_action)
+        assert new_transition.evaluator_events == old_transition.evaluator_events
+        assert new_transition.observation == old_transition.observation
+        old_observation = old_transition.observation
+        new_observation = new_transition.observation
+
+
+def test_capacity_result_matches_legacy_full_tail(monkeypatch) -> None:
+    from dmdod.adofai_chart import parse_adofai_text
+    from dmdod.adofai_playable import build_playable_segment
+    from dmdod.adofai_timing import compile_adofai
+    from dmdod.motor import capacity
+    from dmdod.motor.capacity import _target_token, diagnose_n_key_teacher_capacity
+
+    chart = parse_adofai_text(
+        '{"angleData":[0,90,90,90,90,90,90],'
+        '"settings":{"bpm":120,"pitch":100,"countdownTicks":0,'
+        '"separateCountdownTime":false},"actions":[]}'
+    )
+    segment = build_playable_segment(compile_adofai(chart), start_s=0.0, end_s=4.0)
+    assert segment.targets
+    optimized = capacity._due_target_window
+
+    def legacy_window(segment, start, due_end, reservations):
+        return tuple(
+            (_target_token(target), float(target.episode_time_s))
+            for target in segment.targets[start:]
+        )
+
+    monkeypatch.setattr(capacity, "_due_target_window", legacy_window)
+    expected = diagnose_n_key_teacher_capacity(
+        segment, key_count=4, lead_s=0.044, control_dt_s=0.010
+    )
+    monkeypatch.setattr(capacity, "_due_target_window", optimized)
+    actual = diagnose_n_key_teacher_capacity(
+        segment, key_count=4, lead_s=0.044, control_dt_s=0.010
+    )
+    assert actual == expected
