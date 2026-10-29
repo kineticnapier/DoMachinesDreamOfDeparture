@@ -221,13 +221,16 @@ def load_training_config(path: str | Path) -> TrainingConfig:
     )
 
     budget_raw = _section(raw, "budget")
+    restart_limit = budget_raw.get("max_nonbest_accepts", 3)
+    if type(restart_limit) is not int:
+        raise ValueError("budget.max_nonbest_accepts must be an integer")
     budget = BudgetConfig(
         hours=float(budget_raw.get("hours", 8.0)),
         reserve_minutes=float(budget_raw.get("reserve_minutes", 8.0)),
         max_trials=int(budget_raw.get("max_trials", 10_000)),
         reject_shrink=float(budget_raw.get("reject_shrink", 0.5)),
         safe_grow=float(budget_raw.get("safe_grow", 1.25)),
-        max_nonbest_accepts=int(budget_raw.get("max_nonbest_accepts", 3)),
+        max_nonbest_accepts=restart_limit,
     )
 
     probe_raw = _section(raw, "trajectory_probe")
