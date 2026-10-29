@@ -299,14 +299,37 @@ class RealChartMotorEnv:
         self._next_unresolved_cursor = index
         return reward
 
+    def _beat_delta_between(self, start_s: float, end_s: float) -> float:
+        """Integrate evaluator beats across compiled floor-entry boundaries.
+
+        The compiled BPM is still a per-floor effective speed: this does not
+        reconstruct SetSpeed changes within one floor (Issue #12 remainder).
+        """
+        if end_s <= start_s:
+            return 0.0
+        cursor = self.segment.chart_time_from_episode(start_s)
+        end_chart_s = self.segment.chart_time_from_episode(end_s)
+        beats = 0.0
+        while cursor < end_chart_s:
+            floor_index = self._floor_index_at_chart_time(cursor)
+            next_index = bisect_right(self._floor_entry_times, cursor)
+            boundary = (
+                min(end_chart_s, self._floor_entry_times[next_index])
+                if next_index < len(self._floor_entry_times)
+                else end_chart_s
+            )
+            beats += (
+                (boundary - cursor)
+                * max(1e-6, self.segment.chart.floors[floor_index].bpm)
+                / 60.0
+            )
+            cursor = boundary
+        return beats
+
     def _advance_overload(self, to_time_s: float) -> None:
         if to_time_s <= self._overload_clock_s:
             return
-        delta_s = to_time_s - self._overload_clock_s
-        midpoint_s = self._overload_clock_s + delta_s * 0.5
-        chart_time = self.segment.chart_time_from_episode(midpoint_s)
-        floor = self.segment.chart.floors[self._floor_index_at_chart_time(chart_time)]
-        beat_delta = delta_s * max(1e-6, floor.bpm) * self.segment.pitch_ratio / 60.0
+        beat_delta = self._beat_delta_between(self._overload_clock_s, to_time_s)
         self._overload.advance_beats(beat_delta)
         self._overload_clock_s = to_time_s
 
