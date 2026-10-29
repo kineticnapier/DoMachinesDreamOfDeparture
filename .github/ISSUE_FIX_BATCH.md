@@ -349,3 +349,13 @@ No training, live ADOFAI verification, or performance measurements were performe
 - An **isolated** 5,000-case randomized comparison of due-token membership and future-reservation membership passed; this is not repository pytest.
 - Run: `python -m pytest -q tests/test_n_key_capacity.py tests/test_real_chart_resolution_cursor.py`.
 - **Unverified:** repository pytest, real N-Key capacity run, ADOFAI runtime parity, GPU, training, memory and performance benchmarks. Do not use `Fixes #5` or close the Issue yet. PR #23 remains Draft.
+
+
+## 2026-10-29 — Refs #24: HUD counter reset clock
+
+- Issue: https://github.com/kineticnapier/DoMachinesDreamOfDeparture/issues/24
+- Source: `src/dmdod/features/stock_visible_judgement_feedback_v01.py` — `VisibleCounterRenderer.reset_visible_counters()` clears `_last_capture_s` as well as counters and pending notifications.
+- Regression: `tests/test_stock_visible_judgement_feedback_v01.py::test_visible_reset_restarts_capture_clock_and_discards_old_notifications` covers previous capture at 10s, new episode capture at 0s, cleared notifications and within-episode backward-time rejection.
+- Source commit `d52c07a9a97b2a7b1e2c8c53c2933bc32f82bff8`; test commit `b4d2a89564b3cfe1846268e45fdd3a12a9ea14b5`.
+- Verification command: `python -m pytest -q tests/test_stock_visible_judgement_feedback_v01.py`.
+- **Not executed:** repository pytest, live ADOFAI, training, performance or memory measurement. This is a reset-boundary correctness change, not a change to judgement timing or the HUD-only input contract. Issue remains open; PR remains Draft; use `Refs #24`, not `Fixes #24`.
