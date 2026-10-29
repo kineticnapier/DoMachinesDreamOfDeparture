@@ -282,3 +282,55 @@ def test_legacy_train_identity_opt_in_requires_boolean(tmp_path: Path) -> None:
     )
     with pytest.raises(ValueError, match="allow_legacy_train_identity_resume"):
         load_training_config(path)
+
+
+@pytest.mark.parametrize("section, key", [
+    ("action_trust", "lr"),
+    ("action_trust", "stay_coef"),
+    ("action_trust", "initial_action_rms"),
+    ("action_trust", "min_action_rms"),
+    ("action_trust", "min_lr"),
+    ("budget", "hours"),
+    ("budget", "reserve_minutes"),
+    ("budget", "reject_shrink"),
+    ("budget", "safe_grow"),
+    ("trajectory_probe", "candidate_action_rms"),
+    ("boundary_trust", "mismatch_grace_s"),
+    ("human_visible", "lr"),
+    ("human_visible", "min_lr"),
+    ("human_visible", "controller_lr"),
+    ("human_visible", "weight_decay"),
+    ("human_visible", "grad_clip"),
+])
+@pytest.mark.parametrize("invalid", ["nan", "+inf", "-inf"])
+def test_nonfinite_training_float_is_rejected(
+    tmp_path: Path, section: str, key: str, invalid: str
+) -> None:
+    path = tmp_path / "nonfinite.toml"
+    path.write_text(
+        'mode = "human_visible_curriculum_dagger"\n'
+        '[run]\ndataset = "x"\ncheckpoint = "in.pt"\noutput = "out.pt"\n'
+        f'[{section}]\n{key} = {invalid}\n',
+        encoding="utf-8",
+    )
+    with pytest.raises(ValueError, match=rf"{section}\.{key} must be finite"):
+        load_training_config(path)
+
+
+def test_finite_training_float_boundaries_remain_allowed(tmp_path: Path) -> None:
+    path = tmp_path / "finite.toml"
+    path.write_text(
+        'mode = "human_visible_curriculum_dagger"\n'
+        '[run]\ndataset = "x"\ncheckpoint = "in.pt"\noutput = "out.pt"\n'
+        '[action_trust]\nstay_coef = 0.0\n'
+        '[budget]\nreserve_minutes = 0.0\nsafe_grow = 1.0\n'
+        '[boundary_trust]\nmismatch_grace_s = 0.0\n'
+        '[human_visible]\nweight_decay = 0.0\n',
+        encoding="utf-8",
+    )
+    config = load_training_config(path)
+    assert config.action_trust.stay_coef == 0.0
+    assert config.budget.reserve_minutes == 0.0
+    assert config.budget.safe_grow == 1.0
+    assert config.boundary_trust.mismatch_grace_s == 0.0
+    assert config.human_visible.weight_decay == 0.0
