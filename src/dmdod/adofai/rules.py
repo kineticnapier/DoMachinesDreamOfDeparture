@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from enum import Enum
+from math import isfinite
 from typing import Iterable
 
 
@@ -135,6 +136,17 @@ def timing_windows(
     the absolute 25 ms floor is applied.
     """
 
+    # Non-finite inputs bypass ordinary range comparisons (notably NaN),
+    # yielding invalid windows or silently misclassified judgements.
+    for name, value in (
+        ("bpm", bpm),
+        ("timing_scale", timing_scale),
+        ("controller_speed", controller_speed),
+        ("pitch", pitch),
+        ("speed_trial", speed_trial),
+    ):
+        if not isfinite(value):
+            raise ValueError(f"{name} must be finite")
     if bpm <= 0.0:
         raise ValueError("bpm must be positive")
     if timing_scale < 0.0:
@@ -146,6 +158,8 @@ def timing_windows(
 
     difficulty = _coerce_difficulty(difficulty)
     angular_speed_deg_s = 3.0 * bpm * controller_speed * pitch
+    if not isfinite(angular_speed_deg_s) or angular_speed_deg_s <= 0.0:
+        raise ValueError("effective angular speed must be finite and positive")
 
     if mobile:
         counted_min = _speed_adjusted_minimum(MOBILE_COUNTED_MIN_S, speed_trial)
@@ -171,10 +185,18 @@ def timing_windows(
         angular_speed_deg_s * counted_min,
     )
 
+    perfect_s = perfect_deg / angular_speed_deg_s
+    early_late_perfect_s = early_late_perfect_deg / angular_speed_deg_s
+    pass_s = pass_deg / angular_speed_deg_s
+    if not all(isfinite(value) for value in (
+        perfect_deg, early_late_perfect_deg, pass_deg,
+        perfect_s, early_late_perfect_s, pass_s,
+    )):
+        raise ValueError("timing window boundaries must be finite")
     return TimingWindows(
-        perfect_s=perfect_deg / angular_speed_deg_s,
-        early_late_perfect_s=early_late_perfect_deg / angular_speed_deg_s,
-        pass_s=pass_deg / angular_speed_deg_s,
+        perfect_s=perfect_s,
+        early_late_perfect_s=early_late_perfect_s,
+        pass_s=pass_s,
         perfect_deg=perfect_deg,
         early_late_perfect_deg=early_late_perfect_deg,
         pass_deg=pass_deg,
@@ -204,6 +226,8 @@ def classify_timing(
 ) -> TimingJudgement:
     """Classify a signed timing error with the DLL-style timing windows."""
 
+    if not isfinite(error_s):
+        raise ValueError("error_s must be finite")
     windows = timing_windows(
         bpm,
         difficulty=difficulty,
