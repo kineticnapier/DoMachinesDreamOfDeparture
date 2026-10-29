@@ -124,6 +124,9 @@ class VisibleCounterRenderer:
     def reset_visible_counters(self) -> None:
         self._counters = {label: 0 for label in self.contract.labels}
         self._pending.clear()
+        # A new episode can restart its display clock at zero.
+        # Captures within an episode still reject backward timestamps.
+        self._last_capture_s = None
 
     def capture(self, displayed_at_s: float) -> JudgementCounterFrame:
         displayed = float(displayed_at_s)
