@@ -112,6 +112,13 @@ def _section(raw: dict, name: str) -> dict:
     return value
 
 
+def _toml_boolean(value: object, *, name: str) -> bool:
+    """Reject non-boolean TOML values instead of relying on truthiness."""
+    if type(value) is not bool:
+        raise ValueError(f"{name} must be boolean")
+    return value
+
+
 def _toml_integer(value: object, *, name: str) -> int:
     """Reject TOML floats, strings and booleans instead of silently coercing them."""
     if type(value) is not int:
@@ -249,7 +256,7 @@ def load_training_config(path: str | Path) -> TrainingConfig:
 
     boundary_raw = _section(raw, "boundary_trust")
     boundary_trust = BoundaryTrustConfig(
-        preserve_safe_only=bool(boundary_raw.get("preserve_safe_only", True)),
+        preserve_safe_only=_toml_boolean(boundary_raw.get("preserve_safe_only", True), name="boundary_trust.preserve_safe_only"),
         mismatch_grace_s=float(boundary_raw.get("mismatch_grace_s", 0.030)),
     )
 
@@ -275,13 +282,15 @@ def load_training_config(path: str | Path) -> TrainingConfig:
         grad_clip=float(visible_raw.get("grad_clip", 1.0)),
         seed=_toml_integer(visible_raw.get("seed", 2401), name="human_visible.seed"),
         allow_legacy_train_identity_resume=legacy_identity_opt_in,
-        alpha_sweep_enabled=bool(visible_raw.get("alpha_sweep_enabled", False)),
+        alpha_sweep_enabled=_toml_boolean(visible_raw.get("alpha_sweep_enabled", False), name="human_visible.alpha_sweep_enabled"),
         alpha_sweep_alphas=_alpha_sweep_grid(visible_raw),
-        alpha_sweep_compare_transitions=bool(
-            visible_raw.get("alpha_sweep_compare_transitions", False)
+        alpha_sweep_compare_transitions=_toml_boolean(
+            visible_raw.get("alpha_sweep_compare_transitions", False),
+            name="human_visible.alpha_sweep_compare_transitions",
         ),
-        alpha_sweep_recovery_probe_enabled=bool(
-            visible_raw.get("alpha_sweep_recovery_probe_enabled", False)
+        alpha_sweep_recovery_probe_enabled=_toml_boolean(
+            visible_raw.get("alpha_sweep_recovery_probe_enabled", False),
+            name="human_visible.alpha_sweep_recovery_probe_enabled",
         ),
         alpha_sweep_expected_best=_alpha_sweep_expectation(
             visible_raw, "alpha_sweep_expected_best"
