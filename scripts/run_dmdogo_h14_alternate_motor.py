@@ -349,13 +349,13 @@ class OneShotPlanner:
                 if outer.calls != 1:
                     raise ValueError("H1.4 planner was called more than once")
                 source = tuple(events)
-                if (len(source) != len(ready.events)
+                if (len(source) != len(outer.ready.events)
                         or any((a.event_index != b.event_index
                                 or a.chord_size != b.chord_size
                                 or abs(a.due_s-b.due_s) > EPS)
-                               for a,b in zip(source,ready.events,strict=True))):
+                               for a,b in zip(source,outer.ready.events,strict=True))):
                     raise ValueError("Motor oracle events differ from H1.4 attested source")
-                return ready.alternate_plan
+                return outer.ready.alternate_plan
 
         return Proxy()
 
