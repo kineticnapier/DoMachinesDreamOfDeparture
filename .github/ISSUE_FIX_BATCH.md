@@ -443,3 +443,12 @@ No training, live ADOFAI verification, or performance measurements were performe
   integer semantics, HUD-only inputs, judgement timings, checkpoint schema
   and frozen research artifacts are intentionally unchanged.
 - Keep the parent Issue #31 open, this PR Draft, and `Refs #31` (not `Fixes`).
+
+
+## Audit Hub update — Refs #30: reject non-finite fail-bar beat advances (2026-10-30)
+
+- `src/dmdod/adofai/rules.py::OverloadCounter.advance_beats` now rejects NaN and +/-Inf `beat_delta` before any state changes. Previously NaN passed the negative check and poisoned `multipress_reset_beats`; +Inf was accepted and immediately erased the counters.
+- Source commit: `a744af3e56982deda2dec8b8e5362488a1c4aa56`. Regression tests: `3281a88224cca0c02ac17bffa3155ff3c9ec8e68` (format: `5c3f2b8bc11e867559bcd3dad6b805fceb516037`). Added three parameter cases for NaN/+Inf/-Inf with no mutation, and one finite/negative compatibility case.
+- Run: `python -m pytest -q tests/test_adofai_rules.py tests/test_rhythm_env.py tests/test_real_chart_env.py`.
+- **Repository pytest NOT run**: the local execution container cannot resolve github.com to retrieve the full repository. A separate faithful copy of the affected counter method passed four isolated pytest cases; this is **not** an integrated repository result. No training, live ADOFAI, GPU, checkpoint, performance or memory verification.
+- Classification: invalid-input correctness fix (not pure behavior-preserving for invalid beat deltas). Finite beat recovery, existing negative-value rejection, judgement thresholds, HUD-only inputs, checkpoint schema and frozen research results intentionally unchanged. Parent #30 remains open; PR #23 remains Draft. Use `Refs #30`, not `Fixes`.
