@@ -24,9 +24,15 @@ from dmdod.motor.env import TimedKeyEvent
 from dmdod.profiles import personal_blue_switch_v0_1
 
 
-def n_key_names(key_count: int) -> tuple[str, ...]:
-    if key_count < 2 or key_count % 2 != 0:
+def _validated_key_count(key_count: int) -> int:
+    """Reject fractional, boolean and string counts without silent coercion."""
+    if type(key_count) is not int or key_count < 2 or key_count % 2 != 0:
         raise ValueError("key_count must be an even integer >= 2")
+    return key_count
+
+
+def n_key_names(key_count: int) -> tuple[str, ...]:
+    key_count = _validated_key_count(key_count)
     per_hand = key_count // 2
     return tuple(
         [f"left_{depth}" for depth in range(per_hand, 0, -1)]
@@ -35,8 +41,7 @@ def n_key_names(key_count: int) -> tuple[str, ...]:
 
 
 def n_key_tiers(key_count: int) -> tuple[tuple[str, str], ...]:
-    if key_count < 2 or key_count % 2 != 0:
-        raise ValueError("key_count must be an even integer >= 2")
+    key_count = _validated_key_count(key_count)
     return tuple(
         (f"left_{depth}", f"right_{depth}")
         for depth in range(1, key_count // 2 + 1)
@@ -110,8 +115,8 @@ class NKeyBody:
     """Two-hand body with an arbitrary equal number of fingers per hand."""
 
     def __init__(self, key_count: int) -> None:
-        self.key_count = int(key_count)
-        self.key_names = n_key_names(self.key_count)
+        self.key_names = n_key_names(key_count)
+        self.key_count = key_count
         self.per_hand = self.key_count // 2
 
         base = personal_blue_switch_v0_1(same_hand=True)
@@ -390,8 +395,8 @@ class NKeyMotorEnv:
         if abs(substeps * physics_dt_s - control_dt_s) > 1e-12:
             raise ValueError("control_dt_s must be an integer multiple of physics_dt_s")
 
-        self.key_count = int(key_count)
-        self.key_names = n_key_names(self.key_count)
+        self.key_names = n_key_names(key_count)
+        self.key_count = key_count
         self.body = NKeyBody(self.key_count)
         self.keyboard = NKeyKeyboard(self.key_names, key_config)
         self.control_dt_s = float(control_dt_s)
