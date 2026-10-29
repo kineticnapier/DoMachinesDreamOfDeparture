@@ -412,3 +412,11 @@ No training, live ADOFAI verification, or performance measurements were performe
 - Run: `python -m pytest -q tests/test_n_key_capacity.py tests/test_motor_env.py tests/test_simulator.py`.
 - **Unverified:** repository pytest was not executed because the execution environment cannot resolve github.com to obtain the repository; GitHub Actions has no run for the new work HEAD. Training, real Motor timing, live ADOFAI, checkpoint resume, GPU and performance/memory measurements were not performed.
 - Classification: invalid-input correctness fix, **not** a behavior-preserving refactor for non-finite inputs. Finite control/physics substep rules, motor equations, HUD-only interface, checkpoint schema, and historical research results remain unchanged. Keep parent Issue #29 open, PR #23 Draft, and use `Refs #29` only (never `Fixes #29`).
+
+## Audit Hub update — Refs #31: exact non-best restart limits (2026-10-30)
+
+- **Refs #31** — `NonBestRestartController.create()` now requires a positive built-in integer; `load_training_config()` rejects TOML non-integer `budget.max_nonbest_accepts` instead of silently truncating fractional values. Existing positive integer thresholds retain their previous restart behavior.
+- Source commits: `96f972397328286115026d4c6004c5c6b5ecca9d` and `e49b1fde72aff41e4162d2c68bfdf8528e2cbe99`. Tests: `9979c9bfb73212dda6c6fa8811d43aa06452604b`, `9a6125ee4db1bbdc46d15fc047633e40cdfebd71`.
+- Run: `python -m pytest -q tests/test_training_budget.py tests/test_training_config.py`.
+- **Not verified:** repository pytest (GitHub DNS unavailable), real training/checkpoint resume, ADOFAI live runtime, GPU and performance/memory measurements. Isolated controller/TOML guard reproduction: 15 passed; not a repository test.
+- Classification: invalid-input correctness fix, not behavior-preserving for invalid inputs. Keep parent #31 open, PR #23 Draft, `Refs #31` only. Other integer coercions in `config.py` remain to be audited; do not mark them fixed.
