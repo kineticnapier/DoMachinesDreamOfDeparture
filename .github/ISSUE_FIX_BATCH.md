@@ -283,3 +283,13 @@ No training, live ADOFAI verification, or performance measurements were performe
 - Run: `python -m pytest -q tests/test_stock_floor_state_machine.py tests/test_stock_frame_state_machine.py tests/test_stock_runtime_parity_v01.py`.
 - **Not verified:** repository pytest, live ADOFAI runtime, training, GPU, performance/memory checks not executed. No parity or speed claims. This is an input-boundary correctness change, not a behavior-preserving refactor.
 - Issue: https://github.com/kineticnapier/DoMachinesDreamOfDeparture/issues/9. Keep Issue open and PR #23 Draft. Use `Refs #9`, not `Fixes #9`.
+
+
+## Batch update — Refs #2 (2026-10-29)
+
+- **Partial implementation:** Added `src/dmdod/planning/due_event_window_v06.py` and replaced the repeated full-event `upcoming` scan in `scripts/run_dmdogo_v06_pattern_first.py::run_pattern_arm` with indexed time-window lookup. The selection and deferred-retry rules, exact expiry addition, +1e-9 deadline, and original event order are retained.
+- Added `tests/test_due_event_window_v06.py` with expiry/prediction boundary, deferral, invalid timeline and 500-event/250-frame seeded equivalence cases.
+- **Executed:** standalone helper regression: `PYTHONPATH=/mnt/data/dmdod_audit/src python -m pytest -q /mnt/data/dmdod_audit/tests/test_due_event_window_v06.py` → **3 passed**. This tested a local copy of the new helper, **not** the repository checkout or full runner.
+- **Not executed:** repository pytest/integration for v0.6/v0.7/v0.8, frozen-output comparisons, actual physical Motor, training, live ADOFAI, GPU, memory/performance benchmarks.
+- **Unimplemented:** post-run `decisions` × `keydowns` and `judgement_trace` scans; exact numerical/telemetry compatibility and performance gains remain unverified.
+- Intended behavior-preserving selection optimization. Because the v0.8 research runner is shared, do not certify frozen v0.8 results until full before/after replay/telemetry comparisons pass. Keep Issue #2 open, PR #23 Draft and `Refs #2` only.
