@@ -302,3 +302,12 @@ No training, live ADOFAI verification, or performance measurements were performe
 - **Executed:** isolated local helper test, `PYTHONPATH=src python -m pytest -q tests/test_postrun_diagnostic_index_v06.py` in a temporary standalone directory → **3 passed**. This is NOT repository pytest or a full physical runner replay.
 - **Not executed:** repository-wide or integrated pytest, all three planning modes, before/after frozen replay and telemetry comparison, physical Motor, training, ADOFAI runtime, GPU, memory/performance measurements.
 - Classification: intended behavior-preserving diagnostic performance refactor; actual numerical/telemetry equivalence and speed gains are **not yet established**. Issue #2 remains open and PR #23 remains Draft. Use `Refs #2`, never `Fixes #2` until verified.
+
+
+## 2026-10-29 — Refs #6 (partial provenance recording)
+- Committed `scripts/dmdogo_h0_source_provenance.py` and wired `audit_source_provenance` into new H0.10/H0.11/H0.12 report JSON only. Records loaded local Python SHA-256, Git HEAD, dirty status and status digest; frozen v0.8 identity remains separate.
+- Added `tests/test_dmdogo_h0_source_provenance.py` for changed source, Git metadata and report wiring.
+- Commits: `ecdacf2`, `ee602e5`, `13a6e9d`, `d518352`, `422812f`.
+- Run: `uv run pytest -q tests/test_dmdogo_h0_source_provenance.py tests/test_dmdogo_v09_h010_all_quick_seams.py tests/test_dmdogo_v09_h011_adaptive_release.py tests/test_dmdogo_v09_h012_synthetic_counterexamples.py`.
+- **Not verified:** repository pytest, actual report generation, training, ADOFAI live runtime, GPU and performance measurements were not run; checkout is unavailable. H0.13+ are not present on this work branch and remain **unimplemented**; do not copy newer research scripts from the diverged base.
+- Metadata-only intended behavior-preserving addition to newly generated reports; no frozen research outputs, timing, Motor, HUD-only observations, checkpoints or algorithms changed. Issue #6 remains open, PR #23 remains Draft; use `Refs #6`, not `Fixes #6`.
