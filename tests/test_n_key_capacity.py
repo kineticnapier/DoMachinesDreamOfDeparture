@@ -294,3 +294,43 @@ def test_capacity_result_matches_legacy_full_tail(monkeypatch) -> None:
         segment, key_count=4, lead_s=0.044, control_dt_s=0.010
     )
     assert actual == expected
+
+from dmdod.motor.n_key import NKeyBody
+
+
+@pytest.mark.parametrize("bad", (float("nan"), float("inf"), float("-inf")))
+@pytest.mark.parametrize("field", ("control_dt_s", "physics_dt_s"))
+def test_n_key_env_rejects_nonfinite_clock_configuration(field, bad) -> None:
+    with pytest.raises(ValueError, match=rf"{field} must be finite"):
+        NKeyMotorEnv(4, **{field: bad})
+
+
+@pytest.mark.parametrize("bad", (float("nan"), float("inf"), float("-inf")))
+def test_n_key_body_rejects_nonfinite_dt_without_mutation(bad) -> None:
+    body = NKeyBody(4)
+    before_states = tuple(state.copy() for state in body.states)
+    before_hands = (
+        body.left_hand_state.fatigue,
+        body.left_hand_state.coordination,
+        body.right_hand_state.fatigue,
+        body.right_hand_state.coordination,
+        body.bilateral_state.coordination,
+    )
+    with pytest.raises(ValueError, match="dt_s must be finite and positive"):
+        body.step(NKeyAction((0.0,) * 4), bad)
+    assert tuple(body.states) == before_states
+    assert (
+        body.left_hand_state.fatigue,
+        body.left_hand_state.coordination,
+        body.right_hand_state.fatigue,
+        body.right_hand_state.coordination,
+        body.bilateral_state.coordination,
+    ) == before_hands
+
+
+def test_n_key_finite_clock_configuration_preserves_substeps() -> None:
+    env = NKeyMotorEnv(4, control_dt_s=0.010, physics_dt_s=0.001)
+    assert env.physics_substeps == 10
+    before = env.reset()
+    assert env.step(NKeyAction((0.0,) * 4)).observation == before
+
