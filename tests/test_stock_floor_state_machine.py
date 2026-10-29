@@ -1,6 +1,13 @@
 from __future__ import annotations
 
 import math
+from dataclasses import replace
+
+import pytest
+
+from dmdod.adofai.chart import parse_adofai_text
+from dmdod.adofai.playable import build_playable_segment
+from dmdod.adofai.timing import compile_adofai
 
 from dmdod.adofai.stock_floor_state_machine import (
     StockFloorStateMachine,
@@ -8,6 +15,7 @@ from dmdod.adofai.stock_floor_state_machine import (
     StockReproducibility,
     StockRunMode,
     StockTransitionKind,
+    targets_from_playable_segment,
 )
 from dmdod.adofai.stock_judgement_reference import StockHitMargin
 
@@ -175,3 +183,74 @@ def test_fail_mode_dies_on_post_floor_check_before_later_input() -> None:
     ]
     assert rows[0].target_ordinal == 36
     assert rows[0].dll_flow == ("CheckPostHoldFail", "Die")
+
+
+def _plain_compiled_chart():
+    return compile_adofai(
+        parse_adofai_text(
+            '{"angleData":[0,0,0,0],"settings":{"bpm":120,'
+            '"countdownTicks":0},"actions":[]}'
+        )
+    )
+
+
+def test_sliced_stock_reference_uses_explicit_landed_floor() -> None:
+    chart = _plain_compiled_chart()
+    start_s = (chart.floors[2].target_time_s + chart.floors[3].target_time_s) / 2
+    segment = build_playable_segment(chart, start_s=start_s)
+    assert segment.targets[0].floor_index == 3
+
+    # Legacy callers fail closed rather than silently assuming earlier hits.
+    assert not targets_from_playable_segment(segment)[0].supported
+    targets = targets_from_playable_segment(segment, initial_floor=2)
+    assert targets[0].supported
+    assert targets[0].unsupported_reason is None
+
+    machine = StockFloorStateMachine(targets, initial_floor=2)
+    row = machine.key_down(targets[0].due_s)[-1]
+    assert row.kind is StockTransitionKind.HIT_ADVANCE
+    assert row.current_floor_before == 2
+    assert row.current_floor_after == 3
+
+
+def test_sliced_stock_reference_rejects_wrong_or_future_landed_floor() -> None:
+    chart = _plain_compiled_chart()
+    start_s = (chart.floors[2].target_time_s + chart.floors[3].target_time_s) / 2
+    segment = build_playable_segment(chart, start_s=start_s)
+    for wrong in (0, 1, 3, -1, len(chart.floors), True):
+        with pytest.raises(ValueError, match="initial_floor"):
+            targets_from_playable_segment(segment, initial_floor=wrong)
+
+
+def test_sliced_stock_reference_still_detects_omitted_in_segment_floor() -> None:
+    chart = _plain_compiled_chart()
+    start_s = (chart.floors[2].target_time_s + chart.floors[3].target_time_s) / 2
+    segment = build_playable_segment(chart, start_s=start_s)
+    assert len(segment.targets) >= 2
+    omitted = replace(segment, targets=segment.targets[1:])
+    first = targets_from_playable_segment(omitted, initial_floor=2)[0]
+    assert not first.supported
+    assert "non-midspin floor omitted" in first.unsupported_reason
+
+
+def test_whole_chart_stock_reference_is_unchanged_with_floor_zero() -> None:
+    segment = build_playable_segment(_plain_compiled_chart())
+    assert targets_from_playable_segment(segment) == targets_from_playable_segment(
+        segment, initial_floor=0
+    )
+
+
+def test_sliced_stock_reference_preserves_midspin_bridge() -> None:
+    chart = compile_adofai(
+        parse_adofai_text(
+            '{"angleData":[0,0,999,0],"settings":{"bpm":120,'
+            '"countdownTicks":0},"actions":[]}'
+        )
+    )
+    assert chart.floors[2].midspin
+    start_s = (chart.floors[1].target_time_s + chart.floors[3].target_time_s) / 2
+    segment = build_playable_segment(chart, start_s=start_s)
+    assert segment.targets[0].floor_index == 3
+    first = targets_from_playable_segment(segment, initial_floor=1)[0]
+    assert first.supported
+    assert first.skipped_midspin_floors == (2,)
