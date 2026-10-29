@@ -106,6 +106,8 @@ class StockStateTransition:
 
 def targets_from_playable_segment(
     segment: PlayableChartSegment,
+    *,
+    initial_floor: int | None = None,
 ) -> tuple[StockFloorTarget, ...]:
     """Build ordinary-floor inputs without treating chart truth as policy data.
 
@@ -117,7 +119,33 @@ def targets_from_playable_segment(
     chart = segment.chart
     pitch = segment.pitch_ratio
     targets: list[StockFloorTarget] = []
-    prior_landed_floor = 0
+    # None preserves the conservative whole-chart assumption for legacy callers.
+    # A sliced reference must supply the evaluator-only landed floor explicitly;
+    # never infer this privileged state inside a HUD-only policy.
+    if initial_floor is None:
+        prior_landed_floor = 0
+    else:
+        if (
+            isinstance(initial_floor, bool)
+            or not isinstance(initial_floor, int)
+            or not 0 <= initial_floor < len(chart.floors)
+        ):
+            raise ValueError("initial_floor must be a valid chart floor index")
+        last_prior_floor = max(
+            (
+                floor.index
+                for floor in chart.floors[1:]
+                if not floor.midspin
+                and floor.target_time_s < segment.start_chart_s
+            ),
+            default=0,
+        )
+        if initial_floor != last_prior_floor:
+            raise ValueError(
+                "initial_floor must be the last input-bearing floor before "
+                "the segment start"
+            )
+        prior_landed_floor = initial_floor
     unsupported_markers = {"Pause", "MultiPlanet", "Checkpoint"}
 
     for playable in segment.targets:
