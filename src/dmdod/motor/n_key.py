@@ -305,8 +305,8 @@ class NKeyBody:
         )
 
     def step(self, action: NKeyAction, dt_s: float) -> tuple[FingerState, ...]:
-        if dt_s <= 0.0:
-            raise ValueError("dt_s must be positive")
+        if not isfinite(dt_s) or dt_s <= 0.0:
+            raise ValueError("dt_s must be finite and positive")
         values = action.as_tuple()
         if len(values) != self.key_count:
             raise ValueError(f"expected {self.key_count} action values, got {len(values)}")
@@ -378,6 +378,10 @@ class NKeyMotorEnv:
         physics_dt_s: float = 0.001,
         key_config: KeyConfig | None = None,
     ) -> None:
+        if not isfinite(physics_dt_s):
+            raise ValueError("physics_dt_s must be finite")
+        if not isfinite(control_dt_s):
+            raise ValueError("control_dt_s must be finite")
         if physics_dt_s <= 0.0:
             raise ValueError("physics_dt_s must be positive")
         if control_dt_s < physics_dt_s:
