@@ -108,6 +108,10 @@ class RepositoryWindowModel:
     pass_s: float
 
     def __post_init__(self) -> None:
+        if not all(isfinite(value) for value in (
+            self.perfect_s, self.early_late_perfect_s, self.pass_s
+        )):
+            raise ValueError("judgement windows must be finite")
         if not (
             0.0 <= self.perfect_s
             <= self.early_late_perfect_s
