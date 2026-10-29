@@ -87,10 +87,10 @@ def test_reservation_history_cannot_rebind_or_resolve_a_floor() -> None:
 def test_twelve_identical_visible_judgements_do_not_expand_factorially() -> None:
     estimator = StockPersistentJudgementStateEstimator(automatic_failmiss_visible=True)
     for index in range(12):
-        local_id = str(index)
-        estimator.observe_timing(_timing(local_id, 0.0, 1.0))
+        estimator.observe_timing(_timing(str(index), 0.0, 1.0))
+    for index in range(12):
         estimator.observe_keydown(MotorKeyDownEvidence(
-            f"k{index}", local_id, 1.0, 1.0
+            f"k{index}", str(index), 1.0, 1.0
         ))
     result = estimator.observe_judgement(_delta(1.02, perfect=12))
     assert len(result.hypotheses) == 1
