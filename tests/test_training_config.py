@@ -334,3 +334,20 @@ def test_finite_training_float_boundaries_remain_allowed(tmp_path: Path) -> None
     assert config.budget.safe_grow == 1.0
     assert config.boundary_trust.mismatch_grace_s == 0.0
     assert config.human_visible.weight_decay == 0.0
+
+
+@pytest.mark.parametrize("literal", ("2.5", "3.0", "true", '"3"', "nan", "inf"))
+def test_nonbest_restart_limit_must_be_toml_integer(tmp_path, literal: str) -> None:
+    path = tmp_path / "noninteger-restart.toml"
+    path.write_text(
+        'mode = "budget_survival_trust"\n'
+        '[run]\n'
+        'dataset = "unused"\n'
+        'checkpoint = "in.pt"\n'
+        'output = "out.pt"\n'
+        '[budget]\n'
+        f'max_nonbest_accepts = {literal}\n',
+        encoding="utf-8",
+    )
+    with pytest.raises(ValueError, match="budget.max_nonbest_accepts must be an integer"):
+        load_training_config(path)
