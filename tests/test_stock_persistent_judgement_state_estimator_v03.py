@@ -6,6 +6,7 @@ from dmdod.planning.stock_persistent_judgement_state_estimator_v03 import (
     StockMotorReservationEvidence,
     StockPersistentJudgementStateEstimator,
     StockReservationStatus,
+    StockEstimateStatus,
 )
 
 
@@ -81,3 +82,44 @@ def test_reservation_history_cannot_rebind_or_resolve_a_floor() -> None:
         pass
     else:
         raise AssertionError("reservation rebind must be rejected")
+
+
+def test_twelve_identical_visible_judgements_do_not_expand_factorially() -> None:
+    estimator = StockPersistentJudgementStateEstimator(automatic_failmiss_visible=True)
+    for index in range(12):
+        local_id = str(index)
+        estimator.observe_timing(_timing(local_id, 0.0, 1.0))
+        estimator.observe_keydown(MotorKeyDownEvidence(
+            f"k{index}", local_id, 1.0, 1.0
+        ))
+    result = estimator.observe_judgement(_delta(1.02, perfect=12))
+    assert len(result.hypotheses) == 1
+    assert len(result.hypotheses[0].attributions) == 12
+    assert not result.hypotheses[0].unknown_search_remainder
+
+
+def test_huge_visible_delta_abstains_before_label_allocation() -> None:
+    estimator = StockPersistentJudgementStateEstimator(automatic_failmiss_visible=True)
+    result = estimator.observe_judgement(_delta(1.0, perfect=100_000))
+    assert result.status is StockEstimateStatus.TRUNCATED
+    assert not result.identifiable
+    assert all(row.unknown_search_remainder for row in result.hypotheses)
+
+
+def test_distinct_label_budget_abstains_without_false_identification() -> None:
+    estimator = StockPersistentJudgementStateEstimator(automatic_failmiss_visible=True)
+    labels = {f"label_{index}": 1 for index in range(7)}
+    result = estimator.observe_judgement(_delta(1.0, **labels))
+    assert result.status is StockEstimateStatus.TRUNCATED
+    assert not result.identifiable
+    assert all(row.unknown_search_remainder for row in result.hypotheses)
+
+
+def test_negative_delta_still_raises_value_error() -> None:
+    estimator = StockPersistentJudgementStateEstimator(automatic_failmiss_visible=True)
+    try:
+        estimator.observe_judgement(_delta(1.0, perfect=100_000, very_late=-100_000))
+    except ValueError:
+        pass
+    else:
+        raise AssertionError("negative visible delta must be rejected")
