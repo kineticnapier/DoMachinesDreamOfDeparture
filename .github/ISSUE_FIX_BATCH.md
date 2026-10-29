@@ -359,3 +359,28 @@ No training, live ADOFAI verification, or performance measurements were performe
 - Source commit `d52c07a9a97b2a7b1e2c8c53c2933bc32f82bff8`; test commit `b4d2a89564b3cfe1846268e45fdd3a12a9ea14b5`.
 - Verification command: `python -m pytest -q tests/test_stock_visible_judgement_feedback_v01.py`.
 - **Not executed:** repository pytest, live ADOFAI, training, performance or memory measurement. This is a reset-boundary correctness change, not a change to judgement timing or the HUD-only input contract. Issue remains open; PR remains Draft; use `Refs #24`, not `Fixes #24`.
+
+
+## Batch update — Refs #12: floor-boundary FailBar integration (2026-10-29)
+
+- **Partial correctness fix:** `src/dmdod/envs/real_chart.py` now integrates
+  evaluator beat counts across compiled floor-entry times instead of using the
+  BPM of one midpoint floor for the entire control interval.
+- This uses chart time, so pitch conversion is applied exactly once.
+  Equal-time Midspin floors are skipped by `bisect_right`; a single aggregate
+  `OverloadCounter.advance_beats()` call retains the previous counter update
+  cadence. Existing per-floor effective BPM remains unchanged.
+- `tests/test_real_chart_env.py`: 5 new parameterized/individual test cases
+  for 120→240 BPM floor transition (pitch 50/100/200%), one-step versus split
+  updates, and constant BPM across equal-time Midspin floor entries.
+- Source commit: `1b96c2fce74382e9956a5e06bcf8e02fe18bbad1`;
+  tests: `3f99f4abe58ed884c6781b64b6212b815630f301`.
+- Run: `python -m pytest -q tests/test_real_chart_env.py tests/test_n_key_capacity.py`.
+- **Unimplemented:** within-floor `SetSpeed(angleOffset>0)` still uses the
+  compiler's averaged floor BPM; preserving exact sub-floor speed requires
+  new evaluator-only timing segments and Stock timing verification.
+- **Not verified:** repository pytest, full-chart before/after replay,
+  actual ADOFAI DLL FailBar behavior, training, GPU and performance/memory
+  measurements were not run. The partial fix can change FailBar/reward near
+  a floor BPM boundary; it is not a behavior-preserving refactor.
+- Keep Issue #12 open, PR #23 Draft; use `Refs #12` only, not `Fixes #12`.
