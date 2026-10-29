@@ -126,6 +126,13 @@ def _toml_integer(value: object, *, name: str) -> int:
     return value
 
 
+def _toml_float(value: object, *, name: str) -> float:
+    """Accept TOML numbers, not booleans or numeric-looking strings."""
+    if type(value) not in (int, float):
+        raise ValueError(f"{name} must be a TOML number")
+    return float(value)
+
+
 def _optional_positive_int(value, *, name: str) -> int | None:
     if value is None:
         return None
@@ -226,12 +233,12 @@ def load_training_config(path: str | Path) -> TrainingConfig:
     trust_raw = _section(raw, "action_trust")
     action_trust = ActionTrustConfig(
         actor_steps=_toml_integer(trust_raw.get("actor_steps", 8), name="action_trust.actor_steps"),
-        lr=float(trust_raw.get("lr", 3e-4)),
-        stay_coef=float(trust_raw.get("stay_coef", 20.0)),
-        initial_action_rms=float(trust_raw.get("initial_action_rms", 0.01)),
-        min_action_rms=float(trust_raw.get("min_action_rms", 1e-6)),
+        lr=_toml_float(trust_raw.get("lr", 3e-4), name="action_trust.lr"),
+        stay_coef=_toml_float(trust_raw.get("stay_coef", 20.0), name="action_trust.stay_coef"),
+        initial_action_rms=_toml_float(trust_raw.get("initial_action_rms", 0.01), name="action_trust.initial_action_rms"),
+        min_action_rms=_toml_float(trust_raw.get("min_action_rms", 1e-6), name="action_trust.min_action_rms"),
         lr_backoffs=_toml_integer(trust_raw.get("lr_backoffs", 10), name="action_trust.lr_backoffs"),
-        min_lr=float(trust_raw.get("min_lr", 1e-8)),
+        min_lr=_toml_float(trust_raw.get("min_lr", 1e-8), name="action_trust.min_lr"),
     )
 
     budget_raw = _section(raw, "budget")
@@ -239,25 +246,23 @@ def load_training_config(path: str | Path) -> TrainingConfig:
     if type(restart_limit) is not int:
         raise ValueError("budget.max_nonbest_accepts must be an integer")
     budget = BudgetConfig(
-        hours=float(budget_raw.get("hours", 8.0)),
-        reserve_minutes=float(budget_raw.get("reserve_minutes", 8.0)),
+        hours=_toml_float(budget_raw.get("hours", 8.0), name="budget.hours"),
+        reserve_minutes=_toml_float(budget_raw.get("reserve_minutes", 8.0), name="budget.reserve_minutes"),
         max_trials=_toml_integer(budget_raw.get("max_trials", 10_000), name="budget.max_trials"),
-        reject_shrink=float(budget_raw.get("reject_shrink", 0.5)),
-        safe_grow=float(budget_raw.get("safe_grow", 1.25)),
+        reject_shrink=_toml_float(budget_raw.get("reject_shrink", 0.5), name="budget.reject_shrink"),
+        safe_grow=_toml_float(budget_raw.get("safe_grow", 1.25), name="budget.safe_grow"),
         max_nonbest_accepts=restart_limit,
     )
 
     probe_raw = _section(raw, "trajectory_probe")
     trajectory_probe = TrajectoryProbeConfig(
-        candidate_action_rms=float(
-            probe_raw.get("candidate_action_rms", 2.5e-5)
-        ),
+        candidate_action_rms=_toml_float(probe_raw.get("candidate_action_rms", 2.5e-5), name="trajectory_probe.candidate_action_rms"),
     )
 
     boundary_raw = _section(raw, "boundary_trust")
     boundary_trust = BoundaryTrustConfig(
         preserve_safe_only=_toml_boolean(boundary_raw.get("preserve_safe_only", True), name="boundary_trust.preserve_safe_only"),
-        mismatch_grace_s=float(boundary_raw.get("mismatch_grace_s", 0.030)),
+        mismatch_grace_s=_toml_float(boundary_raw.get("mismatch_grace_s", 0.030), name="boundary_trust.mismatch_grace_s"),
     )
 
     visible_raw = _section(raw, "human_visible")
@@ -266,9 +271,9 @@ def load_training_config(path: str | Path) -> TrainingConfig:
         raise ValueError("human_visible.allow_legacy_train_identity_resume must be boolean")
     human_visible = HumanVisibleConfig(
         updates_per_trial=_toml_integer(visible_raw.get("updates_per_trial", 32), name="human_visible.updates_per_trial"),
-        lr=float(visible_raw.get("lr", 1e-4)),
-        min_lr=float(visible_raw.get("min_lr", 1e-6)),
-        controller_lr=float(visible_raw.get("controller_lr", 3e-5)),
+        lr=_toml_float(visible_raw.get("lr", 1e-4), name="human_visible.lr"),
+        min_lr=_toml_float(visible_raw.get("min_lr", 1e-6), name="human_visible.min_lr"),
+        controller_lr=_toml_float(visible_raw.get("controller_lr", 3e-5), name="human_visible.controller_lr"),
         updates_per_epoch=_toml_integer(visible_raw.get("updates_per_epoch", 32), name="human_visible.updates_per_epoch"),
         transition_updates_per_epoch=_toml_integer(visible_raw.get("transition_updates_per_epoch", 16), name="human_visible.transition_updates_per_epoch"),
         transition_epochs=_toml_integer(visible_raw.get("transition_epochs", 3), name="human_visible.transition_epochs"),
@@ -278,8 +283,8 @@ def load_training_config(path: str | Path) -> TrainingConfig:
         progression_streak=_toml_integer(visible_raw.get("progression_streak", 3), name="human_visible.progression_streak"),
         catastrophic_patience=_toml_integer(visible_raw.get("catastrophic_patience", 2), name="human_visible.catastrophic_patience"),
         max_epochs=_toml_integer(visible_raw.get("max_epochs", 10_000), name="human_visible.max_epochs"),
-        weight_decay=float(visible_raw.get("weight_decay", 1e-4)),
-        grad_clip=float(visible_raw.get("grad_clip", 1.0)),
+        weight_decay=_toml_float(visible_raw.get("weight_decay", 1e-4), name="human_visible.weight_decay"),
+        grad_clip=_toml_float(visible_raw.get("grad_clip", 1.0), name="human_visible.grad_clip"),
         seed=_toml_integer(visible_raw.get("seed", 2401), name="human_visible.seed"),
         allow_legacy_train_identity_resume=legacy_identity_opt_in,
         alpha_sweep_enabled=_toml_boolean(visible_raw.get("alpha_sweep_enabled", False), name="human_visible.alpha_sweep_enabled"),
