@@ -112,10 +112,17 @@ def _section(raw: dict, name: str) -> dict:
     return value
 
 
+def _toml_integer(value: object, *, name: str) -> int:
+    """Reject TOML floats, strings and booleans instead of silently coercing them."""
+    if type(value) is not int:
+        raise ValueError(f"{name} must be an integer")
+    return value
+
+
 def _optional_positive_int(value, *, name: str) -> int | None:
     if value is None:
         return None
-    value = int(value)
+    value = _toml_integer(value, name=name)
     if value <= 0:
         raise ValueError(f"{name} must be positive")
     return value
@@ -211,12 +218,12 @@ def load_training_config(path: str | Path) -> TrainingConfig:
 
     trust_raw = _section(raw, "action_trust")
     action_trust = ActionTrustConfig(
-        actor_steps=int(trust_raw.get("actor_steps", 8)),
+        actor_steps=_toml_integer(trust_raw.get("actor_steps", 8), name="action_trust.actor_steps"),
         lr=float(trust_raw.get("lr", 3e-4)),
         stay_coef=float(trust_raw.get("stay_coef", 20.0)),
         initial_action_rms=float(trust_raw.get("initial_action_rms", 0.01)),
         min_action_rms=float(trust_raw.get("min_action_rms", 1e-6)),
-        lr_backoffs=int(trust_raw.get("lr_backoffs", 10)),
+        lr_backoffs=_toml_integer(trust_raw.get("lr_backoffs", 10), name="action_trust.lr_backoffs"),
         min_lr=float(trust_raw.get("min_lr", 1e-8)),
     )
 
@@ -227,7 +234,7 @@ def load_training_config(path: str | Path) -> TrainingConfig:
     budget = BudgetConfig(
         hours=float(budget_raw.get("hours", 8.0)),
         reserve_minutes=float(budget_raw.get("reserve_minutes", 8.0)),
-        max_trials=int(budget_raw.get("max_trials", 10_000)),
+        max_trials=_toml_integer(budget_raw.get("max_trials", 10_000), name="budget.max_trials"),
         reject_shrink=float(budget_raw.get("reject_shrink", 0.5)),
         safe_grow=float(budget_raw.get("safe_grow", 1.25)),
         max_nonbest_accepts=restart_limit,
@@ -251,24 +258,22 @@ def load_training_config(path: str | Path) -> TrainingConfig:
     if type(legacy_identity_opt_in) is not bool:
         raise ValueError("human_visible.allow_legacy_train_identity_resume must be boolean")
     human_visible = HumanVisibleConfig(
-        updates_per_trial=int(visible_raw.get("updates_per_trial", 32)),
+        updates_per_trial=_toml_integer(visible_raw.get("updates_per_trial", 32), name="human_visible.updates_per_trial"),
         lr=float(visible_raw.get("lr", 1e-4)),
         min_lr=float(visible_raw.get("min_lr", 1e-6)),
         controller_lr=float(visible_raw.get("controller_lr", 3e-5)),
-        updates_per_epoch=int(visible_raw.get("updates_per_epoch", 32)),
-        transition_updates_per_epoch=int(
-            visible_raw.get("transition_updates_per_epoch", 16)
-        ),
-        transition_epochs=int(visible_raw.get("transition_epochs", 3)),
-        burn_in_steps=int(visible_raw.get("burn_in_steps", 96)),
-        supervised_steps=int(visible_raw.get("supervised_steps", 192)),
-        anchors_per_batch=int(visible_raw.get("anchors_per_batch", 4)),
-        progression_streak=int(visible_raw.get("progression_streak", 3)),
-        catastrophic_patience=int(visible_raw.get("catastrophic_patience", 2)),
-        max_epochs=int(visible_raw.get("max_epochs", 10_000)),
+        updates_per_epoch=_toml_integer(visible_raw.get("updates_per_epoch", 32), name="human_visible.updates_per_epoch"),
+        transition_updates_per_epoch=_toml_integer(visible_raw.get("transition_updates_per_epoch", 16), name="human_visible.transition_updates_per_epoch"),
+        transition_epochs=_toml_integer(visible_raw.get("transition_epochs", 3), name="human_visible.transition_epochs"),
+        burn_in_steps=_toml_integer(visible_raw.get("burn_in_steps", 96), name="human_visible.burn_in_steps"),
+        supervised_steps=_toml_integer(visible_raw.get("supervised_steps", 192), name="human_visible.supervised_steps"),
+        anchors_per_batch=_toml_integer(visible_raw.get("anchors_per_batch", 4), name="human_visible.anchors_per_batch"),
+        progression_streak=_toml_integer(visible_raw.get("progression_streak", 3), name="human_visible.progression_streak"),
+        catastrophic_patience=_toml_integer(visible_raw.get("catastrophic_patience", 2), name="human_visible.catastrophic_patience"),
+        max_epochs=_toml_integer(visible_raw.get("max_epochs", 10_000), name="human_visible.max_epochs"),
         weight_decay=float(visible_raw.get("weight_decay", 1e-4)),
         grad_clip=float(visible_raw.get("grad_clip", 1.0)),
-        seed=int(visible_raw.get("seed", 2401)),
+        seed=_toml_integer(visible_raw.get("seed", 2401), name="human_visible.seed"),
         allow_legacy_train_identity_resume=legacy_identity_opt_in,
         alpha_sweep_enabled=bool(visible_raw.get("alpha_sweep_enabled", False)),
         alpha_sweep_alphas=_alpha_sweep_grid(visible_raw),
