@@ -30,6 +30,7 @@ from dmdod.planning.pattern_scheduler_v06 import (
     PatternEvent, PatternFirstScheduler, schedule_metrics,
 )
 from dmdod.planning.motor_lead_compensation_v04 import MotorLeadCompensator
+from dmdod.planning.due_event_window_v06 import DueEventWindow
 from dmdod.training.prestige1_autoplay_timing import AutoplayTimingTeacher
 
 
@@ -176,6 +177,7 @@ def run_pattern_arm(segment, *, minimum_reuse_s: float = .080,
     selection_seconds = controller_seconds = 0.0
     selection_peak = controller_peak = 0.0
     selection_calls = controller_calls = 0
+    due_window = DueEventWindow(events)
     maximum = int((segment.duration_s + 2.0) / teacher.CTRL) + 200
     wall_started = time.monotonic()
     step_done = False
@@ -194,14 +196,9 @@ def run_pattern_arm(segment, *, minimum_reuse_s: float = .080,
             for axis in item.axes
         }
         armed = {key: value for key, value in armed.items() if key in live_keys}
-        upcoming = tuple(
-            event for event in events
-            if event.event_index not in selected
-            and event.episode_time_s + teacher.PREVIEW_TAIL >= now
-        )
-        due = tuple(
-            event for event in upcoming
-            if event.episode_time_s <= now + compensator.max_prediction_s + 1e-9
+        due = due_window.due(
+            now, preview_tail_s=teacher.PREVIEW_TAIL,
+            prediction_s=compensator.max_prediction_s, selected=selected,
         )
         for event in due:
             start = time.perf_counter()
