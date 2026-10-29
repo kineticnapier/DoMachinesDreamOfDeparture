@@ -267,3 +267,43 @@ def test_rhythm_cursor_step_results_match_full_scan_reference():
                 break
         else:
             pytest.fail("rhythm episode did not terminate")
+
+
+@pytest.mark.parametrize(
+    "field",
+    (
+        "hit_reward",
+        "xacc_reward",
+        "timing_bonus",
+        "perfect_sigma_fraction",
+        "timing_sigma_s",
+        "miss_penalty",
+        "too_early_penalty",
+        "overload_penalty",
+        "effort_penalty",
+    ),
+)
+@pytest.mark.parametrize("bad", (float("nan"), float("inf"), float("-inf")))
+def test_reward_config_rejects_nonfinite_scales(field, bad):
+    from dmdod.envs.rhythm import RewardConfig
+
+    with pytest.raises(ValueError, match=rf"{field} must be finite"):
+        RewardConfig(**{field: bad})
+
+
+def test_reward_config_preserves_finite_ablation_scales_and_defaults():
+    from dmdod.envs.rhythm import RewardConfig
+
+    assert RewardConfig().timing_sigma_s is None
+    config = RewardConfig(
+        hit_reward=-0.5,
+        miss_penalty=-0.25,
+        too_early_penalty=-0.1,
+        effort_penalty=-0.01,
+        timing_sigma_s=0.01,
+    )
+    assert config.hit_reward == -0.5
+    assert config.miss_penalty == -0.25
+    assert config.too_early_penalty == -0.1
+    assert config.effort_penalty == -0.01
+    assert config.timing_sigma_s == 0.01
