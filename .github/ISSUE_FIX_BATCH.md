@@ -293,3 +293,12 @@ No training, live ADOFAI verification, or performance measurements were performe
 - **Not executed:** repository pytest/integration for v0.6/v0.7/v0.8, frozen-output comparisons, actual physical Motor, training, live ADOFAI, GPU, memory/performance benchmarks.
 - **Unimplemented:** post-run `decisions` × `keydowns` and `judgement_trace` scans; exact numerical/telemetry compatibility and performance gains remain unverified.
 - Intended behavior-preserving selection optimization. Because the v0.8 research runner is shared, do not certify frozen v0.8 results until full before/after replay/telemetry comparisons pass. Keep Issue #2 open, PR #23 Draft and `Refs #2` only.
+
+## Batch follow-up — Refs #2 (2026-10-29)
+
+- The previously unimplemented post-run full scans are now replaced in `scripts/run_dmdogo_v06_pattern_first.py::run_pattern_arm` with `PostrunDiagnosticIndex` from `src/dmdod/planning/postrun_diagnostic_index_v06.py`.
+- The helper indexes KeyDowns by physical axis and time, and TooEarly trace timestamps by target index. It preserves the original axis order, repeated-axis output, nearest-timestamp tie break by original KeyDown order, strict TooEarly timestamp comparison, and diagnostic-only (not scorer) ownership semantics. A widened search window is rechecked with the original `abs(time_ms - due_ms) <= 35.0` predicate for floating-point boundary equivalence.
+- Added `tests/test_postrun_diagnostic_index_v06.py` with three tests covering ties, duplicate axes/ordinals, exact/near boundaries, empty input and 500 randomized old/new comparisons (1,000 KeyDowns, 900 trace rows).
+- **Executed:** isolated local helper test, `PYTHONPATH=src python -m pytest -q tests/test_postrun_diagnostic_index_v06.py` in a temporary standalone directory → **3 passed**. This is NOT repository pytest or a full physical runner replay.
+- **Not executed:** repository-wide or integrated pytest, all three planning modes, before/after frozen replay and telemetry comparison, physical Motor, training, ADOFAI runtime, GPU, memory/performance measurements.
+- Classification: intended behavior-preserving diagnostic performance refactor; actual numerical/telemetry equivalence and speed gains are **not yet established**. Issue #2 remains open and PR #23 remains Draft. Use `Refs #2`, never `Fixes #2` until verified.
