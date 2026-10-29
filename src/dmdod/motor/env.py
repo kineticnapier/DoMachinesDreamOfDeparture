@@ -88,6 +88,8 @@ class MotorEnv:
         body_config = personal_blue_switch_v0_1(same_hand=same_hand)
         self.sim = Simulation(body=TwoFingerBody(config=body_config))
         physics_dt = self.sim.config.dt_s
+        if not isfinite(control_dt_s):
+            raise ValueError("control_dt_s must be finite")
         if control_dt_s < physics_dt:
             raise ValueError("control_dt_s must be at least one physics step")
         substeps = round(control_dt_s / physics_dt)
