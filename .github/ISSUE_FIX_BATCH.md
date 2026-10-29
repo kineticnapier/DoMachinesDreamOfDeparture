@@ -403,3 +403,12 @@ No training, live ADOFAI verification, or performance measurements were performe
 - Regression: `tests/test_training_config.py` commit `5d10a4fcba18a8d2251cf236144291b4c3e8a16d`; 16 settings × 3 nonfinite inputs (48 parameterized cases) plus a finite-boundary compatibility case.
 - Run: `python -m pytest -q tests/test_training_config.py tests/test_human_visible_curriculum.py`.
 - **Not verified:** repository pytest, actual training, checkpoint resume, ADOFAI runtime, GPU and performance/memory measurements were not executed. A standalone Python standard-library TOML/dataclass finite-check smoke check passed 3 cases, not repository tests. Keep Issue #27 open, PR #23 Draft; no `Fixes #27`.
+
+## Audit Hub update — Refs #29: Motor clock finite-value boundary (2026-10-29)
+
+- `src/dmdod/motor/n_key.py::NKeyBody.step` now rejects non-finite `dt_s` before changing any finger or shared-hand state. `NKeyMotorEnv.__init__` validates `control_dt_s` and `physics_dt_s` before substep rounding; `src/dmdod/motor/env.py::MotorEnv.__init__` rejects non-finite control time before rounding.
+- Source commits: `201e3a52484d6b55153b1c54804fa60ee1b7c126`, `d369f66b0f0d304b5bdb7fa0c57cd22729776ac5`. Regression test commits: `90173bea60d5a5882b805be2d785c334305a26bd`, `9927f99c96e04770b2a28a2d71986b9cd27e35ca`; test formatting: `a9bdc3d5ebd70bdc7b73637fdcd7935aadde8ab9`, `9809a08fa05f334172696dfc58bdb72b378bac3f`.
+- 14 new parameterized/individual test cases: N-Key configuration (6), direct N-Key body (3), N-Key finite compatibility (1), 2K control configuration (3), 2K finite compatibility (1). N-Key direct-body cases assert no mutation after rejected clocks.
+- Run: `python -m pytest -q tests/test_n_key_capacity.py tests/test_motor_env.py tests/test_simulator.py`.
+- **Unverified:** repository pytest was not executed because the execution environment cannot resolve github.com to obtain the repository; GitHub Actions has no run for the new work HEAD. Training, real Motor timing, live ADOFAI, checkpoint resume, GPU and performance/memory measurements were not performed.
+- Classification: invalid-input correctness fix, **not** a behavior-preserving refactor for non-finite inputs. Finite control/physics substep rules, motor equations, HUD-only interface, checkpoint schema, and historical research results remain unchanged. Keep parent Issue #29 open, PR #23 Draft, and use `Refs #29` only (never `Fixes #29`).
