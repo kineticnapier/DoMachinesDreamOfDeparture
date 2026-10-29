@@ -5,6 +5,7 @@ import pytest
 from dmdod.four_key_motor import FourKeyAction, FourKeyMotorEnv
 from dmdod.n_key_capacity import CenterFirstNKeyTeacher, calibrate_n_key_press_lead
 from dmdod.n_key_motor import NKeyAction, NKeyMotorEnv, n_key_names, n_key_tiers
+from dmdod.motor.n_key import NKeyBody
 
 
 def test_n_key_layout_is_center_symmetric() -> None:
@@ -294,8 +295,6 @@ def test_capacity_result_matches_legacy_full_tail(monkeypatch) -> None:
         segment, key_count=4, lead_s=0.044, control_dt_s=0.010
     )
     assert actual == expected
-
-from dmdod.motor.n_key import NKeyBody
 
 
 @pytest.mark.parametrize("bad", (float("nan"), float("inf"), float("-inf")))
