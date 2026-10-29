@@ -18,6 +18,12 @@ from dmdod.features.judgement_observer_v01 import (
     JudgementDelta,
     JudgementDeltaStatus,
 )
+from dmdod.planning.judgement_label_orders import (
+    MAX_ORDER_EXPANSIONS,
+    MAX_VISIBLE_EVENTS,
+    bounded_unique_orders,
+    tied_input_orders_exceed_budget,
+)
 from dmdod.planning.judgement_state_estimator_v01 import (
     MotorKeyDownEvidence,
     RepositoryWindowModel,
@@ -436,7 +442,30 @@ class PersistentJudgementStateEstimator:
                 "delta has no attributable display interval",
             )
 
+        # A huge counter increment must not be expanded into a huge tuple.
+        if any(count < 0 for _, count in feedback.deltas):
+            raise ValueError("visible judgement delta cannot be negative")
+        if feedback.total_increment > MAX_VISIBLE_EVENTS:
+            self._set_hypotheses(
+                self._hypotheses, truncation_reason="visible delta too large"
+            )
+            return self._estimate(
+                feedback.observed_at_s,
+                PersistentEstimateStatus.TRUNCATED,
+                "visible delta too large",
+            )
         labels = self._labels(feedback)
+        budget = max(1, MAX_ORDER_EXPANSIONS // max(1, len(self._hypotheses)))
+        label_orders = bounded_unique_orders(labels, limit=budget)
+        if label_orders is None:
+            self._set_hypotheses(
+                self._hypotheses, truncation_reason="visible order budget exceeded"
+            )
+            return self._estimate(
+                feedback.observed_at_s,
+                PersistentEstimateStatus.TRUNCATED,
+                "visible order budget exceeded",
+            )
         lower, upper = feedback.event_interval_s
         compatible: list[PersistentStateHypothesis] = []
         omitted_possible = False
@@ -474,6 +503,19 @@ class PersistentJudgementStateEstimator:
                 len(selected_pending) > 1
                 and len({row.occurred_at_s for row in selected_pending}) == 1
             ):
+                if tied_input_orders_exceed_budget(
+                    len(selected_pending), len(label_orders),
+                    limit=max(1, MAX_ORDER_EXPANSIONS // max(1, len(self._hypotheses))),
+                ):
+                    compatible.append(replace(
+                        hypothesis,
+                        unknown_search_remainder=True,
+                        observation_gaps=_dedupe(hypothesis.observation_gaps + (
+                            "tied KeyDown order budget exceeded",
+                        )),
+                    ))
+                    omitted_possible = True
+                    continue
                 input_orders = permutations(selected_pending)
             else:
                 input_orders = (tuple(selected_pending),)
@@ -482,7 +524,7 @@ class PersistentJudgementStateEstimator:
                     break
                 if len({row.input_id for row in keydown_order}) != len(keydown_order):
                     continue
-                for label_order in set(permutations(labels)):
+                for label_order in label_orders:
                     if generation_capped:
                         break
                     if self.allocation_rule is AllocationRule.REPOSITORY_FIFO:
