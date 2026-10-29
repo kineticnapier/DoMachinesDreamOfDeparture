@@ -80,9 +80,10 @@ class NonBestRestartController:
 
     @classmethod
     def create(cls, *, limit: int) -> "NonBestRestartController":
-        if limit <= 0:
-            raise ValueError("non-best restart limit must be positive")
-        return cls(limit=int(limit))
+        # Do not silently truncate fractional limits or accept bool as 1.
+        if type(limit) is not int or limit <= 0:
+            raise ValueError("non-best restart limit must be a positive integer")
+        return cls(limit=limit)
 
     def observe(self, *, selected_best: bool) -> bool:
         """Return True when exploration should restart from the selected best."""
