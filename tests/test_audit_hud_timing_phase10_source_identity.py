@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from pathlib import Path
 import subprocess
+import sys
 
 from scripts.audit_hud_timing_phase10_source_identity_v01 import (
     _forecast_differences,
@@ -41,10 +42,11 @@ def test_difference_audit_isolates_only_reconciled_countdown_alias():
 def test_cli_help_starts_from_repository_root():
     completed = subprocess.run(
         [
-            str(Path(".venv/Scripts/python.exe")),
+            sys.executable,
             "scripts/audit_hud_timing_phase10_source_identity_v01.py",
             "--help",
         ],
+        cwd=Path(__file__).resolve().parents[1],
         check=False,
         capture_output=True,
         text=True,
