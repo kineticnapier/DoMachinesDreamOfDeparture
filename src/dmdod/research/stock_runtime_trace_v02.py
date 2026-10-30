@@ -92,7 +92,7 @@ def parse_runtime_jsonl_v02(lines: Iterable[str]) -> tuple[TraceSession, ...]:
             raise ValueError(f"line {line_number}: object required")
         if row.get("type") == "stock_runtime_probe_header":
             finish()
-            if not str(row.get("session_id", "")):
+            if type(row.get("session_id")) is not str or not row["session_id"]:
                 raise ValueError(f"line {line_number}: header session_id required")
             header = row
             continue
@@ -102,8 +102,11 @@ def parse_runtime_jsonl_v02(lines: Iterable[str]) -> tuple[TraceSession, ...]:
         missing = [name for name in required if name not in row]
         if missing:
             raise ValueError(f"line {line_number}: missing {','.join(missing)}")
-        if str(row["session_id"]) != str(header["session_id"]):
+        if type(row["session_id"]) is not str or row["session_id"] != header["session_id"]:
             raise ValueError(f"line {line_number}: session mismatch")
+        if (type(row["kind"]) is not str or not row["kind"]
+                or type(row["hook"]) is not str or not row["hook"]):
+            raise ValueError(f"line {line_number}: invalid kind/hook types")
         # Do not silently coerce malformed trace metadata: bool("false") is
         # True, int(1.5) truncates, and bool is also an int in Python.
         sequence, frame, timestamp = row["sequence"], row["frame"], row["realtime_s"]
@@ -111,7 +114,10 @@ def parse_runtime_jsonl_v02(lines: Iterable[str]) -> tuple[TraceSession, ...]:
                 or type(timestamp) not in (int, float)
                 or type(row["no_fail"]) is not bool):
             raise ValueError(f"line {line_number}: invalid sequence/frame/time/no_fail types")
-        timestamp = float(timestamp)
+        try:
+            timestamp = float(timestamp)
+        except OverflowError as exc:
+            raise ValueError(f"line {line_number}: invalid sequence/frame/time") from exc
         if sequence < 0 or frame < 0 or not math.isfinite(timestamp):
             raise ValueError(f"line {line_number}: invalid sequence/frame/time")
         if sequence in seen_sequences:
