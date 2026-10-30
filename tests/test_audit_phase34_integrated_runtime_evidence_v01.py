@@ -4,6 +4,8 @@ import importlib.util
 import json
 from pathlib import Path
 
+import pytest
+
 
 ROOT = Path(__file__).resolve().parents[1]
 SCRIPT = ROOT / "scripts" / "audit_phase34_integrated_runtime_evidence_v01.py"
@@ -57,5 +59,65 @@ def test_full_gate_requires_runtime_load_hooks_counter_and_comparison() -> None:
         {"verdict": "RUNTIME_PARITY_CONFIRMED"},
     )
     assert "RUNTIME_TRACE_CAPTURED" in result["verdicts"]
+    assert "STOCK_VISIBLE_FEEDBACK_CONFIRMED" in result["verdicts"]
+    assert "INSUFFICIENT_EVIDENCE" not in result["verdicts"]
+
+
+
+def _complete_evidence(sessions: list[dict]) -> dict:
+    return _load().integrate(
+        {"verdict": "DLL_SIGNATURES_VERIFIED"},
+        {"build": {"success": True}, "runtime_loaded": True, "harmony_hooks_observed": True},
+        {"live_runtime_present": True, "sessions": sessions},
+        {"verdict": "RUNTIME_PARITY_CONFIRMED"},
+    )
+
+
+def test_missing_counter_field_cannot_confirm_visible_feedback() -> None:
+    result = _complete_evidence([{"hook_coverage": ["ShowHitText"]}])
+    assert "STOCK_VISIBLE_FEEDBACK_PARTIAL" in result["verdicts"]
+    assert "INSUFFICIENT_EVIDENCE" in result["verdicts"]
+    assert not result["gates"]["visible_cumulative_counter_hook_present"]
+
+
+@pytest.mark.parametrize(
+    "delay",
+    [None, "UNKNOWN_NOT_HOOKED", "NOT_MEASURED", float("nan"),
+     float("inf"), float("-inf"), -0.01, True],
+)
+def test_unmeasured_or_invalid_counter_delay_cannot_confirm(delay: object) -> None:
+    result = _complete_evidence([{
+        "hook_coverage": ["ShowHitText"],
+        "visible_cumulative_counter_delay": delay,
+    }])
+    assert "STOCK_VISIBLE_FEEDBACK_PARTIAL" in result["verdicts"]
+    assert "INSUFFICIENT_EVIDENCE" in result["verdicts"]
+    assert not result["gates"]["visible_cumulative_counter_hook_present"]
+
+
+def test_hit_text_and_counter_from_different_sessions_do_not_confirm() -> None:
+    result = _complete_evidence([
+        {"hook_coverage": ["ShowHitText"],
+         "visible_cumulative_counter_delay": "UNKNOWN_NOT_HOOKED"},
+        {"hook_coverage": [], "visible_cumulative_counter_delay": 0.01},
+    ])
+    assert result["gates"]["visible_hit_text_signal_present"]
+    assert result["gates"]["visible_cumulative_counter_hook_present"]
+    assert "STOCK_VISIBLE_FEEDBACK_PARTIAL" in result["verdicts"]
+    assert "INSUFFICIENT_EVIDENCE" in result["verdicts"]
+
+
+def test_counter_without_hit_text_does_not_complete_runtime_gate() -> None:
+    result = _complete_evidence([
+        {"hook_coverage": [], "visible_cumulative_counter_delay": 0.01},
+    ])
+    assert "STOCK_VISIBLE_FEEDBACK_PARTIAL" in result["verdicts"]
+    assert "INSUFFICIENT_EVIDENCE" in result["verdicts"]
+
+
+def test_zero_measured_delay_in_same_session_is_valid() -> None:
+    result = _complete_evidence([
+        {"hook_coverage": ["ShowHitText"], "visible_cumulative_counter_delay": 0.0},
+    ])
     assert "STOCK_VISIBLE_FEEDBACK_CONFIRMED" in result["verdicts"]
     assert "INSUFFICIENT_EVIDENCE" not in result["verdicts"]
