@@ -90,7 +90,7 @@ def validate_bundle(tmp_path,edit=None):
     if edit:edit(r,s)
     stored(out,sp,r,s)
     return h15.validate_result(
-        r,s,result_path=out,status_path=sp,
+        r["candidate_id"],r,s,result_path=out,status_path=sp,
         pinned_digest=None,hashes=hashes,
         frozen_digest="f"*64,evidence=evidence)
 
@@ -148,7 +148,7 @@ def test_status_digest_mismatch_is_rejected(tmp_path):
     sp.write_text(json.dumps(s),encoding="utf-8")
     with pytest.raises(ValueError,match="status/result digest"):
         h15.validate_result(
-            r,s,result_path=out,status_path=sp,
+            r["candidate_id"],r,s,result_path=out,status_path=sp,
             pinned_digest=None,hashes=hashes,
             frozen_digest="f"*64,evidence=evidence)
 
@@ -158,7 +158,7 @@ def test_historical_pilot_pin_mismatch_is_rejected(tmp_path):
     stored(out,sp,r,s)
     with pytest.raises(ValueError,match="pilot digest changed"):
         h15.validate_result(
-            r,s,result_path=out,status_path=sp,
+            r["candidate_id"],r,s,result_path=out,status_path=sp,
             pinned_digest="0"*64,hashes=hashes,
             frozen_digest="f"*64,evidence=evidence)
 
