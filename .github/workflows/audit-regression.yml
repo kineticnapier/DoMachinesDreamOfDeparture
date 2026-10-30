@@ -456,3 +456,14 @@ jobs:
             tests/test_audit_hud_timing_phase15_checkpoint_v01.py::test_report_writer_never_overwrites_existing_evidence \
             tests/test_diagnose_hud_v14_saved_integration_v02.py \
             tests/test_audit_phase30_dll_signatures_v01.py
+
+      # Seventeenth CPU batch: preserved historical report contracts and
+      # fail-closed runtime evidence gates. No Train chart or live DLL needed.
+      - name: Run report-only runtime evidence and causal safety regression tests
+        run: |
+          python -m pytest -q \
+            tests/test_audit_phase34_integrated_runtime_evidence_v01.py \
+            tests/test_audit_hold_h8_release_v01.py \
+            tests/test_audit_hud_timing_phase14_twirl_v01.py::test_phase14_audit_keeps_truth_out_of_policy_capture_source \
+            tests/test_audit_phase23_predictive_timing_observability_v01.py::test_student_primitive_has_no_chart_or_scorer_identity_api \
+            tests/test_audit_setspeed_observability_v01.py::test_stock_speed_icon_matches_dll_categories
