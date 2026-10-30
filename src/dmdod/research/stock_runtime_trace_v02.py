@@ -104,7 +104,14 @@ def parse_runtime_jsonl_v02(lines: Iterable[str]) -> tuple[TraceSession, ...]:
             raise ValueError(f"line {line_number}: missing {','.join(missing)}")
         if str(row["session_id"]) != str(header["session_id"]):
             raise ValueError(f"line {line_number}: session mismatch")
-        sequence, frame, timestamp = int(row["sequence"]), int(row["frame"]), float(row["realtime_s"])
+        # Do not silently coerce malformed trace metadata: bool("false") is
+        # True, int(1.5) truncates, and bool is also an int in Python.
+        sequence, frame, timestamp = row["sequence"], row["frame"], row["realtime_s"]
+        if (type(sequence) is not int or type(frame) is not int
+                or type(timestamp) not in (int, float)
+                or type(row["no_fail"]) is not bool):
+            raise ValueError(f"line {line_number}: invalid sequence/frame/time/no_fail types")
+        timestamp = float(timestamp)
         if sequence < 0 or frame < 0 or not math.isfinite(timestamp):
             raise ValueError(f"line {line_number}: invalid sequence/frame/time")
         if sequence in seen_sequences:
@@ -120,7 +127,7 @@ def parse_runtime_jsonl_v02(lines: Iterable[str]) -> tuple[TraceSession, ...]:
         known = {"type", "session_id", "sequence", "frame", "realtime_s", "kind", "no_fail", "hook"}
         events.append(TraceEvent(
             str(row["session_id"]), sequence, frame, timestamp, str(row["kind"]),
-            bool(row["no_fail"]), str(row["hook"]),
+            row["no_fail"], str(row["hook"]),
             tuple(sorted((key, value) for key, value in row.items() if key not in known)),
         ))
         seen_sequences.add(sequence)
