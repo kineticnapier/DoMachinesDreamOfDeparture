@@ -276,7 +276,7 @@ def test_windows_and_posix_separators_for_same_trace_are_accepted() -> None:
     reports = _matching_reports([{
         "hook_coverage": ["ShowHitText"], "visible_cumulative_counter_delay": 0.01,
     }])
-    reports[3]["runtime"] = "traces\\\\live.jsonl"
+    reports[3]["runtime"] = "traces\\live.jsonl"
     result = _load().integrate(*reports)
     assert "RUNTIME_PARITY_CONFIRMED" in result["verdicts"]
     assert "INSUFFICIENT_EVIDENCE" not in result["verdicts"]
