@@ -134,12 +134,23 @@ def test_local_replan_is_not_exact_plan(tmp_path):
     (lambda r,s:r["stats"].update({"hits":4}),"scorer"),
     (lambda r,s:r.update({"alternate_motor_executed":False}),"provenance"),
     (lambda r,s:r["physical"].update({"local_replans":2}),"selection counters"),
-    (lambda r,s:s.update({"output_sha256":"0"*64}),"digest"),
     (lambda r,s:r["decisions"][2].update({"event_index":1}),"desired-axis"),
 ])
 def test_tampering_is_never_a_success(tmp_path,edit,pattern):
     with pytest.raises(ValueError,match=pattern):
         validate_bundle(tmp_path,edit)
+
+
+def test_status_digest_mismatch_is_rejected(tmp_path):
+    out,sp,r,s,hashes,evidence=sample_case(tmp_path)
+    stored(out,sp,r,s)
+    s["output_sha256"]="0"*64
+    sp.write_text(json.dumps(s),encoding="utf-8")
+    with pytest.raises(ValueError,match="status/result digest"):
+        h15.validate_result(
+            r,s,result_path=out,status_path=sp,
+            pinned_digest=None,hashes=hashes,
+            frozen_digest="f"*64,evidence=evidence)
 
 
 def test_historical_pilot_pin_mismatch_is_rejected(tmp_path):
