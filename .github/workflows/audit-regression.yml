@@ -183,3 +183,34 @@ jobs:
             tests/test_motion_geometry_env.py \
             tests/test_recovery_probe.py \
             tests/test_planet_perception.py
+
+      # Seventh CPU batch: self-contained synthetic Hold, HUD, Motor, simulator and policy tests.
+      # Historical Train charts, live game and checkpoint replay are intentionally excluded.
+      - name: Run synthetic Hold HUD Motor and policy regression tests
+        run: |
+          python -m pytest -q \
+            tests/test_audit_hold_h7_mesh_v01.py \
+            tests/test_audit_hold_h9_end_to_end_v01.py \
+            tests/test_hold_mesh_observability_v01.py \
+            tests/test_hud_timing_tracker_partial_v11.py \
+            tests/test_jrp_cbpm_anchor_v1.py \
+            tests/test_jrp_cbpm_anchor_v2.py \
+            tests/test_jrp_cbpm_anchor_v3.py \
+            tests/test_real_chart_v062.py \
+            tests/test_real_chart_v063.py \
+            tests/test_real_chart_v064.py \
+            tests/test_real_chart_v065.py \
+            tests/test_real_chart_hud_features.py \
+            tests/test_prestige1_causal_planning_contract.py \
+            tests/test_prestige1_target_contract.py \
+            tests/test_prestige1_failure_diagnostics.py \
+            tests/test_prestige1_finger_phase.py \
+            tests/test_prestige1_autoplay_countdown.py \
+            tests/test_prestige1_autoplay_first_frame_geometry_audit.py \
+            tests/test_prestige1_autoplay_future_events_audit.py \
+            tests/test_prestige1_autoplay_halfturn_audit.py \
+            tests/test_prestige1_autoplay_motor_schedule_audit.py \
+            tests/test_prestige1_autoplay_high_bpm_simulator_audit.py \
+            tests/test_prestige1_autoplay_near_countdown_audit.py \
+            tests/test_prestige1_autoplay_contact_judgement_audit.py \
+            tests/test_prestige1_autoplay_switch_hud_audit.py
