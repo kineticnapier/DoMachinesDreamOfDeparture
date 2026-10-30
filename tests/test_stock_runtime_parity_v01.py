@@ -223,3 +223,62 @@ def test_zero_song_time_is_not_replaced_by_category_timestamp() -> None:
     transitions = extract_runtime_transitions(updated_session)
     assert len(transitions) == 1
     assert transitions[0].song_time_s == 0.0
+
+
+@pytest.mark.parametrize("field,invalid_value", [
+    ("floor_before_evaluator_only", "1"),
+    ("floor_before_evaluator_only", 1.0),
+    ("floor_before_evaluator_only", True),
+    ("floor_after_evaluator_only", "2"),
+    ("floor_after_evaluator_only", 2.0),
+    ("floor_after_evaluator_only", True),
+])
+def test_runtime_floor_payload_rejects_implicit_type_coercion(
+    field: str, invalid_value: object,
+) -> None:
+    """Malformed floor identities must not confirm synthetic qualified-shaped parity."""
+    session, reference = _qualified_one_transition()
+    switch = session.events[2]
+    payload = dict(switch.payload)
+    payload[field] = invalid_value
+    altered = replace(switch, payload=tuple(sorted(payload.items())))
+    session = replace(session, events=session.events[:2] + (altered,) + session.events[3:])
+    result = compare_runtime_to_reference(
+        session, reference, floor_to_target={2: 0},
+        song_time_offset_s=0.011, song_time_tolerance_s=0.0001,
+    )
+    field_name = "floor_before" if field.startswith("floor_before") else "floor_after"
+    assert result["comparisons"][0]["fields"][field_name] == "UNKNOWN"
+    assert result["verdict"] == "RUNTIME_PARITY_UNVERIFIED"
+    assert not result["complete"]
+
+
+@pytest.mark.parametrize("invalid_value", ["3.261", True, float("nan"), float("inf")])
+def test_runtime_song_time_payload_rejects_implicit_type_coercion(
+    invalid_value: object,
+) -> None:
+    """Invalid timestamps cannot be calibrated into a confirmed live comparison."""
+    session, reference = _qualified_one_transition()
+    events = []
+    for event in session.events:
+        payload = dict(event.payload)
+        if "song_time_evaluator_only" in payload:
+            payload["song_time_evaluator_only"] = invalid_value
+        events.append(replace(event, payload=tuple(sorted(payload.items()))))
+    result = compare_runtime_to_reference(
+        replace(session, events=tuple(events)), reference, floor_to_target={2: 0},
+        song_time_offset_s=0.011, song_time_tolerance_s=0.0001,
+    )
+    assert result["comparisons"][0]["fields"]["song_time_s"] == "UNKNOWN"
+    assert result["verdict"] == "RUNTIME_PARITY_UNVERIFIED"
+    assert not result["complete"]
+
+
+def test_runtime_numeric_floor_and_song_time_remain_compatible() -> None:
+    """Real JSON integer floors and numeric song times still match."""
+    session, reference = _qualified_one_transition(song_time_s=3.261)
+    result = compare_runtime_to_reference(
+        session, reference, floor_to_target={2: 0},
+        song_time_offset_s=0.011, song_time_tolerance_s=0.0001,
+    )
+    assert result["verdict"] == "RUNTIME_PARITY_CONFIRMED"
