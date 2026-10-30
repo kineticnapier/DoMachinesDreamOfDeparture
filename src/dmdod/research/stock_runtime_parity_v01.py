@@ -154,6 +154,17 @@ def reference_transitions(phase20c: dict[str, object], *, no_fail: bool) -> tupl
     return tuple(sorted(rows, key=lambda row: float(row["song_time_s"])))
 
 
+def _finite_alignment_number(value: object) -> bool:
+    """Accept finite JSON-style numbers, not booleans or coercible strings."""
+    if type(value) not in (int, float):
+        return False
+    try:
+        return math.isfinite(value)
+    except OverflowError:
+        # Very large Python integers cannot be converted to a finite float.
+        return False
+
+
 def compare_runtime_to_reference(
     session: TraceSession,
     phase20c: dict[str, object],
@@ -170,10 +181,11 @@ def compare_runtime_to_reference(
     if (song_time_offset_s is None) != (song_time_tolerance_s is None):
         raise ValueError("song-time offset and tolerance must be supplied together")
     if song_time_offset_s is not None:
-        if not math.isfinite(song_time_offset_s):
-            raise ValueError("song-time offset must be finite")
-        if not math.isfinite(song_time_tolerance_s) or song_time_tolerance_s < 0:
-            raise ValueError("song-time tolerance must be finite and non-negative")
+        if not _finite_alignment_number(song_time_offset_s):
+            raise ValueError("song-time offset must be a finite number")
+        if (not _finite_alignment_number(song_time_tolerance_s)
+                or song_time_tolerance_s < 0):
+            raise ValueError("song-time tolerance must be a finite non-negative number")
     no_fail_values = {event.no_fail for event in session.events}
     if len(no_fail_values) != 1:
         return {"verdict": "RUNTIME_PARITY_UNVERIFIED", "reason": "session mixes NoFail modes", "comparisons": []}

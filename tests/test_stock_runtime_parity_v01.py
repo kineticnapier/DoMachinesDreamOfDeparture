@@ -201,13 +201,29 @@ def test_qualified_live_missing_song_time_cannot_confirm() -> None:
     {"song_time_offset_s": float("nan"), "song_time_tolerance_s": 0.01},
     {"song_time_offset_s": 0.0, "song_time_tolerance_s": float("inf")},
     {"song_time_offset_s": 0.0, "song_time_tolerance_s": -0.01},
+    {"song_time_offset_s": True, "song_time_tolerance_s": 0.01},
+    {"song_time_offset_s": 0.0, "song_time_tolerance_s": True},
+    {"song_time_offset_s": "0.011", "song_time_tolerance_s": 0.01},
+    {"song_time_offset_s": 0.0, "song_time_tolerance_s": "0.01"},
+    {"song_time_offset_s": 10**400, "song_time_tolerance_s": 0.01},
+    {"song_time_offset_s": 0.0, "song_time_tolerance_s": 10**400},
 ])
-def test_invalid_song_time_alignment_is_rejected(settings: dict[str, float]) -> None:
+def test_invalid_song_time_alignment_is_rejected(settings: dict[str, object]) -> None:
     session, reference = _qualified_one_transition()
     with pytest.raises(ValueError, match="song-time"):
         compare_runtime_to_reference(
             session, reference, floor_to_target={2: 0}, **settings,
         )
+
+
+def test_finite_integer_alignment_parameters_remain_valid() -> None:
+    """Numeric integer offsets/tolerances remain valid for calibrated callers."""
+    session, reference = _qualified_one_transition()
+    result = compare_runtime_to_reference(
+        session, reference, floor_to_target={2: 0},
+        song_time_offset_s=0, song_time_tolerance_s=1,
+    )
+    assert result["verdict"] == "RUNTIME_PARITY_CONFIRMED"
 
 
 def test_zero_song_time_is_not_replaced_by_category_timestamp() -> None:
