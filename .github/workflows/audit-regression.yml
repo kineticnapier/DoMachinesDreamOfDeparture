@@ -307,3 +307,34 @@ jobs:
             tests/test_tuf_dataset_parallel.py \
             tests/test_visualize_real_chart.py \
             tests/test_fingering_continuity_v02.py
+
+      # Eleventh CPU batch: isolated training diagnostics, policy and Motor unit checks.
+      # Tests use synthetic data or temporary paths; no full training or frozen artifacts.
+      - name: Run training diagnostics and policy regression tests
+        run: |
+          python -m pytest -q \
+            tests/test_beta_collection_probe.py \
+            tests/test_beta_training_ablation.py \
+            tests/test_closed_loop_alpha.py \
+            tests/test_extremeeditor_ipc.py \
+            tests/test_four_key_training.py \
+            tests/test_geometry_ppo_accuracy_gate.py \
+            tests/test_geometry_ppo_v034.py \
+            tests/test_geometry_ppo_v036.py \
+            tests/test_geometry_ppo_v037.py \
+            tests/test_geometry_ppo_v038.py \
+            tests/test_geometry_ppo_v039.py \
+            tests/test_geometry_ppo_v040.py \
+            tests/test_geometry_ppo_v041.py \
+            tests/test_geometry_ppo_v042.py \
+            tests/test_geometry_ppo_v043.py \
+            tests/test_prestige1_autoplay_distance_and_ablation.py \
+            tests/test_prestige1_global_annealing.py \
+            tests/test_prestige1_phase_annealing.py \
+            tests/test_prestige1_pulse_annealing.py \
+            tests/test_prestige1_stage_a_v2.py \
+            tests/test_prestige1_transfer.py \
+            tests/test_n_key_dagger.py \
+            tests/test_n_key_dagger_continuation.py \
+            tests/test_n_key_continuous_dagger.py \
+            tests/test_n_key_continuous_trust_dagger.py
