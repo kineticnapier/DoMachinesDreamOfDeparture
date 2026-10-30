@@ -65,6 +65,19 @@ def _unique_json_object(pairs: list[tuple[str, object]]) -> dict[str, object]:
     return result
 
 
+def _finite_json_float(raw: str) -> float:
+    """Reject overflowing JSON numbers before they become evidence payloads."""
+    value = float(raw)
+    if not math.isfinite(value):
+        raise ValueError(f"non-finite JSON number: {raw}")
+    return value
+
+
+def _reject_json_constant(raw: str) -> None:
+    """Python accepts NaN/Infinity by default, but these are not JSON values."""
+    raise ValueError(f"non-standard JSON constant: {raw}")
+
+
 def parse_runtime_jsonl_v02(lines: Iterable[str]) -> tuple[TraceSession, ...]:
     sessions: list[TraceSession] = []
     header: dict[str, object] | None = None
@@ -96,7 +109,10 @@ def parse_runtime_jsonl_v02(lines: Iterable[str]) -> tuple[TraceSession, ...]:
         if not raw.strip():
             continue
         try:
-            row = json.loads(raw, object_pairs_hook=_unique_json_object)
+            row = json.loads(
+                raw, object_pairs_hook=_unique_json_object,
+                parse_float=_finite_json_float, parse_constant=_reject_json_constant,
+            )
         except json.JSONDecodeError as exc:
             raise ValueError(f"line {line_number}: invalid JSON") from exc
         except ValueError as exc:
