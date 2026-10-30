@@ -188,3 +188,43 @@ def test_runtime_event_accepts_integer_timestamp_and_boolean_nofail() -> None:
     assert event.no_fail is False
     assert event.sequence == event.frame == 0
     assert event.realtime_s == 0.0
+
+
+@pytest.mark.parametrize("invalid_id", [1, True, ["test"], {"value": "test"}, ""])
+def test_runtime_header_rejects_non_string_session_identity(invalid_id: object) -> None:
+    header = {"type": "stock_runtime_probe_header", "session_id": invalid_id}
+    with pytest.raises(ValueError, match="header session_id required"):
+        parse_runtime_jsonl_v02([json.dumps(header)])
+
+
+@pytest.mark.parametrize("field,invalid_value,error", [
+    ("session_id", 1, "session mismatch"),
+    ("session_id", True, "session mismatch"),
+    ("kind", 1, "invalid kind/hook types"),
+    ("kind", "", "invalid kind/hook types"),
+    ("hook", False, "invalid kind/hook types"),
+    ("hook", "", "invalid kind/hook types"),
+])
+def test_runtime_event_rejects_non_string_identity_and_hook_fields(
+    field: str, invalid_value: object, error: str,
+) -> None:
+    header = {"type": "stock_runtime_probe_header", "session_id": "test"}
+    event = {
+        "type": "event", "session_id": "test", "sequence": 0,
+        "frame": 0, "realtime_s": 0.0, "kind": "frame_begin",
+        "no_fail": False, "hook": "Simulated_PlayerControl_Update",
+    }
+    event[field] = invalid_value
+    with pytest.raises(ValueError, match=error):
+        parse_runtime_jsonl_v02([json.dumps(header), json.dumps(event)])
+
+
+def test_runtime_event_rejects_oversized_integer_timestamp_with_line_number() -> None:
+    header = {"type": "stock_runtime_probe_header", "session_id": "test"}
+    event = {
+        "type": "event", "session_id": "test", "sequence": 0,
+        "frame": 0, "realtime_s": 10 ** 400, "kind": "frame_begin",
+        "no_fail": False, "hook": "Simulated_PlayerControl_Update",
+    }
+    with pytest.raises(ValueError, match=r"line 2: invalid sequence/frame/time"):
+        parse_runtime_jsonl_v02([json.dumps(header), json.dumps(event)])
