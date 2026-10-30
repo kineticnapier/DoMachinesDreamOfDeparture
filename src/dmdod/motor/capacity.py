@@ -259,6 +259,22 @@ def _target_token(target) -> tuple[int, int, float]:
     return (int(target.ordinal), int(target.floor_index), float(target.episode_time_s))
 
 
+def _unresolved_tail(env: NKeyRealChartMotorEnv) -> tuple[tuple[object, float], ...]:
+    """Compatibility oracle view for Stage T's fixed 8K/16K capacity audit.
+
+    This intentionally exposes privileged future targets only to the Motor-only
+    diagnostic. The optimized diagnose_n_key_teacher_capacity path continues
+    to use _due_target_window instead of copying the entire remaining tail.
+    """
+    target = env.privileged_next_target()
+    if target is None:
+        return ()
+    return tuple(
+        (_target_token(future), float(future.episode_time_s))
+        for future in env.segment.targets[int(target.ordinal):]
+    )
+
+
 def _due_target_window(
     segment,
     start: int,
