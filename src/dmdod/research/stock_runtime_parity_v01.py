@@ -80,6 +80,10 @@ def extract_runtime_transitions(
             before = _integer(event.value("floor_before_evaluator_only"))
             after = _integer(event.value("floor_after_evaluator_only"))
             category_event, category = pending_category or (event, None)
+            # A category from an earlier frame is not evidence for this switch.
+            # Without a shared transition ID, do not infer a cross-frame match.
+            if category_event.frame != event.frame:
+                category_event, category = event, None
             is_auto = pending_auto is not None and pending_auto.frame == event.frame
             key_event = pending_keydown if pending_keydown is not None and pending_keydown.frame == event.frame else None
             source = tuple(row.sequence for row in (pending_auto if is_auto else None, key_event, category_event, event) if row is not None)
