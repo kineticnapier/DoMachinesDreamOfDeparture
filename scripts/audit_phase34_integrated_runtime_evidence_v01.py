@@ -3,7 +3,14 @@ from __future__ import annotations
 import argparse
 from datetime import datetime, timezone
 import json
+from math import isfinite
 from pathlib import Path
+
+
+def _has_measured_counter_delay(session: dict) -> bool:
+    """Only a finite non-negative measured delay counts as counter evidence."""
+    delay = session.get("visible_cumulative_counter_delay")
+    return type(delay) in (int, float) and isfinite(delay) and delay >= 0.0
 
 
 def integrate(phase30: dict, phase31: dict, phase32: dict, phase33: dict) -> dict[str, object]:
@@ -25,8 +32,14 @@ def integrate(phase30: dict, phase31: dict, phase32: dict, phase33: dict) -> dic
 
     sessions = phase32.get("sessions", [])
     has_hit_text = any("ShowHitText" in row.get("hook_coverage", []) for row in sessions)
-    has_visible_counter = any(row.get("visible_cumulative_counter_delay") != "UNKNOWN_NOT_HOOKED" for row in sessions)
-    if has_hit_text and has_visible_counter and live_captured:
+    has_visible_counter = any(_has_measured_counter_delay(row) for row in sessions)
+    # Evidence from unrelated sessions cannot establish visible feedback.
+    has_confirmed_visible_feedback = any(
+        "ShowHitText" in row.get("hook_coverage", [])
+        and _has_measured_counter_delay(row)
+        for row in sessions
+    )
+    if has_confirmed_visible_feedback and live_captured:
         verdicts.append("STOCK_VISIBLE_FEEDBACK_CONFIRMED")
     else:
         verdicts.append("STOCK_VISIBLE_FEEDBACK_PARTIAL")
@@ -38,7 +51,7 @@ def integrate(phase30: dict, phase31: dict, phase32: dict, phase33: dict) -> dic
         and phase31.get("harmony_hooks_observed") is True
         and live_captured
         and parity in {"RUNTIME_PARITY_CONFIRMED", "RUNTIME_PARITY_MISMATCH"}
-        and has_visible_counter
+        and has_confirmed_visible_feedback
     )
     if not complete:
         verdicts.append("INSUFFICIENT_EVIDENCE")
