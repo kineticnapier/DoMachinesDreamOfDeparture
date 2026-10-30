@@ -161,7 +161,7 @@ jobs:
             tests/test_audit_bool_second_event_counterfactual_v01.py \
             tests/test_audit_countdown_hud_v3_phase1.py \
             tests/test_audit_countdown_timing_phase2_v01.py \
-            tests/test_audit_hud_timing_phase13_setspeed_v01.py \
+            tests/test_real_chart_v061.py \
             tests/test_hud_timing_tracker_current_speed_v12.py \
             tests/test_jrp_bpm_v1.py \
             tests/test_audit_n_key_bc_actions.py \
