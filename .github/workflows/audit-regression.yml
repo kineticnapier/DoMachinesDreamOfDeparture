@@ -92,3 +92,32 @@ jobs:
             tests/test_contact_timing_hud_v01.py \
             tests/test_hold_motor_overlay_v01.py \
             tests/test_motor_latency_v04.py
+
+      # Existing CPU tests across visible timing, fingering, simulator and research provenance.
+      - name: Run timing motor and reproducibility regression tests
+        run: |
+          python -m pytest -q \
+            tests/test_hud_timing_tracker_v1.py \
+            tests/test_hud_timing_tracker_fullturn_v13.py \
+            tests/test_hud_timing_tracker_midspin_v16.py \
+            tests/test_predictive_timing_observability_v01.py \
+            tests/test_countdown_first_event_v01.py \
+            tests/test_countdown_hud_v3.py \
+            tests/test_fingering_candidate_scores.py \
+            tests/test_fingering_reservation_v04.py \
+            tests/test_motor_lead_compensation_v04.py \
+            tests/test_state_aware_motor_latency_v01.py \
+            tests/test_timing_fingering_contract_v02.py \
+            tests/test_real_chart_v053.py \
+            tests/test_real_chart_v070.py \
+            tests/test_geometry_rhythm_env.py \
+            tests/test_training_architecture.py \
+            tests/test_training_real_chart.py \
+            tests/test_curriculum.py \
+            tests/test_random_connectome_policy.py \
+            tests/test_predictive_recurrent_policy.py \
+            tests/test_recurrent_policy_sequence.py \
+            tests/test_dmdogo_v08_provenance_and_launcher.py \
+            tests/test_dmdogo_v08_execution_audit.py \
+            tests/test_phase31_stock_runtime_probe_source.py \
+            tests/test_audit_hud_timing_phase10_source_identity.py
