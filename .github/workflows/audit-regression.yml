@@ -338,3 +338,34 @@ jobs:
             tests/test_n_key_dagger_continuation.py \
             tests/test_n_key_continuous_dagger.py \
             tests/test_n_key_continuous_trust_dagger.py
+
+      # Twelfth CPU batch: synthetic checks for legacy training and checkpoint contracts.
+      # CUDA-dependent tests skip on CPU; no real training, GPU run or checkpoint replay.
+      - name: Run historical training implementation regression tests
+        run: |
+          python -m pytest -q \
+            tests/test_train_real_chart_v090.py \
+            tests/test_train_real_chart_v090_chunk_gru.py \
+            tests/test_train_real_chart_v090_cuda_bc.py \
+            tests/test_train_real_chart_v090_fast.py \
+            tests/test_train_real_chart_v090_round_accel.py \
+            tests/test_train_real_chart_v090_round_accel_bidir_cuda.py \
+            tests/test_train_real_chart_v090_turbo.py \
+            tests/test_train_real_chart_v100_bootstrap_progress.py \
+            tests/test_train_real_chart_v100_start_micro.py \
+            tests/test_train_real_chart_v110_bootstrap_cuda.py \
+            tests/test_train_real_chart_v110_nonempty_segments.py \
+            tests/test_train_real_chart_v110_rejection_telemetry.py \
+            tests/test_train_real_chart_v110_start_gate.py \
+            tests/test_train_real_chart_v120_bc_guard_overlap.py \
+            tests/test_train_real_chart_v120_guard_wave_accel.py \
+            tests/test_train_real_chart_v120_train_preserve.py \
+            tests/test_train_real_chart_v130_aggregate_xacc.py \
+            tests/test_train_real_chart_v150_four_key_bootstrap.py \
+            tests/test_train_real_chart_v160_n_key_bootstrap.py \
+            tests/test_v172_reject_early_stop.py \
+            tests/test_v180_microstep_dagger.py \
+            tests/test_v181_sgd_microstep_dagger.py \
+            tests/test_v190_actor_action_trust_dagger.py \
+            tests/test_v191_budgeted_action_trust_dagger.py \
+            tests/test_onset_ablation.py
