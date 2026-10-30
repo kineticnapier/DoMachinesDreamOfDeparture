@@ -54,6 +54,17 @@ class TraceSession:
         return self.evidence_kind == "live_runtime"
 
 
+
+def _unique_json_object(pairs: list[tuple[str, object]]) -> dict[str, object]:
+    """Reject duplicate JSON keys, including inside evaluator-only payloads."""
+    result: dict[str, object] = {}
+    for key, value in pairs:
+        if key in result:
+            raise ValueError(f"duplicate JSON key: {key}")
+        result[key] = value
+    return result
+
+
 def parse_runtime_jsonl_v02(lines: Iterable[str]) -> tuple[TraceSession, ...]:
     sessions: list[TraceSession] = []
     header: dict[str, object] | None = None
@@ -85,9 +96,11 @@ def parse_runtime_jsonl_v02(lines: Iterable[str]) -> tuple[TraceSession, ...]:
         if not raw.strip():
             continue
         try:
-            row = json.loads(raw)
+            row = json.loads(raw, object_pairs_hook=_unique_json_object)
         except json.JSONDecodeError as exc:
             raise ValueError(f"line {line_number}: invalid JSON") from exc
+        except ValueError as exc:
+            raise ValueError(f"line {line_number}: {exc}") from exc
         if not isinstance(row, dict):
             raise ValueError(f"line {line_number}: object required")
         if row.get("type") == "stock_runtime_probe_header":
