@@ -71,3 +71,28 @@ def test_checkpoint_format_is_distinct_from_motor_and_timing_students():
     assert network.MAX_EVENTS == 3
     assert network.GOOD_COST_TOLERANCE > 0
     assert network.CONTEXT_DIM == network.MOTOR_FEATURE_DIM + 3 * network.MAX_EVENTS
+
+
+def test_viewer_formats_missing_and_numeric_network_scores():
+    row = {
+        "event_index": 0, "due_ms": 100.0, "axes": ["left_1"],
+        "chosen": "left_1", "teacher_chosen": "left_1",
+        "keydowns": [], "outcome": "Hit",
+        "candidates": [
+            {"finger": "left_1", "network_score": None,
+             "teacher_score": None, "teacher_reason": "unavailable"},
+            {"finger": "right_1", "network_score": 0.125,
+             "teacher_score": 1.5, "teacher_reason": "measured"},
+        ],
+    }
+    result = {
+        "decisions": [row], "hits": 1, "targets": 1,
+        "misses": 0, "too_early": 0, "overloaded": False,
+    }
+    report = {"physical_evaluation": {"cases": [
+        {"bpm": 900.0, "network_v0_1": result},
+    ]}}
+    html = experiment.render_viewer(report)
+    assert "<td>—</td>" in html
+    assert "<td>0.1250</td>" in html
+    assert "<td>1.5</td>" in html
