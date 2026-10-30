@@ -1,0 +1,45 @@
+# Targeted regression checks for the consolidated audit branch.
+# No training, live-game checks, GPU benchmarks, or checkpoint migration.
+name: Audit regression (CPU)
+
+on:
+  push:
+    branches:
+      - work/issue-fix-batch
+  pull_request:
+    branches:
+      - develop/dmdogo
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  audit-regression:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Check out the exact commit under test
+        uses: actions/checkout@v4
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: pip
+      - name: Install package and test dependencies
+        run: python -m pip install -e ".[dev]"
+      - name: Run audit regression tests
+        run: |
+          python -m pytest -q \
+            tests/test_adofai_rules.py \
+            tests/test_training_config.py \
+            tests/test_training_budget.py \
+            tests/test_motor_env.py \
+            tests/test_n_key_capacity.py \
+            tests/test_simulator.py \
+            tests/test_judgement_label_orders.py \
+            tests/test_judgement_state_estimator_v01.py \
+            tests/test_persistent_judgement_state_estimator_v02.py \
+            tests/test_stock_persistent_judgement_state_estimator_v03.py \
+            tests/test_rhythm_env.py \
+            tests/test_real_chart_env.py
