@@ -7,6 +7,7 @@ payloads remain evidence for reference-model comparison only.
 """
 
 from dataclasses import dataclass
+from hashlib import sha256
 import json
 import math
 from pathlib import Path
@@ -135,6 +136,13 @@ def parse_runtime_jsonl_v02(lines: Iterable[str]) -> tuple[TraceSession, ...]:
 
 def load_runtime_jsonl_v02(path: Path) -> tuple[TraceSession, ...]:
     return parse_runtime_jsonl_v02(path.read_text(encoding="utf-8-sig").splitlines())
+
+
+def load_runtime_jsonl_with_sha256_v02(path: Path) -> tuple[tuple[TraceSession, ...], str]:
+    """Parse and hash the exact same input bytes (including any UTF-8 BOM)."""
+    raw = path.read_bytes()
+    sessions = parse_runtime_jsonl_v02(raw.decode("utf-8-sig").splitlines())
+    return sessions, sha256(raw).hexdigest()
 
 
 def audit_trace_sessions(sessions: tuple[TraceSession, ...]) -> dict[str, object]:

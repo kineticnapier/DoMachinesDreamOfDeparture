@@ -5,6 +5,7 @@ from datetime import datetime, timezone
 import json
 from math import isfinite
 from pathlib import Path
+from string import hexdigits
 
 
 def _has_measured_counter_delay(session: dict) -> bool:
@@ -19,6 +20,10 @@ def _has_hit_text(session: dict) -> bool:
     return isinstance(hooks, list) and "ShowHitText" in hooks
 
 
+def _valid_sha256(value: object) -> bool:
+    return isinstance(value, str) and len(value) == 64 and all(char in hexdigits for char in value)
+
+
 def _parity_matches_capture(phase32: dict, phase33: dict) -> bool:
     """Only accept Phase33 comparisons for the exact qualified Phase32 sessions.
 
@@ -31,6 +36,12 @@ def _parity_matches_capture(phase32: dict, phase33: dict) -> bool:
         and isinstance(compared_source, str) and compared_source
         and source.replace("\\", "/") == compared_source.replace("\\", "/")
     ):
+        return False
+
+    capture_hash = phase32.get("input_sha256")
+    parity_hash = phase33.get("runtime_sha256")
+    if not (_valid_sha256(capture_hash) and _valid_sha256(parity_hash)
+            and capture_hash.lower() == parity_hash.lower()):
         return False
 
     captured = phase32.get("sessions")

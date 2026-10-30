@@ -1,6 +1,9 @@
 from __future__ import annotations
 
 import importlib.util
+from hashlib import sha256
+import subprocess
+import sys
 import json
 from pathlib import Path
 
@@ -75,9 +78,11 @@ def _matching_reports(sessions: list[dict]) -> tuple[dict, dict, dict, dict]:
     return (
         {"verdict": "DLL_SIGNATURES_VERIFIED"},
         {"build": {"success": True}, "runtime_loaded": True, "harmony_hooks_observed": True},
-        {"input": "traces/live.jsonl", "all_sessions_complete": True,
+        {"input": "traces/live.jsonl", "input_sha256": "a" * 64,
+         "all_sessions_complete": True,
          "live_runtime_present": True, "sessions": captured},
-        {"runtime": "traces/live.jsonl", "verdict": "RUNTIME_PARITY_CONFIRMED",
+        {"runtime": "traces/live.jsonl", "runtime_sha256": "a" * 64,
+         "verdict": "RUNTIME_PARITY_CONFIRMED",
          "sessions": compared},
     )
 
@@ -280,3 +285,67 @@ def test_windows_and_posix_separators_for_same_trace_are_accepted() -> None:
     result = _load().integrate(*reports)
     assert "RUNTIME_PARITY_CONFIRMED" in result["verdicts"]
     assert "INSUFFICIENT_EVIDENCE" not in result["verdicts"]
+
+
+@pytest.mark.parametrize(
+    "capture_hash, parity_hash",
+    [
+        (None, "a" * 64),
+        ("a" * 64, None),
+        ("a" * 63, "a" * 64),
+        ("not-a-sha256", "not-a-sha256"),
+        ("a" * 64, "b" * 64),
+        ("g" * 64, "g" * 64),
+    ],
+)
+def test_parity_rejects_missing_malformed_or_different_trace_hash(
+    capture_hash: object, parity_hash: object,
+) -> None:
+    reports = _matching_reports([{
+        "hook_coverage": ["ShowHitText"], "visible_cumulative_counter_delay": 0.01,
+    }])
+    reports[2]["input_sha256"] = capture_hash
+    reports[3]["runtime_sha256"] = parity_hash
+    _assert_parity_unverified(reports)
+
+
+def test_matching_case_insensitive_sha256_is_accepted() -> None:
+    reports = _matching_reports([{
+        "hook_coverage": ["ShowHitText"], "visible_cumulative_counter_delay": 0.01,
+    }])
+    reports[2]["input_sha256"] = "abcdef" * 10 + "abcd"
+    reports[3]["runtime_sha256"] = "ABCDEF" * 10 + "ABCD"
+    result = _load().integrate(*reports)
+    assert result["gates"]["reference_comparison_complete"]
+    assert "INSUFFICIENT_EVIDENCE" not in result["verdicts"]
+
+
+def test_phase32_and_phase33_hash_exact_same_trace_bytes(tmp_path: Path) -> None:
+    fixture = ROOT / "tests" / "fixtures" / "phase32-stock-runtime-multisession-synthetic.jsonl"
+    trace = tmp_path / "runtime.jsonl"
+    trace.write_bytes(fixture.read_bytes())
+    phase32_output = tmp_path / "phase32.json"
+    phase33_output = tmp_path / "phase33.json"
+    reference = ROOT / "reports" / "phase20c-frame-stock-state-20261022-r1.json"
+    subprocess.run(
+        [sys.executable, str(ROOT / "scripts" / "audit_phase32_runtime_trace_ingestion_v01.py"),
+         "--input", str(trace), "--output", str(phase32_output)],
+        cwd=ROOT, check=True, capture_output=True, text=True,
+    )
+    subprocess.run(
+        [sys.executable, str(ROOT / "scripts" / "audit_phase33_stock_runtime_parity_v01.py"),
+         "--runtime", str(trace), "--reference", str(reference), "--output", str(phase33_output)],
+        cwd=ROOT, check=True, capture_output=True, text=True,
+    )
+    phase32 = json.loads(phase32_output.read_text(encoding="utf-8"))
+    phase33 = json.loads(phase33_output.read_text(encoding="utf-8"))
+    expected = sha256(trace.read_bytes()).hexdigest()
+    assert phase32["input_sha256"] == expected
+    assert phase33["runtime_sha256"] == expected
+    assert phase32["input"] == phase33["runtime"] == str(trace)
+
+    # Same path but different bytes must not qualify for parity.
+    trace.write_bytes(trace.read_bytes() + b"\n")
+    changed = sha256(trace.read_bytes()).hexdigest()
+    assert changed != expected
+    assert phase32["input_sha256"] != changed

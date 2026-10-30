@@ -6,7 +6,7 @@ import json
 from pathlib import Path
 
 from dmdod.research.stock_runtime_parity_v01 import compare_runtime_to_reference
-from dmdod.research.stock_runtime_trace_v02 import load_runtime_jsonl_v02
+from dmdod.research.stock_runtime_trace_v02 import load_runtime_jsonl_with_sha256_v02
 
 
 def main() -> None:
@@ -32,13 +32,14 @@ def main() -> None:
     floor_map = None
     if args.floor_map:
         floor_map = {int(key): int(value) for key, value in json.loads(args.floor_map.read_text(encoding="utf-8")).items()}
+    sessions, runtime_sha256 = load_runtime_jsonl_with_sha256_v02(args.runtime)
     results = [
         compare_runtime_to_reference(
             session, reference, floor_to_target=floor_map,
             song_time_offset_s=args.song_time_offset_s,
             song_time_tolerance_s=args.song_time_tolerance_s,
         )
-        for session in load_runtime_jsonl_v02(args.runtime)
+        for session in sessions
     ]
     verdicts = {row["verdict"] for row in results}
     verdict = "RUNTIME_PARITY_MISMATCH" if "RUNTIME_PARITY_MISMATCH" in verdicts else ("RUNTIME_PARITY_CONFIRMED" if verdicts == {"RUNTIME_PARITY_CONFIRMED"} else "RUNTIME_PARITY_UNVERIFIED")
@@ -46,7 +47,8 @@ def main() -> None:
         "format": "dmdod-phase33-stock-runtime-parity-v0.1",
         "generated_utc": datetime.now(timezone.utc).isoformat(),
         "verdict": verdict,
-        "runtime": str(args.runtime), "reference": str(args.reference),
+        "runtime": str(args.runtime), "runtime_sha256": runtime_sha256,
+        "reference": str(args.reference),
         "song_time_alignment": {
             "offset_s": args.song_time_offset_s,
             "tolerance_s": args.song_time_tolerance_s,
