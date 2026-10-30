@@ -121,3 +121,34 @@ jobs:
             tests/test_dmdogo_v08_execution_audit.py \
             tests/test_phase31_stock_runtime_probe_source.py \
             tests/test_audit_hud_timing_phase10_source_identity.py
+
+      # Fifth CPU batch: targeted HUD-only, Motor, Hold, training and reproducibility checks.
+      # These tests do not run a training job or alter frozen experimental artifacts.
+      - name: Run additional timing motor and training regression tests
+        run: |
+          python -m pytest -q \
+            tests/test_audit_hud_timing_phase12_midspin_v01.py \
+            tests/test_audit_phase16_event89_causal_v01.py \
+            tests/test_audit_phase17_visible_judgement_v01.py \
+            tests/test_audit_phase18_judgement_state_v01.py \
+            tests/test_fast_motor.py \
+            tests/test_four_key_policy.py \
+            tests/test_hud_timing_tracker_lifecycle_v15.py \
+            tests/test_hud_timing_tracker_checkpoint_v18.py \
+            tests/test_hud_timing_tracker_transition_v14.py \
+            tests/test_hud_timing_tracker_twirl_v17.py \
+            tests/test_hud_v3_composite_forecast_source_v30.py \
+            tests/test_hold_hud_v4.py \
+            tests/test_hold_release_forecast_v01.py \
+            tests/test_hold_release_motor_adapter_v01.py \
+            tests/test_fingering_reservation_v05.py \
+            tests/test_fingering_reservation_v06.py \
+            tests/test_gesture_chunk_planner_v08.py \
+            tests/test_n_key_policy_backend.py \
+            tests/test_n_key_training.py \
+            tests/test_real_chart_v054.py \
+            tests/test_real_chart_v055.py \
+            tests/test_real_chart_v056.py \
+            tests/test_real_chart_v057.py \
+            tests/test_real_chart_v058.py \
+            tests/test_timing_countdown_v3.py
