@@ -369,3 +369,34 @@ jobs:
             tests/test_v190_actor_action_trust_dagger.py \
             tests/test_v191_budgeted_action_trust_dagger.py \
             tests/test_onset_ablation.py
+
+      # Thirteenth CPU batch: synthetic timing, Motor, fingering, evaluation and
+      # replay-contract checks. No fixed Train chart, live game or GPU required.
+      - name: Run synthetic fingering timing and evaluation regression tests
+        run: |
+          python -m pytest -q \
+            tests/test_audit_timing_generalization_phase7_v01.py \
+            tests/test_compare_teacher_student_motion.py \
+            tests/test_diagnose_fingering_causal_failure_v02.py \
+            tests/test_diagnose_hud_v14_failed_cases_v02.py \
+            tests/test_dmdogo_v04_comparison.py \
+            tests/test_dmdogo_v05_comparison.py \
+            tests/test_dmdogo_v08_train_generalization.py \
+            tests/test_eval_real_chart.py \
+            tests/test_eval_v110_strict_dataset.py \
+            tests/test_jrp_cbpm_bridge_physical.py \
+            tests/test_jrp_unseen_split_v2.py \
+            tests/test_swapped_teacher_causality_v062.py \
+            tests/test_fingering_v06_lookahead_debug.py \
+            tests/test_human_phrase_audit_v07.py \
+            tests/test_stage_c_command_divergence_v062.py \
+            tests/test_stage_c_motor_replay_v062.py \
+            tests/test_run_countdown_hud_v3_motor_phase3.py \
+            tests/test_fingering_network_v01.py \
+            tests/test_fingering_network_v011.py \
+            tests/test_fingering_network_v011_comparison.py \
+            tests/test_fingering_release_lead_v011.py \
+            tests/test_fingering_continuity_analysis_v03.py \
+            tests/test_fingering_continuity_comparison_v02.py \
+            tests/test_fingering_continuity_comparison_v03.py \
+            tests/test_fingering_motor_onset_v011.py
