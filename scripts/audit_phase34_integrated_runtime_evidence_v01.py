@@ -19,6 +19,63 @@ def _has_hit_text(session: dict) -> bool:
     return isinstance(hooks, list) and "ShowHitText" in hooks
 
 
+def _parity_matches_capture(phase32: dict, phase33: dict) -> bool:
+    """Only accept Phase33 comparisons for the exact qualified Phase32 sessions.
+
+    This checks report consistency, not the authenticity of a live capture.
+    """
+    source = phase32.get("input")
+    compared_source = phase33.get("runtime")
+    if not (
+        isinstance(source, str) and source
+        and isinstance(compared_source, str) and compared_source
+        and source.replace("\\", "/") == compared_source.replace("\\", "/")
+    ):
+        return False
+
+    captured = phase32.get("sessions")
+    compared = phase33.get("sessions")
+    if not (isinstance(captured, list) and captured
+            and isinstance(compared, list) and len(captured) == len(compared)):
+        return False
+    if phase32.get("all_sessions_complete") is not True:
+        return False
+
+    captured_by_id: dict[str, bool] = {}
+    for row in captured:
+        if not isinstance(row, dict):
+            return False
+        session_id = row.get("session_id")
+        modes = row.get("no_fail_values")
+        if (not isinstance(session_id, str) or not session_id
+                or session_id in captured_by_id
+                or row.get("evidence_kind") != "live_runtime"
+                or modes not in ([True], [False])):
+            return False
+        captured_by_id[session_id] = modes[0]
+
+    seen: set[str] = set()
+    verdicts: set[str] = set()
+    for row in compared:
+        if not isinstance(row, dict):
+            return False
+        session_id = row.get("session_id")
+        verdict = row.get("verdict")
+        if (not isinstance(session_id, str)
+                or session_id not in captured_by_id or session_id in seen
+                or row.get("no_fail") is not captured_by_id[session_id]
+                or row.get("live_qualified") is not True
+                or verdict not in {"RUNTIME_PARITY_CONFIRMED", "RUNTIME_PARITY_MISMATCH"}):
+            return False
+        seen.add(session_id)
+        verdicts.add(verdict)
+
+    expected = ("RUNTIME_PARITY_MISMATCH"
+                if "RUNTIME_PARITY_MISMATCH" in verdicts
+                else "RUNTIME_PARITY_CONFIRMED")
+    return seen == set(captured_by_id) and phase33.get("verdict") == expected
+
+
 def integrate(phase30: dict, phase31: dict, phase32: dict, phase33: dict) -> dict[str, object]:
     verdicts: list[str] = []
     signature = phase30.get("verdict")
@@ -35,7 +92,8 @@ def integrate(phase30: dict, phase31: dict, phase32: dict, phase33: dict) -> dic
     if live_captured:
         verdicts.append("RUNTIME_TRACE_CAPTURED")
     parity = phase33.get("verdict", "RUNTIME_PARITY_UNVERIFIED")
-    if parity not in {"RUNTIME_PARITY_CONFIRMED", "RUNTIME_PARITY_MISMATCH"}:
+    if (parity not in {"RUNTIME_PARITY_CONFIRMED", "RUNTIME_PARITY_MISMATCH"}
+            or not _parity_matches_capture(phase32, phase33)):
         parity = "RUNTIME_PARITY_UNVERIFIED"
     verdicts.append(parity)
 
