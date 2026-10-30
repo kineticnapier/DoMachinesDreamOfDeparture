@@ -13,6 +13,12 @@ def _has_measured_counter_delay(session: dict) -> bool:
     return type(delay) in (int, float) and isfinite(delay) and delay >= 0.0
 
 
+def _has_hit_text(session: dict) -> bool:
+    """Require an exact hook name from the Phase32 hook list."""
+    hooks = session.get("hook_coverage")
+    return isinstance(hooks, list) and "ShowHitText" in hooks
+
+
 def integrate(phase30: dict, phase31: dict, phase32: dict, phase33: dict) -> dict[str, object]:
     verdicts: list[str] = []
     signature = phase30.get("verdict")
@@ -22,7 +28,10 @@ def integrate(phase30: dict, phase31: dict, phase32: dict, phase33: dict) -> dic
         verdicts.append("RUNTIME_TRACE_MOD_BUILT")
     verdicts.append("RUNTIME_TRACE_MOD_UNVERIFIED")
 
-    live_captured = bool(phase32.get("live_runtime_present"))
+    sessions = phase32.get("sessions", [])
+    live_sessions = [row for row in sessions if row.get("evidence_kind") == "live_runtime"]
+    # An aggregate flag alone cannot turn synthetic evidence into live evidence.
+    live_captured = phase32.get("live_runtime_present") is True and bool(live_sessions)
     if live_captured:
         verdicts.append("RUNTIME_TRACE_CAPTURED")
     parity = phase33.get("verdict", "RUNTIME_PARITY_UNVERIFIED")
@@ -30,14 +39,12 @@ def integrate(phase30: dict, phase31: dict, phase32: dict, phase33: dict) -> dic
         parity = "RUNTIME_PARITY_UNVERIFIED"
     verdicts.append(parity)
 
-    sessions = phase32.get("sessions", [])
-    has_hit_text = any("ShowHitText" in row.get("hook_coverage", []) for row in sessions)
-    has_visible_counter = any(_has_measured_counter_delay(row) for row in sessions)
-    # Evidence from unrelated sessions cannot establish visible feedback.
+    has_hit_text = any(_has_hit_text(row) for row in live_sessions)
+    has_visible_counter = any(_has_measured_counter_delay(row) for row in live_sessions)
+    # The visible signals must be measured together in a live session.
     has_confirmed_visible_feedback = any(
-        "ShowHitText" in row.get("hook_coverage", [])
-        and _has_measured_counter_delay(row)
-        for row in sessions
+        _has_hit_text(row) and _has_measured_counter_delay(row)
+        for row in live_sessions
     )
     if has_confirmed_visible_feedback and live_captured:
         verdicts.append("STOCK_VISIBLE_FEEDBACK_CONFIRMED")
