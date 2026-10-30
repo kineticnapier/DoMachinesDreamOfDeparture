@@ -276,3 +276,34 @@ jobs:
             tests/test_prestige1_alignment_audit.py \
             tests/test_replay_hud_v14_scorer_routing_v02.py \
             tests/test_gesture_chunk_audit_v08.py
+
+      # Tenth CPU batch: synthetic HUD observability, Motor, simulator, inference,
+      # training diagnostics and data handling. No external Train files or live game.
+      - name: Run additional self-contained cross-domain regression tests
+        run: |
+          python -m pytest -q \
+            tests/test_ablation.py \
+            tests/test_audit_hud263_nonidentifiability_v01.py \
+            tests/test_autoplay_sequence_evaluation_v1.py \
+            tests/test_compare_n_key_backends_v169.py \
+            tests/test_continuity_compensated_v05.py \
+            tests/test_counterfactual_intervention_v01.py \
+            tests/test_diagnose_four_key_teacher_capacity.py \
+            tests/test_dmdogo_v09_human_input.py \
+            tests/test_fingering_reservation_counterfactual.py \
+            tests/test_fingering_v061.py \
+            tests/test_geometry_ppo_margin_metrics.py \
+            tests/test_hud_timing_phase11_generalization.py \
+            tests/test_jrp_overlay_diagnostic.py \
+            tests/test_modern_cli.py \
+            tests/test_modern_cli_bootstrap.py \
+            tests/test_modern_cli_dagger.py \
+            tests/test_modern_cli_live.py \
+            tests/test_prestige1_teacher_quality.py \
+            tests/test_real_chart_v070_flat.py \
+            tests/test_real_chart_v080_fast.py \
+            tests/test_smoke_visual_policy_png.py \
+            tests/test_tuf_balanced_dataset.py \
+            tests/test_tuf_dataset_parallel.py \
+            tests/test_visualize_real_chart.py \
+            tests/test_fingering_continuity_v02.py
