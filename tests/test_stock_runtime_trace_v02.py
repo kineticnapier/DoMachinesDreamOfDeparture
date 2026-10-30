@@ -228,3 +228,38 @@ def test_runtime_event_rejects_oversized_integer_timestamp_with_line_number() ->
     }
     with pytest.raises(ValueError, match=r"line 2: invalid sequence/frame/time"):
         parse_runtime_jsonl_v02([json.dumps(header), json.dumps(event)])
+
+
+@pytest.mark.parametrize("raw,expected_line,key", [
+    (
+        '{"type":"stock_runtime_probe_header","session_id":"first","session_id":"second"}',
+        1, "session_id",
+    ),
+    (
+        '{"type":"event","session_id":"test","sequence":0,"sequence":1,'
+        '"frame":0,"realtime_s":0,"kind":"frame_begin","no_fail":false,'
+        '"hook":"Simulated_PlayerControl_Update"}',
+        2, "sequence",
+    ),
+    (
+        '{"type":"event","session_id":"test","sequence":0,'
+        '"frame":0,"realtime_s":0,"kind":"frame_begin",'
+        '"no_fail":false,"no_fail":true,"hook":"Simulated_PlayerControl_Update"}',
+        2, "no_fail",
+    ),
+    (
+        '{"type":"event","session_id":"test","sequence":0,'
+        '"frame":0,"realtime_s":0,"kind":"frame_begin","no_fail":false,'
+        '"hook":"Simulated_PlayerControl_Update",'
+        '"payload":{"floor_evaluator_only":1,"floor_evaluator_only":2}}',
+        2, "floor_evaluator_only",
+    ),
+])
+def test_runtime_jsonl_rejects_duplicate_keys_at_any_depth(
+    raw: str, expected_line: int, key: str,
+) -> None:
+    """Overwritten fields cannot be promoted into qualified runtime evidence."""
+    header = '{"type":"stock_runtime_probe_header","session_id":"test"}'
+    lines = [raw] if expected_line == 1 else [header, raw]
+    with pytest.raises(ValueError, match=rf"line {expected_line}: duplicate JSON key: {key}"):
+        parse_runtime_jsonl_v02(lines)
