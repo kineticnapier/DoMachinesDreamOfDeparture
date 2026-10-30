@@ -263,3 +263,52 @@ def test_runtime_jsonl_rejects_duplicate_keys_at_any_depth(
     lines = [raw] if expected_line == 1 else [header, raw]
     with pytest.raises(ValueError, match=rf"line {expected_line}: duplicate JSON key: {key}"):
         parse_runtime_jsonl_v02(lines)
+
+
+@pytest.mark.parametrize("raw,expected_line,reason", [
+    ('{"type":"stock_runtime_probe_header","session_id":"test","extra":NaN}',
+     1, "non-standard JSON constant: NaN"),
+    ('{"payload":{"nested":[NaN]}}',
+     2, "non-standard JSON constant: NaN"),
+    ('{"payload":{"floor_evaluator_only":Infinity}}',
+     2, "non-standard JSON constant: Infinity"),
+    ('{"payload":{"floor_evaluator_only":-Infinity}}',
+     2, "non-standard JSON constant: -Infinity"),
+    ('{"payload":{"floor_evaluator_only":1e999}}',
+     2, "non-finite JSON number: 1e999"),
+    ('{"realtime_s":1e999}',
+     2, "non-finite JSON number: 1e999"),
+])
+def test_runtime_jsonl_rejects_nonfinite_numbers_at_any_depth(
+    raw: str, expected_line: int, reason: str,
+) -> None:
+    """Malformed evaluator-only fields must not survive JSON parsing."""
+    header = '{"type":"stock_runtime_probe_header","session_id":"test"}'
+    event = {
+        "type": "event", "session_id": "test", "sequence": 0,
+        "frame": 0, "realtime_s": 0.0, "kind": "frame_begin",
+        "no_fail": False, "hook": "Simulated_PlayerControl_Update",
+    }
+    if expected_line == 1:
+        lines = [raw]
+    else:
+        # Replace the event's specified field with its raw JSON token,
+        # keeping the non-standard token intact rather than json.dumps it.
+        if raw.startswith('{"payload"'):
+            event_text = json.dumps(event)[:-1] + ',' + raw[1:]
+        else:
+            event_text = json.dumps(event).replace('"realtime_s": 0.0', '"realtime_s": 1e999')
+        lines = [header, event_text]
+    with pytest.raises(ValueError, match=f"line {expected_line}: {reason}"):
+        parse_runtime_jsonl_v02(lines)
+
+
+def test_runtime_jsonl_keeps_valid_finite_exponents_in_payload() -> None:
+    header = '{"type":"stock_runtime_probe_header","session_id":"test"}'
+    event = ('{"type":"event","session_id":"test","sequence":0,"frame":0,'
+             '"realtime_s":1e-3,"kind":"frame_begin","no_fail":false,'
+             '"hook":"Simulated_PlayerControl_Update",'
+             '"payload":{"nested":[1e-4,-2.5e2]}}')
+    result = parse_runtime_jsonl_v02([header, event])[0].events[0]
+    assert result.realtime_s == pytest.approx(0.001)
+    assert result.value("payload")["nested"] == pytest.approx([0.0001, -250.0])
