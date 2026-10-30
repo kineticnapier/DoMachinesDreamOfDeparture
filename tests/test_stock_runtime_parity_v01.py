@@ -282,3 +282,38 @@ def test_runtime_numeric_floor_and_song_time_remain_compatible() -> None:
         song_time_offset_s=0.011, song_time_tolerance_s=0.0001,
     )
     assert result["verdict"] == "RUNTIME_PARITY_CONFIRMED"
+
+
+@pytest.mark.parametrize("switch_has_time", [True, False])
+def test_previous_frame_category_cannot_confirm_later_switch(
+    switch_has_time: bool,
+) -> None:
+    """A prior-frame AddHit cannot supply category or fallback time evidence.
+
+    This qualified-shaped test is synthetic, not a real ADOFAI capture.
+    """
+    session, reference = _qualified_one_transition()
+    events = list(session.events)
+    events[0] = replace(events[0], frame=6)
+    events[1] = replace(events[1], frame=6)
+    if not switch_has_time:
+        switch_payload = dict(events[2].payload)
+        del switch_payload["song_time_evaluator_only"]
+        events[2] = replace(events[2], payload=tuple(sorted(switch_payload.items())))
+    session = replace(session, events=tuple(events))
+
+    transition = extract_runtime_transitions(session)[0]
+    assert transition.judgement is None
+    assert events[1].sequence not in transition.source_sequences
+    if not switch_has_time:
+        assert transition.song_time_s is None
+
+    result = compare_runtime_to_reference(
+        session, reference, floor_to_target={2: 0},
+        song_time_offset_s=0.011, song_time_tolerance_s=0.0001,
+    )
+    fields = result["comparisons"][0]["fields"]
+    assert fields["judgement"] == "UNKNOWN"
+    assert fields["song_time_s"] == ("MATCH" if switch_has_time else "UNKNOWN")
+    assert not result["complete"]
+    assert result["verdict"] == "RUNTIME_PARITY_UNVERIFIED"
