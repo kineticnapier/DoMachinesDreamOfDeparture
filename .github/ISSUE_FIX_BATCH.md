@@ -452,3 +452,12 @@ No training, live ADOFAI verification, or performance measurements were performe
 - Run: `python -m pytest -q tests/test_adofai_rules.py tests/test_rhythm_env.py tests/test_real_chart_env.py`.
 - **Repository pytest NOT run**: the local execution container cannot resolve github.com to retrieve the full repository. A separate faithful copy of the affected counter method passed four isolated pytest cases; this is **not** an integrated repository result. No training, live ADOFAI, GPU, checkpoint, performance or memory verification.
 - Classification: invalid-input correctness fix (not pure behavior-preserving for invalid beat deltas). Finite beat recovery, existing negative-value rejection, judgement thresholds, HUD-only inputs, checkpoint schema and frozen research results intentionally unchanged. Parent #30 remains open; PR #23 remains Draft. Use `Refs #30`, not `Fixes`.
+
+
+## Audit Hub update — Refs #32: expanded repository regression coverage (2026-10-30)
+
+- Extended `.github/workflows/audit-regression.yml` with a second pytest step covering 16 existing test files for visible HUD counters, Stock runtime parity/trace, Stock frame/floor transitions, FlyConnectome inference, due-event/post-run indexing, real-chart cursor, TUF ingestion/preflight, curriculum resume, Fingering reservations, timing evaluator, visual perception and ADOFAI chart parsing.
+- Source commit: `078f1a6e8370701b1df8c63087e52cc5606a31b2`. Existing 13-file step remains unchanged; this change only broadens CI test coverage and does not change production algorithms, HUD-only inputs, judgement timing, checkpoint schema or frozen research results.
+- **Real repository GitHub Actions run:** https://github.com/kineticnapier/DoMachinesDreamOfDeparture/actions/runs/40987672173 . Original step **548 passed in 3.38s**; expanded step **232 passed in 3.09s**; both steps and job succeeded (**780 tests across 29 distinct files**).
+- Run locally: `python -m pytest -q` followed by the 29 explicit paths in `.github/workflows/audit-regression.yml`; the entire repository test suite has **not** been executed. No actual training, checkpoint resume, live ADOFAI parity, GPU, performance or memory measurement was run.
+- Related permanent hubs: #28, #29, #30, #31 and #32; existing individual issues remain open pending their own acceptance criteria. PR #23 remains Draft/open. Use `Refs #32`, not `Fixes #32`.
