@@ -1,3 +1,4 @@
+import json
 from pathlib import Path
 
 import pytest
@@ -141,3 +142,49 @@ def test_reverse_lookup_handles_long_synthetic_session_without_tuple_slicing() -
     assert result["keydown_judgement_pairs"][-1]["judgement_sequence"] == 2396
     assert result["auto_transitions"][-1]["next_judgement_sequence"] == 2397
     assert result["hit_text_signal_delays"][-1]["visible_sequence"] == 2399
+
+
+@pytest.mark.parametrize("field,value", [
+    ("no_fail", "false"),
+    ("no_fail", "true"),
+    ("no_fail", 0),
+    ("no_fail", 1),
+    ("sequence", "1"),
+    ("sequence", 1.5),
+    ("sequence", True),
+    ("frame", "2"),
+    ("frame", 2.5),
+    ("frame", False),
+    ("realtime_s", "1.0"),
+    ("realtime_s", True),
+])
+def test_runtime_event_metadata_rejects_implicit_type_coercion(field: str, value: object) -> None:
+    """Malformed JSON types must not silently change NoFail or frame identity."""
+    header = {
+        "type": "stock_runtime_probe_header", "session_id": "test",
+        "evidence_kind": "synthetic_fixture",
+    }
+    event = {
+        "type": "event", "session_id": "test", "sequence": 1,
+        "frame": 2, "realtime_s": 1.0, "kind": "frame_begin",
+        "no_fail": False, "hook": "Simulated_PlayerControl_Update",
+    }
+    event[field] = value
+    with pytest.raises(ValueError, match="invalid sequence/frame/time/no_fail types"):
+        parse_runtime_jsonl_v02([json.dumps(header), json.dumps(event)])
+
+
+def test_runtime_event_accepts_integer_timestamp_and_boolean_nofail() -> None:
+    """Integral JSON timestamps remain valid; no numeric representation is changed."""
+    lines = [
+        json.dumps({"type": "stock_runtime_probe_header", "session_id": "test"}),
+        json.dumps({
+            "type": "event", "session_id": "test", "sequence": 0,
+            "frame": 0, "realtime_s": 0, "kind": "frame_begin",
+            "no_fail": False, "hook": "Simulated_PlayerControl_Update",
+        }),
+    ]
+    event = parse_runtime_jsonl_v02(lines)[0].events[0]
+    assert event.no_fail is False
+    assert event.sequence == event.frame == 0
+    assert event.realtime_s == 0.0
