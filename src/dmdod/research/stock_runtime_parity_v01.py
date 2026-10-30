@@ -40,14 +40,21 @@ class RuntimeTransition:
 
 
 def _integer(value: object) -> int | None:
-    return None if value is None else int(value)
+    # The C# probe emits JSON integers for floor identities. Do not silently
+    # truncate floats or turn booleans/numeric strings into real floor evidence.
+    return value if type(value) is int else None
 
 
 def _song_time(event: TraceEvent) -> float | None:
     value = event.value("song_time_evaluator_only")
-    if value is None:
+    # Only JSON numbers are admissible runtime timestamps. In particular,
+    # float("3.261") would otherwise upgrade a malformed string to evidence.
+    if type(value) not in (int, float):
         return None
-    number = float(value)
+    try:
+        number = float(value)
+    except OverflowError:
+        return None
     return number if math.isfinite(number) else None
 
 
