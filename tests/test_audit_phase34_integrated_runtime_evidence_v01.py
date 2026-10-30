@@ -55,7 +55,7 @@ def test_full_gate_requires_runtime_load_hooks_counter_and_comparison() -> None:
     result = _load().integrate(
         {"verdict": "DLL_SIGNATURES_VERIFIED"},
         {"build": {"success": True}, "runtime_loaded": True, "harmony_hooks_observed": True},
-        {"live_runtime_present": True, "sessions": [{"hook_coverage": ["ShowHitText"], "visible_cumulative_counter_delay": 0.01}]},
+        {"live_runtime_present": True, "sessions": [{"evidence_kind": "live_runtime", "hook_coverage": ["ShowHitText"], "visible_cumulative_counter_delay": 0.01}]},
         {"verdict": "RUNTIME_PARITY_CONFIRMED"},
     )
     assert "RUNTIME_TRACE_CAPTURED" in result["verdicts"]
@@ -68,7 +68,9 @@ def _complete_evidence(sessions: list[dict]) -> dict:
     return _load().integrate(
         {"verdict": "DLL_SIGNATURES_VERIFIED"},
         {"build": {"success": True}, "runtime_loaded": True, "harmony_hooks_observed": True},
-        {"live_runtime_present": True, "sessions": sessions},
+        {"live_runtime_present": True, "sessions": [
+            {"evidence_kind": "live_runtime", **row} for row in sessions
+        ]},
         {"verdict": "RUNTIME_PARITY_CONFIRMED"},
     )
 
@@ -121,3 +123,52 @@ def test_zero_measured_delay_in_same_session_is_valid() -> None:
     ])
     assert "STOCK_VISIBLE_FEEDBACK_CONFIRMED" in result["verdicts"]
     assert "INSUFFICIENT_EVIDENCE" not in result["verdicts"]
+
+
+def test_synthetic_visible_feedback_cannot_substitute_for_live_session() -> None:
+    result = _complete_evidence([
+        {"evidence_kind": "synthetic_fixture", "hook_coverage": ["ShowHitText"],
+         "visible_cumulative_counter_delay": 0.01},
+        {"evidence_kind": "live_runtime", "hook_coverage": ["ProcessKeyInputs"],
+         "visible_cumulative_counter_delay": "UNKNOWN_NOT_HOOKED"},
+    ])
+    assert result["gates"]["live_runtime_trace_captured"]
+    assert not result["gates"]["visible_hit_text_signal_present"]
+    assert not result["gates"]["visible_cumulative_counter_hook_present"]
+    assert "STOCK_VISIBLE_FEEDBACK_CONFIRMED" not in result["verdicts"]
+    assert "INSUFFICIENT_EVIDENCE" in result["verdicts"]
+
+
+def test_synthetic_only_sessions_cannot_be_live_even_with_true_flag() -> None:
+    result = _complete_evidence([
+        {"evidence_kind": "synthetic_fixture", "hook_coverage": ["ShowHitText"],
+         "visible_cumulative_counter_delay": 0.01},
+    ])
+    assert not result["gates"]["live_runtime_trace_captured"]
+    assert "RUNTIME_TRACE_CAPTURED" not in result["verdicts"]
+    assert "STOCK_VISIBLE_FEEDBACK_CONFIRMED" not in result["verdicts"]
+    assert "INSUFFICIENT_EVIDENCE" in result["verdicts"]
+
+
+def test_truthy_string_live_flag_does_not_confirm_runtime() -> None:
+    result = _load().integrate(
+        {"verdict": "DLL_SIGNATURES_VERIFIED"},
+        {"build": {"success": True}, "runtime_loaded": True, "harmony_hooks_observed": True},
+        {"live_runtime_present": "false", "sessions": [
+            {"evidence_kind": "live_runtime", "hook_coverage": ["ShowHitText"],
+             "visible_cumulative_counter_delay": 0.01},
+        ]},
+        {"verdict": "RUNTIME_PARITY_CONFIRMED"},
+    )
+    assert not result["gates"]["live_runtime_trace_captured"]
+    assert "STOCK_VISIBLE_FEEDBACK_CONFIRMED" not in result["verdicts"]
+    assert "INSUFFICIENT_EVIDENCE" in result["verdicts"]
+
+
+def test_hook_coverage_string_substring_is_not_exact_hook_evidence() -> None:
+    result = _complete_evidence([
+        {"hook_coverage": "not-ShowHitText", "visible_cumulative_counter_delay": 0.01},
+    ])
+    assert not result["gates"]["visible_hit_text_signal_present"]
+    assert "STOCK_VISIBLE_FEEDBACK_CONFIRMED" not in result["verdicts"]
+    assert "INSUFFICIENT_EVIDENCE" in result["verdicts"]
