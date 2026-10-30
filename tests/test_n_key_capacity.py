@@ -352,3 +352,27 @@ def test_n_key_finite_clock_configuration_preserves_substeps() -> None:
     before = env.reset()
     assert env.step(NKeyAction((0.0,) * 4)).observation == before
 
+
+def test_legacy_oracle_tail_remains_available_for_stage_t() -> None:
+    """Stage T still imports the original privileged oracle helper."""
+    from types import SimpleNamespace
+    from dmdod.motor.capacity import _target_token, _unresolved_tail
+
+    targets = tuple(
+        SimpleNamespace(ordinal=i, floor_index=i + 1, episode_time_s=i * 0.1)
+        for i in range(4)
+    )
+    segment = SimpleNamespace(targets=targets)
+    env = SimpleNamespace(
+        segment=segment,
+        privileged_next_target=lambda: targets[2],
+    )
+    assert _unresolved_tail(env) == tuple(
+        (_target_token(target), float(target.episode_time_s))
+        for target in targets[2:]
+    )
+    empty_env = SimpleNamespace(
+        segment=segment,
+        privileged_next_target=lambda: None,
+    )
+    assert _unresolved_tail(empty_env) == ()
