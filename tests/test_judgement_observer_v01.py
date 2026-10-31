@@ -207,3 +207,38 @@ def test_integer_clock_values_remain_valid_for_hud_observation():
     assert delta.status is JudgementDeltaStatus.DELTA
     assert delta.delta_map["perfect"] == 1
     assert delta.event_interval_s == (1.0, 2.0)
+
+
+@pytest.mark.parametrize(
+    "bad_rows",
+    [
+        None,
+        7,
+        (("perfect", 0), ("very_late", 0), ("too_early",)),
+        (("perfect", 0), ("very_late", 0), 7),
+        (("perfect", 0), ("very_late", 0), ("too_early", 0, 1)),
+        (("perfect", 0), None, ("too_early", 0)),
+    ],
+)
+def test_direct_frame_malformed_counter_rows_fail_closed_and_reset(bad_rows):
+    observer = JudgementObserver(LABELS)
+    assert observer.observe(frame(0.0, dict.fromkeys(LABELS, 0))).status is JudgementDeltaStatus.BASELINE
+    malformed = JudgementCounterFrame(
+        observed_at_s=0.1,
+        displayed_at_s=0.1,
+        counters=bad_rows,
+    )
+    invalid = observer.observe(malformed)
+    assert invalid.status is JudgementDeltaStatus.INVALID
+    assert invalid.delta_available is False
+    assert invalid.deltas == ()
+    # Do not manufacture a delta across a malformed capture.
+    resumed = observer.observe(frame(0.2, dict.fromkeys(LABELS, 1)))
+    assert resumed.status is JudgementDeltaStatus.BASELINE
+
+
+def test_direct_frame_generator_pairs_remain_supported():
+    observer = JudgementObserver(LABELS)
+    rows = ((label, 0) for label in LABELS)
+    direct = JudgementCounterFrame(observed_at_s=0.0, displayed_at_s=0.0, counters=rows)
+    assert observer.observe(direct).status is JudgementDeltaStatus.BASELINE
