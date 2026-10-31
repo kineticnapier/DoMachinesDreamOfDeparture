@@ -498,3 +498,40 @@ def test_reference_automatic_miss_boolean_false_keeps_parity() -> None:
     )
     assert result["comparisons"][0]["fields"]["kind"] == "MATCH"
     assert result["verdict"] == "RUNTIME_PARITY_CONFIRMED"
+
+
+@pytest.mark.parametrize("invalid_judgement", [
+    ["Perfect"],
+    ["perfect"],
+    ["TooEarly"],
+    True,
+    1,
+    {"value": "Perfect"},
+])
+def test_runtime_judgement_requires_json_string(invalid_judgement: object) -> None:
+    """Malformed evaluator-only categories cannot confirm Stock parity.
+
+    A Python list containing "Perfect" previously stringified to
+    "['Perfect']", normalized to "perfect", and matched the reference.
+    These are qualified-shaped synthetic events, not live measurements.
+    """
+    session, reference = _qualified_one_transition()
+    add_hit = session.events[1]
+    payload = dict(add_hit.payload)
+    payload["judgement"] = invalid_judgement
+    session = replace(
+        session,
+        events=session.events[:1] + (
+            replace(add_hit, payload=tuple(sorted(payload.items()))),
+        ) + session.events[2:],
+    )
+    result = compare_runtime_to_reference(
+        session, reference, floor_to_target={2: 0},
+        song_time_offset_s=0.011, song_time_tolerance_s=0.0001,
+    )
+    assert result["live_qualified"]
+    assert result["comparisons"][0]["fields"]["judgement"] == "UNKNOWN"
+    assert result["comparisons"][0]["fields"]["song_time_s"] == "MATCH"
+    assert not result["complete"]
+    assert not result["explicit_mismatch"]
+    assert result["verdict"] == "RUNTIME_PARITY_UNVERIFIED"
