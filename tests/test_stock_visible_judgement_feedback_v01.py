@@ -184,3 +184,33 @@ def test_visible_pending_heap_large_batch_and_reset() -> None:
     assert dict(renderer.capture(0.0).counters) == {"perfect": 0, "very_late": 0}
     renderer.notify(StockJudgementNotification(0.01, "perfect"))
     assert dict(renderer.capture(0.02).counters) == {"perfect": 1, "very_late": 0}
+
+
+@pytest.mark.parametrize("invalid_time", [True, False, "0.1", float("nan"), float("inf"), float("-inf"), 10**1000])
+def test_visible_capture_rejects_malformed_timestamps_without_consuming_pending(invalid_time) -> None:
+    renderer = VisibleCounterRenderer(_contract(fail_miss=False))
+    renderer.notify(StockJudgementNotification(0.05, "perfect"))
+    with pytest.raises(ValueError, match="display timestamp must be a finite number"):
+        renderer.capture(invalid_time)
+    assert dict(renderer.capture(0.1).counters)["perfect"] == 1
+
+
+@pytest.mark.parametrize("invalid_time", [True, False, "0.05", float("nan"), float("inf"), float("-inf"), 10**1000])
+def test_visible_notify_rejects_malformed_timestamps_without_queuing(invalid_time) -> None:
+    renderer = VisibleCounterRenderer(_contract(fail_miss=False))
+    with pytest.raises(ValueError, match="judgement occurrence time must be a finite number"):
+        renderer.notify(StockJudgementNotification(invalid_time, "perfect"))
+    assert dict(renderer.capture(0.1).counters)["perfect"] == 0
+
+
+@pytest.mark.parametrize("invalid_time", [True, "0.01", float("nan"), float("inf"), 10**1000])
+@pytest.mark.parametrize("parameter", ["display_latency_s", "capture_latency_s"])
+def test_visible_renderer_rejects_malformed_latency_parameters(parameter, invalid_time) -> None:
+    with pytest.raises(ValueError, match="latency must be a finite number"):
+        VisibleCounterRenderer(_contract(), **{parameter: invalid_time})
+
+
+def test_visible_renderer_preserves_valid_integer_timestamps() -> None:
+    renderer = VisibleCounterRenderer(_contract(fail_miss=False), display_latency_s=0, capture_latency_s=0)
+    assert renderer.notify(StockJudgementNotification(1, "perfect")).accepted
+    assert dict(renderer.capture(1).counters)["perfect"] == 1
