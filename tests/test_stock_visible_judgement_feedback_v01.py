@@ -214,3 +214,24 @@ def test_visible_renderer_preserves_valid_integer_timestamps() -> None:
     renderer = VisibleCounterRenderer(_contract(fail_miss=False), display_latency_s=0, capture_latency_s=0)
     assert renderer.notify(StockJudgementNotification(1, "perfect")).accepted
     assert dict(renderer.capture(1).counters)["perfect"] == 1
+
+
+@pytest.mark.parametrize("displayed_at_s", [1e308, float.fromhex("0x1.fffffffffffffp+1023")])
+def test_visible_capture_rejects_overflowed_observation_before_consuming_pending(displayed_at_s) -> None:
+    renderer = VisibleCounterRenderer(_contract(fail_miss=False), capture_latency_s=1e308)
+    renderer.notify(StockJudgementNotification(0.05, "perfect"))
+    with pytest.raises(ValueError, match="observation timestamp must be finite"):
+        renderer.capture(displayed_at_s)
+
+    # Failed capture must not advance the episode clock or pop a pending hit.
+    frame = renderer.capture(0.1)
+    assert dict(frame.counters)["perfect"] == 1
+    assert frame.observed_at_s == 1e308
+
+
+def test_visible_capture_keeps_large_but_finite_observation_timestamps() -> None:
+    renderer = VisibleCounterRenderer(_contract(fail_miss=False))
+    renderer.notify(StockJudgementNotification(0.05, "perfect"))
+    frame = renderer.capture(1e308)
+    assert frame.observed_at_s == 1e308
+    assert dict(frame.counters)["perfect"] == 1
