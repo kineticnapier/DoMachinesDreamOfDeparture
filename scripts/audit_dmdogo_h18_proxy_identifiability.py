@@ -209,7 +209,7 @@ def sensitivity(chart):
             "removed_pressure_dimension": ignored,
             "frontier_schedule_count": len(frontier),
             "frontier_alternative_count": sum(
-                x in frontier for x in frontier if not x.startswith("original:")),
+                not x.startswith("original:") for x in frontier),
             "lost_original_frontier_members": sorted(original_nodes - frontier),
             "new_frontier_members": sorted(frontier - original_nodes),
             "changed_comparison_count": sum(transitions.values()),
@@ -282,6 +282,18 @@ def analyze(h17_report, plans, chart_times):
                     x["same_event_axis_assignments"] for x in ties),
                 "tradeoff_pair_count": len(tradeoffs),
                 "cost_prefers_dominated_pair_count": len(conflicts),
+                "cost_conflict_dominance_dimensions": {
+                    k: sum(k in x["strictly_lower_pressure_dimensions"]
+                           for x in conflicts) for k in PRESSURE_KEYS
+                },
+                "tradeoff_first_lower_dimensions": {
+                    k: sum(k in x["first_has_lower_count_on"]
+                           for x in tradeoffs) for k in PRESSURE_KEYS
+                },
+                "tradeoff_second_lower_dimensions": {
+                    k: sum(k in x["second_has_lower_count_on"]
+                           for x in tradeoffs) for k in PRESSURE_KEYS
+                },
                 "dimensions_whose_removal_changes_frontier": [
                     r["removed_pressure_dimension"] for r in sensitivity_rows
                     if r["lost_original_frontier_members"] or r["new_frontier_members"]],
@@ -302,6 +314,13 @@ def analyze(h17_report, plans, chart_times):
                    "tradeoff_pair_count",
                    "cost_prefers_dominated_pair_count",
                )}
+    for field in ("cost_conflict_dominance_dimensions",
+                  "tradeoff_first_lower_dimensions",
+                  "tradeoff_second_lower_dimensions"):
+        overall[field] = {
+            k: sum(c["summary"][field][k] for c in chart_results)
+            for k in PRESSURE_KEYS
+        }
     check(overall["equal_proxy_pair_count"] == h17_report["overall"]["equal_proxy_pair_count"]
           and overall["tradeoff_pair_count"] == h17_report["overall"]["proxy_tradeoff_pair_count"]
           and overall["cost_prefers_dominated_pair_count"]
