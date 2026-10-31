@@ -52,9 +52,11 @@ class VisibleCounterContract:
     ) -> "VisibleCounterContract":
         # A visible contract is a strict boundary: coercing identifiers with
         # str() can make malformed categories appear to be genuine HUD labels.
-        if not labels or any(type(label) is not str or not label for label in labels):
-            raise ValueError("counter labels must be non-empty strings")
+        # Materialize once before validating: a one-shot iterable is
+        # exhausted by any(), otherwise silently producing an empty schema.
         normalized = tuple(labels)
+        if not normalized or any(type(label) is not str or not label for label in normalized):
+            raise ValueError("counter labels must be non-empty strings")
         if len(set(normalized)) != len(normalized):
             raise ValueError("counter labels must be unique")
         if any(
