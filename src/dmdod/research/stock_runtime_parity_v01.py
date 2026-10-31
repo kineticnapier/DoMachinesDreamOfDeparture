@@ -226,10 +226,13 @@ def compare_runtime_to_reference(
                 fields["song_time_s"] = "UNKNOWN"
                 complete = False
             else:
-                try:
-                    expected_time = float(reference_time)
-                except (TypeError, ValueError):
+                # A malformed reference timestamp is not timing evidence.
+                # In particular bool is an int subclass and huge ints may
+                # overflow float conversion; neither may confirm parity.
+                if not _finite_alignment_number(reference_time):
                     expected_time = math.nan
+                else:
+                    expected_time = float(reference_time)
                 if not math.isfinite(expected_time):
                     fields["song_time_s"] = "UNKNOWN"
                     complete = False
