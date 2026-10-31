@@ -14,6 +14,17 @@ from math import isfinite
 from typing import Mapping, Sequence
 
 
+def _finite_clock(value: object) -> float | None:
+    """Accept only finite numeric HUD timestamps without implicit coercion."""
+    if type(value) not in (int, float):
+        return None
+    try:
+        number = float(value)
+    except OverflowError:
+        return None
+    return number if isfinite(number) else None
+
+
 class JudgementDeltaStatus(str, Enum):
     BASELINE = "baseline"
     UNCHANGED = "unchanged"
@@ -46,9 +57,13 @@ class JudgementCounterFrame:
         # Never promote a non-string key into a genuine visible HUD label.
         if any(type(name) is not str or not name for name in counters):
             raise ValueError("counter labels must be non-empty strings")
+        observed = _finite_clock(observed_at_s)
+        displayed = _finite_clock(displayed_at_s)
+        if observed is None or displayed is None:
+            raise ValueError("counter timestamps must be finite numbers")
         return cls(
-            observed_at_s=float(observed_at_s),
-            displayed_at_s=float(displayed_at_s),
+            observed_at_s=observed,
+            displayed_at_s=displayed,
             counters=tuple(counters.items()),
         )
 
@@ -104,18 +119,22 @@ class JudgementObserver:
 
     def _invalid(self, frame: JudgementCounterFrame, reason: str) -> JudgementDelta:
         self.reset()
+        observed = _finite_clock(frame.observed_at_s)
+        displayed = _finite_clock(frame.displayed_at_s)
         return JudgementDelta(
             status=JudgementDeltaStatus.INVALID,
-            observed_at_s=float(frame.observed_at_s),
-            displayed_at_s=float(frame.displayed_at_s),
+            # An invalid direct frame may have a nonnumeric or overflowing
+            # clock. Preserve INVALID without coercing it into a valid time.
+            observed_at_s=observed if observed is not None else float("nan"),
+            displayed_at_s=displayed if displayed is not None else float("nan"),
             reason=reason,
         )
 
     def observe(self, frame: JudgementCounterFrame) -> JudgementDelta:
-        observed = float(frame.observed_at_s)
-        displayed = float(frame.displayed_at_s)
-        if not isfinite(observed) or not isfinite(displayed):
-            return self._invalid(frame, "timestamps must be finite")
+        observed = _finite_clock(frame.observed_at_s)
+        displayed = _finite_clock(frame.displayed_at_s)
+        if observed is None or displayed is None:
+            return self._invalid(frame, "timestamps must be finite numbers")
         if displayed > observed + 1e-12:
             return self._invalid(frame, "display timestamp is later than observation")
         if self._previous_observed_at_s is not None and observed < self._previous_observed_at_s:
