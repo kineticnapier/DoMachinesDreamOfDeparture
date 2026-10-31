@@ -165,7 +165,9 @@ class JudgementObserver:
             if name in raw:
                 return self._invalid(frame, f"duplicate counter label: {name}")
             raw[name] = value
-        if tuple(sorted(raw)) != tuple(sorted(self.labels)):
+        # Both collections contain unique string labels. Check membership in
+        # linear time instead of sorting both sets on every HUD frame.
+        if len(raw) != len(self.labels) or any(label not in raw for label in self.labels):
             return self._invalid(frame, "visible counter schema is missing or changed")
 
         values: list[int] = []
