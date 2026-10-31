@@ -137,7 +137,11 @@ def _toml_float(value: object, *, name: str) -> float:
     """Accept TOML numbers, not booleans or numeric-looking strings."""
     if type(value) not in (int, float):
         raise ValueError(f"{name} must be a TOML number")
-    return float(value)
+    try:
+        return float(value)
+    except OverflowError as exc:
+        # tomllib accepts arbitrarily large integers, which float() cannot.
+        raise ValueError(f"{name} must be finite") from exc
 
 
 def _optional_positive_int(value, *, name: str) -> int | None:
@@ -174,7 +178,10 @@ def _alpha_sweep_grid(raw: dict) -> tuple[float, ...] | None:
         for value in values
     ):
         raise ValueError("human_visible.alpha_sweep_alphas must be a numeric array")
-    alphas = tuple(float(value) for value in values)
+    try:
+        alphas = tuple(float(value) for value in values)
+    except OverflowError as exc:
+        raise ValueError("human_visible.alpha_sweep_alphas must contain finite numbers") from exc
     if (len(alphas) < 2 or alphas[0] != 0.0 or alphas[-1] != 1.0
         or any(not math.isfinite(a) or not 0.0 <= a <= 1.0 for a in alphas)
         or any(b <= a for a, b in zip(alphas, alphas[1:]))):
