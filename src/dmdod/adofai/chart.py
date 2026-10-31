@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import math
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
@@ -45,26 +46,42 @@ def load_adofai(path: str | Path) -> AdoFaiChart:
     return parse_adofai_bytes(source.read_bytes(), source_path=str(source))
 
 
-def parse_adofai_bytes(data: bytes, *, source_path: str = "<memory>") -> AdoFaiChart:
+def _decode_adofai_bytes(data: bytes) -> str:
+    """Decode the same BOM variants accepted by the chart parser."""
     if data.startswith(b"\xef\xbb\xbf"):
-        text = data[3:].decode("utf-8")
-    elif data.startswith(b"\xff\xfe"):
-        text = data[2:].decode("utf-16-le")
-    elif data.startswith(b"\xfe\xff"):
-        text = data[2:].decode("utf-16-be")
-    else:
-        text = data.decode("utf-8")
-    return parse_adofai_text(text, source_path=source_path)
+        return data[3:].decode("utf-8")
+    if data.startswith(b"\xff\xfe"):
+        return data[2:].decode("utf-16-le")
+    if data.startswith(b"\xfe\xff"):
+        return data[2:].decode("utf-16-be")
+    return data.decode("utf-8")
 
 
-def parse_adofai_text(text: str, *, source_path: str = "<memory>") -> AdoFaiChart:
-    # ADOFAI files in the wild are not reliably strict JSON.  In addition to
-    # comments/trailing commas handled by _normalize_loose_json, metadata strings
-    # can contain literal control characters such as tabs/newlines.  Python's
-    # decoder accepts those only with strict=False.
+def _parse_adofai_document_text(text: str) -> dict[str, Any]:
+    # Community charts can contain comments, trailing commas and literal
+    # control characters in strings. Keep one common document decoder for
+    # both dataset intake and the actual chart parser.
     root = json.loads(_normalize_loose_json(text), strict=False)
     if not isinstance(root, dict):
         raise ValueError("ADOFAI root must be a JSON object")
+    return root
+
+
+def parse_adofai_document_bytes(data: bytes) -> dict[str, Any]:
+    """Decode an ADOFAI document without imposing angleData-only support.
+
+    TUF intake also needs to recognize legacy pathData; the later parser
+    compatibility preflight remains responsible for rejecting that format.
+    """
+    return _parse_adofai_document_text(_decode_adofai_bytes(data))
+
+
+def parse_adofai_bytes(data: bytes, *, source_path: str = "<memory>") -> AdoFaiChart:
+    return parse_adofai_text(_decode_adofai_bytes(data), source_path=source_path)
+
+
+def parse_adofai_text(text: str, *, source_path: str = "<memory>") -> AdoFaiChart:
+    root = _parse_adofai_document_text(text)
 
     angle_data = root.get("angleData")
     if not isinstance(angle_data, list):
@@ -220,9 +237,14 @@ def _optional_float_or_none(value: Any) -> float | None:
     if value is None or isinstance(value, bool):
         return None
     try:
-        return float(value)
+        parsed = float(value)
     except (TypeError, ValueError):
         return None
+    # JSON accepts NaN/Infinity and numeric strings can contain them too.
+    # Never pass non-finite chart values into geometry or Stock timing.
+    if not math.isfinite(parsed):
+        raise ValueError(f"ADOFAI numeric value must be finite: {value!r}")
+    return parsed
 
 
 def _optional_int(value: Any) -> int | None:

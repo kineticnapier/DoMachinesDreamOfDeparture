@@ -3,7 +3,88 @@ from __future__ import annotations
 import argparse
 from datetime import datetime, timezone
 import json
+from math import isfinite
 from pathlib import Path
+from string import hexdigits
+
+
+def _has_measured_counter_delay(session: dict) -> bool:
+    """Only a finite non-negative measured delay counts as counter evidence."""
+    delay = session.get("visible_cumulative_counter_delay")
+    return type(delay) in (int, float) and isfinite(delay) and delay >= 0.0
+
+
+def _has_hit_text(session: dict) -> bool:
+    """Require an exact hook name from the Phase32 hook list."""
+    hooks = session.get("hook_coverage")
+    return isinstance(hooks, list) and "ShowHitText" in hooks
+
+
+def _valid_sha256(value: object) -> bool:
+    return isinstance(value, str) and len(value) == 64 and all(char in hexdigits for char in value)
+
+
+def _parity_matches_capture(phase32: dict, phase33: dict) -> bool:
+    """Only accept Phase33 comparisons for the exact qualified Phase32 sessions.
+
+    This checks report consistency, not the authenticity of a live capture.
+    """
+    source = phase32.get("input")
+    compared_source = phase33.get("runtime")
+    if not (
+        isinstance(source, str) and source
+        and isinstance(compared_source, str) and compared_source
+        and source.replace("\\", "/") == compared_source.replace("\\", "/")
+    ):
+        return False
+
+    capture_hash = phase32.get("input_sha256")
+    parity_hash = phase33.get("runtime_sha256")
+    if not (_valid_sha256(capture_hash) and _valid_sha256(parity_hash)
+            and capture_hash.lower() == parity_hash.lower()):
+        return False
+
+    captured = phase32.get("sessions")
+    compared = phase33.get("sessions")
+    if not (isinstance(captured, list) and captured
+            and isinstance(compared, list) and len(captured) == len(compared)):
+        return False
+    if phase32.get("all_sessions_complete") is not True:
+        return False
+
+    captured_by_id: dict[str, bool] = {}
+    for row in captured:
+        if not isinstance(row, dict):
+            return False
+        session_id = row.get("session_id")
+        modes = row.get("no_fail_values")
+        if (not isinstance(session_id, str) or not session_id
+                or session_id in captured_by_id
+                or row.get("evidence_kind") != "live_runtime"
+                or modes not in ([True], [False])):
+            return False
+        captured_by_id[session_id] = modes[0]
+
+    seen: set[str] = set()
+    verdicts: set[str] = set()
+    for row in compared:
+        if not isinstance(row, dict):
+            return False
+        session_id = row.get("session_id")
+        verdict = row.get("verdict")
+        if (not isinstance(session_id, str)
+                or session_id not in captured_by_id or session_id in seen
+                or row.get("no_fail") is not captured_by_id[session_id]
+                or row.get("live_qualified") is not True
+                or verdict not in {"RUNTIME_PARITY_CONFIRMED", "RUNTIME_PARITY_MISMATCH"}):
+            return False
+        seen.add(session_id)
+        verdicts.add(verdict)
+
+    expected = ("RUNTIME_PARITY_MISMATCH"
+                if "RUNTIME_PARITY_MISMATCH" in verdicts
+                else "RUNTIME_PARITY_CONFIRMED")
+    return seen == set(captured_by_id) and phase33.get("verdict") == expected
 
 
 def integrate(phase30: dict, phase31: dict, phase32: dict, phase33: dict) -> dict[str, object]:
@@ -15,18 +96,26 @@ def integrate(phase30: dict, phase31: dict, phase32: dict, phase33: dict) -> dic
         verdicts.append("RUNTIME_TRACE_MOD_BUILT")
     verdicts.append("RUNTIME_TRACE_MOD_UNVERIFIED")
 
-    live_captured = bool(phase32.get("live_runtime_present"))
+    sessions = phase32.get("sessions", [])
+    live_sessions = [row for row in sessions if row.get("evidence_kind") == "live_runtime"]
+    # An aggregate flag alone cannot turn synthetic evidence into live evidence.
+    live_captured = phase32.get("live_runtime_present") is True and bool(live_sessions)
     if live_captured:
         verdicts.append("RUNTIME_TRACE_CAPTURED")
     parity = phase33.get("verdict", "RUNTIME_PARITY_UNVERIFIED")
-    if parity not in {"RUNTIME_PARITY_CONFIRMED", "RUNTIME_PARITY_MISMATCH"}:
+    if (parity not in {"RUNTIME_PARITY_CONFIRMED", "RUNTIME_PARITY_MISMATCH"}
+            or not _parity_matches_capture(phase32, phase33)):
         parity = "RUNTIME_PARITY_UNVERIFIED"
     verdicts.append(parity)
 
-    sessions = phase32.get("sessions", [])
-    has_hit_text = any("ShowHitText" in row.get("hook_coverage", []) for row in sessions)
-    has_visible_counter = any(row.get("visible_cumulative_counter_delay") != "UNKNOWN_NOT_HOOKED" for row in sessions)
-    if has_hit_text and has_visible_counter and live_captured:
+    has_hit_text = any(_has_hit_text(row) for row in live_sessions)
+    has_visible_counter = any(_has_measured_counter_delay(row) for row in live_sessions)
+    # The visible signals must be measured together in a live session.
+    has_confirmed_visible_feedback = any(
+        _has_hit_text(row) and _has_measured_counter_delay(row)
+        for row in live_sessions
+    )
+    if has_confirmed_visible_feedback and live_captured:
         verdicts.append("STOCK_VISIBLE_FEEDBACK_CONFIRMED")
     else:
         verdicts.append("STOCK_VISIBLE_FEEDBACK_PARTIAL")
@@ -38,7 +127,7 @@ def integrate(phase30: dict, phase31: dict, phase32: dict, phase33: dict) -> dic
         and phase31.get("harmony_hooks_observed") is True
         and live_captured
         and parity in {"RUNTIME_PARITY_CONFIRMED", "RUNTIME_PARITY_MISMATCH"}
-        and has_visible_counter
+        and has_confirmed_visible_feedback
     )
     if not complete:
         verdicts.append("INSUFFICIENT_EVIDENCE")

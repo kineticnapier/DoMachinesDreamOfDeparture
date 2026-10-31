@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from math import isfinite
 from typing import Protocol
 
 from dmdod.motor.fast import step_held_exact
@@ -87,6 +88,8 @@ class MotorEnv:
         body_config = personal_blue_switch_v0_1(same_hand=same_hand)
         self.sim = Simulation(body=TwoFingerBody(config=body_config))
         physics_dt = self.sim.config.dt_s
+        if not isfinite(control_dt_s):
+            raise ValueError("control_dt_s must be finite")
         if control_dt_s < physics_dt:
             raise ValueError("control_dt_s must be at least one physics step")
         substeps = round(control_dt_s / physics_dt)
@@ -122,6 +125,8 @@ class MotorEnv:
         )
 
     def step(self, action: MotorAction) -> MotorTransition:
+        if not isfinite(action.left) or not isfinite(action.right):
+            raise ValueError("motor commands must be finite")
         left = max(-1.0, min(1.0, action.left))
         right = max(-1.0, min(1.0, action.right))
         raw_events = step_held_exact(

@@ -10,10 +10,24 @@ identity, target time, or scorer cursor state.
 
 from dataclasses import dataclass
 from enum import Enum
+from heapq import heappop, heappush
 from math import isfinite
 from typing import Mapping, Sequence
 
 from dmdod.features.judgement_observer_v01 import JudgementCounterFrame
+
+
+def _finite_timestamp(value: object, *, name: str) -> float:
+    """Reject non-numeric, boolean and overflowing clock values."""
+    if type(value) not in (int, float):
+        raise ValueError(f"{name} must be a finite number")
+    try:
+        number = float(value)
+    except OverflowError as exc:
+        raise ValueError(f"{name} must be a finite number") from exc
+    if not isfinite(number):
+        raise ValueError(f"{name} must be a finite number")
+    return number
 
 
 class CounterVisibilityEvidence(str, Enum):
@@ -36,18 +50,37 @@ class VisibleCounterContract:
         category_to_label: Mapping[str, str],
         evidence: Mapping[str, CounterVisibilityEvidence],
     ) -> "VisibleCounterContract":
-        normalized = tuple(str(label) for label in labels)
-        if not normalized or len(set(normalized)) != len(normalized):
-            raise ValueError("counter labels must be non-empty and unique")
-        mapping = tuple((str(category), str(label)) for category, label in category_to_label.items())
+        # A visible contract is a strict boundary: coercing identifiers with
+        # str() can make malformed categories appear to be genuine HUD labels.
+        # Materialize once before validating: a one-shot iterable is
+        # exhausted by any(), otherwise silently producing an empty schema.
+        # A plain string is a Sequence[str], but iterating it would create
+        # one counter per character instead of one named visible counter.
+        if isinstance(labels, str):
+            raise ValueError("counter labels must be a sequence of non-empty strings")
+        normalized = tuple(labels)
+        if not normalized or any(type(label) is not str or not label for label in normalized):
+            raise ValueError("counter labels must be non-empty strings")
+        if len(set(normalized)) != len(normalized):
+            raise ValueError("counter labels must be unique")
+        if any(
+            type(category) is not str or not category or type(label) is not str
+            for category, label in category_to_label.items()
+        ):
+            raise ValueError("counter mappings require string categories and labels")
+        mapping = tuple(category_to_label.items())
         if any(label not in normalized for _, label in mapping):
             raise ValueError("every mapped category must reference a visible label")
+        if any(type(category) is not str for category in evidence):
+            raise ValueError("visibility evidence keys must be strings")
         if set(evidence) != {category for category, _ in mapping}:
             raise ValueError("visibility evidence must cover exactly the mapped categories")
+        if any(type(value) is not CounterVisibilityEvidence for value in evidence.values()):
+            raise ValueError("visibility evidence must use CounterVisibilityEvidence values")
         return cls(
             labels=normalized,
             category_to_label=mapping,
-            evidence=tuple((str(category), evidence[str(category)]) for category, _ in mapping),
+            evidence=tuple((category, evidence[category]) for category, _ in mapping),
         )
 
     @property
@@ -86,51 +119,80 @@ class VisibleCounterRenderer:
         display_latency_s: float = 0.0,
         capture_latency_s: float = 0.0,
     ) -> None:
-        if not isfinite(display_latency_s) or display_latency_s < 0.0:
+        display_latency_s = _finite_timestamp(display_latency_s, name="display latency")
+        capture_latency_s = _finite_timestamp(capture_latency_s, name="capture latency")
+        if display_latency_s < 0.0:
             raise ValueError("display latency must be finite and non-negative")
-        if not isfinite(capture_latency_s) or capture_latency_s < 0.0:
+        if capture_latency_s < 0.0:
             raise ValueError("capture latency must be finite and non-negative")
         self.contract = contract
+        # Resolve the immutable contract once: rebuilding its dict on every
+        # notification and frame capture adds unnecessary work at high density.
+        self._category_to_label = contract.mapping
+        # Internal-only and fixture-only categories must never enter the HUD.
+        self._confirmed_categories = frozenset(
+            category for category, evidence in contract.evidence
+            if evidence is CounterVisibilityEvidence.USER_CONFIRMED_VISIBLE
+        )
         self.display_latency_s = float(display_latency_s)
         self.capture_latency_s = float(capture_latency_s)
         self._counters = {label: 0 for label in contract.labels}
-        self._pending: list[StockJudgementNotification] = []
+        # Min-heap by occurrence time, with insertion order for equal times.
+        # This is internal to the renderer; no privileged ordering is exposed.
+        self._pending: list[tuple[float, int, StockJudgementNotification]] = []
+        self._pending_sequence = 0
         self._last_capture_s: float | None = None
 
     def notify(self, event: StockJudgementNotification) -> CounterRenderDiagnostic:
-        if not isfinite(event.occurred_at_s):
-            raise ValueError("judgement occurrence time must be finite")
+        occurred_at_s = _finite_timestamp(event.occurred_at_s, name="judgement occurrence time")
         if isinstance(event.count, bool) or not isinstance(event.count, int) or event.count <= 0:
             raise ValueError("judgement count must be a positive integer")
-        label = self.contract.mapping.get(str(event.category))
+        # Only literal category strings may enter the pending heap. Coercing an
+        # object with __str__ can pass the visibility check but later fail
+        # when capture indexes the original, non-string event.category.
+        if type(event.category) is not str:
+            raise ValueError("judgement category must be a string")
+        label = self._category_to_label.get(event.category)
         if label is None:
             return CounterRenderDiagnostic(False, "category is not in the visible contract", str(event.category), float(event.occurred_at_s))
-        self._pending.append(event)
-        self._pending.sort(key=lambda item: item.occurred_at_s)
+        if str(event.category) not in self._confirmed_categories:
+            return CounterRenderDiagnostic(
+                False,
+                "category has no user-confirmed visibility evidence",
+                str(event.category),
+                float(event.occurred_at_s),
+            )
+        self._pending_sequence += 1
+        heappush(self._pending, (occurred_at_s, self._pending_sequence, event))
         return CounterRenderDiagnostic(True, "queued for visible rendering", str(event.category), float(event.occurred_at_s))
 
     def reset_visible_counters(self) -> None:
         self._counters = {label: 0 for label in self.contract.labels}
         self._pending.clear()
+        self._pending_sequence = 0
+        # A new episode can restart its display clock at zero.
+        # Captures within an episode still reject backward timestamps.
+        self._last_capture_s = None
 
     def capture(self, displayed_at_s: float) -> JudgementCounterFrame:
-        displayed = float(displayed_at_s)
-        if not isfinite(displayed):
-            raise ValueError("display timestamp must be finite")
+        displayed = _finite_timestamp(displayed_at_s, name="display timestamp")
         if self._last_capture_s is not None and displayed < self._last_capture_s:
             raise ValueError("capture timestamp moved backward")
+        # Finite inputs can still overflow when adding capture latency.
+        # Validate before consuming pending events or advancing the clock.
+        observed = displayed + self.capture_latency_s
+        if not isfinite(observed):
+            raise ValueError("observation timestamp must be finite")
         cutoff = displayed - self.display_latency_s
-        remaining: list[StockJudgementNotification] = []
-        mapping = self.contract.mapping
-        for event in self._pending:
-            if event.occurred_at_s <= cutoff + 1e-12:
-                self._counters[mapping[event.category]] += event.count
-            else:
-                remaining.append(event)
-        self._pending = remaining
+        mapping = self._category_to_label
+        # Leave future events in the heap without scanning them each frame.
+        # Keep the original inclusive 1e-12 boundary unchanged.
+        while self._pending and self._pending[0][0] <= cutoff + 1e-12:
+            event = heappop(self._pending)[2]
+            self._counters[mapping[event.category]] += event.count
         self._last_capture_s = displayed
         return JudgementCounterFrame.from_mapping(
-            observed_at_s=displayed + self.capture_latency_s,
+            observed_at_s=observed,
             displayed_at_s=displayed,
             counters=self._counters,
         )

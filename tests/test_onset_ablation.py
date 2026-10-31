@@ -252,7 +252,7 @@ def test_full_pilot_restores_best_and_optimizer_for_each_arm(monkeypatch,tmp_pat
     assert updates==[10,10]
     assert labels[0]==labels[1]
     assert len(traces_seen)==3
-    assert float(model.weight)==3.0
+    assert model.weight.detach().item() == 3.0
     assert all(r["selected_as_best"] is False for r in result["arm_comparison"])
     with pytest.raises(FileExistsError):
         run_onset_learning_ablation(prepared,config,report_path=report)

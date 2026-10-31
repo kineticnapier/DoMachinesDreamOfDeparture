@@ -9,6 +9,7 @@ queued KeyDowns in timestamp/insertion order.
 from __future__ import annotations
 
 from dataclasses import dataclass
+from heapq import heappop, heappush
 import math
 
 from .stock_floor_state_machine import (
@@ -100,7 +101,7 @@ class StockFrameStateMachine:
         self.floor_machine = floor_machine
         self.frame_dt_s = float(frame_dt_s)
         self.phase_s = float(phase_s)
-        self._queue: list[tuple[int, StockQueuedKeyDown]] = []
+        self._queue: list[tuple[float, int, StockQueuedKeyDown]] = []
         self._seen_input_ids: set[str] = set()
         self._sequence = 0
         self._last_frame_index: int | None = None
@@ -116,8 +117,7 @@ class StockFrameStateMachine:
             raise ValueError("cannot queue a KeyDown at or before the last frame")
         self._seen_input_ids.add(keydown.input_id)
         self._sequence += 1
-        self._queue.append((self._sequence, keydown))
-        self._queue.sort(key=lambda row: (row[1].occurred_at_s, row[0]))
+        heappush(self._queue, (keydown.occurred_at_s, self._sequence, keydown))
 
     def update(self, frame_index: int) -> StockFrameUpdate:
         if frame_index < 0:
@@ -129,10 +129,9 @@ class StockFrameStateMachine:
         current_before = self.floor_machine.current_floor
 
         automatic = self.floor_machine.advance(frame_time_s)
-        ready = [row for row in self._queue if row[1].occurred_at_s <= frame_time_s + 1e-12]
-        self._queue = [
-            row for row in self._queue if row[1].occurred_at_s > frame_time_s + 1e-12
-        ]
+        ready: list[StockQueuedKeyDown] = []
+        while self._queue and self._queue[0][0] <= frame_time_s + 1e-12:
+            ready.append(heappop(self._queue)[2])
         processed = tuple(
             StockProcessedKeyDown(
                 keydown=keydown,
@@ -140,7 +139,7 @@ class StockFrameStateMachine:
                     keydown.occurred_at_s
                 ),
             )
-            for _, keydown in ready
+            for keydown in ready
         )
         self._last_frame_index = frame_index
         self._last_frame_time_s = frame_time_s
@@ -159,4 +158,4 @@ class StockFrameStateMachine:
 
     @property
     def pending_keydowns(self) -> tuple[StockQueuedKeyDown, ...]:
-        return tuple(row[1] for row in self._queue)
+        return tuple(row[2] for row in sorted(self._queue))

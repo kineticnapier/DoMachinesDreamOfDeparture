@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from dataclasses import asdict, dataclass
+from dataclasses import asdict, dataclass, fields
 from pathlib import Path
 import tomllib
 import math
@@ -77,6 +77,9 @@ class HumanVisibleConfig:
     weight_decay: float = 1e-4
     grad_clip: float = 1.0
     seed: int = 2401
+    # Explicit opt-in for pre-identity curriculum checkpoints. Never implies
+    # that their historical Train anchors were verified.
+    allow_legacy_train_identity_resume: bool = False
 
     # Optional diagnostic. Does not influence optimization or checkpoint ranking.
     alpha_sweep_enabled: bool = False
@@ -109,10 +112,42 @@ def _section(raw: dict, name: str) -> dict:
     return value
 
 
+def _toml_string(value: object, *, name: str) -> str:
+    """Reject non-string TOML values for paths and other identifiers."""
+    if type(value) is not str:
+        raise ValueError(f"{name} must be a TOML string")
+    return value
+
+
+def _toml_boolean(value: object, *, name: str) -> bool:
+    """Reject non-boolean TOML values instead of relying on truthiness."""
+    if type(value) is not bool:
+        raise ValueError(f"{name} must be boolean")
+    return value
+
+
+def _toml_integer(value: object, *, name: str) -> int:
+    """Reject TOML floats, strings and booleans instead of silently coercing them."""
+    if type(value) is not int:
+        raise ValueError(f"{name} must be an integer")
+    return value
+
+
+def _toml_float(value: object, *, name: str) -> float:
+    """Accept TOML numbers, not booleans or numeric-looking strings."""
+    if type(value) not in (int, float):
+        raise ValueError(f"{name} must be a TOML number")
+    try:
+        return float(value)
+    except OverflowError as exc:
+        # tomllib accepts arbitrarily large integers, which float() cannot.
+        raise ValueError(f"{name} must be finite") from exc
+
+
 def _optional_positive_int(value, *, name: str) -> int | None:
     if value is None:
         return None
-    value = int(value)
+    value = _toml_integer(value, name=name)
     if value <= 0:
         raise ValueError(f"{name} must be positive")
     return value
@@ -143,7 +178,10 @@ def _alpha_sweep_grid(raw: dict) -> tuple[float, ...] | None:
         for value in values
     ):
         raise ValueError("human_visible.alpha_sweep_alphas must be a numeric array")
-    alphas = tuple(float(value) for value in values)
+    try:
+        alphas = tuple(float(value) for value in values)
+    except OverflowError as exc:
+        raise ValueError("human_visible.alpha_sweep_alphas must contain finite numbers") from exc
     if (len(alphas) < 2 or alphas[0] != 0.0 or alphas[-1] != 1.0
         or any(not math.isfinite(a) or not 0.0 <= a <= 1.0 for a in alphas)
         or any(b <= a for a, b in zip(alphas, alphas[1:]))):
@@ -151,12 +189,30 @@ def _alpha_sweep_grid(raw: dict) -> tuple[float, ...] | None:
     return alphas
 
 
+
+def validate_checkpoint_paths(checkpoint: str | Path, output: str | Path) -> None:
+    """Reject overwriting the source checkpoint, including path aliases.
+
+    Only compare resolved paths; retain the caller's original path spelling
+    for checkpoint metadata and relative-to-working-directory behavior.
+    """
+    source = Path(checkpoint).resolve()
+    destination = Path(output).resolve()
+    if source == destination or (
+        source.exists() and destination.exists() and source.samefile(destination)
+    ):
+        raise ValueError(
+            "[run].checkpoint and [run].output refer to the same file; "
+            "choose a separate output checkpoint to preserve the source"
+        )
+
+
 def load_training_config(path: str | Path) -> TrainingConfig:
     path = Path(path)
     with path.open("rb") as handle:
         raw = tomllib.load(handle)
 
-    mode = str(raw.get("mode", "")).strip()
+    mode = _toml_string(raw.get("mode", ""), name="mode").strip()
     if not mode:
         raise ValueError("top-level 'mode' is required")
 
@@ -165,11 +221,12 @@ def load_training_config(path: str | Path) -> TrainingConfig:
     if missing:
         raise ValueError("[run] is missing: " + ", ".join(missing))
     run = RunConfig(
-        dataset=str(run_raw["dataset"]),
-        checkpoint=str(run_raw["checkpoint"]),
-        output=str(run_raw["output"]),
-        device=str(run_raw.get("device", "auto")),
+        dataset=_toml_string(run_raw["dataset"], name="run.dataset"),
+        checkpoint=_toml_string(run_raw["checkpoint"], name="run.checkpoint"),
+        output=_toml_string(run_raw["output"], name="run.output"),
+        device=_toml_string(run_raw.get("device", "auto"), name="run.device"),
     )
+    validate_checkpoint_paths(run.checkpoint, run.output)
 
     data_raw = _section(raw, "data")
     data = DataConfig(
@@ -189,65 +246,70 @@ def load_training_config(path: str | Path) -> TrainingConfig:
 
     trust_raw = _section(raw, "action_trust")
     action_trust = ActionTrustConfig(
-        actor_steps=int(trust_raw.get("actor_steps", 8)),
-        lr=float(trust_raw.get("lr", 3e-4)),
-        stay_coef=float(trust_raw.get("stay_coef", 20.0)),
-        initial_action_rms=float(trust_raw.get("initial_action_rms", 0.01)),
-        min_action_rms=float(trust_raw.get("min_action_rms", 1e-6)),
-        lr_backoffs=int(trust_raw.get("lr_backoffs", 10)),
-        min_lr=float(trust_raw.get("min_lr", 1e-8)),
+        actor_steps=_toml_integer(trust_raw.get("actor_steps", 8), name="action_trust.actor_steps"),
+        lr=_toml_float(trust_raw.get("lr", 3e-4), name="action_trust.lr"),
+        stay_coef=_toml_float(trust_raw.get("stay_coef", 20.0), name="action_trust.stay_coef"),
+        initial_action_rms=_toml_float(trust_raw.get("initial_action_rms", 0.01), name="action_trust.initial_action_rms"),
+        min_action_rms=_toml_float(trust_raw.get("min_action_rms", 1e-6), name="action_trust.min_action_rms"),
+        lr_backoffs=_toml_integer(trust_raw.get("lr_backoffs", 10), name="action_trust.lr_backoffs"),
+        min_lr=_toml_float(trust_raw.get("min_lr", 1e-8), name="action_trust.min_lr"),
     )
 
     budget_raw = _section(raw, "budget")
+    restart_limit = budget_raw.get("max_nonbest_accepts", 3)
+    if type(restart_limit) is not int:
+        raise ValueError("budget.max_nonbest_accepts must be an integer")
     budget = BudgetConfig(
-        hours=float(budget_raw.get("hours", 8.0)),
-        reserve_minutes=float(budget_raw.get("reserve_minutes", 8.0)),
-        max_trials=int(budget_raw.get("max_trials", 10_000)),
-        reject_shrink=float(budget_raw.get("reject_shrink", 0.5)),
-        safe_grow=float(budget_raw.get("safe_grow", 1.25)),
-        max_nonbest_accepts=int(budget_raw.get("max_nonbest_accepts", 3)),
+        hours=_toml_float(budget_raw.get("hours", 8.0), name="budget.hours"),
+        reserve_minutes=_toml_float(budget_raw.get("reserve_minutes", 8.0), name="budget.reserve_minutes"),
+        max_trials=_toml_integer(budget_raw.get("max_trials", 10_000), name="budget.max_trials"),
+        reject_shrink=_toml_float(budget_raw.get("reject_shrink", 0.5), name="budget.reject_shrink"),
+        safe_grow=_toml_float(budget_raw.get("safe_grow", 1.25), name="budget.safe_grow"),
+        max_nonbest_accepts=restart_limit,
     )
 
     probe_raw = _section(raw, "trajectory_probe")
     trajectory_probe = TrajectoryProbeConfig(
-        candidate_action_rms=float(
-            probe_raw.get("candidate_action_rms", 2.5e-5)
-        ),
+        candidate_action_rms=_toml_float(probe_raw.get("candidate_action_rms", 2.5e-5), name="trajectory_probe.candidate_action_rms"),
     )
 
     boundary_raw = _section(raw, "boundary_trust")
     boundary_trust = BoundaryTrustConfig(
-        preserve_safe_only=bool(boundary_raw.get("preserve_safe_only", True)),
-        mismatch_grace_s=float(boundary_raw.get("mismatch_grace_s", 0.030)),
+        preserve_safe_only=_toml_boolean(boundary_raw.get("preserve_safe_only", True), name="boundary_trust.preserve_safe_only"),
+        mismatch_grace_s=_toml_float(boundary_raw.get("mismatch_grace_s", 0.030), name="boundary_trust.mismatch_grace_s"),
     )
 
     visible_raw = _section(raw, "human_visible")
+    legacy_identity_opt_in = visible_raw.get("allow_legacy_train_identity_resume", False)
+    if type(legacy_identity_opt_in) is not bool:
+        raise ValueError("human_visible.allow_legacy_train_identity_resume must be boolean")
     human_visible = HumanVisibleConfig(
-        updates_per_trial=int(visible_raw.get("updates_per_trial", 32)),
-        lr=float(visible_raw.get("lr", 1e-4)),
-        min_lr=float(visible_raw.get("min_lr", 1e-6)),
-        controller_lr=float(visible_raw.get("controller_lr", 3e-5)),
-        updates_per_epoch=int(visible_raw.get("updates_per_epoch", 32)),
-        transition_updates_per_epoch=int(
-            visible_raw.get("transition_updates_per_epoch", 16)
-        ),
-        transition_epochs=int(visible_raw.get("transition_epochs", 3)),
-        burn_in_steps=int(visible_raw.get("burn_in_steps", 96)),
-        supervised_steps=int(visible_raw.get("supervised_steps", 192)),
-        anchors_per_batch=int(visible_raw.get("anchors_per_batch", 4)),
-        progression_streak=int(visible_raw.get("progression_streak", 3)),
-        catastrophic_patience=int(visible_raw.get("catastrophic_patience", 2)),
-        max_epochs=int(visible_raw.get("max_epochs", 10_000)),
-        weight_decay=float(visible_raw.get("weight_decay", 1e-4)),
-        grad_clip=float(visible_raw.get("grad_clip", 1.0)),
-        seed=int(visible_raw.get("seed", 2401)),
-        alpha_sweep_enabled=bool(visible_raw.get("alpha_sweep_enabled", False)),
+        updates_per_trial=_toml_integer(visible_raw.get("updates_per_trial", 32), name="human_visible.updates_per_trial"),
+        lr=_toml_float(visible_raw.get("lr", 1e-4), name="human_visible.lr"),
+        min_lr=_toml_float(visible_raw.get("min_lr", 1e-6), name="human_visible.min_lr"),
+        controller_lr=_toml_float(visible_raw.get("controller_lr", 3e-5), name="human_visible.controller_lr"),
+        updates_per_epoch=_toml_integer(visible_raw.get("updates_per_epoch", 32), name="human_visible.updates_per_epoch"),
+        transition_updates_per_epoch=_toml_integer(visible_raw.get("transition_updates_per_epoch", 16), name="human_visible.transition_updates_per_epoch"),
+        transition_epochs=_toml_integer(visible_raw.get("transition_epochs", 3), name="human_visible.transition_epochs"),
+        burn_in_steps=_toml_integer(visible_raw.get("burn_in_steps", 96), name="human_visible.burn_in_steps"),
+        supervised_steps=_toml_integer(visible_raw.get("supervised_steps", 192), name="human_visible.supervised_steps"),
+        anchors_per_batch=_toml_integer(visible_raw.get("anchors_per_batch", 4), name="human_visible.anchors_per_batch"),
+        progression_streak=_toml_integer(visible_raw.get("progression_streak", 3), name="human_visible.progression_streak"),
+        catastrophic_patience=_toml_integer(visible_raw.get("catastrophic_patience", 2), name="human_visible.catastrophic_patience"),
+        max_epochs=_toml_integer(visible_raw.get("max_epochs", 10_000), name="human_visible.max_epochs"),
+        weight_decay=_toml_float(visible_raw.get("weight_decay", 1e-4), name="human_visible.weight_decay"),
+        grad_clip=_toml_float(visible_raw.get("grad_clip", 1.0), name="human_visible.grad_clip"),
+        seed=_toml_integer(visible_raw.get("seed", 2401), name="human_visible.seed"),
+        allow_legacy_train_identity_resume=legacy_identity_opt_in,
+        alpha_sweep_enabled=_toml_boolean(visible_raw.get("alpha_sweep_enabled", False), name="human_visible.alpha_sweep_enabled"),
         alpha_sweep_alphas=_alpha_sweep_grid(visible_raw),
-        alpha_sweep_compare_transitions=bool(
-            visible_raw.get("alpha_sweep_compare_transitions", False)
+        alpha_sweep_compare_transitions=_toml_boolean(
+            visible_raw.get("alpha_sweep_compare_transitions", False),
+            name="human_visible.alpha_sweep_compare_transitions",
         ),
-        alpha_sweep_recovery_probe_enabled=bool(
-            visible_raw.get("alpha_sweep_recovery_probe_enabled", False)
+        alpha_sweep_recovery_probe_enabled=_toml_boolean(
+            visible_raw.get("alpha_sweep_recovery_probe_enabled", False),
+            name="human_visible.alpha_sweep_recovery_probe_enabled",
         ),
         alpha_sweep_expected_best=_alpha_sweep_expectation(
             visible_raw, "alpha_sweep_expected_best"
@@ -296,6 +358,19 @@ def _validate(
     boundary_trust: BoundaryTrustConfig,
     human_visible: HumanVisibleConfig,
 ) -> None:
+    # TOML permits nan/inf; ordinary range comparisons cannot reject NaN.
+    # All scalar float settings are checked before the existing range checks.
+    for section_name, section in (
+        ("action_trust", action),
+        ("budget", budget),
+        ("trajectory_probe", trajectory_probe),
+        ("boundary_trust", boundary_trust),
+        ("human_visible", human_visible),
+    ):
+        for setting in fields(section):
+            value = getattr(section, setting.name)
+            if isinstance(value, float) and not math.isfinite(value):
+                raise ValueError(f"{section_name}.{setting.name} must be finite")
     if action.actor_steps <= 0:
         raise ValueError("action_trust.actor_steps must be positive")
     if action.lr <= 0.0 or action.min_lr <= 0.0:

@@ -11,10 +11,14 @@ UNKNOWN remainder rather than guessed away.
 
 from dataclasses import dataclass, replace
 from enum import Enum
-from itertools import permutations
 from math import isfinite
 
 from dmdod.features.judgement_observer_v01 import JudgementDelta, JudgementDeltaStatus
+from dmdod.planning.judgement_label_orders import (
+    MAX_ORDER_EXPANSIONS,
+    MAX_VISIBLE_EVENTS,
+    bounded_unique_orders,
+)
 from dmdod.planning.judgement_state_estimator_v01 import (
     MotorKeyDownEvidence,
     TimingEventEvidence,
@@ -255,13 +259,39 @@ class StockPersistentJudgementStateEstimator:
             self._hypotheses = tuple(replace(row, unknown_search_remainder=True, observation_gaps=row.observation_gaps + (f"counter {delta.status.value}",)) for row in self._hypotheses)
             return self._estimate(StockEstimateStatus.OBSERVATION_GAP, "counter discontinuity prevents unique state recovery")
 
+        # Validate the counter before expanding a potentially enormous delta.
+        if any(count < 0 for _, count in delta.deltas):
+            raise ValueError("visible deltas cannot be negative")
+        if delta.total_increment > MAX_VISIBLE_EVENTS:
+            self._hypotheses = tuple(replace(
+                row,
+                unknown_search_remainder=True,
+                observation_gaps=row.observation_gaps + ("visible delta too large",),
+            ) for row in self._hypotheses)
+            return self._estimate(StockEstimateStatus.TRUNCATED, "visible delta too large")
         labels = self._labels(delta)
         if not labels:
             return self._estimate(StockEstimateStatus.NO_UPDATE, "empty visible delta")
+
+        # Bound all label orders *before* constructing any permutation. This
+        # conservative budget includes possible hidden-automatic branches.
+        branch_factor = 1 if self.automatic_failmiss_visible is True else 3
+        budget = max(1, MAX_ORDER_EXPANSIONS // max(
+            1, len(self._hypotheses) * branch_factor
+        ))
+        orders = bounded_unique_orders(labels, limit=budget)
+        if orders is None:
+            self._hypotheses = tuple(replace(
+                row,
+                unknown_search_remainder=True,
+                observation_gaps=row.observation_gaps + ("visible order budget exceeded",),
+            ) for row in self._hypotheses)
+            return self._estimate(StockEstimateStatus.TRUNCATED, "visible order budget exceeded")
+
         candidates: list[StockFloorHypothesis] = []
         for hypothesis in self._hypotheses:
             for branch in self._hidden_branches(hypothesis):
-                for order in set(permutations(labels)):
+                for order in orders:
                     current: StockFloorHypothesis | None = branch
                     for label in order:
                         if current is None:

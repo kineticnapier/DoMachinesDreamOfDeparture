@@ -133,3 +133,41 @@ def test_segment_selection_and_audio_chart_time_transform():
     entries = compiled.floor_entries_between(1.99, 2.26)
     assert entries
     assert all(1.99 <= floor.target_time_s <= 2.26 for floor in entries)
+
+@pytest.mark.parametrize(
+    "chart_text",
+    [
+        '{"angleData":["NaN"],"settings":{"bpm":120}}',
+        '{"angleData":[Infinity],"settings":{"bpm":120}}',
+        '{"angleData":["1e1000"],"settings":{"bpm":120}}',
+        '{"angleData":[0],"settings":{"bpm":"NaN"}}',
+        '{"angleData":[0],"settings":{"pitch":"Infinity"}}',
+        '{"angleData":[0],"settings":{"offset":"-Infinity"}}',
+        '{"angleData":[0],"actions":[{"floor":0,"eventType":"SetSpeed","beatsPerMinute":"NaN"}]}',
+        '{"angleData":[0],"actions":[{"floor":0,"eventType":"SetSpeed","bpmMultiplier":"Infinity"}]}',
+        '{"angleData":[0],"actions":[{"floor":0,"eventType":"SetSpeed","angleOffset":"-Infinity"}]}',
+        '{"angleData":[0],"actions":[{"floor":0,"eventType":"Pause","duration":"NaN"}]}',
+    ],
+)
+def test_parser_rejects_nonfinite_chart_numbers_before_timing(chart_text):
+    # All chart-derived numeric fields must be finite, even for inactive
+    # events; otherwise a later geometry/timing consumer can propagate NaN.
+    with pytest.raises(ValueError, match="must be finite"):
+        parse_adofai_text(chart_text)
+
+
+def test_parser_keeps_finite_numeric_strings_and_optional_invalid_fallback():
+    chart = parse_adofai_text(
+        '{"angleData":["0","90"],"settings":{"bpm":"120","pitch":"50"},'
+        '"actions":[{"floor":1,"eventType":"SetSpeed",'
+        '"beatsPerMinute":"240","angleOffset":"45"}]}'
+    )
+    assert chart.angles == (0.0, 90.0)
+    assert chart.initial_bpm == 120.0
+    assert chart.pitch_percent == 50.0
+    assert chart.actions[0].beats_per_minute == 240.0
+    assert chart.actions[0].angle_offset == 45.0
+    # Invalid optional numeric text still falls back as before.
+    assert parse_adofai_text(
+        '{"angleData":[0],"settings":{"pitch":"not-a-number"}}'
+    ).pitch_percent == 100.0

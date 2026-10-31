@@ -112,3 +112,64 @@ def test_frame_contract_rejects_retroactive_or_duplicate_input() -> None:
 def test_nonfinite_keydown_is_rejected() -> None:
     with pytest.raises(ValueError):
         StockQueuedKeyDown("bad", math.nan)
+
+
+def test_prequeued_out_of_order_keydowns_keep_timestamp_and_insertion_order() -> None:
+    frames = StockFrameStateMachine(
+        StockFloorStateMachine(tuple(target(i, 1.0 + 0.01 * i) for i in range(4)))
+    )
+    for input_id, timestamp in [
+        ("later", 1.02),
+        ("first", 1.0),
+        ("same_time", 1.0),
+        ("middle", 1.01),
+    ]:
+        frames.queue_keydown(StockQueuedKeyDown(input_id, timestamp))
+
+    assert [row.input_id for row in frames.pending_keydowns] == [
+        "first", "same_time", "middle", "later"
+    ]
+    assert [row.keydown.input_id for row in frames.update(100).processed_keydowns] == [
+        "first", "same_time"
+    ]
+    assert [row.input_id for row in frames.pending_keydowns] == ["middle", "later"]
+    assert [row.keydown.input_id for row in frames.update(101).processed_keydowns] == [
+        "middle"
+    ]
+    assert [row.keydown.input_id for row in frames.update(102).processed_keydowns] == [
+        "later"
+    ]
+    assert frames.pending_keydowns == ()
+
+
+def test_queued_keydown_keeps_existing_frame_tolerance() -> None:
+    frames = StockFrameStateMachine(
+        StockFloorStateMachine((target(0, 1.0),))
+    )
+    frames.queue_keydown(StockQueuedKeyDown("just_inside", 0.2 + 0.5e-12))
+    frames.queue_keydown(StockQueuedKeyDown("outside", 0.2 + 2.0e-12))
+
+    first = frames.update(20)
+    assert [row.keydown.input_id for row in first.processed_keydowns] == [
+        "just_inside"
+    ]
+    assert [row.input_id for row in frames.pending_keydowns] == ["outside"]
+    second = frames.update(21)
+    assert [row.keydown.input_id for row in second.processed_keydowns] == [
+        "outside"
+    ]
+
+
+def test_large_prequeued_input_keeps_stable_time_order() -> None:
+    frames = StockFrameStateMachine(
+        StockFloorStateMachine((target(0, 2.0),))
+    )
+    times = [0.25 + (index % 7) * 0.001 for index in range(1200)]
+    for index, timestamp in enumerate(times):
+        frames.queue_keydown(StockQueuedKeyDown(str(index), timestamp))
+
+    expected = [str(index) for index in sorted(range(len(times)), key=lambda i: (times[i], i))]
+    assert [row.input_id for row in frames.pending_keydowns] == expected
+    result = frames.update(26)
+    assert [row.keydown.input_id for row in result.processed_keydowns] == expected
+    assert frames.pending_keydowns == ()

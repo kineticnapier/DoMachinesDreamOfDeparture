@@ -9,6 +9,7 @@ import math
 from pathlib import Path
 import random
 import time
+import warnings
 
 import torch
 
@@ -1138,6 +1139,28 @@ def _validation_identity(prepared) -> list[dict]:
     ]
 
 
+def _train_identity(prepared) -> list[dict]:
+    """Ordered identity of exactly the Train anchors used by this run."""
+    return [
+        {
+            "chart_sha256": str(item.chart_sha256),
+            "start_s": float(item.start_s),
+            "end_s": float(item.end_s),
+        }
+        for item in prepared.anchors
+    ]
+
+
+def _train_identity_verified_for_output(parent: dict) -> bool:
+    """Never relabel historical unverified Train epochs as verified."""
+    if curriculum_checkpoint_role(parent) is None:
+        return True  # Fresh curriculum run; all selected anchors are recorded.
+    return (
+        "human_visible_train_identity" in parent
+        and parent.get("human_visible_train_identity_verified", True) is True
+    )
+
+
 def _check_validation_context(checkpoint: dict, config, prepared) -> None:
     previous = checkpoint.get("training_config")
     if not isinstance(previous, dict):
@@ -1165,6 +1188,48 @@ def _check_validation_context(checkpoint: dict, config, prepared) -> None:
                 if not math.isclose(float(old[name]), new[name], abs_tol=1e-8, rel_tol=0):
                     raise SystemExit(f"fixed Validation {name} changed")
 
+    # The Validation identity does not prove that the Train anchors are the
+    # same. Keep this check before optimizer restore or checkpoint writes.
+    saved_train = checkpoint.get("human_visible_train_identity")
+    verified = checkpoint.get("human_visible_train_identity_verified", True)
+    if type(verified) is not bool:
+        raise SystemExit("resume Train identity verification flag is invalid")
+    unverified_legacy = saved_train is None or not verified
+    allow_legacy = getattr(
+        config.human_visible, "allow_legacy_train_identity_resume", False
+    )
+    if unverified_legacy:
+        if allow_legacy is not True:
+            raise SystemExit(
+                "resume Train identity is unverified; set "
+                "[human_visible].allow_legacy_train_identity_resume = true "
+                "to explicitly accept historical uncertainty"
+            )
+        warnings.warn(
+            "Resuming with unverified historical Train anchors; "
+            "the resulting checkpoint remains marked unverified",
+            RuntimeWarning,
+            stacklevel=2,
+        )
+    if saved_train is not None:
+        current_train = _train_identity(prepared)
+        if not isinstance(saved_train, list) or len(saved_train) != len(current_train):
+            raise SystemExit("resume Train anchor count changed or identity is invalid")
+        for index, (old, new) in enumerate(zip(saved_train, current_train)):
+            if not isinstance(old, dict) or old.get("chart_sha256") != new["chart_sha256"]:
+                raise SystemExit(f"resume Train anchor {index} chart SHA changed")
+            for name in ("start_s", "end_s"):
+                try:
+                    old_time = float(old[name])
+                except (KeyError, TypeError, ValueError, OverflowError) as exc:
+                    raise SystemExit(
+                        f"resume Train anchor {index} {name} is invalid"
+                    ) from exc
+                if not math.isfinite(old_time) or not math.isclose(
+                    old_time, new[name], abs_tol=1e-8, rel_tol=0
+                ):
+                    raise SystemExit(f"resume Train anchor {index} {name} changed")
+
 
 def _check_validation_summary(actual: dict, recorded: dict) -> None:
     if not isinstance(recorded, dict):
@@ -1172,6 +1237,18 @@ def _check_validation_summary(actual: dict, recorded: dict) -> None:
     for name in ("anchors", "targets", "safe", "hits"):
         if int(actual[name]) != int(recorded[name]):
             raise SystemExit(f"fixed Validation mismatch: {name}: {actual[name]} != {recorded[name]}")
+    # Older checkpoints may lack these fields. Validate them whenever they
+    # were recorded, without changing the saved ranking or checkpoint format.
+    for name in ("early", "keydowns", "overloaded"):
+        if name not in recorded:
+            continue
+        current = actual.get(name, "<missing>")
+        if name == "overloaded":
+            matches = isinstance(current, bool) and current == recorded[name]
+        else:
+            matches = isinstance(current, int) and not isinstance(current, bool) and current == recorded[name]
+        if not matches:
+            raise SystemExit(f"fixed Validation mismatch: {name}: {current} != {recorded[name]}")
     # Stored checkpoint stats are already rounded by the simulator pipeline.
     for name, tolerance in (("x", 0.05), ("pp", 0.05), ("mae_ms", 0.25)):
         a, b = float(actual[name]), float(recorded[name])
@@ -1195,7 +1272,18 @@ def _check_optimizer_state(optimizer: torch.optim.Optimizer, checkpoint: dict, m
     if previous_names is not None and previous_names != current_names:
         raise SystemExit("resume AdamW parameter names/order mismatch")
     saved_state = saved.get("state")
-    if not isinstance(saved_state, dict) or not saved_state:
+    if not isinstance(saved_state, dict):
+        raise SystemExit("resume AdamW has no optimizer moments")
+    # An initial selected-best checkpoint is saved before any optimizer step.
+    # Its empty AdamW moments are valid only for the pristine baseline.
+    pristine_baseline = (
+        curriculum_checkpoint_role(checkpoint) == "selected-best"
+        and checkpoint.get("human_visible_stopped_reason") == "baseline-validated"
+        and int(checkpoint.get("human_visible_epoch", -1)) == 0
+        and int(checkpoint.get("human_visible_best_epoch", -1)) == 0
+        and checkpoint.get("human_visible_history") == []
+    )
+    if not saved_state and not pristine_baseline:
         raise SystemExit("resume AdamW has no optimizer moments")
     expected_ids = {identifier for group in groups for identifier in group.get("params", [])}
     if not set(saved_state).issubset(expected_ids):
@@ -1363,6 +1451,10 @@ def _checkpoint_payload(
             "training_config": config.as_dict(),
             "human_visible_checkpoint_role": str(checkpoint_role),
             "human_visible_validation_identity": _validation_identity(prepared),
+            "human_visible_train_identity": _train_identity(prepared),
+            "human_visible_train_identity_verified": (
+                _train_identity_verified_for_output(prepared.parent)
+            ),
             "human_visible_optimizer_parameter_names": [
                 [next(name for name, p in model.named_parameters() if p is param)
                  for param in group["params"]]

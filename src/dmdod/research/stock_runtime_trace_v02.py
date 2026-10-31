@@ -7,6 +7,7 @@ payloads remain evidence for reference-model comparison only.
 """
 
 from dataclasses import dataclass
+from hashlib import sha256
 import json
 import math
 from pathlib import Path
@@ -53,6 +54,30 @@ class TraceSession:
         return self.evidence_kind == "live_runtime"
 
 
+
+def _unique_json_object(pairs: list[tuple[str, object]]) -> dict[str, object]:
+    """Reject duplicate JSON keys, including inside evaluator-only payloads."""
+    result: dict[str, object] = {}
+    for key, value in pairs:
+        if key in result:
+            raise ValueError(f"duplicate JSON key: {key}")
+        result[key] = value
+    return result
+
+
+def _finite_json_float(raw: str) -> float:
+    """Reject overflowing JSON numbers before they become evidence payloads."""
+    value = float(raw)
+    if not math.isfinite(value):
+        raise ValueError(f"non-finite JSON number: {raw}")
+    return value
+
+
+def _reject_json_constant(raw: str) -> None:
+    """Python accepts NaN/Infinity by default, but these are not JSON values."""
+    raise ValueError(f"non-standard JSON constant: {raw}")
+
+
 def parse_runtime_jsonl_v02(lines: Iterable[str]) -> tuple[TraceSession, ...]:
     sessions: list[TraceSession] = []
     header: dict[str, object] | None = None
@@ -84,14 +109,19 @@ def parse_runtime_jsonl_v02(lines: Iterable[str]) -> tuple[TraceSession, ...]:
         if not raw.strip():
             continue
         try:
-            row = json.loads(raw)
+            row = json.loads(
+                raw, object_pairs_hook=_unique_json_object,
+                parse_float=_finite_json_float, parse_constant=_reject_json_constant,
+            )
         except json.JSONDecodeError as exc:
             raise ValueError(f"line {line_number}: invalid JSON") from exc
+        except ValueError as exc:
+            raise ValueError(f"line {line_number}: {exc}") from exc
         if not isinstance(row, dict):
             raise ValueError(f"line {line_number}: object required")
         if row.get("type") == "stock_runtime_probe_header":
             finish()
-            if not str(row.get("session_id", "")):
+            if type(row.get("session_id")) is not str or not row["session_id"]:
                 raise ValueError(f"line {line_number}: header session_id required")
             header = row
             continue
@@ -101,9 +131,22 @@ def parse_runtime_jsonl_v02(lines: Iterable[str]) -> tuple[TraceSession, ...]:
         missing = [name for name in required if name not in row]
         if missing:
             raise ValueError(f"line {line_number}: missing {','.join(missing)}")
-        if str(row["session_id"]) != str(header["session_id"]):
+        if type(row["session_id"]) is not str or row["session_id"] != header["session_id"]:
             raise ValueError(f"line {line_number}: session mismatch")
-        sequence, frame, timestamp = int(row["sequence"]), int(row["frame"]), float(row["realtime_s"])
+        if (type(row["kind"]) is not str or not row["kind"]
+                or type(row["hook"]) is not str or not row["hook"]):
+            raise ValueError(f"line {line_number}: invalid kind/hook types")
+        # Do not silently coerce malformed trace metadata: bool("false") is
+        # True, int(1.5) truncates, and bool is also an int in Python.
+        sequence, frame, timestamp = row["sequence"], row["frame"], row["realtime_s"]
+        if (type(sequence) is not int or type(frame) is not int
+                or type(timestamp) not in (int, float)
+                or type(row["no_fail"]) is not bool):
+            raise ValueError(f"line {line_number}: invalid sequence/frame/time/no_fail types")
+        try:
+            timestamp = float(timestamp)
+        except OverflowError as exc:
+            raise ValueError(f"line {line_number}: invalid sequence/frame/time") from exc
         if sequence < 0 or frame < 0 or not math.isfinite(timestamp):
             raise ValueError(f"line {line_number}: invalid sequence/frame/time")
         if sequence in seen_sequences:
@@ -119,7 +162,7 @@ def parse_runtime_jsonl_v02(lines: Iterable[str]) -> tuple[TraceSession, ...]:
         known = {"type", "session_id", "sequence", "frame", "realtime_s", "kind", "no_fail", "hook"}
         events.append(TraceEvent(
             str(row["session_id"]), sequence, frame, timestamp, str(row["kind"]),
-            bool(row["no_fail"]), str(row["hook"]),
+            row["no_fail"], str(row["hook"]),
             tuple(sorted((key, value) for key, value in row.items() if key not in known)),
         ))
         seen_sequences.add(sequence)
@@ -137,11 +180,11 @@ def load_runtime_jsonl_v02(path: Path) -> tuple[TraceSession, ...]:
     return parse_runtime_jsonl_v02(path.read_text(encoding="utf-8-sig").splitlines())
 
 
-def _next_matching(events: tuple[TraceEvent, ...], start: int, kinds: set[str]) -> TraceEvent | None:
-    for event in events[start + 1:]:
-        if event.kind in kinds:
-            return event
-    return None
+def load_runtime_jsonl_with_sha256_v02(path: Path) -> tuple[tuple[TraceSession, ...], str]:
+    """Parse and hash the exact same input bytes (including any UTF-8 BOM)."""
+    raw = path.read_bytes()
+    sessions = parse_runtime_jsonl_v02(raw.decode("utf-8-sig").splitlines())
+    return sessions, sha256(raw).hexdigest()
 
 
 def audit_trace_sessions(sessions: tuple[TraceSession, ...]) -> dict[str, object]:
@@ -157,9 +200,29 @@ def audit_trace_sessions(sessions: tuple[TraceSession, ...]) -> dict[str, object
         keydown_pairs: list[dict[str, object]] = []
         auto_transitions: list[dict[str, object]] = []
         hit_text_delays: list[dict[str, object]] = []
-        for index, event in enumerate(session.events):
+        # Keep the earliest strictly later matching event for each event type.
+        # A reverse pass avoids repeated tuple slicing and forward rescans.
+        events = session.events
+        next_judgement_or_miss: list[TraceEvent | None] = [None] * len(events)
+        next_judgement: list[TraceEvent | None] = [None] * len(events)
+        next_visible: list[TraceEvent | None] = [None] * len(events)
+        later_judgement_or_miss: TraceEvent | None = None
+        later_judgement: TraceEvent | None = None
+        later_visible: TraceEvent | None = None
+        for index in range(len(events) - 1, -1, -1):
+            event = events[index]
+            next_judgement_or_miss[index] = later_judgement_or_miss
+            next_judgement[index] = later_judgement
+            next_visible[index] = later_visible
+            if event.kind in {"judgement", "auto_fail_miss"}:
+                later_judgement_or_miss = event
+            if event.kind == "judgement":
+                later_judgement = event
+            if event.kind in {"visible_judgement_signal", "counter_update"}:
+                later_visible = event
+        for index, event in enumerate(events):
             if event.kind == "key_down":
-                judged = _next_matching(session.events, index, {"judgement", "auto_fail_miss"})
+                judged = next_judgement_or_miss[index]
                 keydown_pairs.append({
                     "keydown_sequence": event.sequence,
                     "keydown_frame": event.frame,
@@ -168,7 +231,7 @@ def audit_trace_sessions(sessions: tuple[TraceSession, ...]) -> dict[str, object
                     "target_floor_evaluator_only": None if judged is None else judged.value("floor_evaluator_only"),
                 })
             if event.kind == "auto_fail_miss":
-                transitioned = _next_matching(session.events, index, {"judgement"})
+                transitioned = next_judgement[index]
                 auto_transitions.append({
                     "sequence": event.sequence,
                     "frame": event.frame,
@@ -176,7 +239,7 @@ def audit_trace_sessions(sessions: tuple[TraceSession, ...]) -> dict[str, object
                     "next_judgement_sequence": None if transitioned is None else transitioned.sequence,
                 })
             if event.kind == "add_hit":
-                visible = _next_matching(session.events, index, {"visible_judgement_signal", "counter_update"})
+                visible = next_visible[index]
                 hit_text_delays.append({
                     "add_hit_sequence": event.sequence,
                     "visible_sequence": None if visible is None else visible.sequence,

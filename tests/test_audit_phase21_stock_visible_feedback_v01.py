@@ -21,8 +21,12 @@ def _load():
 def test_phase21_keeps_unverified_automatic_failmiss_out_of_conservative_surface() -> None:
     result = _load().run(ROOT / "reports/phase20c-frame-stock-state-20261022-r1.json")
     invisible = result["conservative_failmiss_unknown"]["invisible_events"]
-    assert len(invisible) == 4
-    assert {row["category"] for row in invisible} == {"fail_miss"}
+    # Only user-confirmed visible counters may enter the HUD. The source
+    # contains four automatic FailMiss and 51 internal-only KeyDown results.
+    assert len(invisible) == 55
+    assert sum(row["category"] == "fail_miss" for row in invisible) == 4
+    assert {row["source"] for row in invisible} == {"automatic", "keydown"}
+    assert len(result["conservative_failmiss_unknown"]["observations"]) == 1
     assert result["verdicts"] == ["STOCK_VISIBLE_FEEDBACK_PARTIAL"]
 
 

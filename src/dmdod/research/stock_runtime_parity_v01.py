@@ -6,21 +6,33 @@ from dataclasses import dataclass
 import math
 from typing import Mapping
 
+from dmdod.adofai.rules import TimingJudgement
+
 from .stock_runtime_log_v01 import AUDITED_DLL_SHA256
 from .stock_runtime_trace_v02 import REQUIRED_HOOKS, TraceEvent, TraceSession
 
 
 def _norm_judgement(value: object) -> str | None:
-    if value is None:
+    # A probe judgement is a JSON string. Stringifying a list such as
+    # ["Perfect"] would otherwise silently produce a valid "perfect" label.
+    if type(value) is not str:
         return None
-    text = "".join(char for char in str(value).lower() if char.isalnum())
-    aliases = {"failmiss": "fail_miss", "verylate": "very_late", "toolate": "too_late"}
+    text = "".join(char for char in value.lower() if char.isalnum())
+    aliases = {
+        "failmiss": "fail_miss",
+        "tooearly": "too_early",
+        "veryearly": "very_early",
+        "earlyperfect": "early_perfect",
+        "lateperfect": "late_perfect",
+        "verylate": "very_late",
+        "toolate": "too_late",
+    }
     return aliases.get(text, text or None)
 
 
 @dataclass(frozen=True, slots=True)
 class RuntimeTransition:
-    kind: str
+    kind: str | None
     frame: int
     song_time_s: float | None
     realtime_s: float
@@ -32,14 +44,38 @@ class RuntimeTransition:
 
 
 def _integer(value: object) -> int | None:
-    return None if value is None else int(value)
+    # The C# probe emits JSON integers for floor identities. Do not silently
+    # truncate floats or turn booleans/numeric strings into real floor evidence.
+    return value if type(value) is int else None
+
+
+_STOCK_JUDGEMENTS = frozenset(judgement.value for judgement in TimingJudgement)
+
+
+def _valid_transition_field(name: str, value: object) -> bool:
+    """Require exact identity types on both sides of a parity comparison.
+
+    Python considers True == 1 and 2.0 == 2, but those are not the same
+    JSON floor/target identities. Neither side may be silently coerced.
+    """
+    if name in {"floor_before", "floor_after", "target_ordinal"}:
+        return type(value) is int
+    if name == "judgement":
+        # Matching two unknown labels does not establish Stock parity.
+        return type(value) is str and value in _STOCK_JUDGEMENTS
+    return type(value) is str and bool(value)
 
 
 def _song_time(event: TraceEvent) -> float | None:
     value = event.value("song_time_evaluator_only")
-    if value is None:
+    # Only JSON numbers are admissible runtime timestamps. In particular,
+    # float("3.261") would otherwise upgrade a malformed string to evidence.
+    if type(value) not in (int, float):
         return None
-    number = float(value)
+    try:
+        number = float(value)
+    except OverflowError:
+        return None
     return number if math.isfinite(number) else None
 
 
@@ -48,7 +84,12 @@ def extract_runtime_transitions(
     *,
     floor_to_target: Mapping[int, int] | None = None,
 ) -> tuple[RuntimeTransition, ...]:
-    floor_map = {} if floor_to_target is None else dict(floor_to_target)
+    # A float/bool key may compare equal to an integer floor (2.0 == 2,
+    # True == 1). Only genuine integer keys can establish target identity.
+    floor_map = ({} if floor_to_target is None else {
+        floor: target for floor, target in floor_to_target.items()
+        if type(floor) is int
+    })
     result: list[RuntimeTransition] = []
     pending_keydown: TraceEvent | None = None
     pending_category: tuple[TraceEvent, str] | None = None
@@ -65,13 +106,22 @@ def extract_runtime_transitions(
             before = _integer(event.value("floor_before_evaluator_only"))
             after = _integer(event.value("floor_after_evaluator_only"))
             category_event, category = pending_category or (event, None)
+            # A category from an earlier frame is not evidence for this switch.
+            # Without a shared transition ID, do not infer a cross-frame match.
+            if category_event.frame != event.frame:
+                category_event, category = event, None
             is_auto = pending_auto is not None and pending_auto.frame == event.frame
             key_event = pending_keydown if pending_keydown is not None and pending_keydown.frame == event.frame else None
             source = tuple(row.sequence for row in (pending_auto if is_auto else None, key_event, category_event, event) if row is not None)
+            transition_song_time = _song_time(event)
+            if transition_song_time is None:
+                transition_song_time = _song_time(category_event)
             result.append(RuntimeTransition(
-                kind="auto_miss" if is_auto else "key_down",
+                # A switch without a same-frame KeyDown is not evidence of a
+                # physical key_down transition, even if AddHit is present.
+                kind="auto_miss" if is_auto else ("key_down" if key_event is not None else None),
                 frame=event.frame,
-                song_time_s=_song_time(event) or _song_time(category_event),
+                song_time_s=transition_song_time,
                 realtime_s=event.realtime_s,
                 floor_before=before,
                 floor_after=after,
@@ -117,7 +167,8 @@ def reference_transitions(phase20c: dict[str, object], *, no_fail: bool) -> tupl
                 if row["kind"] == "ignored_after_fail":
                     continue
                 rows.append({
-                    "kind": "auto_miss" if row["automatic_miss"] else "key_down",
+                    "kind": ("auto_miss" if row["automatic_miss"] else "key_down")
+                    if type(row["automatic_miss"]) is bool else None,
                     "song_time_s": row["observed_time_s"], "target_ordinal": row["target_ordinal"],
                     "judgement": row["judgement"], "floor_before": row["current_floor_before"],
                     "floor_after": row["current_floor_after"],
@@ -129,7 +180,25 @@ def reference_transitions(phase20c: dict[str, object], *, no_fail: bool) -> tupl
                 "target_ordinal": None, "judgement": None,
                 "floor_before": failure["current_floor_before"], "floor_after": failure["current_floor_after"],
             })
-    return tuple(sorted(rows, key=lambda row: float(row["song_time_s"])))
+    # Keep malformed reference times available for UNKNOWN field reporting,
+    # but never coerce them or raise while ordering the reference rows.
+    # Invalid timestamps sort last, preserving their original relative order.
+    return tuple(sorted(rows, key=lambda row: _reference_sort_time(row["song_time_s"])))
+
+
+def _finite_alignment_number(value: object) -> bool:
+    """Accept finite JSON-style numbers, not booleans or coercible strings."""
+    if type(value) not in (int, float):
+        return False
+    try:
+        return math.isfinite(value)
+    except OverflowError:
+        # Very large Python integers cannot be converted to a finite float.
+        return False
+
+
+def _reference_sort_time(value: object) -> float:
+    return float(value) if _finite_alignment_number(value) else math.inf
 
 
 def compare_runtime_to_reference(
@@ -137,7 +206,22 @@ def compare_runtime_to_reference(
     phase20c: dict[str, object],
     *,
     floor_to_target: Mapping[int, int] | None = None,
+    song_time_offset_s: float | None = None,
+    song_time_tolerance_s: float | None = None,
 ) -> dict[str, object]:
+    """Compare evaluator-only transitions, failing closed without time alignment.
+
+    Offset and tolerance must be independently calibrated against live timing
+    evidence before use. The virtual 10ms Phase 20C grid is not calibration.
+    """
+    if (song_time_offset_s is None) != (song_time_tolerance_s is None):
+        raise ValueError("song-time offset and tolerance must be supplied together")
+    if song_time_offset_s is not None:
+        if not _finite_alignment_number(song_time_offset_s):
+            raise ValueError("song-time offset must be a finite number")
+        if (not _finite_alignment_number(song_time_tolerance_s)
+                or song_time_tolerance_s < 0):
+            raise ValueError("song-time tolerance must be a finite non-negative number")
     no_fail_values = {event.no_fail for event in session.events}
     if len(no_fail_values) != 1:
         return {"verdict": "RUNTIME_PARITY_UNVERIFIED", "reason": "session mixes NoFail modes", "comparisons": []}
@@ -165,7 +249,9 @@ def compare_runtime_to_reference(
             fields: dict[str, str] = {}
             for name in ("kind", "judgement", "floor_before", "floor_after", "target_ordinal"):
                 left, right = getattr(actual, name), wanted[name]
-                if left is None or right is None:
+                if (left is None or right is None
+                        or not _valid_transition_field(name, left)
+                        or not _valid_transition_field(name, right)):
                     fields[name] = "UNKNOWN"
                     complete = False
                 elif left == right:
@@ -173,12 +259,33 @@ def compare_runtime_to_reference(
                 else:
                     fields[name] = "MISMATCH"
                     explicit_mismatch = True
-            if actual.song_time_s is None:
+            reference_time = wanted.get("song_time_s")
+            if actual.song_time_s is None or reference_time is None:
                 fields["song_time_s"] = "UNKNOWN"
                 complete = False
             else:
-                fields["song_time_s"] = "OBSERVED"
-                row["song_time_delta_s"] = actual.song_time_s - float(wanted["song_time_s"])
+                # A malformed reference timestamp is not timing evidence.
+                # In particular bool is an int subclass and huge ints may
+                # overflow float conversion; neither may confirm parity.
+                if not _finite_alignment_number(reference_time):
+                    expected_time = math.nan
+                else:
+                    expected_time = float(reference_time)
+                if not math.isfinite(expected_time):
+                    fields["song_time_s"] = "UNKNOWN"
+                    complete = False
+                else:
+                    delta = actual.song_time_s - expected_time
+                    row["song_time_delta_s"] = delta
+                    if song_time_offset_s is None:
+                        # An observed timestamp is not evidence of parity.
+                        fields["song_time_s"] = "UNKNOWN"
+                        complete = False
+                    elif abs(delta - song_time_offset_s) <= song_time_tolerance_s:
+                        fields["song_time_s"] = "MATCH"
+                    else:
+                        fields["song_time_s"] = "MISMATCH"
+                        explicit_mismatch = True
             row["fields"] = fields
         comparisons.append(row)
     hooks = {event.hook for event in session.events}
@@ -189,7 +296,7 @@ def compare_runtime_to_reference(
         and REQUIRED_HOOKS <= hooks
     )
     if live_qualified and explicit_mismatch:
-        verdict, reason = "RUNTIME_PARITY_MISMATCH", "live qualified evidence contains an explicit state/category/order mismatch"
+        verdict, reason = "RUNTIME_PARITY_MISMATCH", "live qualified evidence contains an explicit state/category/order/time mismatch"
     elif live_qualified and complete and not explicit_mismatch:
         verdict, reason = "RUNTIME_PARITY_CONFIRMED", "all declared reference transitions and fields match live evidence"
     else:
@@ -206,5 +313,10 @@ def compare_runtime_to_reference(
         "explicit_mismatch": explicit_mismatch,
         "comparisons": comparisons,
         "uses_virtual_10ms_as_runtime_time": False,
+        "song_time_alignment": {
+            "offset_s": song_time_offset_s,
+            "tolerance_s": song_time_tolerance_s,
+            "explicit_alignment_parameters_supplied": song_time_offset_s is not None,
+        },
         "student_visible_fields": [],
     }

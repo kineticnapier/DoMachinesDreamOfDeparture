@@ -98,12 +98,9 @@ class NKeyHumanVisibleControllerActorCritic(NKeyFlyConnectomeActorCritic):
         self.floor_context_dim = int(floor_context_dim)
         self.motor_context_dim = int(motor_context_dim)
         self.hud_context_dim = int(hud_context_dim)
-        # One extra bit records whether the legacy fly no-grad state has
-        # advanced at least once. The parent backend reuses its projection
-        # scratch buffer as the returned state, so from the second inference
-        # step onward that state is overwritten by the current projection
-        # before recurrence. Preserve that established rollout behaviour here
-        # without relying on tensor aliasing.
+        # Retain the legacy started bit in the policy state for checkpoint
+        # shape compatibility. The parent now returns independent recurrent
+        # states, so the bit no longer changes recurrence semantics.
         self.policy_state_dim = (
             self.connectome_hidden_dim + self.controller_hidden_dim + 1
         )
@@ -197,19 +194,16 @@ class NKeyHumanVisibleControllerActorCritic(NKeyFlyConnectomeActorCritic):
         connectome_state: torch.Tensor,
         started: bool,
     ) -> torch.Tensor:
-        """Match the established parent no-grad rollout semantics exactly.
+        """Use the previous recurrent state, as the corrected parent does.
 
-        NKeyFlyConnectomeActorCritic returns its reusable projection buffer as
-        the recurrent state during inference. On the next step that same buffer
-        is filled with the new input projection before the recurrent multiply,
-        so after the first step the recurrent input is the *current* projection.
-        The relaxed controller stores state in a concatenated tensor and would
-        otherwise silently change the inherited policy's behaviour.
+        The started flag is retained in the state for existing checkpoint
+        compatibility, but must not replace the previous state with the
+        current projection. The parent stopped aliasing its projection buffer
+        in commit 2352a507 (Refs #11).
         """
 
         injected = torch.mv(self.input_projection, encoded)
-        recurrent_state = injected if started else connectome_state
-        return self._advance_injected(injected, recurrent_state)
+        return self._advance_injected(injected, connectome_state)
 
     def _split_observation(
         self,
@@ -309,9 +303,8 @@ class NKeyHumanVisibleControllerActorCritic(NKeyFlyConnectomeActorCritic):
                 initial_state,
             )
 
-        # Batch the sensory transform, then reproduce the parent's established
-        # no-grad rollout semantics explicitly. This keeps exact warm-start
-        # behaviour while avoiding dependence on scratch-buffer aliasing.
+        # Batch the sensory transform, then use the same recurrence as the
+        # parent. Preserve the legacy started bit in the returned state.
         with torch.no_grad():
             encoded_sequence = torch.tanh(self.sensory(observations))
             connectome_states: list[torch.Tensor] = []

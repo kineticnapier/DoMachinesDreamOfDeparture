@@ -16,6 +16,7 @@ formula is defined so the 4K case is numerically equivalent to FourFingerBody.
 """
 
 from dataclasses import dataclass, replace
+from math import isfinite
 
 from dmdod.motor.body import BilateralState, FingerConfig, FingerState, HandConfig, HandState
 from dmdod.motor.keyboard import KeyConfig, KeyEvent, KeyState
@@ -23,9 +24,15 @@ from dmdod.motor.env import TimedKeyEvent
 from dmdod.profiles import personal_blue_switch_v0_1
 
 
-def n_key_names(key_count: int) -> tuple[str, ...]:
-    if key_count < 2 or key_count % 2 != 0:
+def _validated_key_count(key_count: int) -> int:
+    """Reject fractional, boolean and string counts without silent coercion."""
+    if type(key_count) is not int or key_count < 2 or key_count % 2 != 0:
         raise ValueError("key_count must be an even integer >= 2")
+    return key_count
+
+
+def n_key_names(key_count: int) -> tuple[str, ...]:
+    key_count = _validated_key_count(key_count)
     per_hand = key_count // 2
     return tuple(
         [f"left_{depth}" for depth in range(per_hand, 0, -1)]
@@ -34,8 +41,7 @@ def n_key_names(key_count: int) -> tuple[str, ...]:
 
 
 def n_key_tiers(key_count: int) -> tuple[tuple[str, str], ...]:
-    if key_count < 2 or key_count % 2 != 0:
-        raise ValueError("key_count must be an even integer >= 2")
+    key_count = _validated_key_count(key_count)
     return tuple(
         (f"left_{depth}", f"right_{depth}")
         for depth in range(1, key_count // 2 + 1)
@@ -109,8 +115,8 @@ class NKeyBody:
     """Two-hand body with an arbitrary equal number of fingers per hand."""
 
     def __init__(self, key_count: int) -> None:
-        self.key_count = int(key_count)
-        self.key_names = n_key_names(self.key_count)
+        self.key_names = n_key_names(key_count)
+        self.key_count = key_count
         self.per_hand = self.key_count // 2
 
         base = personal_blue_switch_v0_1(same_hand=True)
@@ -304,11 +310,16 @@ class NKeyBody:
         )
 
     def step(self, action: NKeyAction, dt_s: float) -> tuple[FingerState, ...]:
-        if dt_s <= 0.0:
-            raise ValueError("dt_s must be positive")
+        if not isfinite(dt_s) or dt_s <= 0.0:
+            raise ValueError("dt_s must be finite and positive")
         values = action.as_tuple()
         if len(values) != self.key_count:
             raise ValueError(f"expected {self.key_count} action values, got {len(values)}")
+        # NKeyMotorEnv validates this at its public boundary, but the body is
+        # also used directly by research code. Reject before mutating fatigue
+        # or coordination; NaN would otherwise be silently clamped to +1.
+        if any(not isfinite(value) for value in values):
+            raise ValueError("N-key motor commands must be finite")
 
         old = tuple(state.copy() for state in self.states)
         updated = tuple(
@@ -377,6 +388,10 @@ class NKeyMotorEnv:
         physics_dt_s: float = 0.001,
         key_config: KeyConfig | None = None,
     ) -> None:
+        if not isfinite(physics_dt_s):
+            raise ValueError("physics_dt_s must be finite")
+        if not isfinite(control_dt_s):
+            raise ValueError("control_dt_s must be finite")
         if physics_dt_s <= 0.0:
             raise ValueError("physics_dt_s must be positive")
         if control_dt_s < physics_dt_s:
@@ -385,8 +400,8 @@ class NKeyMotorEnv:
         if abs(substeps * physics_dt_s - control_dt_s) > 1e-12:
             raise ValueError("control_dt_s must be an integer multiple of physics_dt_s")
 
-        self.key_count = int(key_count)
-        self.key_names = n_key_names(self.key_count)
+        self.key_names = n_key_names(key_count)
+        self.key_count = key_count
         self.body = NKeyBody(self.key_count)
         self.keyboard = NKeyKeyboard(self.key_names, key_config)
         self.control_dt_s = float(control_dt_s)
@@ -427,6 +442,8 @@ class NKeyMotorEnv:
         values = action.as_tuple()
         if len(values) != self.key_count:
             raise ValueError(f"expected {self.key_count} action values, got {len(values)}")
+        if any(not isfinite(value) for value in values):
+            raise ValueError("N-key motor commands must be finite")
         clamped = NKeyAction(tuple(max(-1.0, min(1.0, value)) for value in values))
         if not self.capture_physics_trace:
             return self._step_held_exact(clamped)

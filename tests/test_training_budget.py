@@ -1,6 +1,27 @@
 from __future__ import annotations
 
+import pytest
+
 from dmdod.training.budget import NonBestRestartController, TrustRadiusController
+
+
+@pytest.mark.parametrize("field", ("initial", "minimum", "reject_shrink", "safe_grow"))
+@pytest.mark.parametrize("bad", (float("nan"), float("inf"), float("-inf")))
+def test_trust_radius_rejects_nonfinite_parameters(field: str, bad: float) -> None:
+    values = dict(initial=0.01, minimum=0.001, reject_shrink=0.5, safe_grow=1.25)
+    values[field] = bad
+    with pytest.raises(ValueError, match=rf"{field} must be finite"):
+        TrustRadiusController.create(**values)
+
+
+def test_trust_radius_preserves_finite_parameter_behavior() -> None:
+    radius = TrustRadiusController.create(
+        initial=0.01, minimum=0.001, reject_shrink=0.5, safe_grow=1.25,
+    )
+    assert radius.current == 0.01
+    assert radius.reject()
+    assert radius.current == 0.005
+    assert radius.accept() == 0.00625
 
 
 def test_reject_tries_floor_exactly_once() -> None:
@@ -57,3 +78,19 @@ def test_nonbest_restart_controller_best_resets_streak() -> None:
     assert not controller.observe(selected_best=True)
     assert controller.streak == 0
     assert controller.restarts == 0
+
+
+@pytest.mark.parametrize(
+    "invalid", (0, -1, 2.5, 3.0, True, "3", float("nan"), float("inf")),
+)
+def test_nonbest_restart_controller_rejects_noninteger_limit(invalid) -> None:
+    with pytest.raises(ValueError, match="non-best restart limit must be a positive integer"):
+        NonBestRestartController.create(limit=invalid)
+
+
+def test_nonbest_restart_controller_keeps_exact_integer_limit() -> None:
+    controller = NonBestRestartController.create(limit=3)
+    assert controller.limit == 3
+    assert [controller.observe(selected_best=False) for _ in range(3)] == [
+        False, False, True,
+    ]

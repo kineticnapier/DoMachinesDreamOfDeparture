@@ -18,6 +18,12 @@ from dmdod.features.judgement_observer_v01 import (
     JudgementDelta,
     JudgementDeltaStatus,
 )
+from dmdod.planning.judgement_label_orders import (
+    MAX_ORDER_EXPANSIONS,
+    MAX_VISIBLE_EVENTS,
+    bounded_unique_orders,
+    tied_input_orders_exceed_budget,
+)
 from dmdod.planning.judgement_state_estimator_v01 import (
     MotorKeyDownEvidence,
     RepositoryWindowModel,
@@ -436,9 +442,34 @@ class PersistentJudgementStateEstimator:
                 "delta has no attributable display interval",
             )
 
+        # A huge counter increment must not be expanded into a huge tuple.
+        if any(count < 0 for _, count in feedback.deltas):
+            raise ValueError("visible judgement delta cannot be negative")
+        if feedback.total_increment > MAX_VISIBLE_EVENTS:
+            self._set_hypotheses(
+                self._hypotheses, truncation_reason="visible delta too large"
+            )
+            return self._estimate(
+                feedback.observed_at_s,
+                PersistentEstimateStatus.TRUNCATED,
+                "visible delta too large",
+            )
         labels = self._labels(feedback)
+        budget = max(1, MAX_ORDER_EXPANSIONS // max(1, len(self._hypotheses)))
+        label_orders = bounded_unique_orders(labels, limit=budget)
+        if label_orders is None:
+            self._set_hypotheses(
+                self._hypotheses, truncation_reason="visible order budget exceeded"
+            )
+            return self._estimate(
+                feedback.observed_at_s,
+                PersistentEstimateStatus.TRUNCATED,
+                "visible order budget exceeded",
+            )
         lower, upper = feedback.event_interval_s
         compatible: list[PersistentStateHypothesis] = []
+        remaining_search_budget = MAX_ORDER_EXPANSIONS
+        combination_budget_exceeded = False
         omitted_possible = False
         generation_capped = False
         for hypothesis in self._hypotheses:
@@ -474,6 +505,19 @@ class PersistentJudgementStateEstimator:
                 len(selected_pending) > 1
                 and len({row.occurred_at_s for row in selected_pending}) == 1
             ):
+                if tied_input_orders_exceed_budget(
+                    len(selected_pending), len(label_orders),
+                    limit=max(1, MAX_ORDER_EXPANSIONS // max(1, len(self._hypotheses))),
+                ):
+                    compatible.append(replace(
+                        hypothesis,
+                        unknown_search_remainder=True,
+                        observation_gaps=_dedupe(hypothesis.observation_gaps + (
+                            "tied KeyDown order budget exceeded",
+                        )),
+                    ))
+                    omitted_possible = True
+                    continue
                 input_orders = permutations(selected_pending)
             else:
                 input_orders = (tuple(selected_pending),)
@@ -482,7 +526,7 @@ class PersistentJudgementStateEstimator:
                     break
                 if len({row.input_id for row in keydown_order}) != len(keydown_order):
                     continue
-                for label_order in set(permutations(labels)):
+                for label_order in label_orders:
                     if generation_capped:
                         break
                     if self.allocation_rule is AllocationRule.REPOSITORY_FIFO:
@@ -551,6 +595,18 @@ class PersistentJudgementStateEstimator:
                     omitted_possible |= branch_omitted
                     if any(not choices for choices in event_choices):
                         continue
+                    # The number of distinct visible orders is bounded, but
+                    # each order can still expand into an enormous Cartesian
+                    # product of compatible predecessor events.
+                    combinations = 1
+                    for choices in event_choices:
+                        combinations *= len(choices)
+                    if combinations > remaining_search_budget:
+                        omitted_possible = True
+                        combination_budget_exceeded = True
+                        generation_capped = True
+                        break
+                    remaining_search_budget -= combinations
                     for selected in product(*event_choices):
                         resolving_ids = [
                             event.local_id for event, label in zip(selected, label_order)
@@ -598,6 +654,16 @@ class PersistentJudgementStateEstimator:
                             generation_capped = True
                             break
 
+        if not compatible and combination_budget_exceeded:
+            self._set_hypotheses(
+                self._hypotheses,
+                truncation_reason="attribution combination budget exceeded",
+            )
+            return self._estimate(
+                feedback.observed_at_s,
+                PersistentEstimateStatus.TRUNCATED,
+                "attribution combination budget exceeded; causal attribution unknown",
+            )
         if not compatible:
             # Do not silently resurrect discarded concrete histories.  A single
             # UNKNOWN continuation records model mismatch/observation loss.

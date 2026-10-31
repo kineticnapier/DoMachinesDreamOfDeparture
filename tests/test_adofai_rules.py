@@ -198,3 +198,67 @@ def test_multipress_counter_also_uses_strict_greater_than_one_fail_condition():
     assert overload.record_multipress()      # 1.05
     assert overload.multipress_value == pytest.approx(1.05)
     assert overload.overloaded
+
+
+@pytest.mark.parametrize("bad", (float("nan"), float("inf"), float("-inf")))
+def test_overload_advance_rejects_nonfinite_beats_without_state_change(bad):
+    counter = OverloadCounter(
+        value=1.0, multipress_value=0.35, multipress_reset_beats=1.0,
+    )
+    before = (
+        counter.value, counter.multipress_value, counter.multipress_reset_beats,
+    )
+    with pytest.raises(ValueError, match="beat_delta must be finite"):
+        counter.advance_beats(bad)
+    assert (
+        counter.value, counter.multipress_value, counter.multipress_reset_beats,
+    ) == before
+
+
+def test_overload_advance_keeps_finite_decay_and_negative_rejection():
+    counter = OverloadCounter(
+        value=1.0, multipress_value=0.35, multipress_reset_beats=1.0,
+    )
+    with pytest.raises(ValueError, match="beat_delta must be non-negative"):
+        counter.advance_beats(-0.5)
+    assert (counter.value, counter.multipress_value, counter.multipress_reset_beats) == (
+        1.0, 0.35, 1.0,
+    )
+    counter.advance_beats(0.5)
+    assert counter.value == pytest.approx(0.8)
+    assert counter.multipress_value == pytest.approx(0.25)
+    assert counter.multipress_reset_beats == pytest.approx(1.5)
+
+
+@pytest.mark.parametrize("field", (
+    "bpm", "timing_scale", "controller_speed", "pitch", "speed_trial",
+))
+@pytest.mark.parametrize("bad", (float("nan"), float("inf"), float("-inf")))
+def test_timing_windows_rejects_nonfinite_inputs(field, bad):
+    params = {"bpm": 120.0, field: bad}
+    with pytest.raises(ValueError, match=rf"{field} must be finite"):
+        timing_windows(**params)
+
+
+@pytest.mark.parametrize("bad", (float("nan"), float("inf"), float("-inf")))
+def test_classify_timing_rejects_nonfinite_event_error(bad):
+    with pytest.raises(ValueError, match="error_s must be finite"):
+        classify_timing(bad, 120.0)
+
+
+@pytest.mark.parametrize("kwargs, message", (
+    ({"bpm": 1e308, "controller_speed": 2.0}, "effective angular speed"),
+    ({"bpm": 1e-320}, "timing window boundaries"),
+    ({"bpm": 120.0, "timing_scale": 1e308}, "timing window boundaries"),
+))
+def test_timing_windows_rejects_nonrepresentable_derived_values(kwargs, message):
+    with pytest.raises(ValueError, match=message):
+        timing_windows(**kwargs)
+
+
+def test_timing_windows_keeps_finite_zero_scale_and_dll_boundaries():
+    windows = timing_windows(120.0, timing_scale=0.0)
+    assert windows.perfect_s == pytest.approx(0.025)
+    assert windows.early_late_perfect_s == pytest.approx(0.030)
+    assert windows.pass_s == pytest.approx(0.065)
+    assert classify_timing(0.0, 120.0, timing_scale=0.0) is TimingJudgement.PERFECT

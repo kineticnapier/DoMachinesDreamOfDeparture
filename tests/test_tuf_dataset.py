@@ -1,6 +1,10 @@
 from __future__ import annotations
 
+import io
 import zipfile
+
+import pytest
+import dmdod.data.tuf as tuf_module
 from pathlib import Path
 
 from dmdod.tuf_dataset import (
@@ -136,3 +140,64 @@ def test_copy_final_source_extracts_final_from_bundle_zip(tmp_path: Path):
     assert copied == 2
     assert (destination / "Celica" / "level.adofai").read_text() == "celica"
     assert (destination / "Aftershine" / "level.adofai").read_text() == "aftershine"
+
+
+@pytest.mark.parametrize("raw", [
+    b'{"angleData":[0,90],"settings":{"bpm":120}}',
+    b'{"angleData":[0,90,],"settings":{"bpm":120,},}',
+    b'{// comment\n"angleData":[0,90]}',
+    b'{"angleData":[0],"settings":{"songFilename":"line1\nline2.ogg"}}',
+    b"\xff\xfe" + '{"angleData":[0,90,]}'.encode("utf-16-le"),
+    b"\xfe\xff" + '{"angleData":[0,90,]}'.encode("utf-16-be"),
+])
+def test_download_chart_accepts_every_parser_supported_document_encoding(monkeypatch, raw):
+    # A valid direct response must not be discarded in favor of the ZIP URL.
+    candidate = _candidate(501)
+    requested = []
+
+    def fake_request(url, *, timeout_s):
+        requested.append(url)
+        if url != f"{tuf_module.API_BASE}/v2/database/levels/501/level.adofai":
+            raise AssertionError("unexpected fallback download")
+        return raw
+
+    monkeypatch.setattr(tuf_module, "_request_bytes", fake_request)
+    assert tuf_module.download_chart(candidate) == raw
+    assert len(requested) == 1
+
+
+def test_download_chart_accepts_loose_json_inside_zip(monkeypatch):
+    candidate = _candidate(502)
+    chart = b"\xff\xfe" + '{/*note*/"angleData":[0,90,]}'.encode("utf-16-le")
+    archive_data = io.BytesIO()
+    with zipfile.ZipFile(archive_data, "w") as archive:
+        archive.writestr("level.adofai", chart)
+    requested = []
+
+    def fake_request(url, *, timeout_s):
+        requested.append(url)
+        return b"not a chart" if url.endswith("/level.adofai") else archive_data.getvalue()
+
+    monkeypatch.setattr(tuf_module, "_request_bytes", fake_request)
+    assert tuf_module.download_chart(candidate) == chart
+    assert len(requested) == 2
+
+
+def test_download_chart_preserves_legacy_pathdata_for_preflight():
+    from dmdod.adofai.chart import parse_adofai_bytes
+
+    legacy = b'{"pathData":"RULD"}'
+    assert tuf_module._looks_like_adofai(legacy)
+    with pytest.raises(ValueError, match="legacy pathData"):
+        parse_adofai_bytes(legacy)
+
+
+@pytest.mark.parametrize("raw", [
+    b"not JSON",
+    b'{"angleData":null}',
+    b'{"settings":{"bpm":120}}',
+    b'{"pathData":123}',
+    b"[]",
+])
+def test_download_chart_rejects_invalid_document_shapes(raw):
+    assert not tuf_module._looks_like_adofai(raw)

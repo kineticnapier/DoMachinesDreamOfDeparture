@@ -103,7 +103,7 @@ def test_aux_loss_only_perturbed_key_and_frames():
     target[2:4,3]=.25
     correction=MotorCorrection(0,LocalIntervention(3,2,2,.25),obs,target,0,1,1)
     loss=auxiliary_loss(policy,correction)
-    assert float(loss)==pytest.approx(.0625)
+    assert loss.detach().item()==pytest.approx(.0625)
     loss.backward()
     assert policy.weights.grad[3] == pytest.approx(-.5)
     assert torch.all(policy.weights.grad[:3]==0)

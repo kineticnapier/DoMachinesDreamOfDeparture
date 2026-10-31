@@ -9,7 +9,7 @@ SCRIPTS = Path(__file__).resolve().parents[1] / "scripts"
 if str(SCRIPTS) not in sys.path:
     sys.path.insert(0, str(SCRIPTS))
 
-from compare_fingering_human_log_v011 import parse_human_log
+from compare_fingering_human_log_v011 import parse_human_log, render_html
 from prepare_dmdogo_v09_human_input import (
     normalize_legacy, validate_normalized, FORMAT,
 )
@@ -92,3 +92,38 @@ def test_importer_cannot_claim_fingers_verified_by_recording():
     )
     assert payload["finger_verification"]["method"] == "fixed_declaration_from_legacy_key_map"
     assert payload["records"][0]["finger_label_evidence"] == "declared_key_mapping_not_observed"
+
+
+def test_human_fingering_html_formats_first_and_subsequent_intervals():
+    report = {
+        "chart": "synthetic",
+        "alignment": {
+            "status": "intervals_consistent",
+            "estimated_human_minus_oracle_offset_ms": 0.0,
+            "p95_absolute_residual_ms": 0.0,
+            "p95_interval_difference_ms": 0.0,
+        },
+        "policies": {
+            "free": {"axis_matches": 2, "hand_matches": 2},
+            "human_proxy": {"axis_matches": 2, "hand_matches": 2},
+        },
+        "four_second_windows": [],
+        "common_prefix_only": False,
+        "human": {"median_repeat_ms": None},
+        "limitations": [],
+    }
+    rows = [
+        {
+            "event_index": index,
+            "human": {"time_ms": time_ms, "finger": "LI", "key": "K04"},
+            "interval_ms": interval,
+            "choices": {"free": ["left_1"], "human_proxy": ["left_1"]},
+            "match": {"free": True, "human_proxy": True},
+        }
+        for index, time_ms, interval in ((0, 100.0, None), (1, 120.54, 20.54))
+    ]
+    html = render_html(report, rows)
+    assert '<td>—</td>' in html
+    assert '<td>20.5</td>' in html
+    assert 'data-dense="0"' in html
+    assert 'data-dense="1"' in html

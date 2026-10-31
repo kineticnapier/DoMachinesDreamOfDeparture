@@ -317,10 +317,11 @@ def render_html(report: dict, rows: list[dict]) -> str:
         format_axis = lambda axes, ok: (
             f'<span class="finger {"hit" if ok else "miss"}">{escape(axis_text(axes))}</span>'
         )
+        interval_text = "—" if row["interval_ms"] is None else f'{row["interval_ms"]:.1f}'
         events_html.append(
             f'<tr data-dense="{int(dense)}" data-status="{status}">'
             f'<td>{row["event_index"]}</td><td>{human["time_ms"]/1000:.3f}</td>'
-            f'<td>{"—" if row["interval_ms"] is None else f"{row['interval_ms']:.1f}"}</td>'
+            f'<td>{interval_text}</td>'
             f'<td><span class="finger human">{escape(human["finger"])}</span> '
             f'<span class="muted">{escape(human["key"])}</span></td>'
             f'<td>{format_axis(free, row["match"]["free"])}</td>'

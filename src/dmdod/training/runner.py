@@ -18,7 +18,7 @@ from .action_trust import (
     train_actor_action_trust,
 )
 from .budget import NonBestRestartController, TrustRadiusController
-from .config import TrainingConfig
+from .config import TrainingConfig, validate_checkpoint_paths
 from .human_visible import (
     build_human_visible_replay_chunks,
     freeze_human_visible_controller,
@@ -88,6 +88,8 @@ def _progress_checkpoint_path(output: Path) -> Path:
 
 
 def _prepare(config: TrainingConfig) -> PreparedRun:
+    # Recheck for manually constructed configs before loading models or data.
+    validate_checkpoint_paths(config.run.checkpoint, config.run.output)
     device = device_from_arg(config.run.device)
     source_checkpoint = Path(config.run.checkpoint)
     output_checkpoint = Path(config.run.output)
