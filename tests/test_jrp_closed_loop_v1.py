@@ -118,7 +118,8 @@ def test_frozen_prestige_adapter_preserves_263d_and_records_causal_timing():
     update = type('Timing', (), {})()
     observation = CausalJrpPolicyInput(7, (0.,) * 263, ('120', '240', '4'), update)
     action = policy.act(observation)
-    assert action.values == pytest.approx(tuple(torch.tanh(torch.linspace(-2., 2., 8))))
+    expected = tuple(float(value) for value in torch.tanh(torch.linspace(-2., 2., 8)))
+    assert action.values == pytest.approx(expected)
     assert len(policy.estimates) == 1
     estimate = policy.estimates[0]
     assert estimate.frame == 7

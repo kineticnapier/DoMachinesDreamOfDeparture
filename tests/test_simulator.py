@@ -1,6 +1,48 @@
 import pytest
 
 from dmdod import BodyConfig, FingerConfig, KeyEvent, Simulation, TwoFingerBody
+from dmdod.envs.simulator import SimulationConfig
+
+
+@pytest.mark.parametrize("bad", (float("nan"), float("inf"), float("-inf")))
+def test_simulation_config_rejects_nonfinite_dt(bad):
+    with pytest.raises(ValueError, match="dt_s must be finite and positive"):
+        SimulationConfig(dt_s=bad)
+
+
+@pytest.mark.parametrize("bad", (float("nan"), float("inf"), float("-inf")))
+def test_direct_body_step_rejects_nonfinite_dt_without_mutating_state(bad):
+    body = TwoFingerBody()
+    body.reset()
+    left_before = body.left.copy()
+    right_before = body.right.copy()
+    hand_before = (body.shared_hand.fatigue, body.shared_hand.coordination)
+    bilateral_before = body.bilateral_state.coordination
+
+    with pytest.raises(ValueError, match="dt_s must be finite and positive"):
+        body.step(1.0, 0.0, bad)
+
+    assert body.left == left_before
+    assert body.right == right_before
+    assert (body.shared_hand.fatigue, body.shared_hand.coordination) == hand_before
+    assert body.bilateral_state.coordination == bilateral_before
+
+
+@pytest.mark.parametrize("bad", (float("nan"), float("inf"), float("-inf")))
+def test_run_constant_rejects_nonfinite_duration_without_advancing(bad):
+    sim = Simulation()
+    with pytest.raises(ValueError, match="duration_s must be finite and non-negative"):
+        sim.run_constant(1.0, 0.0, bad)
+    assert sim.time_s == 0.0
+    assert sim.body.left.position_m == 0.0
+    assert sim.body.right.position_m == 0.0
+
+
+def test_finite_time_boundaries_preserve_existing_behavior():
+    assert SimulationConfig(dt_s=0.001).dt_s == 0.001
+    sim = Simulation()
+    assert sim.run_constant(0.0, 0.0, 0.0) == []
+    assert sim.step(0.0, 0.0).time_s == pytest.approx(0.001)
 
 
 def test_zero_command_stays_at_rest():

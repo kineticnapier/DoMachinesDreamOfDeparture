@@ -87,6 +87,36 @@ def test_human_visible_warm_start_preserves_parent_actions(tmp_path) -> None:
             )
 
 
+
+def test_human_visible_no_grad_rollout_keeps_parent_state_independent(tmp_path) -> None:
+    """The inherited state must not be replaced by the next projection."""
+    parent, relaxed = _models(tmp_path)
+    observations = torch.randn(4, parent.input_dim)
+    parent_state = parent.initial_state(torch.device("cpu"))
+    relaxed_state = relaxed.initial_state(torch.device("cpu"))
+
+    with torch.no_grad():
+        for observation in observations:
+            parent_before = parent_state.clone()
+            relaxed_before = relaxed_state.clone()
+            parent_mean, _, parent_value, next_parent = parent.forward_step(
+                observation, parent_state,
+            )
+            relaxed_mean, _, relaxed_value, next_relaxed = relaxed.forward_step(
+                observation, relaxed_state,
+            )
+            assert torch.equal(parent_state, parent_before)
+            assert torch.equal(relaxed_state, relaxed_before)
+            assert torch.allclose(relaxed_mean, parent_mean, atol=1e-7, rtol=1e-6)
+            assert torch.allclose(relaxed_value, parent_value, atol=1e-7, rtol=1e-6)
+            assert torch.allclose(
+                next_relaxed[: parent.hidden_dim],
+                next_parent,
+                atol=1e-7,
+                rtol=1e-6,
+            )
+            parent_state, relaxed_state = next_parent, next_relaxed
+
 def test_human_visible_step_and_sequence_match(tmp_path) -> None:
     _, model = _models(tmp_path)
     observations = torch.randn(6, model.input_dim)

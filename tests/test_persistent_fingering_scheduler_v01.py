@@ -359,3 +359,32 @@ def test_passive_velocity_does_not_relax_new_reservations():
     assert "right_3" not in planner.available_axes(moving)
     with pytest.raises(ValueError, match="reserved or not reset"):
         planner.reserve(0, (PhysicalFinger("right_3"),), moving)
+
+
+@pytest.mark.parametrize("fingers,chord_size,pressed_axis", [
+    ((PhysicalFinger("left_1"),), 1, "left_1"),
+    ((PhysicalFinger("left_5", 2),), 2, "left_5"),
+    ((PhysicalFinger("left_1"), PhysicalFinger("right_1")), 2, "left_1"),
+])
+def test_keydown_before_arm_quarantines_axes(fingers, chord_size, pressed_axis):
+    planner = PersistentFingeringScheduler()
+    planner.apply_forecast(
+        frame(0, pending=(token(0, .06, chord_size),), new=(0,)),
+        snap(),
+    )
+    planner.reserve(0, fingers, snap())
+    pressed = snap(**{pressed_axis: {
+        "position": .003, "velocity": .02,
+        "activation": .1, "pressed": True,
+    }})
+    planner.observe_physics(pressed, ((pressed_axis, KeyEvent.DOWN),))
+    entry = planner.reservation(0)
+    assert entry.phase is ReservationPhase.CANCELED_IN_FLIGHT
+    assert entry.confirmed is False
+    assert entry.retired_reason == "unexpected_keydown_before_arm"
+    assert all(axis not in planner.available_axes(pressed) for axis in entry.axes)
+    with pytest.raises(ValueError, match="only a reserved"):
+        planner.arm(0, pressed)
+    # Physical reset, not forecast expiration, releases the reservation.
+    planner.observe_physics(snap(), ((pressed_axis, KeyEvent.UP),))
+    assert planner.reservations == ()

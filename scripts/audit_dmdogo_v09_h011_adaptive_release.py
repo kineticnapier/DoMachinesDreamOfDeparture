@@ -14,6 +14,7 @@ import argparse
 from collections import Counter
 import json
 from pathlib import Path
+from dmdogo_h0_source_provenance import capture_audit_source_provenance
 from statistics import mean, median
 
 from dmdod.planning.gesture_chunk_planner_v08 import (
@@ -520,6 +521,7 @@ def main() -> None:
         raise ValueError("saved H0.10 aggregates mismatched")
     report = {
         "format": FORMAT,
+        "audit_source_provenance": capture_audit_source_provenance(Path(__file__).resolve().parents[1]),
         "source_v08_commit": checked["source_v08_commit"],
         "frozen_code_digest": checked["frozen_code_digest"],
         "h010_source_sha256": sha256_file(args.h010_report),

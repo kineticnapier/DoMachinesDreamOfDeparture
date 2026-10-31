@@ -3,6 +3,7 @@ from __future__ import annotations
 from copy import deepcopy
 from pathlib import Path
 import subprocess
+import sys
 
 from scripts import run_hud_timing_phase9_lifecycle_motor_ab_v01 as runner
 
@@ -68,7 +69,7 @@ def test_phase3_default_remains_lifecycle_v14():
 def test_cli_help_starts_from_repository_root():
     completed = subprocess.run(
         [
-            str(Path(".venv/Scripts/python.exe")),
+            sys.executable,
             "scripts/run_hud_timing_phase9_lifecycle_motor_ab_v01.py",
             "--help",
         ],
@@ -76,6 +77,7 @@ def test_cli_help_starts_from_repository_root():
         capture_output=True,
         text=True,
         timeout=30,
+        cwd=Path(__file__).resolve().parents[1],
     )
     assert completed.returncode == 0, completed.stderr
 

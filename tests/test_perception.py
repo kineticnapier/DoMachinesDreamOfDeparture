@@ -80,3 +80,32 @@ def test_visual_cue_target_change_forces_fresh_frame():
 
     assert first.left > 0.99 and first.right == 0.0
     assert second.left == 0.0 and second.right > 0.0
+
+@pytest.mark.parametrize(
+    "field",
+    (
+        "latency_s", "width_s", "horizon_s", "latency_jitter_s",
+        "sample_period_s", "amplitude_noise_std", "dropout_probability",
+    ),
+)
+@pytest.mark.parametrize("bad", (float("nan"), float("inf"), float("-inf")))
+def test_visual_cue_config_rejects_nonfinite_sensor_parameters(field, bad):
+    # NaN previously bypassed every range check; positive infinity bypassed
+    # most of them. Neither is a meaningful observable sensor parameter.
+    with pytest.raises(ValueError, match=rf"{field} must be finite"):
+        VisualCueConfig(**{field: bad})
+
+
+def test_visual_cue_config_preserves_finite_boundary_values():
+    config = VisualCueConfig(
+        latency_s=0.0,
+        width_s=1e-6,
+        horizon_s=1e-6,
+        latency_jitter_s=0.0,
+        sample_period_s=0.0,
+        amplitude_noise_std=0.0,
+        dropout_probability=1.0,
+    )
+    assert config.dropout_probability == 1.0
+    assert config.width_s == 1e-6
+    assert VisualCueConfig().latency_s == 0.050

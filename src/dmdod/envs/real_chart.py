@@ -159,7 +159,7 @@ class RealChartMotorEnv:
             if self._failed_on_miss:
                 break
             reward += self._score_event(event)
-            if self._overload.overloaded:
+            if self._failed_on_miss or self._overload.overloaded:
                 break
 
         now = transition.diagnostics.time_s
@@ -168,7 +168,7 @@ class RealChartMotorEnv:
             reward += self._expire_misses(now)
         reward -= self.reward_config.effort_penalty * (abs(action.left) + abs(action.right))
 
-        all_resolved = all(used or missed for used, missed in zip(self._used, self._missed))
+        all_resolved = self._all_targets_resolved()
         self._done = (
             self._failed_on_miss
             or self._overload.overloaded
@@ -184,6 +184,10 @@ class RealChartMotorEnv:
             reward,
             self._done,
         )
+
+    def _all_targets_resolved(self) -> bool:
+        """Check evaluator completion with the monotone unresolved cursor."""
+        return self._next_target_index() is None
 
     def _next_target_index(self) -> int | None:
         index = self._next_unresolved_cursor
@@ -270,6 +274,8 @@ class RealChartMotorEnv:
         )
 
     def _expire_misses(self, now_s: float) -> float:
+        if self._failed_on_miss:
+            return 0.0
         reward = 0.0
         index = self._next_unresolved_cursor
         while index < len(self.segment.targets):
@@ -282,9 +288,10 @@ class RealChartMotorEnv:
                 self._misses += 1
                 self._record_margin(TimingJudgement.FAIL_MISS)
                 reward -= self.reward_config.miss_penalty
+                index += 1
                 if self.reward_config.fail_on_miss:
                     self._failed_on_miss = True
-                index += 1
+                    break
                 continue
             # Playable targets are time ordered, so no later target can expire
             # while this first unresolved target remains inside its window.
@@ -292,14 +299,37 @@ class RealChartMotorEnv:
         self._next_unresolved_cursor = index
         return reward
 
+    def _beat_delta_between(self, start_s: float, end_s: float) -> float:
+        """Integrate evaluator beats across compiled floor-entry boundaries.
+
+        The compiled BPM is still a per-floor effective speed: this does not
+        reconstruct SetSpeed changes within one floor (Issue #12 remainder).
+        """
+        if end_s <= start_s:
+            return 0.0
+        cursor = self.segment.chart_time_from_episode(start_s)
+        end_chart_s = self.segment.chart_time_from_episode(end_s)
+        beats = 0.0
+        while cursor < end_chart_s:
+            floor_index = self._floor_index_at_chart_time(cursor)
+            next_index = bisect_right(self._floor_entry_times, cursor)
+            boundary = (
+                min(end_chart_s, self._floor_entry_times[next_index])
+                if next_index < len(self._floor_entry_times)
+                else end_chart_s
+            )
+            beats += (
+                (boundary - cursor)
+                * max(1e-6, self.segment.chart.floors[floor_index].bpm)
+                / 60.0
+            )
+            cursor = boundary
+        return beats
+
     def _advance_overload(self, to_time_s: float) -> None:
         if to_time_s <= self._overload_clock_s:
             return
-        delta_s = to_time_s - self._overload_clock_s
-        midpoint_s = self._overload_clock_s + delta_s * 0.5
-        chart_time = self.segment.chart_time_from_episode(midpoint_s)
-        floor = self.segment.chart.floors[self._floor_index_at_chart_time(chart_time)]
-        beat_delta = delta_s * max(1e-6, floor.bpm) * self.segment.pitch_ratio / 60.0
+        beat_delta = self._beat_delta_between(self._overload_clock_s, to_time_s)
         self._overload.advance_beats(beat_delta)
         self._overload_clock_s = to_time_s
 

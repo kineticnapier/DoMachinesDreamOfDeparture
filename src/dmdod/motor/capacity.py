@@ -8,6 +8,7 @@ number of keys, how much of a dense chart can a center-first scheduler actually
 produce?  No policy is trained here.
 """
 
+from bisect import bisect_right
 from dataclasses import dataclass
 
 from dmdod.motor.keyboard import KeyEvent
@@ -141,7 +142,7 @@ class NKeyRealChartMotorEnv(RealChartMotorEnv):
             reward += self._expire_misses(now)
         reward -= self.reward_config.effort_penalty * sum(abs(value) for value in action.values)
 
-        all_resolved = all(used or missed for used, missed in zip(self._used, self._missed))
+        all_resolved = self._all_targets_resolved()
         self._done = (
             self._failed_on_miss
             or self._overload.overloaded
@@ -259,13 +260,46 @@ def _target_token(target) -> tuple[int, int, float]:
 
 
 def _unresolved_tail(env: NKeyRealChartMotorEnv) -> tuple[tuple[object, float], ...]:
+    """Compatibility oracle view for Stage T's fixed 8K/16K capacity audit.
+
+    This intentionally exposes privileged future targets only to the Motor-only
+    diagnostic. The optimized diagnose_n_key_teacher_capacity path continues
+    to use _due_target_window instead of copying the entire remaining tail.
+    """
     target = env.privileged_next_target()
     if target is None:
         return ()
     return tuple(
         (_target_token(future), float(future.episode_time_s))
-        for future in env.segment.targets[int(target.ordinal) :]
+        for future in env.segment.targets[int(target.ordinal):]
     )
+
+
+def _due_target_window(
+    segment,
+    start: int,
+    due_end: int,
+    reservations: dict[str, tuple[object, float]],
+) -> tuple[tuple[object, float], ...]:
+    """Keep due targets and valid future reservations without copying the tail.
+
+    Future reservations must remain visible to pipeline_action's membership
+    check even though the scheduler stops at the first not-yet-due target.
+    """
+    result = [
+        (_target_token(target), float(target.episode_time_s))
+        for target in segment.targets[start:due_end]
+    ]
+    for token, _ in reservations.values():
+        if not isinstance(token, tuple) or len(token) != 3:
+            continue
+        ordinal = token[0]
+        if not isinstance(ordinal, int) or not (max(start, due_end) <= ordinal < len(segment.targets)):
+            continue
+        future = segment.targets[ordinal]
+        if _target_token(future) == token:
+            result.append((token, float(future.episode_time_s)))
+    return tuple(result)
 
 
 def _peak_targets_in_window(segment, window_s: float) -> int:
@@ -314,15 +348,15 @@ def diagnose_n_key_teacher_capacity(
     other_block_frames = 0
     blocked_tokens: set[object] = set()
 
+    target_times = tuple(float(target.episode_time_s) for target in segment.targets)
     max_steps = int((segment.duration_s + 2.0) / control_dt_s) + 200
     for _ in range(max_steps):
         now_s = float(env.privileged_episode_time_s())
-        targets = _unresolved_tail(env)
-        due_tokens = [
-            token
-            for token, target_time_s in targets
-            if now_s + float(lead_s) >= float(target_time_s)
-        ]
+        next_target = env.privileged_next_target()
+        start = len(target_times) if next_target is None else int(next_target.ordinal)
+        due_end = bisect_right(target_times, now_s + float(lead_s), lo=start)
+        targets = _due_target_window(segment, start, due_end, teacher._reservations)
+        due_tokens = [token for token, _ in targets[: due_end - start]]
         max_due = max(max_due, len(due_tokens))
 
         action = teacher.pipeline_action(

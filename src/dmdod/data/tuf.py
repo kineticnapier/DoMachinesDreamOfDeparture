@@ -16,6 +16,7 @@ from urllib.error import HTTPError, URLError
 from urllib.parse import urlencode
 from urllib.request import Request, urlopen
 
+from dmdod.adofai.chart import parse_adofai_document_bytes
 from dmdod.data.multichart import _choose_adofai_name
 
 
@@ -438,13 +439,13 @@ def chart_filename(candidate: TufCandidate) -> str:
 
 
 def _looks_like_adofai(raw: bytes) -> bool:
+    # Match the real chart parser's decoding/loose-JSON rules. Keep legacy
+    # pathData recognizable here so preflight can report parser incompatibility.
     try:
-        value = json.loads(raw.decode("utf-8-sig"))
-    except (UnicodeDecodeError, json.JSONDecodeError):
+        value = parse_adofai_document_bytes(raw)
+    except (UnicodeError, ValueError):
         return False
-    return isinstance(value, dict) and (
-        isinstance(value.get("angleData"), list) or isinstance(value.get("pathData"), str)
-    )
+    return isinstance(value.get("angleData"), list) or isinstance(value.get("pathData"), str)
 
 
 def download_chart(

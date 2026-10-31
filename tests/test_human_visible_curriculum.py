@@ -234,7 +234,10 @@ from dmdod.training.human_visible_curriculum import (
     BETA_SCHEDULE,
     TRAINING_MODE,
     _check_validation_context,
+    _checkpoint_payload,
     _check_validation_summary,
+    _train_identity,
+    _train_identity_verified_for_output,
     _checkpoint_best_identity,
     _check_optimizer_state,
     _load_checked_optimizer,
@@ -277,12 +280,105 @@ def _tiny_resume_context(tmp_path, model, optimizer, *, role="selected-best"):
         "human_visible_validation_streak": 1,
         "human_visible_catastrophic_streak": 1,
     }
+    anchors = [
+        SimpleNamespace(chart_sha256="train-a", start_s=0.0, end_s=10.0),
+        SimpleNamespace(chart_sha256="train-b", start_s=5.0, end_s=15.0),
+    ]
+    old["human_visible_train_identity"] = [
+        {"chart_sha256": item.chart_sha256, "start_s": item.start_s, "end_s": item.end_s}
+        for item in anchors
+    ]
     data = SimpleNamespace(anchor_limit=20, validation_limit=20)
     run = SimpleNamespace(dataset=str(tmp_path / "dataset"))
-    config = SimpleNamespace(run=run, data=data, human_visible=SimpleNamespace(transition_epochs=3))
-    prepared = SimpleNamespace(parent=old, source_checkpoint=source, output_checkpoint=output,
-                               validation=[SimpleNamespace(chart_sha256="abc", start_s=0, end_s=10)])
+    config = SimpleNamespace(
+        run=run, data=data,
+        human_visible=SimpleNamespace(
+            transition_epochs=3, allow_legacy_train_identity_resume=False
+        ),
+    )
+    prepared = SimpleNamespace(
+        parent=old, source_checkpoint=source, output_checkpoint=output,
+        anchors=anchors,
+        validation=[SimpleNamespace(chart_sha256="abc", start_s=0, end_s=10)],
+    )
     return prepared, config, summary
+
+
+def _unstepped_resume_model_and_optimizer():
+    model = torch.nn.Sequential(torch.nn.Linear(3, 2), torch.nn.Linear(2, 1))
+    optimizer = torch.optim.AdamW(
+        [{"params": list(model[0].parameters()), "lr": 3e-5},
+         {"params": list(model[1].parameters()), "lr": 5e-5}],
+        weight_decay=1e-4,
+    )
+    assert optimizer.state_dict()["state"] == {}
+    return model, optimizer
+
+
+def _mark_pristine_baseline(checkpoint):
+    checkpoint.update({
+        "human_visible_checkpoint_role": "selected-best",
+        "human_visible_stopped_reason": "baseline-validated",
+        "human_visible_epoch": 0,
+        "human_visible_best_epoch": 0,
+        "human_visible_best_beta": BETA_SCHEDULE[0],
+        "human_visible_dagger_level": 0,
+        "human_visible_history": [],
+    })
+
+
+def test_pristine_baseline_selected_best_accepts_empty_adamw(tmp_path):
+    model, optimizer = _unstepped_resume_model_and_optimizer()
+    prepared, config, _ = _tiny_resume_context(tmp_path, model, optimizer)
+    _mark_pristine_baseline(prepared.parent)
+    start = prepare_curriculum_start(prepared, config, model, optimizer)
+    assert start.role == "selected-best"
+    assert start.epoch == start.best_epoch == 0
+    assert start.best_optimizer_state["state"] == {}
+    assert optimizer.state_dict()["state"] == {}
+
+
+def test_empty_adamw_is_rejected_outside_pristine_baseline(tmp_path):
+    model, optimizer = _unstepped_resume_model_and_optimizer()
+    prepared, _, _ = _tiny_resume_context(tmp_path, model, optimizer)
+    _mark_pristine_baseline(prepared.parent)
+    for changed in (
+        {"human_visible_stopped_reason": "running-best"},
+        {"human_visible_epoch": 1, "human_visible_best_epoch": 1},
+        {"human_visible_history": [{"epoch": 0, "selected_best": True}]},
+    ):
+        bad = copy.deepcopy(prepared.parent)
+        bad.update(changed)
+        with pytest.raises(SystemExit, match="no optimizer moments"):
+            _check_optimizer_state(optimizer, bad, model)
+    for bad_state in (None, [], "invalid"):
+        bad = copy.deepcopy(prepared.parent)
+        bad["human_visible_optimizer_state"]["state"] = bad_state
+        with pytest.raises(SystemExit, match="no optimizer moments"):
+            _check_optimizer_state(optimizer, bad, model)
+
+
+def test_progress_resume_can_reference_pristine_baseline(tmp_path):
+    model, optimizer = _small_resume_model_and_optimizer()
+    prepared, config, _ = _tiny_resume_context(
+        tmp_path, model, optimizer, role="continuation-progress"
+    )
+    baseline_model, baseline_optimizer = _unstepped_resume_model_and_optimizer()
+    best = copy.deepcopy(prepared.parent)
+    _mark_pristine_baseline(best)
+    best["model_state"] = {
+        name: tensor.detach().clone()
+        for name, tensor in baseline_model.state_dict().items()
+    }
+    best["human_visible_optimizer_state"] = copy.deepcopy(baseline_optimizer.state_dict())
+    torch.save(best, prepared.output_checkpoint)
+    prepared.parent["human_visible_best_checkpoint_path"] = str(prepared.output_checkpoint)
+    start = prepare_curriculum_start(prepared, config, model, optimizer)
+    assert start.role == "continuation-progress"
+    assert start.epoch == 2
+    assert start.best_epoch == 0
+    assert start.best_optimizer_state["state"] == {}
+    assert optimizer.state_dict()["state"]
 
 
 def test_old_selected_best_beta_is_read_from_matching_history(tmp_path):
@@ -500,3 +596,147 @@ def test_validation_identity_and_count_must_match():
 def test_limit_must_be_nonnegative():
     with pytest.raises(ValueError, match="non-negative"):
         format_catastrophic_anchor_diagnostics((), (), max_hit_drops=-1)
+
+
+def test_resume_validation_rejects_optional_recorded_counter_mismatches():
+    recorded = {
+        "anchors": 1, "targets": 5, "safe": 1, "hits": 2,
+        "x": 50.0, "pp": 40.0, "mae_ms": 22.0,
+        "early": 3, "keydowns": 8, "overloaded": False,
+    }
+    _check_validation_summary(dict(recorded), recorded)
+    for name, changed in (("early", 4), ("keydowns", 9), ("overloaded", True)):
+        with pytest.raises(SystemExit, match=f"fixed Validation mismatch: {name}"):
+            _check_validation_summary(dict(recorded, **{name: changed}), recorded)
+        actual_missing = dict(recorded)
+        del actual_missing[name]
+        with pytest.raises(SystemExit, match=f"fixed Validation mismatch: {name}"):
+            _check_validation_summary(actual_missing, recorded)
+
+
+def test_resume_validation_preserves_legacy_optional_counter_compatibility():
+    recorded = {
+        "anchors": 1, "targets": 5, "safe": 1, "hits": 2,
+        "x": 50.0, "pp": 40.0, "mae_ms": 22.0,
+    }
+    actual = dict(recorded, early=3, keydowns=8, overloaded=False)
+    _check_validation_summary(actual, recorded)
+    _check_validation_summary(dict(recorded), recorded)
+
+
+def test_resume_train_identity_rejects_changed_sha_window_order_and_count(tmp_path):
+    model, optim = _small_resume_model_and_optimizer()
+    prepared, config, _ = _tiny_resume_context(tmp_path, model, optim)
+    _check_validation_context(prepared.parent, config, prepared)
+    assert _train_identity(prepared) == prepared.parent["human_visible_train_identity"]
+
+    for changed in (
+        [SimpleNamespace(chart_sha256="different", start_s=0.0, end_s=10.0), prepared.anchors[1]],
+        [SimpleNamespace(chart_sha256="train-a", start_s=0.1, end_s=10.0), prepared.anchors[1]],
+        [SimpleNamespace(chart_sha256="train-a", start_s=0.0, end_s=10.1), prepared.anchors[1]],
+        list(reversed(prepared.anchors)),
+        prepared.anchors[:1],
+    ):
+        prepared.anchors = changed
+        with pytest.raises(SystemExit, match="resume Train anchor"):
+            _check_validation_context(prepared.parent, config, prepared)
+    prepared.anchors = [
+        SimpleNamespace(chart_sha256="train-a", start_s=1e-9, end_s=10.0),
+        SimpleNamespace(chart_sha256="train-b", start_s=5.0, end_s=15.0),
+    ]
+    _check_validation_context(prepared.parent, config, prepared)
+
+
+def test_resume_train_identity_legacy_requires_opt_in_and_retains_unverified_lineage(tmp_path):
+    model, optim = _small_resume_model_and_optimizer()
+    prepared, config, _ = _tiny_resume_context(tmp_path, model, optim)
+    del prepared.parent["human_visible_train_identity"]
+    with pytest.raises(SystemExit, match="allow_legacy_train_identity_resume"):
+        _check_validation_context(prepared.parent, config, prepared)
+    assert not _train_identity_verified_for_output(prepared.parent)
+    config.human_visible.allow_legacy_train_identity_resume = True
+    with pytest.warns(RuntimeWarning, match="unverified historical Train"):
+        _check_validation_context(prepared.parent, config, prepared)
+    prepared.parent["human_visible_train_identity"] = _train_identity(prepared)
+    prepared.parent["human_visible_train_identity_verified"] = False
+    assert not _train_identity_verified_for_output(prepared.parent)
+    config.human_visible.allow_legacy_train_identity_resume = False
+    with pytest.raises(SystemExit, match="allow_legacy_train_identity_resume"):
+        _check_validation_context(prepared.parent, config, prepared)
+
+
+def test_resume_train_identity_rejects_malformed_saved_entries(tmp_path):
+    model, optim = _small_resume_model_and_optimizer()
+    prepared, config, _ = _tiny_resume_context(tmp_path, model, optim)
+    for bad in ({"chart_sha256": "train-a", "start_s": "nan", "end_s": 10.0},
+                {"chart_sha256": "train-a", "start_s": "invalid", "end_s": 10.0},
+                None):
+        prepared.parent["human_visible_train_identity"] = [
+            bad, {"chart_sha256": "train-b", "start_s": 5.0, "end_s": 15.0}
+        ]
+        with pytest.raises(SystemExit, match="resume Train anchor"):
+            _check_validation_context(prepared.parent, config, prepared)
+
+
+def test_resume_train_identity_provenance_fresh_run_is_verified():
+    assert _train_identity_verified_for_output({"training_mode": "other"})
+
+
+def test_curriculum_checkpoint_persists_train_identity_and_unverified_lineage(tmp_path):
+    model, optimizer = _small_resume_model_and_optimizer()
+    prepared, config, summary = _tiny_resume_context(tmp_path, model, optimizer)
+    model.checkpoint_metadata = lambda: {}
+    config.as_dict = lambda: {
+        "run": {"dataset": config.run.dataset},
+        "data": {"anchor_limit": 20, "validation_limit": 20},
+    }
+
+    def make_payload():
+        return _checkpoint_payload(
+            prepared, config, model, optimizer,
+            epoch=2, level=0, validation_streak=0, catastrophic_streak=0,
+            baseline_summary=summary, current_summary=summary,
+            best_summary=summary, best_checkpoint_path=prepared.output_checkpoint,
+            best_epoch=2, best_beta=1.0, transition_epochs_remaining=0,
+            history=[], stopped_reason="running-best",
+            checkpoint_role="selected-best",
+        )
+
+    fresh = make_payload()
+    assert fresh["human_visible_train_identity"] == _train_identity(prepared)
+    assert fresh["human_visible_train_identity_verified"] is True
+
+    prepared.parent["human_visible_train_identity_verified"] = False
+    migrated = make_payload()
+    assert migrated["human_visible_train_identity"] == _train_identity(prepared)
+    assert migrated["human_visible_train_identity_verified"] is False
+
+
+def test_selected_best_resume_checks_train_before_optimizer_restore_or_output(tmp_path):
+    model, optimizer = _small_resume_model_and_optimizer()
+    prepared, config, _ = _tiny_resume_context(tmp_path, model, optimizer)
+    del prepared.parent["human_visible_train_identity"]
+    original = copy.deepcopy(optimizer.state_dict())
+    with pytest.raises(SystemExit, match="allow_legacy_train_identity_resume"):
+        prepare_curriculum_start(prepared, config, model, optimizer)
+    assert not prepared.output_checkpoint.exists()
+    assert optimizer.state_dict()["state"].keys() == original["state"].keys()
+    config.human_visible.allow_legacy_train_identity_resume = True
+    with pytest.warns(RuntimeWarning, match="unverified historical Train"):
+        resumed = prepare_curriculum_start(prepared, config, model, optimizer)
+    assert resumed.role == "selected-best"
+    assert not _train_identity_verified_for_output(prepared.parent)
+
+
+def test_progress_resume_checks_both_progress_and_best_train_identity(tmp_path):
+    model, optimizer = _small_resume_model_and_optimizer()
+    prepared, config, _ = _tiny_resume_context(
+        tmp_path, model, optimizer, role="continuation-progress"
+    )
+    best = copy.deepcopy(prepared.parent)
+    best["human_visible_stopped_reason"] = "running-best"
+    best["human_visible_train_identity"][0]["chart_sha256"] = "different"
+    torch.save(best, prepared.output_checkpoint)
+    prepared.parent["human_visible_best_checkpoint_path"] = str(prepared.output_checkpoint)
+    with pytest.raises(SystemExit, match="Train anchor 0 chart SHA changed"):
+        prepare_curriculum_start(prepared, config, model, optimizer)

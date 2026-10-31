@@ -342,7 +342,7 @@ def render_viewer(report: dict) -> str:
         for row in rows:
             candidates = "".join(
                 f'<tr class="{"chosen" if c["finger"] == row["chosen"] else ""}"><td>{escape(allocation_label(c["finger"]))}</td>'
-                f'<td>{"—" if c["network_score"] is None else f"{c["network_score"]:.4f}"}</td>'
+                f'<td>{"—" if c["network_score"] is None else format(c["network_score"], ".4f")}</td>'
                 f'<td>{"—" if c["teacher_score"] is None else c["teacher_score"]}</td><td>{escape(c["teacher_reason"])}</td></tr>'
                 for c in row.get("candidates", [])
             )

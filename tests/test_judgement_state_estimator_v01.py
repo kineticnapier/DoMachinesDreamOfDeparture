@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import pytest
+
 from dmdod.features.judgement_observer_v01 import (
     JudgementDelta,
     JudgementDeltaStatus,
@@ -164,3 +166,69 @@ def test_public_evidence_contract_contains_no_scorer_truth_fields():
     forbidden = {"target_index", "_used", "_missed", "truth_time_s", "scorer_cursor"}
     assert timing_fields.isdisjoint(forbidden)
     assert motor_fields.isdisjoint(forbidden)
+
+
+def test_hypothesis_cap_cannot_claim_unique_attribution():
+    est = JudgementStateEstimator(
+        RepositoryWindowModel(0.025, 0.030, 0.065),
+        max_hypotheses=1,
+    )
+    est.observe_timing(event(1, 1.0))
+    est.observe_timing(event(2, 1.0))
+    est.observe_keydown(keydown("one", 2, 1.0))
+    result = est.observe_judgement(delta(1.01, perfect=1))
+    assert result.status is EstimateStatus.AMBIGUOUS
+    assert not result.identifiable
+    assert result.aligned_state_possible
+    assert "2" in result.possible_unresolved_local_ids
+
+
+def test_huge_counter_delta_abstains_without_expanding_labels():
+    est = estimator()
+    result = est.observe_judgement(delta(1.01, perfect=100_000))
+    assert result.status is EstimateStatus.AMBIGUOUS
+    assert not result.identifiable
+    assert "truncated" in result.reason
+
+
+def test_distinct_label_orders_exceeding_budget_abstain():
+    est = estimator()
+    result = est.observe_judgement(delta(
+        1.01, **{f"label_{index}": 1 for index in range(7)}
+    ))
+    assert result.status is EstimateStatus.AMBIGUOUS
+    assert not result.identifiable
+
+
+def test_large_attribution_product_abstains_without_enumeration():
+    est = JudgementStateEstimator(
+        RepositoryWindowModel(0.025, 0.030, 0.065),
+        max_predecessors=6,
+    )
+    for index in range(7):
+        est.observe_timing(event(index, 1.0))
+        est.observe_keydown(keydown(f"k{index}", index, 1.0))
+    # 1 * 2 * ... * 7 = 5040 candidate combinations (>4096).
+    result = est.observe_judgement(delta(1.01, perfect=7))
+    assert result.status is EstimateStatus.AMBIGUOUS
+    assert not result.identifiable
+    assert result.hypotheses == ()
+    assert set(result.possible_unresolved_local_ids) == {
+        str(index) for index in range(7)
+    }
+    assert "truncated" in result.reason
+
+
+@pytest.mark.parametrize("field", ("perfect_s", "early_late_perfect_s", "pass_s"))
+@pytest.mark.parametrize("bad", (float("nan"), float("inf"), float("-inf")))
+def test_repository_window_model_rejects_nonfinite_bounds(field: str, bad: float):
+    values = dict(perfect_s=0.025, early_late_perfect_s=0.030, pass_s=0.065)
+    values[field] = bad
+    with pytest.raises(ValueError, match="judgement windows must be finite"):
+        RepositoryWindowModel(**values)
+
+
+def test_repository_window_model_preserves_finite_boundary_behavior():
+    model = RepositoryWindowModel(0.025, 0.030, 0.065)
+    assert "perfect" in model.possible_labels(event(1, 1.0), 1.0)
+    assert "too_late" in model.possible_labels(event(1, 1.0), 1.1)

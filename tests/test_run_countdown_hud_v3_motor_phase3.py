@@ -4,6 +4,7 @@ import ast
 import inspect
 from pathlib import Path
 import subprocess
+import sys
 import textwrap
 
 import pytest
@@ -44,7 +45,7 @@ def test_output_directory_is_create_only(tmp_path) -> None:
 def test_cli_help_starts_from_repository_root() -> None:
     completed = subprocess.run(
         [
-            str(Path(".venv/Scripts/python.exe")),
+            sys.executable,
             "scripts/run_countdown_hud_v3_motor_phase3.py",
             "--help",
         ],
@@ -52,5 +53,6 @@ def test_cli_help_starts_from_repository_root() -> None:
         capture_output=True,
         text=True,
         timeout=30,
+        cwd=Path(__file__).resolve().parents[1],
     )
     assert completed.returncode == 0, completed.stderr

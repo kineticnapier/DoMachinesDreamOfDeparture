@@ -9,12 +9,17 @@ counter deltas.  It never reads scorer cursors or target truth.
 
 from dataclasses import dataclass
 from enum import Enum
-from itertools import permutations, product
+from itertools import product
 from math import isfinite
 
 from dmdod.features.judgement_observer_v01 import (
     JudgementDelta,
     JudgementDeltaStatus,
+)
+from dmdod.planning.judgement_label_orders import (
+    MAX_ORDER_EXPANSIONS,
+    MAX_VISIBLE_EVENTS,
+    bounded_unique_orders,
 )
 
 
@@ -103,6 +108,10 @@ class RepositoryWindowModel:
     pass_s: float
 
     def __post_init__(self) -> None:
+        if not all(isfinite(value) for value in (
+            self.perfect_s, self.early_late_perfect_s, self.pass_s
+        )):
+            raise ValueError("judgement windows must be finite")
         if not (
             0.0 <= self.perfect_s
             <= self.early_late_perfect_s
@@ -221,12 +230,36 @@ class JudgementStateEstimator:
         if feedback.status is not JudgementDeltaStatus.DELTA or feedback.event_interval_s is None:
             return self._no_update(feedback, "feedback has no attributable display interval")
 
-        labels = self._expanded_labels(feedback)
         lower, upper = feedback.event_interval_s
         keydowns = [
             row for row in self._pending_keydowns
             if lower - 1e-12 <= row.occurred_at_s <= upper + 1e-12
         ]
+        if any(count < 0 for _, count in feedback.deltas):
+            raise ValueError("visible judgement delta cannot be negative")
+        if feedback.total_increment > MAX_VISIBLE_EVENTS:
+            orders = None
+            labels = ()
+        else:
+            labels = self._expanded_labels(feedback)
+            orders = bounded_unique_orders(labels)
+        if orders is None:
+            self._pending_keydowns = [
+                row for row in self._pending_keydowns
+                if row.occurred_at_s > upper + 1e-12
+            ]
+            return JudgementStateEstimate(
+                status=EstimateStatus.AMBIGUOUS,
+                observed_at_s=feedback.observed_at_s,
+                hypotheses=(),
+                possible_unresolved_local_ids=tuple(sorted({
+                    row.intended_local_id for row in keydowns
+                })),
+                aligned_state_possible=True,
+                identifiable=False,
+                stock_identity_verified=False,
+                reason="visible order search truncated; attribution unknown",
+            )
         if len(keydowns) != len(labels) or not labels:
             self._pending_keydowns = [
                 row for row in self._pending_keydowns if row.occurred_at_s > upper + 1e-12
@@ -246,13 +279,24 @@ class JudgementStateEstimator:
 
         hypothesis_keys: set[tuple[tuple[str, str, str, str], ...]] = set()
         hypotheses: list[AttributionHypothesis] = []
-        for label_order in set(permutations(labels)):
+        cap_reached = False
+        remaining_search_budget = MAX_ORDER_EXPANSIONS
+        for label_order in orders:
             choices = [
                 self._candidate_events(keydown, label)
                 for keydown, label in zip(keydowns, label_order)
             ]
             if any(not candidates for candidates in choices):
                 continue
+            # Count even incompatible products before allocation: a capped
+            # result must never imply that omitted assignments were impossible.
+            combinations = 1
+            for candidates in choices:
+                combinations *= len(candidates)
+            if combinations > remaining_search_budget:
+                cap_reached = True
+                break
+            remaining_search_budget -= combinations
             for selected in product(*choices):
                 selected_ids = tuple(event.local_id for event in selected)
                 if len(set(selected_ids)) != len(selected_ids):
@@ -279,6 +323,7 @@ class JudgementStateEstimator:
                     within_interval_order_known=feedback.within_interval_order_known,
                 ))
                 if len(hypotheses) >= self.max_hypotheses:
+                    cap_reached = True
                     break
             if len(hypotheses) >= self.max_hypotheses:
                 break
@@ -298,7 +343,11 @@ class JudgementStateEstimator:
                 aligned_state_possible=True,
                 identifiable=False,
                 stock_identity_verified=False,
-                reason="no attribution fits the explicit simulator window model",
+                reason=(
+                    "attribution search truncated before complete enumeration"
+                    if cap_reached else
+                    "no attribution fits the explicit simulator window model"
+                ),
             )
 
         aligned_possible = any(
@@ -311,7 +360,13 @@ class JudgementStateEstimator:
             for _, intended, judged, _ in hypothesis.attributions
             if intended != judged
         })
-        identified = len(hypotheses) == 1
+        if cap_reached:
+            # Omitted alternatives may be aligned or have unresolved targets.
+            aligned_possible = True
+            unresolved = sorted(set(unresolved) | {
+                row.intended_local_id for row in keydowns
+            })
+        identified = len(hypotheses) == 1 and not cap_reached
         return JudgementStateEstimate(
             status=(EstimateStatus.MODEL_IDENTIFIED if identified else EstimateStatus.AMBIGUOUS),
             observed_at_s=feedback.observed_at_s,
@@ -324,6 +379,7 @@ class JudgementStateEstimator:
                 "one attribution remains under the explicit simulator-specific window model; "
                 "Stock identity remains unverified"
                 if identified else
-                "multiple attributions remain under the simulator-specific window model"
+                ("search cap reached; omitted attributions remain possible" if cap_reached
+                 else "multiple attributions remain under the simulator-specific window model")
             ),
         )

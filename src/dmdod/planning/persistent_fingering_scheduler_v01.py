@@ -320,14 +320,20 @@ class PersistentFingeringScheduler:
             if edge is KeyEvent.DOWN:
                 down = entry.down_axes | frozenset((axis,))
                 phase = entry.phase
-                if phase in (ReservationPhase.ARMED_IN_FLIGHT,
-                             ReservationPhase.RESERVED) and set(entry.axes) <= down:
+                if phase is ReservationPhase.RESERVED:
+                    # An unissued command cannot be confirmed by a physical
+                    # KeyDown. Quarantine the axis until Motor resets.
+                    updated[local_id] = replace(
+                        entry, down_axes=down,
+                        phase=ReservationPhase.CANCELED_IN_FLIGHT,
+                        confirmed=False,
+                        retired_reason="unexpected_keydown_before_arm",
+                    )
+                    continue
+                if (phase is ReservationPhase.ARMED_IN_FLIGHT
+                        and set(entry.axes) <= down):
                     phase = (ReservationPhase.RELEASING if entry.up_axes
                              else ReservationPhase.KEYDOWN_OBSERVED)
-                elif phase is ReservationPhase.RESERVED:
-                    # An unexpected physical stroke cannot be treated as an
-                    # unarmed, instantly cancellable reservation.
-                    phase = ReservationPhase.CANCELED_IN_FLIGHT
                 updated[local_id] = replace(entry, down_axes=down, phase=phase)
             else:
                 up = entry.up_axes | frozenset((axis,))

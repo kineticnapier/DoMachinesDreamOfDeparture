@@ -44,6 +44,7 @@ class TimingEvaluator:
         self.hit_window_s = hit_window_s
         self._used = [False] * len(self.targets)
         self._judgements: list[Judgement] = []
+        self._finalized_miss_indices: set[int] = set()
 
     def record(self, events: tuple[TimedKeyEvent, ...]) -> None:
         for event in events:
@@ -69,10 +70,10 @@ class TimingEvaluator:
                 )
 
     def finalize(self) -> EvaluationSummary:
-        judged_targets = {j.target_time_s for j in self._judgements}
         for i, target in enumerate(self.targets):
-            if not self._used[i] and target.time_s not in judged_targets:
+            if not self._used[i] and i not in self._finalized_miss_indices:
                 self._judgements.append(Judgement(target.time_s, None, None, target.key))
+                self._finalized_miss_indices.add(i)
 
         errors_ms = [abs(j.error_s) * 1000.0 for j in self._judgements if j.error_s is not None]
         hits = len(errors_ms)

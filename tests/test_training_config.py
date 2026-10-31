@@ -1,6 +1,10 @@
 from __future__ import annotations
 
-from dmdod.training.config import load_training_config
+from pathlib import Path
+
+import pytest
+
+from dmdod.training.config import load_training_config, validate_checkpoint_paths
 
 
 def test_load_training_config(tmp_path) -> None:
@@ -59,6 +63,7 @@ max_epochs = 7
 weight_decay = 0.0001
 grad_clip = 1.5
 seed = 99
+allow_legacy_train_identity_resume = true
 """,
         encoding="utf-8",
     )
@@ -92,6 +97,7 @@ seed = 99
     assert config.human_visible.max_epochs == 7
     assert config.human_visible.grad_clip == 1.5
     assert config.human_visible.seed == 99
+    assert config.human_visible.allow_legacy_train_identity_resume is True
 
 
 def test_invalid_radius_order_is_rejected(tmp_path) -> None:
@@ -169,3 +175,442 @@ min_lr = 0.00001
         assert "human_visible.min_lr" in str(exc)
     else:
         raise AssertionError("invalid human-visible learning-rate order must fail")
+
+
+def _write_checkpoint_path_config(
+    tmp_path: Path, *, checkpoint: Path, output: Path, mode: str = "budget_action_trust"
+) -> Path:
+    config_file = tmp_path / "paths.toml"
+    config_file.write_text(
+        f'mode = "{mode}"\n\n'
+        f'[run]\ndataset = "unused"\n'
+        f'checkpoint = "{checkpoint.as_posix()}"\n'
+        f'output = "{output.as_posix()}"\n',
+        encoding="utf-8",
+    )
+    return config_file
+
+
+@pytest.mark.parametrize(
+    "mode",
+    ["budget_action_trust", "human_visible_dagger", "human_visible_curriculum_dagger"],
+)
+def test_checkpoint_source_cannot_be_output(tmp_path: Path, mode: str) -> None:
+    source = tmp_path / "source.pt"
+    source.write_bytes(b"original-checkpoint")
+    config_file = _write_checkpoint_path_config(
+        tmp_path, checkpoint=source, output=source, mode=mode
+    )
+    with pytest.raises(ValueError, match="same file"):
+        load_training_config(config_file)
+    assert source.read_bytes() == b"original-checkpoint"
+
+
+def test_checkpoint_alias_with_parent_segments_is_rejected(tmp_path: Path) -> None:
+    source = tmp_path / "source.pt"
+    source.write_bytes(b"original")
+    (tmp_path / "sub").mkdir()
+    alias = tmp_path / "sub" / ".." / "source.pt"
+    config_file = _write_checkpoint_path_config(
+        tmp_path, checkpoint=source, output=alias
+    )
+    with pytest.raises(ValueError, match="same file"):
+        load_training_config(config_file)
+
+
+def test_checkpoint_hardlink_alias_is_rejected(tmp_path: Path) -> None:
+    source = tmp_path / "source.pt"
+    source.write_bytes(b"original")
+    alias = tmp_path / "alias.pt"
+    try:
+        alias.hardlink_to(source)
+    except (OSError, NotImplementedError) as exc:
+        pytest.skip(f"hard links unavailable: {exc}")
+    with pytest.raises(ValueError, match="same file"):
+        validate_checkpoint_paths(source, alias)
+
+
+def test_checkpoint_symlink_alias_is_rejected(tmp_path: Path) -> None:
+    source = tmp_path / "source.pt"
+    source.write_bytes(b"original")
+    alias = tmp_path / "alias.pt"
+    try:
+        alias.symlink_to(source)
+    except (OSError, NotImplementedError) as exc:
+        pytest.skip(f"symbolic links unavailable: {exc}")
+    with pytest.raises(ValueError, match="same file"):
+        validate_checkpoint_paths(source, alias)
+
+
+def test_distinct_checkpoint_output_remains_allowed(tmp_path: Path) -> None:
+    source = tmp_path / "source.pt"
+    source.write_bytes(b"original")
+    output = tmp_path / "different.pt"
+    config_file = _write_checkpoint_path_config(
+        tmp_path, checkpoint=source, output=output
+    )
+    config = load_training_config(config_file)
+    assert Path(config.run.checkpoint) == source
+    assert Path(config.run.output) == output
+    assert source.read_bytes() == b"original"
+    assert not output.exists()
+
+
+def test_runner_rechecks_manually_constructed_config(tmp_path: Path) -> None:
+    from dataclasses import replace
+    from dmdod.training.runner import _prepare
+
+    source = tmp_path / "source.pt"
+    source.write_bytes(b"original")
+    config_file = _write_checkpoint_path_config(
+        tmp_path, checkpoint=source, output=tmp_path / "output.pt"
+    )
+    valid = load_training_config(config_file)
+    invalid = replace(valid, run=replace(valid.run, output=str(source)))
+    with pytest.raises(ValueError, match="same file"):
+        _prepare(invalid)
+    assert source.read_bytes() == b"original"
+
+
+def test_legacy_train_identity_opt_in_requires_boolean(tmp_path: Path) -> None:
+    path = tmp_path / "bad-legacy-identity.toml"
+    path.write_text(
+        'mode = "human_visible_curriculum_dagger"\n'
+        '[run]\ndataset = "x"\ncheckpoint = "in.pt"\noutput = "out.pt"\n'
+        '[human_visible]\nallow_legacy_train_identity_resume = "false"\n',
+        encoding="utf-8",
+    )
+    with pytest.raises(ValueError, match="allow_legacy_train_identity_resume"):
+        load_training_config(path)
+
+
+@pytest.mark.parametrize("section, key", [
+    ("action_trust", "lr"),
+    ("action_trust", "stay_coef"),
+    ("action_trust", "initial_action_rms"),
+    ("action_trust", "min_action_rms"),
+    ("action_trust", "min_lr"),
+    ("budget", "hours"),
+    ("budget", "reserve_minutes"),
+    ("budget", "reject_shrink"),
+    ("budget", "safe_grow"),
+    ("trajectory_probe", "candidate_action_rms"),
+    ("boundary_trust", "mismatch_grace_s"),
+    ("human_visible", "lr"),
+    ("human_visible", "min_lr"),
+    ("human_visible", "controller_lr"),
+    ("human_visible", "weight_decay"),
+    ("human_visible", "grad_clip"),
+])
+@pytest.mark.parametrize("invalid", ["nan", "+inf", "-inf"])
+def test_nonfinite_training_float_is_rejected(
+    tmp_path: Path, section: str, key: str, invalid: str
+) -> None:
+    path = tmp_path / "nonfinite.toml"
+    path.write_text(
+        'mode = "human_visible_curriculum_dagger"\n'
+        '[run]\ndataset = "x"\ncheckpoint = "in.pt"\noutput = "out.pt"\n'
+        f'[{section}]\n{key} = {invalid}\n',
+        encoding="utf-8",
+    )
+    with pytest.raises(ValueError, match=rf"{section}\.{key} must be finite"):
+        load_training_config(path)
+
+
+def test_finite_training_float_boundaries_remain_allowed(tmp_path: Path) -> None:
+    path = tmp_path / "finite.toml"
+    path.write_text(
+        'mode = "human_visible_curriculum_dagger"\n'
+        '[run]\ndataset = "x"\ncheckpoint = "in.pt"\noutput = "out.pt"\n'
+        '[action_trust]\nstay_coef = 0.0\n'
+        '[budget]\nreserve_minutes = 0.0\nsafe_grow = 1.0\n'
+        '[boundary_trust]\nmismatch_grace_s = 0.0\n'
+        '[human_visible]\nweight_decay = 0.0\n',
+        encoding="utf-8",
+    )
+    config = load_training_config(path)
+    assert config.action_trust.stay_coef == 0.0
+    assert config.budget.reserve_minutes == 0.0
+    assert config.budget.safe_grow == 1.0
+    assert config.boundary_trust.mismatch_grace_s == 0.0
+    assert config.human_visible.weight_decay == 0.0
+
+
+@pytest.mark.parametrize("literal", ("2.5", "3.0", "true", '"3"', "nan", "inf"))
+def test_nonbest_restart_limit_must_be_toml_integer(tmp_path, literal: str) -> None:
+    path = tmp_path / "noninteger-restart.toml"
+    path.write_text(
+        'mode = "budget_survival_trust"\n'
+        '[run]\n'
+        'dataset = "unused"\n'
+        'checkpoint = "in.pt"\n'
+        'output = "out.pt"\n'
+        '[budget]\n'
+        f'max_nonbest_accepts = {literal}\n',
+        encoding="utf-8",
+    )
+    with pytest.raises(ValueError, match="budget.max_nonbest_accepts must be an integer"):
+        load_training_config(path)
+
+
+# TOML integers must not be silently truncated or coerced to booleans.
+# All listed fields previously used int(...) directly or through
+# _optional_positive_int, including values that control training budgets.
+@pytest.mark.parametrize(
+    "section,key",
+    [
+        ("data", "anchor_limit"),
+        ("data", "validation_limit"),
+        ("data", "chunk_steps"),
+        ("action_trust", "actor_steps"),
+        ("action_trust", "lr_backoffs"),
+        ("budget", "max_trials"),
+        ("human_visible", "updates_per_trial"),
+        ("human_visible", "updates_per_epoch"),
+        ("human_visible", "transition_updates_per_epoch"),
+        ("human_visible", "transition_epochs"),
+        ("human_visible", "burn_in_steps"),
+        ("human_visible", "supervised_steps"),
+        ("human_visible", "anchors_per_batch"),
+        ("human_visible", "progression_streak"),
+        ("human_visible", "catastrophic_patience"),
+        ("human_visible", "max_epochs"),
+        ("human_visible", "seed"),
+    ],
+)
+@pytest.mark.parametrize("literal", ("2.5", "3.0", "true", '"3"', "nan", "inf"))
+def test_integer_config_fields_reject_implicit_conversion(
+    tmp_path: Path, section: str, key: str, literal: str
+) -> None:
+    config_file = tmp_path / "noninteger.toml"
+    config_file.write_text(
+        'mode = "human_visible_curriculum_dagger"\n'
+        '[run]\ndataset = "unused"\ncheckpoint = "in.pt"\noutput = "out.pt"\n'
+        f'[{section}]\n{key} = {literal}\n',
+        encoding="utf-8",
+    )
+    with pytest.raises(ValueError, match=rf"{section}\.{key} must be an integer"):
+        load_training_config(config_file)
+
+
+def test_integer_config_zero_boundaries_remain_valid(tmp_path: Path) -> None:
+    config_file = tmp_path / "integer-boundaries.toml"
+    config_file.write_text(
+        'mode = "human_visible_curriculum_dagger"\n'
+        '[run]\ndataset = "unused"\ncheckpoint = "in.pt"\noutput = "out.pt"\n'
+        '[action_trust]\nlr_backoffs = 0\n'
+        '[human_visible]\ntransition_epochs = 0\nburn_in_steps = 0\nseed = 0\n',
+        encoding="utf-8",
+    )
+    config = load_training_config(config_file)
+    assert config.action_trust.lr_backoffs == 0
+    assert config.human_visible.transition_epochs == 0
+    assert config.human_visible.burn_in_steps == 0
+    assert config.human_visible.seed == 0
+
+
+# These switches control training policy and optional diagnostics. Using
+# bool("false") would silently enable a switch and change experiment conditions.
+@pytest.mark.parametrize(
+    "section,key",
+    [
+        ("boundary_trust", "preserve_safe_only"),
+        ("human_visible", "alpha_sweep_enabled"),
+        ("human_visible", "alpha_sweep_compare_transitions"),
+        ("human_visible", "alpha_sweep_recovery_probe_enabled"),
+    ],
+)
+@pytest.mark.parametrize("literal", ('"false"', '"true"', "0", "1", "0.0", "1.0"))
+def test_training_boolean_switches_reject_implicit_conversion(
+    tmp_path: Path, section: str, key: str, literal: str
+) -> None:
+    path = tmp_path / "nonboolean-switch.toml"
+    path.write_text(
+        'mode = "human_visible_curriculum_dagger"\n'
+        '[run]\ndataset = "unused"\ncheckpoint = "in.pt"\noutput = "out.pt"\n'
+        f'[{section}]\n{key} = {literal}\n',
+        encoding="utf-8",
+    )
+    with pytest.raises(ValueError, match=rf"{section}\.{key} must be boolean"):
+        load_training_config(path)
+
+
+@pytest.mark.parametrize("enabled", (False, True))
+def test_training_boolean_switches_preserve_explicit_values(
+    tmp_path: Path, enabled: bool
+) -> None:
+    literal = "true" if enabled else "false"
+    path = tmp_path / "boolean-switches.toml"
+    path.write_text(
+        'mode = "human_visible_curriculum_dagger"\n'
+        '[run]\ndataset = "unused"\ncheckpoint = "in.pt"\noutput = "out.pt"\n'
+        f'[boundary_trust]\npreserve_safe_only = {literal}\n'
+        f'[human_visible]\nalpha_sweep_enabled = {literal}\n'
+        f'alpha_sweep_compare_transitions = {literal}\n'
+        f'alpha_sweep_recovery_probe_enabled = {literal}\n'
+        'alpha_sweep_expected_best = [0, 0, 0, 0]\n'
+        'alpha_sweep_expected_candidate = [0, 0, 0, 0]\n',
+        encoding="utf-8",
+    )
+    config = load_training_config(path)
+    assert config.boundary_trust.preserve_safe_only is enabled
+    assert config.human_visible.alpha_sweep_enabled is enabled
+    assert config.human_visible.alpha_sweep_compare_transitions is enabled
+    assert config.human_visible.alpha_sweep_recovery_probe_enabled is enabled
+
+
+# TOML bool is an int subclass in Python, and float("0.1") accepts strings.
+# Neither should silently become a learning rate, budget or diagnostic setting.
+@pytest.mark.parametrize(
+    "section,key",
+    [
+        ("action_trust", "lr"),
+        ("action_trust", "stay_coef"),
+        ("action_trust", "initial_action_rms"),
+        ("action_trust", "min_action_rms"),
+        ("action_trust", "min_lr"),
+        ("budget", "hours"),
+        ("budget", "reserve_minutes"),
+        ("budget", "reject_shrink"),
+        ("budget", "safe_grow"),
+        ("trajectory_probe", "candidate_action_rms"),
+        ("boundary_trust", "mismatch_grace_s"),
+        ("human_visible", "lr"),
+        ("human_visible", "min_lr"),
+        ("human_visible", "controller_lr"),
+        ("human_visible", "weight_decay"),
+        ("human_visible", "grad_clip"),
+    ],
+)
+@pytest.mark.parametrize("literal", ("true", "false", '"0.1"', '"1.25"'))
+def test_scalar_float_settings_reject_implicit_coercion(
+    tmp_path: Path, section: str, key: str, literal: str
+) -> None:
+    path = tmp_path / "bad-float-setting.toml"
+    path.write_text(
+        'mode = "human_visible_curriculum_dagger"\n'
+        '[run]\ndataset = "unused"\ncheckpoint = "in.pt"\noutput = "out.pt"\n'
+        f'[{section}]\n{key} = {literal}\n',
+        encoding="utf-8",
+    )
+    with pytest.raises(ValueError, match=rf"{section}\.{key} must be a TOML number"):
+        load_training_config(path)
+
+
+def test_scalar_float_settings_preserve_toml_integer_values(tmp_path: Path) -> None:
+    path = tmp_path / "integer-float-setting.toml"
+    path.write_text(
+        'mode = "human_visible_curriculum_dagger"\n'
+        '[run]\ndataset = "unused"\ncheckpoint = "in.pt"\noutput = "out.pt"\n'
+        '[action_trust]\nstay_coef = 2\n'
+        '[budget]\nhours = 2\n'
+        '[boundary_trust]\nmismatch_grace_s = 0\n'
+        '[human_visible]\nweight_decay = 0\n',
+        encoding="utf-8",
+    )
+    config = load_training_config(path)
+    assert config.action_trust.stay_coef == 2.0
+    assert config.budget.hours == 2.0
+    assert config.boundary_trust.mismatch_grace_s == 0.0
+    assert config.human_visible.weight_decay == 0.0
+
+
+@pytest.mark.parametrize(
+    "field",
+    ("mode", "run.dataset", "run.checkpoint", "run.output", "run.device"),
+)
+@pytest.mark.parametrize("literal", ("true", "42", "0.5", '["x"]'))
+def test_run_identifiers_require_toml_strings(
+    tmp_path: Path, field: str, literal: str
+) -> None:
+    values = {
+        "mode": '"human_visible_dagger"',
+        "run.dataset": '"data/example"',
+        "run.checkpoint": '"in.pt"',
+        "run.output": '"out.pt"',
+        "run.device": '"cpu"',
+    }
+    values[field] = literal
+    path = tmp_path / "bad-run-field.toml"
+    path.write_text(
+        f'mode = {values["mode"]}\n'
+        '[run]\n'
+        f'dataset = {values["run.dataset"]}\n'
+        f'checkpoint = {values["run.checkpoint"]}\n'
+        f'output = {values["run.output"]}\n'
+        f'device = {values["run.device"]}\n',
+        encoding="utf-8",
+    )
+    with pytest.raises(ValueError) as exc:
+        load_training_config(path)
+    assert str(exc.value) == f"{field} must be a TOML string"
+
+
+def test_valid_run_strings_keep_existing_normalization(tmp_path: Path) -> None:
+    path = tmp_path / "valid-run-fields.toml"
+    path.write_text(
+        'mode = " human_visible_dagger "\n'
+        '[run]\n'
+        'dataset = "data/example"\n'
+        'checkpoint = "in.pt"\n'
+        'output = "out.pt"\n'
+        'device = "cpu"\n',
+        encoding="utf-8",
+    )
+    config = load_training_config(path)
+    assert config.mode == "human_visible_dagger"
+    assert config.run.dataset == "data/example"
+    assert config.run.checkpoint == "in.pt"
+    assert config.run.output == "out.pt"
+    assert config.run.device == "cpu"
+
+
+@pytest.mark.parametrize(
+    "section,key",
+    [
+        ("action_trust", "lr"),
+        ("budget", "hours"),
+        ("human_visible", "controller_lr"),
+    ],
+)
+def test_huge_toml_integer_float_settings_raise_value_error(
+    tmp_path: Path, section: str, key: str
+) -> None:
+    # tomllib accepts this integer, but float(value) raises OverflowError.
+    huge_integer = "9" * 400
+    path = tmp_path / "overflowing-float.toml"
+    path.write_text(
+        'mode = "human_visible_curriculum_dagger"\n'
+        '[run]\ndataset = "unused"\ncheckpoint = "in.pt"\noutput = "out.pt"\n'
+        f'[{section}]\n{key} = {huge_integer}\n',
+        encoding="utf-8",
+    )
+    with pytest.raises(ValueError, match=rf"{section}\.{key} must be finite"):
+        load_training_config(path)
+
+
+def test_huge_toml_integer_alpha_grid_raises_value_error(tmp_path: Path) -> None:
+    path = tmp_path / "overflowing-alpha.toml"
+    path.write_text(
+        'mode = "human_visible_curriculum_dagger"\n'
+        '[run]\ndataset = "unused"\ncheckpoint = "in.pt"\noutput = "out.pt"\n'
+        '[human_visible]\n'
+        f'alpha_sweep_alphas = [0, {"9" * 400}, 1]\n',
+        encoding="utf-8",
+    )
+    with pytest.raises(ValueError, match="alpha_sweep_alphas must contain finite numbers"):
+        load_training_config(path)
+
+
+def test_finite_integer_alpha_grid_and_float_settings_still_load(tmp_path: Path) -> None:
+    path = tmp_path / "finite-integer-floats.toml"
+    path.write_text(
+        'mode = "human_visible_curriculum_dagger"\n'
+        '[run]\ndataset = "unused"\ncheckpoint = "in.pt"\noutput = "out.pt"\n'
+        '[budget]\nhours = 2\n'
+        '[human_visible]\nalpha_sweep_alphas = [0, 0.5, 1]\n',
+        encoding="utf-8",
+    )
+    config = load_training_config(path)
+    assert config.budget.hours == 2.0
+    assert config.human_visible.alpha_sweep_alphas == (0.0, 0.5, 1.0)

@@ -56,3 +56,46 @@ def test_preflight_rejects_pathdata_and_promotes_replacement(monkeypatch) -> Non
     assert 1 in rejected_ids
     assert 1 not in selected_ids
     assert len(selected_ids) == 2
+
+
+def test_preflight_keeps_loose_json_angledata_candidates(monkeypatch) -> None:
+    candidates = [
+        _candidate(11, score_clears=1000),
+        _candidate(12, score_clears=900),
+        _candidate(13, score_clears=800),
+    ]
+
+    def fake_download(candidate: TufCandidate, *, timeout_s: float = 60.0) -> bytes:
+        return b'{// comment\n"angleData":[0,90,],"settings":{"bpm":120,},}'
+
+    monkeypatch.setattr(preflight, "download_chart", fake_download)
+    result = preflight.select_parser_compatible_dataset(
+        candidates, train_count=1, validation_count=1,
+    )
+    assert result.rejected == ()
+    assert len(result.selection.train) == 1
+    assert len(result.selection.validation) == 1
+
+def test_preflight_rejects_nonfinite_chart_and_promotes_replacement(monkeypatch) -> None:
+    candidates = [
+        _candidate(21, score_clears=1000),
+        _candidate(22, score_clears=900),
+        _candidate(23, score_clears=800),
+        _candidate(24, score_clears=700),
+    ]
+
+    def fake_download(candidate: TufCandidate, *, timeout_s: float = 60.0) -> bytes:
+        if candidate.level_id == 21:
+            return b'{"angleData":[NaN],"settings":{"bpm":120}}'
+        return b'{"angleData":[0,90,180],"settings":{"bpm":120}}'
+
+    monkeypatch.setattr(preflight, "download_chart", fake_download)
+    result = preflight.select_parser_compatible_dataset(
+        candidates, train_count=1, validation_count=1,
+    )
+    selected_ids = {
+        item.level_id for item in (*result.selection.validation, *result.selection.train)
+    }
+    assert 21 not in selected_ids
+    assert any(level_id == 21 and "finite" in reason for level_id, reason in result.rejected)
+    assert len(selected_ids) == 2
