@@ -102,6 +102,9 @@ class JudgementObserver:
     """
 
     def __init__(self, labels: Sequence[str]) -> None:
+        # A bare string must not silently become a schema of characters.
+        if isinstance(labels, str):
+            raise ValueError("counter labels must be a sequence of non-empty strings")
         normalized = tuple(labels)
         if not normalized or any(type(label) is not str or not label for label in normalized):
             raise ValueError("counter labels must be non-empty strings")
