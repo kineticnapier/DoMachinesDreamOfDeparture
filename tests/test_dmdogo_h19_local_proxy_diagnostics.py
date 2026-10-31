@@ -54,20 +54,20 @@ def run(sources):
 
 
 def test_three_chart_paired_complete_audit():
-    result = run(example_sources())
+    sources = example_sources()
+    result = run(sources)
     assert result["format"] == h19.FORMAT
     assert result["scope"]["distinct_train_charts"] == 3
     assert result["scope"]["new_motor_runs"] == 0
     assert result["scope"]["validation20_or_final_accessed"] is False
-    assert result["overall"]["equal_proxy_pairs"] == 31 or (
-        result["overall"]["equal_proxy_pairs"] > 0)
+    assert result["overall"]["equal_proxy_pairs"] == (
+        sources[3]["overall"]["equal_proxy_pair_count"])
     assert result["overall"]["equal_proxy_pairs"] == sum(
         x["summary"]["equal_proxy_pairs"] for x in result["per_chart"])
-    assert result["overall"]["equal_proxy_pairs"] == 31 or True
-    assert result["overall"]["cost_disagreements"] == 26 or (
-        result["overall"]["cost_disagreements"] > 0)
-    assert result["overall"]["tradeoff_pairs"] == 44 or (
-        result["overall"]["tradeoff_pairs"] > 0)
+    assert result["overall"]["cost_disagreements"] == (
+        sources[3]["overall"]["cost_prefers_dominated_pair_count"])
+    assert result["overall"]["tradeoff_pairs"] == (
+        sources[3]["overall"]["tradeoff_pair_count"])
     assert sum(x["summary"]["equal_proxy_pairs"] for x in result["per_chart"]) == (
         result["overall"]["equal_proxy_pairs"])
     assert result["overall"]["equal_proxy_pairs_with_different_local_movement_metrics"] + (
@@ -110,8 +110,10 @@ def test_changed_event_burst_density_and_time_span():
 
 
 def test_all_conflict_term_sums_reconstruct_objective():
-    out = run(example_sources())
-    assert out["overall"]["cost_disagreements"] == 26
+    sources = example_sources()
+    out = run(sources)
+    assert out["overall"]["cost_disagreements"] == (
+        sources[3]["overall"]["cost_prefers_dominated_pair_count"])
     for chart in out["per_chart"]:
         for p in chart["cost_proxy_conflicts"]:
             assert abs(sum(p["component_deltas"].values())
@@ -122,8 +124,10 @@ def test_all_conflict_term_sums_reconstruct_objective():
 
 
 def test_same_proxy_but_different_plans_not_equated():
-    out = run(example_sources())
-    assert out["overall"]["equal_proxy_pairs"] == 31
+    sources = example_sources()
+    out = run(sources)
+    assert out["overall"]["equal_proxy_pairs"] == (
+        sources[3]["overall"]["equal_proxy_pair_count"])
     for chart in out["per_chart"]:
         for pair in chart["ties"]:
             assert pair["changed_event_count"] > 0
