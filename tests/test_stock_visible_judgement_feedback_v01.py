@@ -326,6 +326,16 @@ def test_visible_contract_rejects_invalid_one_shot_label_iterables(label_values)
         )
 
 
+def test_visible_contract_rejects_scalar_string_as_label_sequence() -> None:
+    # Without this check, "perfect" becomes seven separate HUD labels.
+    with pytest.raises(ValueError, match="counter labels"):
+        VisibleCounterContract.build(
+            labels="perfect",
+            category_to_label={"perfect": "p"},
+            evidence={"perfect": CounterVisibilityEvidence.USER_CONFIRMED_VISIBLE},
+        )
+
+
 def test_visible_contract_preserves_valid_one_shot_label_iterable() -> None:
     contract = VisibleCounterContract.build(
         labels=(label for label in ("perfect", "very_late")),
