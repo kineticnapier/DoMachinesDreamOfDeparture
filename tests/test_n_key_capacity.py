@@ -491,7 +491,7 @@ def test_n_key_env_accepts_finite_integer_clock_configuration() -> None:
 
 @pytest.mark.parametrize(
     ("control_dt_s", "physics_dt_s"),
-    [(1e308, 1e-308), (1e-308, 5e-324)],
+    [(1e308, 1e-308), (1e-10, 5e-324)],
 )
 def test_n_key_env_rejects_overflowed_substep_ratio(control_dt_s, physics_dt_s) -> None:
     # Both clock values are finite and positive, but their ratio is infinity.
