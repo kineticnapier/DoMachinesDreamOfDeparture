@@ -1,0 +1,37 @@
+name: H17-H22 research regression (CPU)
+
+on:
+  pull_request:
+    branches:
+      - develop/dmdogo
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  h17-h22-research-regression:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Check out exact pull request code
+        uses: actions/checkout@v5
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v6
+        with:
+          python-version: '3.11'
+          cache: pip
+      - name: Install package and test dependencies
+        run: |
+          python -m pip install -e ".[dev]"
+          python -m pip install "numpy>=2.0" "tqdm>=4.67"
+          python -m pip install torch --index-url https://download.pytorch.org/whl/cpu
+      - name: Verify H17-H22 synthetic regressions
+        run: |
+          python -m pytest -q \
+            tests/test_dmdogo_h17_proxy_pareto.py \
+            tests/test_dmdogo_h18_proxy_identifiability.py \
+            tests/test_dmdogo_h19_local_proxy_diagnostics.py \
+            tests/test_dmdogo_h20_human_plan_alignment.py \
+            tests/test_dmdogo_h21_human_transition_rules.py \
+            tests/test_dmdogo_h22_frozen_transfer.py
