@@ -315,6 +315,11 @@ class NKeyBody:
         values = action.as_tuple()
         if len(values) != self.key_count:
             raise ValueError(f"expected {self.key_count} action values, got {len(values)}")
+        # NKeyMotorEnv validates this at its public boundary, but the body is
+        # also used directly by research code. Reject before mutating fatigue
+        # or coordination; NaN would otherwise be silently clamped to +1.
+        if any(not isfinite(value) for value in values):
+            raise ValueError("N-key motor commands must be finite")
 
         old = tuple(state.copy() for state in self.states)
         updated = tuple(

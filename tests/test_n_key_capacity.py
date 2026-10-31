@@ -324,6 +324,36 @@ def test_n_key_env_rejects_nonfinite_clock_configuration(field, bad) -> None:
 
 
 @pytest.mark.parametrize("bad", (float("nan"), float("inf"), float("-inf")))
+@pytest.mark.parametrize("axis", (0, 3))
+def test_n_key_body_rejects_nonfinite_commands_without_mutation(bad, axis) -> None:
+    # Direct body callers must receive the same fail-closed protection as
+    # NKeyMotorEnv.step; a bad command must not alter physical state.
+    body = NKeyBody(4)
+    before_states = tuple(state.copy() for state in body.states)
+    before_hands = (
+        body.left_hand_state.fatigue,
+        body.left_hand_state.coordination,
+        body.right_hand_state.fatigue,
+        body.right_hand_state.coordination,
+        body.bilateral_state.coordination,
+    )
+    commands = [0.0] * 4
+    commands[axis] = bad
+
+    with pytest.raises(ValueError, match="N-key motor commands must be finite"):
+        body.step(NKeyAction(tuple(commands)), 0.001)
+
+    assert tuple(body.states) == before_states
+    assert (
+        body.left_hand_state.fatigue,
+        body.left_hand_state.coordination,
+        body.right_hand_state.fatigue,
+        body.right_hand_state.coordination,
+        body.bilateral_state.coordination,
+    ) == before_hands
+
+
+@pytest.mark.parametrize("bad", (float("nan"), float("inf"), float("-inf")))
 def test_n_key_body_rejects_nonfinite_dt_without_mutation(bad) -> None:
     body = NKeyBody(4)
     before_states = tuple(state.copy() for state in body.states)
