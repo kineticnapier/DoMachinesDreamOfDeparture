@@ -310,3 +310,32 @@ def test_visible_renderer_reuses_contract_mapping_across_events_and_captures(mon
     assert renderer.notify(StockJudgementNotification(0.01, "perfect")).accepted
     assert dict(renderer.capture(0.02).counters) == {"perfect": 1, "very_late": 0}
     assert len(mapping_reads) == 1
+
+
+@pytest.mark.parametrize(
+    "label_values",
+    [(), ("perfect", "perfect"), (1,), ("",)],
+)
+def test_visible_contract_rejects_invalid_one_shot_label_iterables(label_values) -> None:
+    # Validation must inspect the same labels that are stored in the contract.
+    with pytest.raises(ValueError, match="counter labels"):
+        VisibleCounterContract.build(
+            labels=(label for label in label_values),
+            category_to_label={"perfect": "perfect"},
+            evidence={"perfect": CounterVisibilityEvidence.USER_CONFIRMED_VISIBLE},
+        )
+
+
+def test_visible_contract_preserves_valid_one_shot_label_iterable() -> None:
+    contract = VisibleCounterContract.build(
+        labels=(label for label in ("perfect", "very_late")),
+        category_to_label={"perfect": "perfect", "very_late": "very_late"},
+        evidence={
+            "perfect": CounterVisibilityEvidence.USER_CONFIRMED_VISIBLE,
+            "very_late": CounterVisibilityEvidence.USER_CONFIRMED_VISIBLE,
+        },
+    )
+    assert contract.labels == ("perfect", "very_late")
+    renderer = VisibleCounterRenderer(contract)
+    assert renderer.notify(StockJudgementNotification(0.05, "perfect")).accepted
+    assert dict(renderer.capture(0.1).counters) == {"perfect": 1, "very_late": 0}
