@@ -431,7 +431,13 @@ class NKeyMotorEnv:
             raise ValueError("physics_dt_s must be positive")
         if control_dt_s < physics_dt_s:
             raise ValueError("control_dt_s must be at least one physics step")
-        substeps = round(control_dt_s / physics_dt_s)
+        # Finite clock values can still overflow when divided (for example,
+        # 1e308 / 1e-308). round(inf) raises OverflowError instead of the
+        # configuration's documented ValueError.
+        ratio = control_dt_s / physics_dt_s
+        if not isfinite(ratio):
+            raise ValueError("control_dt_s must be an integer multiple of physics_dt_s")
+        substeps = round(ratio)
         if abs(substeps * physics_dt_s - control_dt_s) > 1e-12:
             raise ValueError("control_dt_s must be an integer multiple of physics_dt_s")
 
