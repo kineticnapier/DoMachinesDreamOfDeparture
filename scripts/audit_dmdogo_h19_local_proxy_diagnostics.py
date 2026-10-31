@@ -266,9 +266,13 @@ def analyse(h18_report, h17_report, plans, chart_times, costs):
         totals[name] = {
             k: sum(c["summary"][name][k] for c in output) for k in TERMS
         }
-    require(totals["equal_proxy_pairs"] == 31
-            and totals["cost_disagreements"] == 26
-            and totals["tradeoff_pairs"] == 44,
+    require(totals["equal_proxy_pairs"]
+                == sum(c["summary"]["equal_proxy_pair_count"]
+                       for c in h18_report["per_chart"])
+            and totals["cost_disagreements"]
+                == h18_report["overall"]["cost_prefers_dominated_pair_count"]
+            and totals["tradeoff_pairs"]
+                == h18_report["overall"]["tradeoff_pair_count"],
             "H1.9 candidate pair census differs")
     return totals, output
 
