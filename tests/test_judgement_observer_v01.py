@@ -238,9 +238,9 @@ def test_direct_frame_malformed_counter_rows_fail_closed_and_reset(bad_rows):
 
 
 def test_observer_rejects_scalar_string_as_label_sequence():
-    # Without this check, "perfect" becomes seven distinct counter names.
+    # Without this check, "abc" is accepted as three distinct counter names.
     with pytest.raises(ValueError, match="counter labels"):
-        JudgementObserver("perfect")
+        JudgementObserver("abc")
 
 
 def test_direct_frame_generator_pairs_remain_supported():
