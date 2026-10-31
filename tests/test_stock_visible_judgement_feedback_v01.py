@@ -284,3 +284,29 @@ def test_visible_contract_preserves_valid_string_identifiers_and_enum_evidence()
     renderer = VisibleCounterRenderer(contract)
     assert renderer.notify(StockJudgementNotification(0.05, "perfect")).accepted
     assert dict(renderer.capture(0.1).counters) == {"perfect": 1}
+
+
+def test_visible_renderer_reuses_contract_mapping_across_events_and_captures(monkeypatch) -> None:
+    # The contract is immutable; resolving its mapping once is sufficient.
+    # Count actual property reads instead of relying on timing measurements.
+    original_mapping = VisibleCounterContract.mapping.fget
+    assert original_mapping is not None
+    mapping_reads = []
+
+    def tracked_mapping(contract):
+        mapping_reads.append(1)
+        return original_mapping(contract)
+
+    monkeypatch.setattr(VisibleCounterContract, "mapping", property(tracked_mapping))
+    renderer = VisibleCounterRenderer(_contract(fail_miss=False))
+    assert len(mapping_reads) == 1
+    assert renderer.notify(StockJudgementNotification(0.05, "perfect", 2)).accepted
+    assert renderer.notify(StockJudgementNotification(0.06, "very_late", 3)).accepted
+    assert not renderer.notify(StockJudgementNotification(0.07, "unknown")).accepted
+    assert dict(renderer.capture(0.05).counters) == {"perfect": 2, "very_late": 0}
+    assert dict(renderer.capture(0.10).counters) == {"perfect": 2, "very_late": 3}
+    renderer.reset_visible_counters()
+    assert dict(renderer.capture(0.0).counters) == {"perfect": 0, "very_late": 0}
+    assert renderer.notify(StockJudgementNotification(0.01, "perfect")).accepted
+    assert dict(renderer.capture(0.02).counters) == {"perfect": 1, "very_late": 0}
+    assert len(mapping_reads) == 1
