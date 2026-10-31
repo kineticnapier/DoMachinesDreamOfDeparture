@@ -74,7 +74,12 @@ def extract_runtime_transitions(
     *,
     floor_to_target: Mapping[int, int] | None = None,
 ) -> tuple[RuntimeTransition, ...]:
-    floor_map = {} if floor_to_target is None else dict(floor_to_target)
+    # A float/bool key may compare equal to an integer floor (2.0 == 2,
+    # True == 1). Only genuine integer keys can establish target identity.
+    floor_map = ({} if floor_to_target is None else {
+        floor: target for floor, target in floor_to_target.items()
+        if type(floor) is int
+    })
     result: list[RuntimeTransition] = []
     pending_keydown: TraceEvent | None = None
     pending_category: tuple[TraceEvent, str] | None = None
