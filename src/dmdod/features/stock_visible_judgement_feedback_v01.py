@@ -151,6 +151,11 @@ class VisibleCounterRenderer:
         displayed = _finite_timestamp(displayed_at_s, name="display timestamp")
         if self._last_capture_s is not None and displayed < self._last_capture_s:
             raise ValueError("capture timestamp moved backward")
+        # Finite inputs can still overflow when adding capture latency.
+        # Validate before consuming pending events or advancing the clock.
+        observed = displayed + self.capture_latency_s
+        if not isfinite(observed):
+            raise ValueError("observation timestamp must be finite")
         cutoff = displayed - self.display_latency_s
         mapping = self.contract.mapping
         # Leave future events in the heap without scanning them each frame.
@@ -160,7 +165,7 @@ class VisibleCounterRenderer:
             self._counters[mapping[event.category]] += event.count
         self._last_capture_s = displayed
         return JudgementCounterFrame.from_mapping(
-            observed_at_s=displayed + self.capture_latency_s,
+            observed_at_s=observed,
             displayed_at_s=displayed,
             counters=self._counters,
         )
