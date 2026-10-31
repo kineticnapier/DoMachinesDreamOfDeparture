@@ -108,6 +108,21 @@ def test_contract_rejects_unmapped_labels_and_bad_events() -> None:
         renderer.notify(StockJudgementNotification(0.0, "perfect", count=0))
 
 
+class _StringifiesToPerfect:
+    def __str__(self) -> str:
+        return "perfect"
+
+
+@pytest.mark.parametrize("invalid_category", [1, True, _StringifiesToPerfect()])
+def test_visible_notify_rejects_nonstring_categories_without_queuing(invalid_category) -> None:
+    renderer = VisibleCounterRenderer(_contract(fail_miss=False))
+    # An object whose __str__ returns "perfect" previously passed notify(),
+    # but capture() then looked up the original object and raised KeyError.
+    with pytest.raises(ValueError, match="judgement category must be a string"):
+        renderer.notify(StockJudgementNotification(0.05, invalid_category))
+    assert dict(renderer.capture(0.10).counters)["perfect"] == 0
+
+
 def test_unconfirmed_categories_never_increment_visible_counters() -> None:
     renderer = VisibleCounterRenderer(_contract(fail_miss=True))
     diagnostic = renderer.notify(StockJudgementNotification(0.05, "fail_miss"))
