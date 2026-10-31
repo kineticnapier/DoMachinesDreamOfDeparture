@@ -6,6 +6,8 @@ from dataclasses import dataclass
 import math
 from typing import Mapping
 
+from dmdod.adofai.rules import TimingJudgement
+
 from .stock_runtime_log_v01 import AUDITED_DLL_SHA256
 from .stock_runtime_trace_v02 import REQUIRED_HOOKS, TraceEvent, TraceSession
 
@@ -47,6 +49,9 @@ def _integer(value: object) -> int | None:
     return value if type(value) is int else None
 
 
+_STOCK_JUDGEMENTS = frozenset(judgement.value for judgement in TimingJudgement)
+
+
 def _valid_transition_field(name: str, value: object) -> bool:
     """Require exact identity types on both sides of a parity comparison.
 
@@ -55,6 +60,9 @@ def _valid_transition_field(name: str, value: object) -> bool:
     """
     if name in {"floor_before", "floor_after", "target_ordinal"}:
         return type(value) is int
+    if name == "judgement":
+        # Matching two unknown labels does not establish Stock parity.
+        return type(value) is str and value in _STOCK_JUDGEMENTS
     return type(value) is str and bool(value)
 
 
