@@ -142,8 +142,19 @@ class JudgementObserver:
         if self._previous_displayed_at_s is not None and displayed < self._previous_displayed_at_s:
             return self._invalid(frame, "display timestamp moved backward")
 
+        # Direct dataclass construction can bypass the mapping builder and
+        # supply None, a scalar, or malformed rows. Treat these as an invalid
+        # HUD frame rather than letting unpacking/iteration raise an exception.
+        try:
+            counter_rows = tuple(frame.counters)
+        except (TypeError, ValueError):
+            return self._invalid(frame, "counter rows must be iterable label/value pairs")
         raw: dict[str, object] = {}
-        for name, value in frame.counters:
+        for row in counter_rows:
+            try:
+                name, value = row
+            except (TypeError, ValueError):
+                return self._invalid(frame, "counter rows must contain label/value pairs")
             # Directly constructed frames bypass from_mapping(). Fail closed,
             # including for unhashable keys, instead of raising TypeError.
             if type(name) is not str or not name:
