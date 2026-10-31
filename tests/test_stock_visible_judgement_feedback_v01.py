@@ -250,3 +250,37 @@ def test_visible_capture_keeps_large_but_finite_observation_timestamps() -> None
     frame = renderer.capture(1e308)
     assert frame.observed_at_s == 1e308
     assert dict(frame.counters)["perfect"] == 1
+
+
+@pytest.mark.parametrize(
+    ("labels", "mapping", "evidence", "message"),
+    [
+        ([1], {1: "perfect"}, {1: CounterVisibilityEvidence.USER_CONFIRMED_VISIBLE}, "counter labels"),
+        ([""], {"perfect": ""}, {"perfect": CounterVisibilityEvidence.USER_CONFIRMED_VISIBLE}, "counter labels"),
+        (["perfect"], {1: "perfect"}, {1: CounterVisibilityEvidence.USER_CONFIRMED_VISIBLE}, "counter mappings"),
+        (["perfect"], {"perfect": 1}, {"perfect": CounterVisibilityEvidence.USER_CONFIRMED_VISIBLE}, "counter mappings"),
+        (["perfect"], {"": "perfect"}, {"": CounterVisibilityEvidence.USER_CONFIRMED_VISIBLE}, "counter mappings"),
+        (["perfect"], {"perfect": "perfect"}, {1: CounterVisibilityEvidence.USER_CONFIRMED_VISIBLE}, "visibility evidence keys"),
+        (["perfect"], {"perfect": "perfect"}, {"perfect": "user_confirmed_visible"}, "visibility evidence must use"),
+    ],
+)
+def test_visible_contract_rejects_coerced_identifiers_and_evidence(
+    labels, mapping, evidence, message
+) -> None:
+    # Previously str() silently accepted non-string labels and categories;
+    # string-valued evidence could also silently disable a visible category.
+    with pytest.raises(ValueError, match=message):
+        VisibleCounterContract.build(
+            labels=labels, category_to_label=mapping, evidence=evidence
+        )
+
+
+def test_visible_contract_preserves_valid_string_identifiers_and_enum_evidence() -> None:
+    contract = VisibleCounterContract.build(
+        labels=["perfect"],
+        category_to_label={"perfect": "perfect"},
+        evidence={"perfect": CounterVisibilityEvidence.USER_CONFIRMED_VISIBLE},
+    )
+    renderer = VisibleCounterRenderer(contract)
+    assert renderer.notify(StockJudgementNotification(0.05, "perfect")).accepted
+    assert dict(renderer.capture(0.1).counters) == {"perfect": 1}
