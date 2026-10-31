@@ -355,3 +355,53 @@ def test_previous_frame_category_cannot_confirm_later_switch(
     assert fields["song_time_s"] == ("MATCH" if switch_has_time else "UNKNOWN")
     assert not result["complete"]
     assert result["verdict"] == "RUNTIME_PARITY_UNVERIFIED"
+
+
+@pytest.mark.parametrize("field,reference_key,invalid", [
+    ("floor_before", "stock_current_floor_before", True),
+    ("floor_before", "stock_current_floor_before", 1.0),
+    ("floor_before", "stock_current_floor_before", "1"),
+    ("floor_after", "stock_current_floor_after", 2.0),
+    ("floor_after", "stock_current_floor_after", "2"),
+    ("target_ordinal", "stock_target_ordinal", False),
+    ("target_ordinal", "stock_target_ordinal", 0.0),
+    ("target_ordinal", "stock_target_ordinal", "0"),
+])
+def test_reference_transition_identity_rejects_coercible_values(
+    field: str, reference_key: str, invalid: object,
+) -> None:
+    """Qualified-shaped synthetic data cannot confirm malformed reference IDs."""
+    session, reference = _qualified_one_transition()
+    reference["no_fail"]["event_37_90"][0][reference_key] = invalid
+    result = compare_runtime_to_reference(
+        session, reference, floor_to_target={2: 0},
+        song_time_offset_s=0.011, song_time_tolerance_s=0.0001,
+    )
+    assert result["comparisons"][0]["fields"][field] == "UNKNOWN"
+    assert not result["complete"]
+    assert result["verdict"] == "RUNTIME_PARITY_UNVERIFIED"
+
+
+@pytest.mark.parametrize("invalid_ordinal", [False, 0.0, "0"])
+def test_floor_map_requires_integer_target_identity(invalid_ordinal: object) -> None:
+    """A caller-provided floor map must not turn bool/float into target evidence."""
+    session, reference = _qualified_one_transition()
+    result = compare_runtime_to_reference(
+        session, reference, floor_to_target={2: invalid_ordinal},
+        song_time_offset_s=0.011, song_time_tolerance_s=0.0001,
+    )
+    assert result["comparisons"][0]["fields"]["target_ordinal"] == "UNKNOWN"
+    assert not result["complete"]
+    assert result["verdict"] == "RUNTIME_PARITY_UNVERIFIED"
+
+
+def test_integer_reference_and_floor_map_still_confirm_synthetic_qualified_shape() -> None:
+    """Valid integer identities keep the existing parity comparison semantics."""
+    session, reference = _qualified_one_transition()
+    result = compare_runtime_to_reference(
+        session, reference, floor_to_target={2: 0},
+        song_time_offset_s=0.011, song_time_tolerance_s=0.0001,
+    )
+    assert result["verdict"] == "RUNTIME_PARITY_CONFIRMED"
+    assert all(result["comparisons"][0]["fields"][key] == "MATCH"
+               for key in ("floor_before", "floor_after", "target_ordinal"))
