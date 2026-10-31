@@ -151,7 +151,10 @@ def reference_transitions(phase20c: dict[str, object], *, no_fail: bool) -> tupl
                 "target_ordinal": None, "judgement": None,
                 "floor_before": failure["current_floor_before"], "floor_after": failure["current_floor_after"],
             })
-    return tuple(sorted(rows, key=lambda row: float(row["song_time_s"])))
+    # Keep malformed reference times available for UNKNOWN field reporting,
+    # but never coerce them or raise while ordering the reference rows.
+    # Invalid timestamps sort last, preserving their original relative order.
+    return tuple(sorted(rows, key=lambda row: _reference_sort_time(row["song_time_s"])))
 
 
 def _finite_alignment_number(value: object) -> bool:
@@ -163,6 +166,10 @@ def _finite_alignment_number(value: object) -> bool:
     except OverflowError:
         # Very large Python integers cannot be converted to a finite float.
         return False
+
+
+def _reference_sort_time(value: object) -> float:
+    return float(value) if _finite_alignment_number(value) else math.inf
 
 
 def compare_runtime_to_reference(
