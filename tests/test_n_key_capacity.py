@@ -406,3 +406,47 @@ def test_legacy_oracle_tail_remains_available_for_stage_t() -> None:
         privileged_next_target=lambda: None,
     )
     assert _unresolved_tail(empty_env) == ()
+
+
+@pytest.mark.parametrize("bad", [True, False, "1", b"1", None, 10**1000])
+def test_n_key_rejects_non_numeric_commands_without_state_mutation(bad) -> None:
+    # Previously bool/str/bytes became a real key press; huge integers raised
+    # OverflowError instead of the documented invalid-command ValueError.
+    commands = [0.0] * 4
+    commands[1] = bad
+    action = NKeyAction(tuple(commands))
+
+    body = NKeyBody(4)
+    before_states = tuple(state.copy() for state in body.states)
+    before_hands = (
+        body.left_hand_state.fatigue,
+        body.left_hand_state.coordination,
+        body.right_hand_state.fatigue,
+        body.right_hand_state.coordination,
+        body.bilateral_state.coordination,
+    )
+    with pytest.raises(ValueError, match="N-key motor commands must be numeric"):
+        body.step(action, 0.001)
+    assert tuple(body.states) == before_states
+    assert (
+        body.left_hand_state.fatigue,
+        body.left_hand_state.coordination,
+        body.right_hand_state.fatigue,
+        body.right_hand_state.coordination,
+        body.bilateral_state.coordination,
+    ) == before_hands
+
+    for trace in (False, True):
+        env = NKeyMotorEnv(4)
+        env.capture_physics_trace = trace
+        before_observation = env.observe()
+        before_diagnostics = env.diagnostics()
+        with pytest.raises(ValueError, match="N-key motor commands must be numeric"):
+            env.step(action)
+        assert env.observe() == before_observation
+        assert env.diagnostics() == before_diagnostics
+        assert env.last_transition is None
+
+
+def test_n_key_numeric_commands_still_convert_to_float() -> None:
+    assert NKeyAction((1, -1, 0.5, 0)).as_tuple() == (1.0, -1.0, 0.5, 0.0)

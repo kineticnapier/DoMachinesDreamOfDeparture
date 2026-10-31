@@ -53,7 +53,18 @@ class NKeyAction:
     values: tuple[float, ...]
 
     def as_tuple(self) -> tuple[float, ...]:
-        return tuple(float(value) for value in self.values)
+        # A boolean or numeric-looking string is not a physical command.
+        # float(True) and float("1") otherwise turn malformed policy output
+        # into a genuine full-strength key press. Convert once at the edge.
+        commands: list[float] = []
+        for value in self.values:
+            if isinstance(value, (bool, str, bytes)):
+                raise ValueError("N-key motor commands must be numeric")
+            try:
+                commands.append(float(value))
+            except (TypeError, ValueError, OverflowError) as exc:
+                raise ValueError("N-key motor commands must be numeric") from exc
+        return tuple(commands)
 
 
 @dataclass(frozen=True, slots=True)
