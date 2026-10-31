@@ -499,6 +499,7 @@ def test_n_key_env_rejects_overflowed_substep_ratio(control_dt_s, physics_dt_s) 
     with pytest.raises(ValueError, match="integer multiple of physics_dt_s"):
         NKeyMotorEnv(4, control_dt_s=control_dt_s, physics_dt_s=physics_dt_s)
 
+
 @pytest.mark.parametrize("trace", (False, True))
 def test_n_key_hand_coordination_positions_are_reused_without_changing_physics(
     monkeypatch, trace: bool
