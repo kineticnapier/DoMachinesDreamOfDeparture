@@ -563,3 +563,54 @@ def test_valid_run_strings_keep_existing_normalization(tmp_path: Path) -> None:
     assert config.run.checkpoint == "in.pt"
     assert config.run.output == "out.pt"
     assert config.run.device == "cpu"
+
+
+@pytest.mark.parametrize(
+    "section,key",
+    [
+        ("action_trust", "lr"),
+        ("budget", "hours"),
+        ("human_visible", "controller_lr"),
+    ],
+)
+def test_huge_toml_integer_float_settings_raise_value_error(
+    tmp_path: Path, section: str, key: str
+) -> None:
+    # tomllib accepts this integer, but float(value) raises OverflowError.
+    huge_integer = "9" * 400
+    path = tmp_path / "overflowing-float.toml"
+    path.write_text(
+        'mode = "human_visible_curriculum_dagger"\n'
+        '[run]\ndataset = "unused"\ncheckpoint = "in.pt"\noutput = "out.pt"\n'
+        f'[{section}]\n{key} = {huge_integer}\n',
+        encoding="utf-8",
+    )
+    with pytest.raises(ValueError, match=rf"{section}\.{key} must be finite"):
+        load_training_config(path)
+
+
+def test_huge_toml_integer_alpha_grid_raises_value_error(tmp_path: Path) -> None:
+    path = tmp_path / "overflowing-alpha.toml"
+    path.write_text(
+        'mode = "human_visible_curriculum_dagger"\n'
+        '[run]\ndataset = "unused"\ncheckpoint = "in.pt"\noutput = "out.pt"\n'
+        '[human_visible]\n'
+        f'alpha_sweep_alphas = [0, {"9" * 400}, 1]\n',
+        encoding="utf-8",
+    )
+    with pytest.raises(ValueError, match="alpha_sweep_alphas must contain finite numbers"):
+        load_training_config(path)
+
+
+def test_finite_integer_alpha_grid_and_float_settings_still_load(tmp_path: Path) -> None:
+    path = tmp_path / "finite-integer-floats.toml"
+    path.write_text(
+        'mode = "human_visible_curriculum_dagger"\n'
+        '[run]\ndataset = "unused"\ncheckpoint = "in.pt"\noutput = "out.pt"\n'
+        '[budget]\nhours = 2\n'
+        '[human_visible]\nalpha_sweep_alphas = [0, 0.5, 1]\n',
+        encoding="utf-8",
+    )
+    config = load_training_config(path)
+    assert config.budget.hours == 2.0
+    assert config.human_visible.alpha_sweep_alphas == (0.0, 0.5, 1.0)
