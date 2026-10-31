@@ -43,10 +43,13 @@ class JudgementCounterFrame:
         displayed_at_s: float,
         counters: Mapping[str, object],
     ) -> JudgementCounterFrame:
+        # Never promote a non-string key into a genuine visible HUD label.
+        if any(type(name) is not str or not name for name in counters):
+            raise ValueError("counter labels must be non-empty strings")
         return cls(
             observed_at_s=float(observed_at_s),
             displayed_at_s=float(displayed_at_s),
-            counters=tuple((str(name), value) for name, value in counters.items()),
+            counters=tuple(counters.items()),
         )
 
 
@@ -84,9 +87,9 @@ class JudgementObserver:
     """
 
     def __init__(self, labels: Sequence[str]) -> None:
-        normalized = tuple(str(label) for label in labels)
-        if not normalized or any(not label for label in normalized):
-            raise ValueError("counter labels must be non-empty")
+        if not labels or any(type(label) is not str or not label for label in labels):
+            raise ValueError("counter labels must be non-empty strings")
+        normalized = tuple(labels)
         if len(set(normalized)) != len(normalized):
             raise ValueError("counter labels must be unique")
         self.labels = normalized
@@ -122,6 +125,10 @@ class JudgementObserver:
 
         raw: dict[str, object] = {}
         for name, value in frame.counters:
+            # Directly constructed frames bypass from_mapping(). Fail closed,
+            # including for unhashable keys, instead of raising TypeError.
+            if type(name) is not str or not name:
+                return self._invalid(frame, "counter labels must be non-empty strings")
             if name in raw:
                 return self._invalid(frame, f"duplicate counter label: {name}")
             raw[name] = value
