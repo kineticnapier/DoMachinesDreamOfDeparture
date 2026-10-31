@@ -11,9 +11,11 @@ from .stock_runtime_trace_v02 import REQUIRED_HOOKS, TraceEvent, TraceSession
 
 
 def _norm_judgement(value: object) -> str | None:
-    if value is None:
+    # A probe judgement is a JSON string. Stringifying a list such as
+    # ["Perfect"] would otherwise silently produce a valid "perfect" label.
+    if type(value) is not str:
         return None
-    text = "".join(char for char in str(value).lower() if char.isalnum())
+    text = "".join(char for char in value.lower() if char.isalnum())
     aliases = {
         "failmiss": "fail_miss",
         "tooearly": "too_early",
