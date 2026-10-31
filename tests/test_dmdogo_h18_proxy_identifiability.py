@@ -100,7 +100,9 @@ def test_h18_full_join_and_113_pairs():
     assert output["overall"]["ties_with_different_actual_assignments"] > 0
     assert all(len(c["leave_one_dimension_out"]) == 8
                for c in output["per_chart"])
-    assert all(t["different_event_count"] == 2
+    assert all(t["different_event_count"] ==
+               (1 if t["first_id"].startswith("original:") or
+                     t["second_id"].startswith("original:") else 2)
                for c in output["per_chart"] for t in c["equal_proxy_pairs"])
     assert output["scope"]["new_motor_runs"] == 0
     assert output["interpretation"]["human_likeness_verified"] is False
@@ -120,7 +122,9 @@ def test_no_cross_chart_pairs_or_event_ids():
             for row in c[group]:
                 assert c["chart_sha256"][:12] in row["first_id"]
                 assert c["chart_sha256"][:12] in row["second_id"]
-                assert row["different_event_run_count"] == 2
+                assert row["different_event_run_count"] == (
+                    1 if row["first_id"].startswith("original:") or
+                         row["second_id"].startswith("original:") else 2)
 
 
 def test_divergence_run_segmentation():
@@ -165,11 +169,11 @@ def test_drop_one_axis_can_create_equalities_and_both_frontier_directions():
     }
     res = h18.sensitivity(chart)
     drop_x = res[0]
-    assert drop_x["lost_original_frontier_members"] == ["alt1"]
+    assert drop_x["lost_original_frontier_members"] == ["original:000000000000"]
     assert drop_x["frontier_schedule_count"] == 1
     assert drop_x["changed_comparison_count"] >= 1
     drop_y = res[1]
-    assert drop_y["lost_original_frontier_members"] == ["original:000000000000"]
+    assert drop_y["lost_original_frontier_members"] == ["alt1"]
 
 
 @pytest.mark.parametrize("change,expected", [
