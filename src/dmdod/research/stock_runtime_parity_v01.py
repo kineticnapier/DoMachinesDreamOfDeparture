@@ -155,7 +155,8 @@ def reference_transitions(phase20c: dict[str, object], *, no_fail: bool) -> tupl
                 if row["kind"] == "ignored_after_fail":
                     continue
                 rows.append({
-                    "kind": "auto_miss" if row["automatic_miss"] else "key_down",
+                    "kind": ("auto_miss" if row["automatic_miss"] else "key_down")
+                    if type(row["automatic_miss"]) is bool else None,
                     "song_time_s": row["observed_time_s"], "target_ordinal": row["target_ordinal"],
                     "judgement": row["judgement"], "floor_before": row["current_floor_before"],
                     "floor_after": row["current_floor_after"],
