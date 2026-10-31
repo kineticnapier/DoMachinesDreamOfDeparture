@@ -487,3 +487,30 @@ def test_n_key_env_accepts_finite_integer_clock_configuration() -> None:
     # Integer numeric values remain accepted; only malformed clocks are rejected.
     env = NKeyMotorEnv(4, control_dt_s=1, physics_dt_s=1)
     assert env.physics_substeps == 1
+
+@pytest.mark.parametrize("trace", (False, True))
+def test_n_key_hand_coordination_positions_are_reused_without_changing_physics(
+    monkeypatch, trace: bool
+) -> None:
+    # Both the exact held path and the traced 1 kHz path must reuse the
+    # immutable physical layout, without rebuilding positions every frame.
+    cached = NKeyMotorEnv(8)
+    reference = NKeyMotorEnv(8)
+    cached.capture_physics_trace = trace
+    reference.capture_physics_trace = trace
+    assert cached.body._hand_coordination_positions == reference.body._hand_coordination_positions
+    assert cached.reset() == reference.reset()
+
+    def no_rebuild(count: int) -> tuple[float, ...]:
+        pytest.fail("fixed N-key coordination positions were rebuilt during step")
+
+    monkeypatch.setattr(cached.body, "_coordination_positions", no_rebuild)
+    patterns = (
+        NKeyAction((0.0, 1.0, 0.5, 0.0, 0.0, 0.5, 1.0, 0.0)),
+        NKeyAction((1.0, -1.0, 0.0, 0.5, 0.5, 0.0, -1.0, 1.0)),
+        NKeyAction((0.0,) * 8),
+    )
+    for index in range(30):
+        action = patterns[(index // 10) % len(patterns)]
+        assert cached.step(action) == reference.step(action)
+    assert cached.diagnostics() == reference.diagnostics()
