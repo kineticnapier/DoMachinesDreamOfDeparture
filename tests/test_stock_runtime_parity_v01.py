@@ -587,3 +587,65 @@ def test_same_frame_keydown_still_establishes_keydown_parity() -> None:
     )
     assert result["comparisons"][0]["fields"]["kind"] == "MATCH"
     assert result["verdict"] == "RUNTIME_PARITY_CONFIRMED"
+
+
+@pytest.mark.parametrize("invalid_label", ["unknown", "perfectish", "madeup"])
+def test_matching_unknown_stock_judgement_cannot_confirm_parity(
+    invalid_label: str,
+) -> None:
+    """Matching arbitrary labels are not evidence of a real Stock HitMargin.
+
+    These qualified-shaped sessions are synthetic, not actual live captures.
+    """
+    session, reference = _qualified_one_transition()
+    add_hit = session.events[1]
+    payload = dict(add_hit.payload)
+    payload["judgement"] = invalid_label
+    session = replace(
+        session,
+        events=session.events[:1] + (
+            replace(add_hit, payload=tuple(sorted(payload.items()))),
+        ) + session.events[2:],
+    )
+    reference["no_fail"]["event_37_90"][0]["stock_judgement"] = invalid_label
+    result = compare_runtime_to_reference(
+        session, reference, floor_to_target={2: 0},
+        song_time_offset_s=0.011, song_time_tolerance_s=0.0001,
+    )
+    assert result["live_qualified"]
+    assert result["comparisons"][0]["fields"]["judgement"] == "UNKNOWN"
+    assert not result["complete"]
+    assert not result["explicit_mismatch"]
+    assert result["verdict"] == "RUNTIME_PARITY_UNVERIFIED"
+
+
+def test_invalid_reference_judgement_is_unknown_not_a_stock_mismatch() -> None:
+    session, reference = _qualified_one_transition()
+    reference["no_fail"]["event_37_90"][0]["stock_judgement"] = "unknown"
+    result = compare_runtime_to_reference(
+        session, reference, floor_to_target={2: 0},
+        song_time_offset_s=0.011, song_time_tolerance_s=0.0001,
+    )
+    assert result["comparisons"][0]["fields"]["judgement"] == "UNKNOWN"
+    assert not result["explicit_mismatch"]
+    assert result["verdict"] == "RUNTIME_PARITY_UNVERIFIED"
+
+
+def test_known_stock_judgement_still_matches_qualified_shape() -> None:
+    session, reference = _qualified_one_transition()
+    add_hit = session.events[1]
+    payload = dict(add_hit.payload)
+    payload["judgement"] = "VeryLate"
+    session = replace(
+        session,
+        events=session.events[:1] + (
+            replace(add_hit, payload=tuple(sorted(payload.items()))),
+        ) + session.events[2:],
+    )
+    reference["no_fail"]["event_37_90"][0]["stock_judgement"] = "very_late"
+    result = compare_runtime_to_reference(
+        session, reference, floor_to_target={2: 0},
+        song_time_offset_s=0.011, song_time_tolerance_s=0.0001,
+    )
+    assert result["comparisons"][0]["fields"]["judgement"] == "MATCH"
+    assert result["verdict"] == "RUNTIME_PARITY_CONFIRMED"
