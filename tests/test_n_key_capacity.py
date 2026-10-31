@@ -488,6 +488,17 @@ def test_n_key_env_accepts_finite_integer_clock_configuration() -> None:
     env = NKeyMotorEnv(4, control_dt_s=1, physics_dt_s=1)
     assert env.physics_substeps == 1
 
+
+@pytest.mark.parametrize(
+    ("control_dt_s", "physics_dt_s"),
+    [(1e308, 1e-308), (1e-308, 5e-324)],
+)
+def test_n_key_env_rejects_overflowed_substep_ratio(control_dt_s, physics_dt_s) -> None:
+    # Both clock values are finite and positive, but their ratio is infinity.
+    # The constructor must report a configuration error, not OverflowError.
+    with pytest.raises(ValueError, match="integer multiple of physics_dt_s"):
+        NKeyMotorEnv(4, control_dt_s=control_dt_s, physics_dt_s=physics_dt_s)
+
 @pytest.mark.parametrize("trace", (False, True))
 def test_n_key_hand_coordination_positions_are_reused_without_changing_physics(
     monkeypatch, trace: bool
