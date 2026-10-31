@@ -121,3 +121,45 @@ def test_observer_contract_has_no_scorer_identity_fields():
     assert not hasattr(observer, "judgement_trace")
     assert not hasattr(observer, "_used")
     assert not hasattr(observer, "_missed")
+
+
+class _StringifiesToPerfect:
+    def __str__(self) -> str:
+        return "perfect"
+
+
+@pytest.mark.parametrize("invalid_label", [1, True, _StringifiesToPerfect(), ""])
+def test_observer_rejects_coerced_or_empty_configured_labels(invalid_label) -> None:
+    # Stringification used to silently convert 1, True, or an arbitrary
+    # object into a purported HUD schema label.
+    with pytest.raises(ValueError, match="counter labels must be non-empty strings"):
+        JudgementObserver((invalid_label, "very_late"))
+
+
+@pytest.mark.parametrize("invalid_label", [1, True, _StringifiesToPerfect(), ""])
+def test_frame_builder_rejects_coerced_or_empty_counter_labels(invalid_label) -> None:
+    with pytest.raises(ValueError, match="counter labels must be non-empty strings"):
+        JudgementCounterFrame.from_mapping(
+            observed_at_s=0.1,
+            displayed_at_s=0.1,
+            counters={invalid_label: 1},
+        )
+
+
+@pytest.mark.parametrize("invalid_label", [1, True, _StringifiesToPerfect(), "", []])
+def test_direct_counter_frame_rejects_malformed_labels_and_resets_baseline(invalid_label) -> None:
+    observer = JudgementObserver(LABELS)
+    assert observer.observe(frame(0.0, dict.fromkeys(LABELS, 0))).status is JudgementDeltaStatus.BASELINE
+    # A direct dataclass constructor bypasses from_mapping. Even an
+    # unhashable label must produce INVALID, not an uncaught TypeError.
+    malformed = JudgementCounterFrame(
+        observed_at_s=0.1,
+        displayed_at_s=0.1,
+        counters=((invalid_label, 1), ("very_late", 0), ("too_early", 0)),
+    )
+    invalid = observer.observe(malformed)
+    assert invalid.status is JudgementDeltaStatus.INVALID
+    assert not invalid.delta_available
+    assert observer.observe(
+        frame(0.2, {"perfect": 1, "very_late": 0, "too_early": 0})
+    ).status is JudgementDeltaStatus.BASELINE
