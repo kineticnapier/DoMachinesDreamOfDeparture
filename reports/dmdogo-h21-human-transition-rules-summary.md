@@ -2,7 +2,7 @@
 
 - 対象: Train譜面「02971 - ALL MY FELLAS - RetroBean.adofai」1譜面
 - 人間: 初見プレイ1回、H2.0で時刻対応済みの打鍵ログ
-- DMD: H1.5候補 \`e142af91b178-1112-1113\` の実行JSON（Oracle由来の計画、HUD-onlyではない）
+- DMD: H1.5候補 `e142af91b178-1112-1113` の実行JSON（Oracle由来の計画、HUD-onlyではない）
 - 入力: H2.0照合CSVとH1.5実行JSON（個人の打鍵ログおよびイベント単位の照合データはリポジトリに保存しない）
 - 検証: 実行時に1,540イベントすべての実打鍵軸・時刻を照合
 - 欠測の扱い: 人間とDMDの双方で連続して対応した1,525組だけ集計。未対応打鍵のミス判定やチャタリング確定はしない
@@ -50,19 +50,19 @@
 
 ## 再現
 
-\`\`\`powershell
-uv run python scripts/audit_dmdogo_h21_human_transition_rules.py \`
-  --h20-events-csv dmdod_h20_human_vs_actual_motor_events.csv \`
-  --h15-motor-json artifacts/dmdogo-h15/motor-r1/e142af91b178-1112-1113.json \`
+```powershell
+uv run python scripts/audit_dmdogo_h21_human_transition_rules.py `
+  --h20-events-csv dmdod_h20_human_vs_actual_motor_events.csv `
+  --h15-motor-json artifacts/dmdogo-h15/motor-r1/e142af91b178-1112-1113.json `
   --output reports/dmdogo-h21-human-transition-rules-r1.json
 
 uv run pytest -q tests/test_dmdogo_h21_human_transition_rules.py
-\`\`\`
+```
 
 相対パスは手元の配置に合わせて調整すること。出力の上書きは拒否する。
 
 **結論:** 手の切替総量の不足ではなく、譜面のリズム配置ごとの切替位置の違いが主な検証対象。次段階では別譜面・別セッションで再現性を確認する。実験結果をもって即座に運指選択器を変更しない。
 
-- \`human_likeness_verified=false\`
-- \`human_preference_observed=false\`
-- \`hud_only_student_verified=false\`
+- `human_likeness_verified=false`
+- `human_preference_observed=false`
+- `hud_only_student_verified=false`
