@@ -45,6 +45,17 @@ def _integer(value: object) -> int | None:
     return value if type(value) is int else None
 
 
+def _valid_transition_field(name: str, value: object) -> bool:
+    """Require exact identity types on both sides of a parity comparison.
+
+    Python considers True == 1 and 2.0 == 2, but those are not the same
+    JSON floor/target identities. Neither side may be silently coerced.
+    """
+    if name in {"floor_before", "floor_after", "target_ordinal"}:
+        return type(value) is int
+    return type(value) is str and bool(value)
+
+
 def _song_time(event: TraceEvent) -> float | None:
     value = event.value("song_time_evaluator_only")
     # Only JSON numbers are admissible runtime timestamps. In particular,
@@ -220,7 +231,9 @@ def compare_runtime_to_reference(
             fields: dict[str, str] = {}
             for name in ("kind", "judgement", "floor_before", "floor_after", "target_ordinal"):
                 left, right = getattr(actual, name), wanted[name]
-                if left is None or right is None:
+                if (left is None or right is None
+                        or not _valid_transition_field(name, left)
+                        or not _valid_transition_field(name, right)):
                     fields[name] = "UNKNOWN"
                     complete = False
                 elif left == right:
