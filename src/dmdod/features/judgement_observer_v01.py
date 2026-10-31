@@ -87,9 +87,9 @@ class JudgementObserver:
     """
 
     def __init__(self, labels: Sequence[str]) -> None:
-        if not labels or any(type(label) is not str or not label for label in labels):
-            raise ValueError("counter labels must be non-empty strings")
         normalized = tuple(labels)
+        if not normalized or any(type(label) is not str or not label for label in normalized):
+            raise ValueError("counter labels must be non-empty strings")
         if len(set(normalized)) != len(normalized):
             raise ValueError("counter labels must be unique")
         self.labels = normalized
