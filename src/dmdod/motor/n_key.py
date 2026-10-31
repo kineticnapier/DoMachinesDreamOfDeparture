@@ -31,6 +31,19 @@ def _validated_key_count(key_count: int) -> int:
     return key_count
 
 
+def _finite_motor_clock(value: object, *, error: str) -> float:
+    """Validate a numeric clock before it can advance physical state."""
+    if isinstance(value, (bool, str, bytes)):
+        raise ValueError(error)
+    try:
+        number = float(value)
+    except (TypeError, ValueError, OverflowError) as exc:
+        raise ValueError(error) from exc
+    if not isfinite(number):
+        raise ValueError(error)
+    return number
+
+
 def n_key_names(key_count: int) -> tuple[str, ...]:
     key_count = _validated_key_count(key_count)
     per_hand = key_count // 2
@@ -321,7 +334,8 @@ class NKeyBody:
         )
 
     def step(self, action: NKeyAction, dt_s: float) -> tuple[FingerState, ...]:
-        if not isfinite(dt_s) or dt_s <= 0.0:
+        dt_s = _finite_motor_clock(dt_s, error="dt_s must be finite and positive")
+        if dt_s <= 0.0:
             raise ValueError("dt_s must be finite and positive")
         values = action.as_tuple()
         if len(values) != self.key_count:
@@ -399,10 +413,12 @@ class NKeyMotorEnv:
         physics_dt_s: float = 0.001,
         key_config: KeyConfig | None = None,
     ) -> None:
-        if not isfinite(physics_dt_s):
-            raise ValueError("physics_dt_s must be finite")
-        if not isfinite(control_dt_s):
-            raise ValueError("control_dt_s must be finite")
+        physics_dt_s = _finite_motor_clock(
+            physics_dt_s, error="physics_dt_s must be finite"
+        )
+        control_dt_s = _finite_motor_clock(
+            control_dt_s, error="control_dt_s must be finite"
+        )
         if physics_dt_s <= 0.0:
             raise ValueError("physics_dt_s must be positive")
         if control_dt_s < physics_dt_s:
