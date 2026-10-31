@@ -17,6 +17,19 @@ from typing import Mapping, Sequence
 from dmdod.features.judgement_observer_v01 import JudgementCounterFrame
 
 
+def _finite_timestamp(value: object, *, name: str) -> float:
+    """Reject non-numeric, boolean and overflowing clock values."""
+    if type(value) not in (int, float):
+        raise ValueError(f"{name} must be a finite number")
+    try:
+        number = float(value)
+    except OverflowError as exc:
+        raise ValueError(f"{name} must be a finite number") from exc
+    if not isfinite(number):
+        raise ValueError(f"{name} must be a finite number")
+    return number
+
+
 class CounterVisibilityEvidence(str, Enum):
     USER_CONFIRMED_VISIBLE = "user_confirmed_visible"
     DLL_INTERNAL_COUNT_ONLY = "dll_internal_count_only"
@@ -87,9 +100,11 @@ class VisibleCounterRenderer:
         display_latency_s: float = 0.0,
         capture_latency_s: float = 0.0,
     ) -> None:
-        if not isfinite(display_latency_s) or display_latency_s < 0.0:
+        display_latency_s = _finite_timestamp(display_latency_s, name="display latency")
+        capture_latency_s = _finite_timestamp(capture_latency_s, name="capture latency")
+        if display_latency_s < 0.0:
             raise ValueError("display latency must be finite and non-negative")
-        if not isfinite(capture_latency_s) or capture_latency_s < 0.0:
+        if capture_latency_s < 0.0:
             raise ValueError("capture latency must be finite and non-negative")
         self.contract = contract
         # Internal-only and fixture-only categories must never enter the HUD.
@@ -107,8 +122,7 @@ class VisibleCounterRenderer:
         self._last_capture_s: float | None = None
 
     def notify(self, event: StockJudgementNotification) -> CounterRenderDiagnostic:
-        if not isfinite(event.occurred_at_s):
-            raise ValueError("judgement occurrence time must be finite")
+        occurred_at_s = _finite_timestamp(event.occurred_at_s, name="judgement occurrence time")
         if isinstance(event.count, bool) or not isinstance(event.count, int) or event.count <= 0:
             raise ValueError("judgement count must be a positive integer")
         label = self.contract.mapping.get(str(event.category))
@@ -122,7 +136,7 @@ class VisibleCounterRenderer:
                 float(event.occurred_at_s),
             )
         self._pending_sequence += 1
-        heappush(self._pending, (event.occurred_at_s, self._pending_sequence, event))
+        heappush(self._pending, (occurred_at_s, self._pending_sequence, event))
         return CounterRenderDiagnostic(True, "queued for visible rendering", str(event.category), float(event.occurred_at_s))
 
     def reset_visible_counters(self) -> None:
@@ -134,9 +148,7 @@ class VisibleCounterRenderer:
         self._last_capture_s = None
 
     def capture(self, displayed_at_s: float) -> JudgementCounterFrame:
-        displayed = float(displayed_at_s)
-        if not isfinite(displayed):
-            raise ValueError("display timestamp must be finite")
+        displayed = _finite_timestamp(displayed_at_s, name="display timestamp")
         if self._last_capture_s is not None and displayed < self._last_capture_s:
             raise ValueError("capture timestamp moved backward")
         cutoff = displayed - self.display_latency_s
