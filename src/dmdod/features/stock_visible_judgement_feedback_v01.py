@@ -125,7 +125,12 @@ class VisibleCounterRenderer:
         occurred_at_s = _finite_timestamp(event.occurred_at_s, name="judgement occurrence time")
         if isinstance(event.count, bool) or not isinstance(event.count, int) or event.count <= 0:
             raise ValueError("judgement count must be a positive integer")
-        label = self.contract.mapping.get(str(event.category))
+        # Only literal category strings may enter the pending heap. Coercing an
+        # object with __str__ can pass the visibility check but later fail
+        # when capture indexes the original, non-string event.category.
+        if type(event.category) is not str:
+            raise ValueError("judgement category must be a string")
+        label = self.contract.mapping.get(event.category)
         if label is None:
             return CounterRenderDiagnostic(False, "category is not in the visible contract", str(event.category), float(event.occurred_at_s))
         if str(event.category) not in self._confirmed_categories:
