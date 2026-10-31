@@ -122,9 +122,19 @@ def test_no_cross_chart_pairs_or_event_ids():
             for row in c[group]:
                 assert c["chart_sha256"][:12] in row["first_id"]
                 assert c["chart_sha256"][:12] in row["second_id"]
-                assert row["different_event_run_count"] == (
-                    1 if row["first_id"].startswith("original:") or
-                         row["second_id"].startswith("original:") else 2)
+                # Synthetic alternatives change event (10 + i). If their
+                # changed event indices are adjacent, the differences
+                # form ONE contiguous run, not two separate runs.
+                first, second = row["first_id"], row["second_id"]
+                if first.startswith("original:") or second.startswith("original:"):
+                    expected_events, expected_runs = 1, 1
+                else:
+                    first_i = int(first.split("-")[1])
+                    second_i = int(second.split("-")[1])
+                    expected_events = 2
+                    expected_runs = 1 if abs(first_i - second_i) == 1 else 2
+                assert row["different_event_count"] == expected_events
+                assert row["different_event_run_count"] == expected_runs
 
 
 def test_divergence_run_segmentation():
