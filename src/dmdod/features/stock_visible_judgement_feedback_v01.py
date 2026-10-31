@@ -120,6 +120,9 @@ class VisibleCounterRenderer:
         if capture_latency_s < 0.0:
             raise ValueError("capture latency must be finite and non-negative")
         self.contract = contract
+        # Resolve the immutable contract once: rebuilding its dict on every
+        # notification and frame capture adds unnecessary work at high density.
+        self._category_to_label = contract.mapping
         # Internal-only and fixture-only categories must never enter the HUD.
         self._confirmed_categories = frozenset(
             category for category, evidence in contract.evidence
@@ -143,7 +146,7 @@ class VisibleCounterRenderer:
         # when capture indexes the original, non-string event.category.
         if type(event.category) is not str:
             raise ValueError("judgement category must be a string")
-        label = self.contract.mapping.get(event.category)
+        label = self._category_to_label.get(event.category)
         if label is None:
             return CounterRenderDiagnostic(False, "category is not in the visible contract", str(event.category), float(event.occurred_at_s))
         if str(event.category) not in self._confirmed_categories:
@@ -175,7 +178,7 @@ class VisibleCounterRenderer:
         if not isfinite(observed):
             raise ValueError("observation timestamp must be finite")
         cutoff = displayed - self.display_latency_s
-        mapping = self.contract.mapping
+        mapping = self._category_to_label
         # Leave future events in the heap without scanning them each frame.
         # Keep the original inclusive 1e-12 boundary unchanged.
         while self._pending and self._pending[0][0] <= cutoff + 1e-12:
