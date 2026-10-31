@@ -50,18 +50,31 @@ class VisibleCounterContract:
         category_to_label: Mapping[str, str],
         evidence: Mapping[str, CounterVisibilityEvidence],
     ) -> "VisibleCounterContract":
-        normalized = tuple(str(label) for label in labels)
-        if not normalized or len(set(normalized)) != len(normalized):
-            raise ValueError("counter labels must be non-empty and unique")
-        mapping = tuple((str(category), str(label)) for category, label in category_to_label.items())
+        # A visible contract is a strict boundary: coercing identifiers with
+        # str() can make malformed categories appear to be genuine HUD labels.
+        if not labels or any(type(label) is not str or not label for label in labels):
+            raise ValueError("counter labels must be non-empty strings")
+        normalized = tuple(labels)
+        if len(set(normalized)) != len(normalized):
+            raise ValueError("counter labels must be unique")
+        if any(
+            type(category) is not str or not category or type(label) is not str
+            for category, label in category_to_label.items()
+        ):
+            raise ValueError("counter mappings require string categories and labels")
+        mapping = tuple(category_to_label.items())
         if any(label not in normalized for _, label in mapping):
             raise ValueError("every mapped category must reference a visible label")
+        if any(type(category) is not str for category in evidence):
+            raise ValueError("visibility evidence keys must be strings")
         if set(evidence) != {category for category, _ in mapping}:
             raise ValueError("visibility evidence must cover exactly the mapped categories")
+        if any(type(value) is not CounterVisibilityEvidence for value in evidence.values()):
+            raise ValueError("visibility evidence must use CounterVisibilityEvidence values")
         return cls(
             labels=normalized,
             category_to_label=mapping,
-            evidence=tuple((str(category), evidence[str(category)]) for category, _ in mapping),
+            evidence=tuple((category, evidence[category]) for category, _ in mapping),
         )
 
     @property
