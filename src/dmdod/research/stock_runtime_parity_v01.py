@@ -30,7 +30,7 @@ def _norm_judgement(value: object) -> str | None:
 
 @dataclass(frozen=True, slots=True)
 class RuntimeTransition:
-    kind: str
+    kind: str | None
     frame: int
     song_time_s: float | None
     realtime_s: float
@@ -109,7 +109,9 @@ def extract_runtime_transitions(
             if transition_song_time is None:
                 transition_song_time = _song_time(category_event)
             result.append(RuntimeTransition(
-                kind="auto_miss" if is_auto else "key_down",
+                # A switch without a same-frame KeyDown is not evidence of a
+                # physical key_down transition, even if AddHit is present.
+                kind="auto_miss" if is_auto else ("key_down" if key_event is not None else None),
                 frame=event.frame,
                 song_time_s=transition_song_time,
                 realtime_s=event.realtime_s,
