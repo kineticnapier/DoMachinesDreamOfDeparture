@@ -216,6 +216,28 @@ def test_invalid_song_time_alignment_is_rejected(settings: dict[str, object]) ->
         )
 
 
+@pytest.mark.parametrize("invalid_reference_time", [
+    True,
+    "3.25",
+    10**400,
+    float("nan"),
+    float("inf"),
+])
+def test_malformed_reference_song_time_cannot_confirm_parity(
+    invalid_reference_time: object,
+) -> None:
+    """A qualified-shaped synthetic trace must not validate invalid reference time."""
+    session, reference = _qualified_one_transition()
+    reference["no_fail"]["event_37_90"][0]["keydown_at_s"] = invalid_reference_time
+    result = compare_runtime_to_reference(
+        session, reference, floor_to_target={2: 0},
+        song_time_offset_s=0.011, song_time_tolerance_s=0.0001,
+    )
+    assert result["comparisons"][0]["fields"]["song_time_s"] == "UNKNOWN"
+    assert result["verdict"] == "RUNTIME_PARITY_UNVERIFIED"
+    assert not result["complete"]
+
+
 def test_finite_integer_alignment_parameters_remain_valid() -> None:
     """Numeric integer offsets/tolerances remain valid for calibrated callers."""
     session, reference = _qualified_one_transition()
