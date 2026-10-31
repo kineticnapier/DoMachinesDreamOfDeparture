@@ -405,3 +405,48 @@ def test_integer_reference_and_floor_map_still_confirm_synthetic_qualified_shape
     assert result["verdict"] == "RUNTIME_PARITY_CONFIRMED"
     assert all(result["comparisons"][0]["fields"][key] == "MATCH"
                for key in ("floor_before", "floor_after", "target_ordinal"))
+
+@pytest.mark.parametrize("invalid_floor_key,after_floor", [
+    (2.0, 2),
+    ("2", 2),
+    (True, 1),
+    (False, 0),
+])
+def test_floor_map_rejects_coercible_floor_keys(
+    invalid_floor_key: object, after_floor: int,
+) -> None:
+    """A non-integer map key cannot establish a runtime target identity."""
+    session, reference = _qualified_one_transition()
+    switch = session.events[2]
+    payload = dict(switch.payload)
+    payload["floor_after_evaluator_only"] = after_floor
+    session = replace(
+        session,
+        events=session.events[:2] + (
+            replace(switch, payload=tuple(sorted(payload.items()))),
+        ) + session.events[3:],
+    )
+    reference["no_fail"]["event_37_90"][0]["stock_current_floor_after"] = after_floor
+
+    transitions = extract_runtime_transitions(
+        session, floor_to_target={invalid_floor_key: 0},
+    )
+    assert transitions[0].target_ordinal is None
+    result = compare_runtime_to_reference(
+        session, reference, floor_to_target={invalid_floor_key: 0},
+        song_time_offset_s=0.011, song_time_tolerance_s=0.0001,
+    )
+    assert result["comparisons"][0]["fields"]["target_ordinal"] == "UNKNOWN"
+    assert not result["complete"]
+    assert result["verdict"] == "RUNTIME_PARITY_UNVERIFIED"
+
+
+def test_floor_map_keeps_valid_integer_key_with_unrelated_invalid_key() -> None:
+    """Rejecting malformed keys must not alter an unrelated valid mapping."""
+    session, reference = _qualified_one_transition()
+    result = compare_runtime_to_reference(
+        session, reference, floor_to_target={2: 0, 3.0: 99},
+        song_time_offset_s=0.011, song_time_tolerance_s=0.0001,
+    )
+    assert result["comparisons"][0]["fields"]["target_ordinal"] == "MATCH"
+    assert result["verdict"] == "RUNTIME_PARITY_CONFIRMED"
