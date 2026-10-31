@@ -248,3 +248,30 @@ def test_direct_frame_generator_pairs_remain_supported():
     rows = ((label, 0) for label in LABELS)
     direct = JudgementCounterFrame(observed_at_s=0.0, displayed_at_s=0.0, counters=rows)
     assert observer.observe(direct).status is JudgementDeltaStatus.BASELINE
+
+def test_large_counter_schema_checks_membership_without_sorting_each_frame(monkeypatch):
+    import dmdod.features.judgement_observer_v01 as observer_module
+
+    labels = tuple(f"counter_{index:04d}" for index in range(512))
+    observer = JudgementObserver(labels)
+
+    def fail_sort(*args, **kwargs):
+        raise AssertionError("HUD frame schema validation must not sort labels")
+
+    monkeypatch.setattr(observer_module, "sorted", fail_sort, raising=False)
+    assert observer.observe(frame(0.0, dict.fromkeys(labels, 0))).status is JudgementDeltaStatus.BASELINE
+
+    # Mapping order must not affect the configured schema or its delta order.
+    reversed_counters = dict.fromkeys(reversed(labels), 0)
+    reversed_counters[labels[-1]] = 1
+    delta = observer.observe(frame(0.1, reversed_counters))
+    assert delta.status is JudgementDeltaStatus.DELTA
+    assert delta.deltas[-1] == (labels[-1], 1)
+    assert delta.total_increment == 1
+
+    # A same-sized but different label set still invalidates the baseline.
+    changed = dict.fromkeys(labels, 0)
+    changed.pop(labels[0])
+    changed["unknown"] = 1
+    assert observer.observe(frame(0.2, changed)).status is JudgementDeltaStatus.INVALID
+    assert observer.observe(frame(0.3, dict.fromkeys(labels, 0))).status is JudgementDeltaStatus.BASELINE
