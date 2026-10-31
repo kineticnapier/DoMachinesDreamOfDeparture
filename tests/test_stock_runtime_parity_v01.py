@@ -450,3 +450,51 @@ def test_floor_map_keeps_valid_integer_key_with_unrelated_invalid_key() -> None:
     )
     assert result["comparisons"][0]["fields"]["target_ordinal"] == "MATCH"
     assert result["verdict"] == "RUNTIME_PARITY_CONFIRMED"
+
+
+def _qualified_fail_reference(automatic_miss: object):
+    """Qualified-shaped synthetic data; not a live ADOFAI measurement."""
+    session, _ = _qualified_one_transition()
+    session = replace(
+        session,
+        events=tuple(replace(event, no_fail=False) for event in session.events),
+    )
+    reference = {"fail_snapshot": {
+        "updates": [{"transitions": [{
+            "kind": "key_down",
+            "automatic_miss": automatic_miss,
+            "observed_time_s": 3.25,
+            "target_ordinal": 0,
+            "judgement": "perfect",
+            "current_floor_before": 1,
+            "current_floor_after": 2,
+        }]}],
+        "failure": None,
+    }}
+    return session, reference
+
+
+@pytest.mark.parametrize("invalid", ["false", "true", 0, 1, None, [], {}])
+def test_reference_automatic_miss_requires_boolean(invalid: object) -> None:
+    """Truthiness of malformed reference metadata must never confirm parity."""
+    session, reference = _qualified_fail_reference(invalid)
+    result = compare_runtime_to_reference(
+        session, reference, floor_to_target={2: 0},
+        song_time_offset_s=0.011, song_time_tolerance_s=0.0001,
+    )
+    assert result["live_qualified"]
+    assert result["comparisons"][0]["fields"]["kind"] == "UNKNOWN"
+    assert result["comparisons"][0]["fields"]["song_time_s"] == "MATCH"
+    assert not result["complete"]
+    assert result["verdict"] == "RUNTIME_PARITY_UNVERIFIED"
+
+
+def test_reference_automatic_miss_boolean_false_keeps_parity() -> None:
+    """A real JSON false still means an ordinary key_down transition."""
+    session, reference = _qualified_fail_reference(False)
+    result = compare_runtime_to_reference(
+        session, reference, floor_to_target={2: 0},
+        song_time_offset_s=0.011, song_time_tolerance_s=0.0001,
+    )
+    assert result["comparisons"][0]["fields"]["kind"] == "MATCH"
+    assert result["verdict"] == "RUNTIME_PARITY_CONFIRMED"
