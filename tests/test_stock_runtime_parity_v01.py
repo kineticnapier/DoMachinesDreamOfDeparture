@@ -535,3 +535,55 @@ def test_runtime_judgement_requires_json_string(invalid_judgement: object) -> No
     assert not result["complete"]
     assert not result["explicit_mismatch"]
     assert result["verdict"] == "RUNTIME_PARITY_UNVERIFIED"
+
+
+@pytest.mark.parametrize("missing_keydown", ["earlier_frame", "hook_only"])
+def test_switch_without_same_frame_keydown_cannot_confirm_keydown_parity(
+    missing_keydown: str,
+) -> None:
+    """A matching AddHit alone does not establish a physical KeyDown.
+
+    The session is deliberately qualified-shaped synthetic evidence, not
+    an actual Stock runtime capture.
+    """
+    session, reference = _qualified_one_transition()
+    events = list(session.events)
+    if missing_keydown == "earlier_frame":
+        events[0] = replace(events[0], frame=6)
+    else:
+        # Keep required hook coverage while removing physical KeyDown evidence.
+        events[0] = replace(events[0], kind="probe")
+    session = replace(session, events=tuple(events))
+
+    transitions = extract_runtime_transitions(session, floor_to_target={2: 0})
+    assert len(transitions) == 1
+    assert transitions[0].kind is None
+    assert transitions[0].judgement == "perfect"
+    assert transitions[0].song_time_s == pytest.approx(3.261)
+    assert events[0].sequence not in transitions[0].source_sequences
+
+    result = compare_runtime_to_reference(
+        session, reference, floor_to_target={2: 0},
+        song_time_offset_s=0.011, song_time_tolerance_s=0.0001,
+    )
+    assert result["live_qualified"]
+    fields = result["comparisons"][0]["fields"]
+    assert fields["kind"] == "UNKNOWN"
+    assert fields["judgement"] == "MATCH"
+    assert fields["song_time_s"] == "MATCH"
+    assert not result["complete"]
+    assert not result["explicit_mismatch"]
+    assert result["verdict"] == "RUNTIME_PARITY_UNVERIFIED"
+
+
+def test_same_frame_keydown_still_establishes_keydown_parity() -> None:
+    """A valid same-frame KeyDown continues to match the reference."""
+    session, reference = _qualified_one_transition()
+    transition = extract_runtime_transitions(session, floor_to_target={2: 0})[0]
+    assert transition.kind == "key_down"
+    result = compare_runtime_to_reference(
+        session, reference, floor_to_target={2: 0},
+        song_time_offset_s=0.011, song_time_tolerance_s=0.0001,
+    )
+    assert result["comparisons"][0]["fields"]["kind"] == "MATCH"
+    assert result["verdict"] == "RUNTIME_PARITY_CONFIRMED"
