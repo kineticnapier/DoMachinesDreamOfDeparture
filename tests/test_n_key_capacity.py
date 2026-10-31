@@ -450,3 +450,40 @@ def test_n_key_rejects_non_numeric_commands_without_state_mutation(bad) -> None:
 
 def test_n_key_numeric_commands_still_convert_to_float() -> None:
     assert NKeyAction((1, -1, 0.5, 0)).as_tuple() == (1.0, -1.0, 0.5, 0.0)
+
+
+@pytest.mark.parametrize("bad", (True, False, "0.001", b"0.001", None, 10**1000))
+def test_n_key_body_rejects_malformed_dt_without_mutation(bad) -> None:
+    # isfinite(True) used to pass; isfinite(huge_int) raised OverflowError.
+    body = NKeyBody(4)
+    before_states = tuple(state.copy() for state in body.states)
+    before_hands = (
+        body.left_hand_state.fatigue,
+        body.left_hand_state.coordination,
+        body.right_hand_state.fatigue,
+        body.right_hand_state.coordination,
+        body.bilateral_state.coordination,
+    )
+    with pytest.raises(ValueError, match="dt_s must be finite and positive"):
+        body.step(NKeyAction((0.0,) * 4), bad)
+    assert tuple(body.states) == before_states
+    assert (
+        body.left_hand_state.fatigue,
+        body.left_hand_state.coordination,
+        body.right_hand_state.fatigue,
+        body.right_hand_state.coordination,
+        body.bilateral_state.coordination,
+    ) == before_hands
+
+
+@pytest.mark.parametrize("field", ("control_dt_s", "physics_dt_s"))
+@pytest.mark.parametrize("bad", (True, False, "0.001", b"0.001", None, 10**1000))
+def test_n_key_env_rejects_malformed_clock_configuration(field, bad) -> None:
+    with pytest.raises(ValueError, match=rf"{field} must be finite"):
+        NKeyMotorEnv(4, **{field: bad})
+
+
+def test_n_key_env_accepts_finite_integer_clock_configuration() -> None:
+    # Integer numeric values remain accepted; only malformed clocks are rejected.
+    env = NKeyMotorEnv(4, control_dt_s=1, physics_dt_s=1)
+    assert env.physics_substeps == 1
