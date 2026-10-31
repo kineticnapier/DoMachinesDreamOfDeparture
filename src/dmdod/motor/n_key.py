@@ -142,6 +142,10 @@ class NKeyBody:
         self.key_names = n_key_names(key_count)
         self.key_count = key_count
         self.per_hand = self.key_count // 2
+        # The physical hand layout never changes after construction. Cache
+        # its coordination positions instead of allocating a tuple for each
+        # hand on every 1 kHz physics step.
+        self._hand_coordination_positions = self._coordination_positions(self.per_hand)
 
         base = personal_blue_switch_v0_1(same_hand=True)
         # FourKeyBody uses [base.left, base.right] in physical order on each
@@ -256,7 +260,11 @@ class NKeyBody:
         press_demand = sum(positive)
         coordination = [1.0] * len(states)
         if press_demand > 1e-9 and len(states) > 1:
-            positions = self._coordination_positions(len(states))
+            positions = (
+                self._hand_coordination_positions
+                if len(states) == self.per_hand
+                else self._coordination_positions(len(states))
+            )
             target = sum(p * value for p, value in zip(positions, positive)) / press_demand
             tau = max(hand_cfg.switch_tau_s, dt_s)
             hand_state.coordination += (target - hand_state.coordination) * dt_s / tau
@@ -530,7 +538,7 @@ class NKeyMotorEnv:
         left_cfg = body.left_hand_config
         right_cfg = body.right_hand_config
         bilateral_cfg = body.bilateral_config
-        coordination_positions = body._coordination_positions(split)
+        coordination_positions = body._hand_coordination_positions
         actuation_m = self.keyboard.config.actuation_m
         reset_m = self.keyboard.config.reset_m
         events: list[TimedKeyEvent] = []
