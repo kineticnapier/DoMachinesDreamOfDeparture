@@ -54,6 +54,10 @@ class VisibleCounterContract:
         # str() can make malformed categories appear to be genuine HUD labels.
         # Materialize once before validating: a one-shot iterable is
         # exhausted by any(), otherwise silently producing an empty schema.
+        # A plain string is a Sequence[str], but iterating it would create
+        # one counter per character instead of one named visible counter.
+        if isinstance(labels, str):
+            raise ValueError("counter labels must be a sequence of non-empty strings")
         normalized = tuple(labels)
         if not normalized or any(type(label) is not str or not label for label in normalized):
             raise ValueError("counter labels must be non-empty strings")
