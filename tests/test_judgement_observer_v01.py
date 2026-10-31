@@ -163,3 +163,47 @@ def test_direct_counter_frame_rejects_malformed_labels_and_resets_baseline(inval
     assert observer.observe(
         frame(0.2, {"perfect": 1, "very_late": 0, "too_early": 0})
     ).status is JudgementDeltaStatus.BASELINE
+
+
+@pytest.mark.parametrize("bad_timestamp", [True, "0.1", float("nan"), float("inf"), 10**400])
+@pytest.mark.parametrize("field", ("observed_at_s", "displayed_at_s"))
+def test_frame_builder_rejects_coerced_nonfinite_or_overflowing_timestamps(field, bad_timestamp):
+    timestamps = {"observed_at_s": 0.1, "displayed_at_s": 0.1}
+    timestamps[field] = bad_timestamp
+    with pytest.raises(ValueError, match="counter timestamps must be finite numbers"):
+        JudgementCounterFrame.from_mapping(
+            **timestamps, counters=dict.fromkeys(LABELS, 0),
+        )
+
+
+@pytest.mark.parametrize("bad_timestamp", [True, "0.1", float("nan"), 10**400])
+@pytest.mark.parametrize("field", ("observed_at_s", "displayed_at_s"))
+def test_direct_frame_bad_timestamps_invalidate_and_reset_baseline(field, bad_timestamp):
+    observer = JudgementObserver(LABELS)
+    assert observer.observe(frame(0.0, dict.fromkeys(LABELS, 0))).status is JudgementDeltaStatus.BASELINE
+    timestamps = {"observed_at_s": 0.1, "displayed_at_s": 0.1}
+    timestamps[field] = bad_timestamp
+    malformed = JudgementCounterFrame(
+        **timestamps,
+        counters=tuple((label, 1) for label in LABELS),
+    )
+    invalid = observer.observe(malformed)
+    assert invalid.status is JudgementDeltaStatus.INVALID
+    assert not invalid.delta_available
+    assert invalid.deltas == ()
+    assert observer.observe(frame(0.2, dict.fromkeys(LABELS, 1))).status is JudgementDeltaStatus.BASELINE
+
+
+def test_integer_clock_values_remain_valid_for_hud_observation():
+    observer = JudgementObserver(LABELS)
+    first = JudgementCounterFrame.from_mapping(
+        observed_at_s=1, displayed_at_s=1, counters=dict.fromkeys(LABELS, 0),
+    )
+    second = JudgementCounterFrame.from_mapping(
+        observed_at_s=2, displayed_at_s=2, counters={"perfect": 1, "very_late": 0, "too_early": 0},
+    )
+    assert observer.observe(first).status is JudgementDeltaStatus.BASELINE
+    delta = observer.observe(second)
+    assert delta.status is JudgementDeltaStatus.DELTA
+    assert delta.delta_map["perfect"] == 1
+    assert delta.event_interval_s == (1.0, 2.0)
