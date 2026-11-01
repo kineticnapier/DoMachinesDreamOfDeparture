@@ -18,6 +18,7 @@ from dmdod.adofai_rules import (
 from dmdod.evaluation.evaluator import TargetHit
 from dmdod.motor.keyboard import KeyEvent
 from dmdod.motor.env import MotorAction, MotorEnv, MotorObservation, TimedKeyEvent
+from dmdod.motor.body import _finite_body_value
 from dmdod.features.perception import VisualCueConfig, VisualCueEncoder, VisualCueObservation
 
 
@@ -145,10 +146,16 @@ class RhythmMotorEnv:
     ) -> None:
         if not targets:
             raise ValueError("at least one target is required")
+        tail_s = _finite_body_value(
+            tail_s, error="tail_s must be finite and non-negative"
+        )
         if tail_s < 0.0:
-            raise ValueError("tail_s must be non-negative")
+            raise ValueError("tail_s must be finite and non-negative")
 
         self._targets = tuple(sorted(targets, key=lambda target: target.time_s))
+        episode_end_s = self._targets[-1].time_s + tail_s
+        if not isfinite(episode_end_s):
+            raise ValueError("episode end time must be finite")
         self.bpm = self._resolve_bpm(bpm)
         self.difficulty = (
             TimingDifficulty(str(difficulty).lower())
@@ -177,7 +184,7 @@ class RhythmMotorEnv:
             config=cue_config,
             seed=perception_seed,
         )
-        self._episode_end_s = self._targets[-1].time_s + tail_s
+        self._episode_end_s = episode_end_s
 
         self._used: list[bool] = []
         self._missed: list[bool] = []
