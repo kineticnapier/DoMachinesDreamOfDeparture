@@ -36,6 +36,36 @@ def test_rhythm_rejects_episode_end_float_overflow():
         RhythmMotorEnv([TargetHit(1e308, "left")], bpm=120.0, tail_s=1e308)
 
 
+@pytest.mark.parametrize(
+    "invalid_bpm",
+    (
+        float("nan"), float("inf"), float("-inf"),
+        True, False, 0.0, -120.0,
+        "120", b"120", 10**1000, object(),
+    ),
+)
+def test_rhythm_rejects_invalid_explicit_bpm(invalid_bpm):
+    with pytest.raises(ValueError, match="bpm must be finite and positive"):
+        RhythmMotorEnv([TargetHit(0.5, "left")], bpm=invalid_bpm)
+
+
+@pytest.mark.parametrize("valid_bpm", (120.0, 120, 120.5))
+def test_rhythm_preserves_valid_explicit_bpm(valid_bpm):
+    env = RhythmMotorEnv([TargetHit(0.5, "left")], bpm=valid_bpm)
+    assert env.bpm == pytest.approx(float(valid_bpm))
+
+
+def test_rhythm_rejects_inferred_bpm_overflow():
+    # The target interval is finite and positive, but 60 / interval is infinite.
+    with pytest.raises(ValueError, match="inferred bpm must be finite"):
+        RhythmMotorEnv([TargetHit(0.0, "left"), TargetHit(5e-324, "right")])
+
+
+def test_rhythm_infers_bpm_from_finite_target_interval():
+    env = RhythmMotorEnv([TargetHit(0.5, "left"), TargetHit(1.0, "right")])
+    assert env.bpm == pytest.approx(120.0)
+
+
 def test_rhythm_observation_does_not_expose_exact_time():
     env = RhythmMotorEnv(make_regular_targets(bpm=120.0, count=2), bpm=120.0)
     observation = env.reset()
