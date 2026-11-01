@@ -1,0 +1,59 @@
+name: Research A v2 mixed-tempo evaluation preflight (CPU)
+
+on:
+  pull_request:
+    branches:
+      - research/a002p-sampled-eval
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  v2-mixed-tempo:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    env:
+      PYTHONHASHSEED: "0"
+      OMP_NUM_THREADS: "1"
+      MKL_NUM_THREADS: "1"
+    steps:
+      - name: Checkout isolated evaluation branch
+        uses: actions/checkout@v5
+      - name: Set up Python 3.11 CPU
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.11"
+      - name: Install project plus pinned original PyTorch
+        run: |
+          python -m pip install -e ".[dev]"
+          python -m pip install "torch==2.5.1+cpu" --index-url https://download.pytorch.org/whl/cpu
+      - name: Validate schedule, event accounting and intervention isolation
+        run: |
+          python -m pytest -q \
+            tests/test_research_a_v2_mixed_tempo_env.py \
+            tests/test_research_a_v2_mixed_tempo_preflight.py
+      - name: Download original R0/R1 final weights
+        uses: actions/download-artifact@v4
+        with:
+          name: research-a002p-r1-paired-reward-comparison
+          path: previous-paired
+          run-id: 41300077879
+          github-token: ${{ github.token }}
+          repository: ${{ github.repository }}
+      - name: Evaluate mixed-tempo and physical finger interventions, without training
+        run: |
+          mkdir -p reports/research_a_v2
+          python -u scripts/a002v2_mixed_tempo_preflight.py \
+            --input previous-paired \
+            --out reports/research_a_v2/all-cases.json \
+            | tee reports/research_a_v2/summary.log
+      - name: Archive all model traces and random baselines
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: research-a-v2-mixed-tempo-preflight
+          path: reports/research_a_v2/
+          retention-days: 30
+          if-no-files-found: warn
