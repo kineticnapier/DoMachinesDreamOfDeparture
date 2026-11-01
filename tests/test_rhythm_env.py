@@ -316,6 +316,23 @@ def test_reward_config_rejects_nonfinite_scales(field, bad):
         RewardConfig(**{field: bad})
 
 
+
+@pytest.mark.parametrize(
+    "field",
+    (
+        "hit_reward", "xacc_reward", "timing_bonus",
+        "perfect_sigma_fraction", "timing_sigma_s",
+        "miss_penalty", "too_early_penalty",
+        "overload_penalty", "effort_penalty",
+    ),
+)
+@pytest.mark.parametrize("bad", (True, False, "1", b"1", 10**1000, object()))
+def test_reward_config_rejects_malformed_numeric_scales(field, bad):
+    from dmdod.envs.rhythm import RewardConfig
+
+    with pytest.raises(ValueError, match=rf"{field} must be finite"):
+        RewardConfig(**{field: bad})
+
 def test_reward_config_preserves_finite_ablation_scales_and_defaults():
     from dmdod.envs.rhythm import RewardConfig
 
