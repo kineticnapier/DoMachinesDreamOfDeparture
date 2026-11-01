@@ -37,6 +37,7 @@ jobs:
         run: python -m pytest -q tests/test_research_a_v2_l0_low_speed_ppo.py
       - name: Train A0 and A1 with no fingering teacher and archive every seed
         run: |
+          set -o pipefail
           mkdir -p reports/research_a_v2_l0/checkpoints
           python -u scripts/a002v2_l0_low_speed_ppo.py \
             --output reports/research_a_v2_l0/full-results.json \
