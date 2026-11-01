@@ -1,0 +1,97 @@
+name: H2.3 frozen hand-choice Motor pilots (CPU)
+
+on:
+  pull_request:
+    branches:
+      - develop/dmdogo
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  h23-frozen-hand-motor:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Check out PR merge candidate
+        uses: actions/checkout@v5
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v6
+        with:
+          python-version: '3.11'
+          cache: pip
+      - name: Install CPU dependencies
+        run: |
+          python -m pip install -e ".[dev]"
+          python -m pip install "numpy>=2.0" "tqdm>=4.67"
+          python -m pip install torch --index-url https://download.pytorch.org/whl/cpu
+      - name: Test frozen rule and physical eligibility contracts
+        run: |
+          python -m pytest -q tests/test_dmdogo_h23_frozen_hands.py tests/test_dmdogo_h23_actual_motor.py tests/test_dmdogo_h22_motor_export.py
+      - name: Extract public target chart only without installing audio
+        env:
+          CHART_ZIP_URL: https://api.tuforums.com/cdn/6cbcd9cf-6060-4127-875e-00371d6f812f
+        run: |
+          python - <<'PY'
+          import hashlib
+          from io import BytesIO
+          import os
+          from pathlib import Path
+          import urllib.request
+          import zipfile
+
+          out = Path("artifacts/h23-invitation/private")
+          out.mkdir(parents=True, exist_ok=False)
+          req = urllib.request.Request(os.environ["CHART_ZIP_URL"],
+                                       headers={"User-Agent": "DMDOD-H23-research/1.0"})
+          with urllib.request.urlopen(req,timeout=120) as response:
+              buf=response.read(48*1024*1024+1)
+          if len(buf)>48*1024*1024:raise ValueError("ZIP too large")
+          with zipfile.ZipFile(BytesIO(buf)) as z:
+              info=z.getinfo("level.adofai")
+              if info.file_size>5*1024*1024:raise ValueError("chart too large")
+              data=z.read(info)
+          digest=hashlib.sha256(data).hexdigest()
+          expected="a4214f3769568ff67a6eb95c250296e66ae32829a757764091743486bdb99b8e"
+          if digest!=expected:
+              raise ValueError(f"Target chart SHA changed: {digest}")
+          (out/"level.adofai").write_bytes(data)
+          print("Target pinned SHA-256:",digest)
+          PY
+      - name: Execute original Motor with frozen interval-only rule
+        run: |
+          python scripts/run_dmdogo_h23_frozen_hands.py \
+            --chart artifacts/h23-invitation/private/level.adofai \
+            --output-root artifacts/h23-invitation/out \
+            --variant interval_only \
+            --wall-timeout-s 900
+      - name: Execute original Motor with frozen rule and right-hand rest reset
+        run: |
+          python scripts/run_dmdogo_h23_frozen_hands.py \
+            --chart artifacts/h23-invitation/private/level.adofai \
+            --output-root artifacts/h23-invitation/out \
+            --variant right_after_long_rest \
+            --wall-timeout-s 900
+      - name: Export normalized executed Motor traces, preserving all replans
+        run: |
+          for variant in interval_only right_after_long_rest; do
+            python scripts/export_dmdogo_h23_actual_motor.py \
+              --summary "artifacts/h23-invitation/out/$variant/summary.json" \
+              --telemetry "artifacts/h23-invitation/out/$variant/telemetry-v08.json" \
+              --chart artifacts/h23-invitation/private/level.adofai \
+              --variant "$variant" \
+              --output "artifacts/h23-invitation/out/$variant/h23-motor.json"
+          done
+      - name: Upload results (only derived Motor outputs; never the chart, audio, or human log)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: h23-invitation-frozen-hand-motor
+          retention-days: 14
+          if-no-files-found: warn
+          path: |
+            artifacts/h23-invitation/out/*/summary.json
+            artifacts/h23-invitation/out/*/telemetry-v08.json
+            artifacts/h23-invitation/out/*/h23-branch-metadata.json
+            artifacts/h23-invitation/out/*/h23-motor.json
