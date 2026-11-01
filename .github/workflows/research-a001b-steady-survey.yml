@@ -1,0 +1,40 @@
+name: Research A001b precommitted steady Motor survey (CPU)
+
+on:
+  pull_request:
+    branches:
+      - develop/dmdogo
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  a001b-survey:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - name: Checkout research revision
+        uses: actions/checkout@v5
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.11"
+      - name: Install CPU test dependency
+        run: python -m pip install -e ".[dev]"
+      - name: Test precommitted warmup, scoring and protocol
+        run: python -m pytest -q tests/test_research_a001b_steady_survey.py
+      - name: Run frozen full survey and preserve all results
+        run: |
+          mkdir -p reports
+          python -u scripts/a001b_steady_motor_survey.py \
+            --out reports/research-a001b-steady-full.json \
+            | tee reports/research-a001b-steady-summary.json
+      - name: Upload full selected traces and all screen candidates
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: research-a001b-precommitted-steady-survey
+          path: reports/research-a001b-steady-*.json
+          retention-days: 30
+          if-no-files-found: warn
