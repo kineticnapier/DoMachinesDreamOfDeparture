@@ -2,7 +2,8 @@ from __future__ import annotations
 
 from bisect import bisect_right
 from dataclasses import dataclass
-from math import cos, exp, pi, sin
+from math import cos, exp, isfinite, pi, sin
+from operator import index
 
 from dmdod.adofai_playable import PlayableChartSegment, PlayableChartTarget
 from dmdod.adofai_rules import (
@@ -61,6 +62,20 @@ class RealChartStep:
     done: bool
 
 
+def _visible_floor_count(value: object, name: str) -> int:
+    """Validate a slice count before any motor or HUD state is initialized."""
+    error = f"{name} must be a non-negative integer"
+    if isinstance(value, bool):
+        raise ValueError(error)
+    try:
+        count = index(value)
+    except TypeError as exc:
+        raise ValueError(error) from exc
+    if count < 0:
+        raise ValueError(error)
+    return count
+
+
 class RealChartMotorEnv:
     """Motor environment for an actual compiled ADOFAI chart segment.
 
@@ -93,8 +108,14 @@ class RealChartMotorEnv:
         )
         if tail_s < 0.0:
             raise ValueError("tail_s must be finite and non-negative")
-        if behind_floors < 0 or ahead_floors < 0:
-            raise ValueError("visible floor counts must be non-negative")
+        behind_floors = _visible_floor_count(behind_floors, "behind_floors")
+        ahead_floors = _visible_floor_count(ahead_floors, "ahead_floors")
+        episode_end_s = max(
+            segment.duration_s,
+            segment.targets[-1].episode_time_s,
+        ) + tail_s
+        if not isfinite(episode_end_s):
+            raise ValueError("episode end time must be finite")
 
         self.segment = segment
         self.motor = MotorEnv(same_hand=same_hand, control_dt_s=control_dt_s)
@@ -109,10 +130,7 @@ class RealChartMotorEnv:
         self.behind_floors = behind_floors
         self.ahead_floors = ahead_floors
         self._floor_entry_times = tuple(floor.target_time_s for floor in segment.chart.floors)
-        self._episode_end_s = max(
-            segment.duration_s,
-            segment.targets[-1].episode_time_s,
-        ) + tail_s
+        self._episode_end_s = episode_end_s
 
         self._used: list[bool] = []
         self._missed: list[bool] = []
