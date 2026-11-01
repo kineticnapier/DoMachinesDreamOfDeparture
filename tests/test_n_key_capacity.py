@@ -500,6 +500,24 @@ def test_n_key_env_rejects_overflowed_substep_ratio(control_dt_s, physics_dt_s) 
         NKeyMotorEnv(4, control_dt_s=control_dt_s, physics_dt_s=physics_dt_s)
 
 
+@pytest.mark.parametrize(
+    ("control_dt_s", "physics_dt_s"),
+    [(1e-13, 6e-14), (1e-14, 6e-15)],
+)
+def test_n_key_env_rejects_fractional_substeps_for_tiny_clocks(
+    control_dt_s, physics_dt_s
+) -> None:
+    # The former absolute 1e-12-second tolerance accepted 5/3 steps
+    # because the rounding error was smaller than the tolerance.
+    with pytest.raises(ValueError, match="integer multiple of physics_dt_s"):
+        NKeyMotorEnv(4, control_dt_s=control_dt_s, physics_dt_s=physics_dt_s)
+
+
+def test_n_key_env_accepts_exact_tiny_integer_substeps() -> None:
+    env = NKeyMotorEnv(4, control_dt_s=1e-13, physics_dt_s=5e-14)
+    assert env.physics_substeps == 2
+
+
 @pytest.mark.parametrize("trace", (False, True))
 def test_n_key_hand_coordination_positions_are_reused_without_changing_physics(
     monkeypatch, trace: bool
