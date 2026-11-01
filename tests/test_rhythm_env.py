@@ -440,3 +440,38 @@ def test_reward_config_preserves_finite_ablation_scales_and_defaults():
     assert config.too_early_penalty == -0.1
     assert config.effort_penalty == -0.01
     assert config.timing_sigma_s == 0.01
+
+
+@pytest.mark.parametrize(
+    "bad_time",
+    (
+        float("nan"), float("inf"), float("-inf"), True, False,
+        "0.5", b"0.5", None, 10**1000, object(),
+    ),
+)
+@pytest.mark.parametrize("target_index", (0, 1))
+def test_rhythm_rejects_invalid_target_times_before_motor_initialization(
+    bad_time, target_index,
+):
+    targets = [TargetHit(0.25, "left"), TargetHit(0.50, "right")]
+    targets[target_index] = TargetHit(bad_time, targets[target_index].key)
+    with pytest.raises(ValueError, match="target time_s must be finite"):
+        RhythmMotorEnv(targets, bpm=120.0)
+
+
+@pytest.mark.parametrize("bad_key", ("", "other", None, True, 123, ["left"]))
+@pytest.mark.parametrize("target_index", (0, 1))
+def test_rhythm_rejects_unsupported_target_keys_before_motor_initialization(
+    bad_key, target_index,
+):
+    targets = [TargetHit(0.25, "left"), TargetHit(0.50, "right")]
+    targets[target_index] = TargetHit(targets[target_index].time_s, bad_key)
+    with pytest.raises(ValueError, match="target key must be"):
+        RhythmMotorEnv(targets, bpm=120.0)
+
+
+def test_rhythm_preserves_finite_target_order_and_supported_keys():
+    # Existing finite targets, including pre-roll times, remain valid.
+    targets = [TargetHit(0.50, "right"), TargetHit(-0.10, "left")]
+    env = RhythmMotorEnv(targets, bpm=120.0)
+    assert env._targets == (targets[1], targets[0])
