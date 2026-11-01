@@ -151,6 +151,14 @@ class RhythmMotorEnv:
     ) -> None:
         if not targets:
             raise ValueError("at least one target is required")
+        # Every target must be valid, not only the last sorted target used
+        # for episode termination. NaN earlier in the chart never expires.
+        for target in targets:
+            _finite_body_value(
+                target.time_s, error="target time_s must be finite"
+            )
+            if not isinstance(target.key, str) or target.key not in ("left", "right"):
+                raise ValueError("target key must be 'left' or 'right'")
         tail_s = _finite_body_value(
             tail_s, error="tail_s must be finite and non-negative"
         )
