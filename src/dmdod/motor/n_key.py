@@ -438,7 +438,13 @@ class NKeyMotorEnv:
         if not isfinite(ratio):
             raise ValueError("control_dt_s must be an integer multiple of physics_dt_s")
         substeps = round(ratio)
-        if abs(substeps * physics_dt_s - control_dt_s) > 1e-12:
+        # The absolute 1e-12-second tolerance alone can accept a fractional
+        # number of steps for tiny clocks (1e-13 / 6e-14 rounds from 5/3 to
+        # 2). Check the ratio as well, before the simulation can drift.
+        if (
+            abs(ratio - substeps) > 1e-9
+            or abs(substeps * physics_dt_s - control_dt_s) > 1e-12
+        ):
             raise ValueError("control_dt_s must be an integer multiple of physics_dt_s")
 
         self.key_names = n_key_names(key_count)
