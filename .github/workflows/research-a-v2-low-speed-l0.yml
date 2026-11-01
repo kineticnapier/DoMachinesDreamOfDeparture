@@ -1,0 +1,52 @@
+name: Research A v2-L0 low-speed teacher-free acquisition pilot (CPU)
+
+on:
+  pull_request:
+    branches:
+      - research/a-v2-mixed-tempo-preflight
+    paths:
+      - "docs/research-a-v2-low-speed-l0-protocol.md"
+      - "scripts/a002v2_l0_low_speed_ppo.py"
+      - "tests/test_research_a_v2_l0_low_speed_ppo.py"
+      - ".github/workflows/research-a-v2-low-speed-l0.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  low-speed-ppo:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    env:
+      PYTHONHASHSEED: "0"
+      OMP_NUM_THREADS: "1"
+      MKL_NUM_THREADS: "1"
+    steps:
+      - name: Checkout isolated pilot
+        uses: actions/checkout@v5
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.11"
+      - name: Install project and original pinned CPU-only PyTorch
+        run: |
+          python -m pip install -e ".[dev]"
+          python -m pip install "torch==2.5.1+cpu" --index-url https://download.pytorch.org/whl/cpu
+      - name: Verify frozen L0 split and physics/reward neutrality
+        run: python -m pytest -q tests/test_research_a_v2_l0_low_speed_ppo.py
+      - name: Train A0 and A1 with no fingering teacher and archive every seed
+        run: |
+          mkdir -p reports/research_a_v2_l0/checkpoints
+          python -u scripts/a002v2_l0_low_speed_ppo.py \
+            --output reports/research_a_v2_l0/full-results.json \
+            --checkpoints reports/research_a_v2_l0/checkpoints \
+            | tee reports/research_a_v2_l0/full-log.txt
+      - name: Upload all success and failure data and all four final models
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: research-a-v2-l0-low-speed-learning
+          path: reports/research_a_v2_l0/
+          retention-days: 30
+          if-no-files-found: warn
