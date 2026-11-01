@@ -28,7 +28,7 @@ jobs:
           python -m pip install torch --index-url https://download.pytorch.org/whl/cpu
       - name: Test frozen rule and physical eligibility contracts
         run: |
-          python -m pytest -q tests/test_dmdogo_h23_frozen_hands.py tests/test_dmdogo_h22_motor_export.py
+          python -m pytest -q tests/test_dmdogo_h23_frozen_hands.py tests/test_dmdogo_h23_actual_motor.py tests/test_dmdogo_h22_motor_export.py
       - name: Extract public target chart only without installing audio
         env:
           CHART_ZIP_URL: https://api.tuforums.com/cdn/6cbcd9cf-6060-4127-875e-00371d6f812f
@@ -73,39 +73,16 @@ jobs:
             --output-root artifacts/h23-invitation/out \
             --variant right_after_long_rest \
             --wall-timeout-s 900
-      - name: Validate both physical Motor outputs and export full per-event traces
+      - name: Export normalized executed Motor traces, preserving all replans
         run: |
-          python - <<'PY'
-          import hashlib
-          import json
-          from pathlib import Path
-          import sys
-          sys.path.insert(0,"scripts")
-          from export_dmdogo_h22_motor_trace import validate_and_export
-
-          root=Path("artifacts/h23-invitation/out")
-          chart=Path("artifacts/h23-invitation/private/level.adofai")
-          for variant in ("interval_only","right_after_long_rest"):
-              p=root/variant
-              summary=json.loads((p/"summary.json").read_text(encoding="utf-8"))
-              telemetry=json.loads((p/"telemetry-v08.json").read_text(encoding="utf-8"))
-              report=validate_and_export(summary,telemetry,chart.read_bytes(),chart.name)
-              report["format"]="dmdogo-h23-executed-Motor-v1"
-              report["candidate_id"]="h23-"+variant
-              report["h23_variant"]=variant
-              report["training_chart_human_log_used"]=True
-              report["target_chart_human_log_used"]=False
-              report["source_h21_report_sha256"]="9dd9ddcaae7213a55e5d07bbc5c313d6acc1bef6b04163c5378ecf8730acc92c"
-              with (p/"h23-motor.json").open("x",encoding="utf-8") as f:
-                  json.dump(report,f,ensure_ascii=False,indent=2)
-                  f.write("\n")
-              print(json.dumps({"variant":variant,
-                                "strict_eligible":report["h22_strict_eligible"],
-                                "gates":report["h22_gates"],
-                                "hits":report["stats"].get("hits"),
-                                "misses":report["stats"].get("misses"),
-                                "local_replans":report["physical_local_replan_count"]}))
-          PY
+          for variant in interval_only right_after_long_rest; do
+            python scripts/export_dmdogo_h23_actual_motor.py \
+              --summary "artifacts/h23-invitation/out/$variant/summary.json" \
+              --telemetry "artifacts/h23-invitation/out/$variant/telemetry-v08.json" \
+              --chart artifacts/h23-invitation/private/level.adofai \
+              --variant "$variant" \
+              --output "artifacts/h23-invitation/out/$variant/h23-motor.json"
+          done
       - name: Upload results (only derived Motor outputs; never the chart, audio, or human log)
         if: always()
         uses: actions/upload-artifact@v4
