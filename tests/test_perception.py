@@ -134,3 +134,38 @@ def test_visual_cue_config_preserves_integer_compatible_finite_values():
     )
     assert config.width_s == 1
     assert config.dropout_probability == 1
+
+
+def test_visual_cue_sample_clock_skips_large_observation_gap():
+    # An unbounded per-frame loop would require 50 million iterations.
+    config = VisualCueConfig(
+        latency_s=0.0, sample_period_s=0.020,
+    )
+    encoder = VisualCueEncoder([TargetHit(0.5, "left")], config=config)
+    encoder.observe(0.45, active_target_indices=(0,))
+    result = encoder.observe(1_000_000.0, active_target_indices=(0,))
+    assert result.left == result.right == 0.0
+    assert 1_000_000.0 < encoder._next_sample_time_s <= 1_000_000.021
+
+
+def test_visual_cue_sample_clock_sub_ulp_period_makes_progress():
+    # At 0.45 seconds, adding the smallest subnormal does not advance a float.
+    config = VisualCueConfig(
+        latency_s=0.0, sample_period_s=5e-324,
+    )
+    encoder = VisualCueEncoder([TargetHit(0.5, "left")], config=config)
+    encoder.observe(0.45, active_target_indices=(0,))
+    encoder.observe(0.46, active_target_indices=(0,))
+    assert encoder._next_sample_time_s > 0.46
+
+
+def test_visual_cue_sample_clock_preserves_ordinary_repeated_addition():
+    period = 0.0001
+    config = VisualCueConfig(latency_s=0.0, sample_period_s=period)
+    encoder = VisualCueEncoder([TargetHit(0.5, "left")], config=config)
+    encoder.observe(0.45, active_target_indices=(0,))
+    encoder.observe(0.50, active_target_indices=(0,))
+    expected = 0.45 + period
+    while expected <= 0.50 + 1e-12:
+        expected += period
+    assert encoder._next_sample_time_s == expected
