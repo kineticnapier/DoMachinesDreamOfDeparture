@@ -11,6 +11,31 @@ from dmdod import (
 )
 
 
+@pytest.mark.parametrize(
+    "invalid_tail",
+    (
+        float("nan"), float("inf"), float("-inf"), True, False,
+        "0.4", b"0.4", None, -0.1, 10**1000,
+    ),
+)
+def test_rhythm_rejects_invalid_tail_before_initialization(invalid_tail):
+    with pytest.raises(ValueError, match="tail_s must be finite and non-negative"):
+        RhythmMotorEnv([TargetHit(0.5, "left")], bpm=120.0, tail_s=invalid_tail)
+
+
+@pytest.mark.parametrize("valid_tail", (0.0, 0.4, 2, -0.0))
+def test_rhythm_preserves_finite_tail_and_episode_end(valid_tail):
+    env = RhythmMotorEnv([TargetHit(0.5, "left")], bpm=120.0, tail_s=valid_tail)
+    assert env._episode_end_s == pytest.approx(0.5 + valid_tail)
+    assert env.reset().cue is not None
+
+
+def test_rhythm_rejects_episode_end_float_overflow():
+    # Each operand is finite, but their sum is not.
+    with pytest.raises(ValueError, match="episode end time must be finite"):
+        RhythmMotorEnv([TargetHit(1e308, "left")], bpm=120.0, tail_s=1e308)
+
+
 def test_rhythm_observation_does_not_expose_exact_time():
     env = RhythmMotorEnv(make_regular_targets(bpm=120.0, count=2), bpm=120.0)
     observation = env.reset()
