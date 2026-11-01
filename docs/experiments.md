@@ -77,6 +77,7 @@ On unseen timing conditions, A0 produced 0/144 hits for both seeds. A1 produced 
 
 - [Exploratory 002-P protocol](research-a-experiment-002p-protocol.md)
 - [Exploratory 002-P results and negative observations](research-a-experiment-002p-results.md)
+- [Additional exploratory 002-P-R1 paired reward comparison](research-a-experiment-002p-r1-reward-ablation-results.md): all eight model results, original R0 reproduced exactly. Removing positive near-miss reward did not induce alternating physical keydowns. Formal 002 remains unstarted.
 - Sparse timing reward, exploration and training budget are untested possible contributors.
 - Formal 002 remains unstarted; all checkpoints and training results are preserved separately.
 

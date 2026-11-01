@@ -67,10 +67,11 @@ def discounted_returns(rewards: list[float]) -> list[float]:
     return result
 
 
-def collect_episode(model: ActorCritic, *, arm: str, rng: random.Random) -> dict:
+def collect_episode(model: ActorCritic, *, arm: str, rng: random.Random,
+                    env_cls=TimingOnlyTwoFingerEnv) -> dict:
     interval = rng.choice(TRAIN_INTERVALS_MS)
     start = rng.uniform(START_MIN_S, START_MAX_S)
-    env = TimingOnlyTwoFingerEnv(interval_ms=interval, start_s=start, arm=arm)
+    env = env_cls(interval_ms=interval, start_s=start, arm=arm)
     observation = env.reset()
     xs, actions, old_logps, old_values, rewards = [], [], [], [], []
     model.eval()
@@ -133,7 +134,8 @@ def update_ppo(model: ActorCritic, optimizer, batch: list[dict]) -> dict:
     return history[-1]
 
 
-def evaluate(model: ActorCritic, *, arm: str, ablate_right: bool = False) -> dict:
+def evaluate(model: ActorCritic, *, arm: str, ablate_right: bool = False,
+             env_cls=TimingOnlyTwoFingerEnv) -> dict:
     rows = []
     model.eval()
     with torch.no_grad():
@@ -141,7 +143,7 @@ def evaluate(model: ActorCritic, *, arm: str, ablate_right: bool = False) -> dic
             for start in EVAL_STARTS_S:
                 # For A1 ablation, evaluate the unchanged A1 policy on A0 body.
                 env_arm = "a0" if ablate_right else arm
-                env = TimingOnlyTwoFingerEnv(
+                env = env_cls(
                     arm=env_arm, interval_ms=interval, start_s=start
                 )
                 observation = env.reset()
@@ -181,18 +183,19 @@ def evaluate(model: ActorCritic, *, arm: str, ablate_right: bool = False) -> dic
     }
 
 
-def run_seed(*, arm: str, seed: int, episodes: int, checkpoint_dir: Path) -> dict:
+def run_seed(*, arm: str, seed: int, episodes: int, checkpoint_dir: Path,
+             env_cls=TimingOnlyTwoFingerEnv) -> dict:
     # Same initialization and environment-sequence seed for A0 and A1;
     # no weight transfer or teacher/finger-based initialization.
     torch.manual_seed(seed)
     rng = random.Random(seed)
     model = ActorCritic()
     optimizer = torch.optim.Adam(model.parameters(), lr=LR)
-    progress = [{"episode": 0, "evaluation": evaluate(model, arm=arm)}]
+    progress = [{"episode": 0, "evaluation": evaluate(model, arm=arm, env_cls=env_cls)}]
     blocks = []
 
     for first in range(0, episodes, BATCH_EPISODES):
-        batch = [collect_episode(model, arm=arm, rng=rng)
+        batch = [collect_episode(model, arm=arm, rng=rng, env_cls=env_cls)
                  for _ in range(min(BATCH_EPISODES, episodes-first))]
         losses = update_ppo(model, optimizer, batch)
         end = min(first+BATCH_EPISODES, episodes)
@@ -207,7 +210,7 @@ def run_seed(*, arm: str, seed: int, episodes: int, checkpoint_dir: Path) -> dic
             **losses,
         })
         if end == episodes // 2 or end == episodes:
-            progress.append({"episode": end, "evaluation": evaluate(model, arm=arm)})
+            progress.append({"episode": end, "evaluation": evaluate(model, arm=arm, env_cls=env_cls)})
         print(
             f"{arm} seed={seed} episodes={end}/{episodes} "
             f"trainHit={blocks[-1]['training_hit_rate']:.3f} "
@@ -232,7 +235,7 @@ def run_seed(*, arm: str, seed: int, episodes: int, checkpoint_dir: Path) -> dic
         "evaluations": progress, "training_blocks": blocks,
     }
     if arm == "a1":
-        result["right_disabled_intervention"] = evaluate(model, arm="a1", ablate_right=True)
+        result["right_disabled_intervention"] = evaluate(model, arm="a1", ablate_right=True, env_cls=env_cls)
     return result
 
 

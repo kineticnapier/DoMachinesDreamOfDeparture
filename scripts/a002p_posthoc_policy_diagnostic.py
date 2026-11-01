@@ -72,9 +72,10 @@ def summarize(values: list[float]) -> dict:
 
 
 def traced_episode(model: ActorCritic, *, arm: str, interval_ms: float,
-                   start_s: float, force_single: bool = False) -> dict:
+                   start_s: float, force_single: bool = False,
+                   env_cls=TimingOnlyTwoFingerEnv) -> dict:
     physical_arm = "a0" if force_single else arm
-    env = TimingOnlyTwoFingerEnv(
+    env = env_cls(
         interval_ms=interval_ms, start_s=start_s, arm=physical_arm
     )
     observation = env.reset()
