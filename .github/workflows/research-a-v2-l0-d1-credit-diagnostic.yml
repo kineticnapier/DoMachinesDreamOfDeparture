@@ -1,0 +1,61 @@
+name: Research A v2-L0-D1 credit proxy diagnostic (CPU, NO TRAINING)
+
+on:
+  pull_request:
+    branches:
+      - research/a-v2-low-speed-rl
+    paths:
+      - "docs/research-a-v2-l0-d1-credit-diagnostic-protocol.md"
+      - "scripts/a002v2_l0_d1_credit_diagnostic.py"
+      - "tests/test_research_a_v2_l0_d1_credit_diagnostic.py"
+      - ".github/workflows/research-a-v2-l0-d1-credit-diagnostic.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  replay-original:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      PYTHONHASHSEED: "0"
+      OMP_NUM_THREADS: "1"
+      MKL_NUM_THREADS: "1"
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.11"
+      - name: Install project and original pinned CPU-only PyTorch
+        run: |
+          python -m pip install -e ".[dev]"
+          python -m pip install "torch==2.5.1+cpu" --index-url https://download.pytorch.org/whl/cpu
+      - name: Test exact replay and physical-timing instrumentation
+        run: |
+          python -m pytest -q tests/test_research_a_v2_l0_d1_credit_diagnostic.py
+      - name: Retrieve original L0 model artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: research-a-v2-l0-low-speed-learning
+          path: original-l0
+          run-id: 41309837474
+          github-token: ${{ github.token }}
+          repository: ${{ github.repository }}
+      - name: Reproduce original 0/256 policies, measure timing delays and conditional actions
+        run: |
+          set -o pipefail
+          mkdir -p reports/research_a_v2_l0_d1
+          python -u scripts/a002v2_l0_d1_credit_diagnostic.py \
+            --input original-l0 \
+            --out reports/research_a_v2_l0_d1/all-diagnostics.json \
+            | tee reports/research_a_v2_l0_d1/summary.log
+      - name: Upload full diagnostic traces, including failures
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: research-a-v2-l0-d1-replay-diagnostics
+          path: reports/research_a_v2_l0_d1/
+          retention-days: 30
+          if-no-files-found: warn
