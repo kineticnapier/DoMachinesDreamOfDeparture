@@ -1,4 +1,4 @@
-from dataclasses import fields
+from dataclasses import fields, replace
 
 import pytest
 
@@ -58,6 +58,44 @@ def test_real_chart_preserves_finite_tail_and_episode_end(env_type, valid_tail):
     assert env._episode_end_s == pytest.approx(expected_end)
     assert env.reset().floors
 
+
+
+
+@pytest.mark.parametrize("env_type", (RealChartMotorEnv, NKeyRealChartMotorEnv))
+def test_real_chart_rejects_episode_end_float_overflow(env_type):
+    segment = build_playable_segment(_compiled(), start_s=0.0, end_s=2.0)
+    # Both operands are finite, but their sum is not.
+    segment = replace(segment, end_chart_s=1e308)
+    kwargs = {"key_count": 4} if env_type is NKeyRealChartMotorEnv else {}
+    with pytest.raises(ValueError, match="episode end time must be finite"):
+        env_type(segment, tail_s=1e308, **kwargs)
+
+
+@pytest.mark.parametrize("env_type", (RealChartMotorEnv, NKeyRealChartMotorEnv))
+@pytest.mark.parametrize("field", ("behind_floors", "ahead_floors"))
+@pytest.mark.parametrize(
+    "invalid_count",
+    (-1, True, False, 1.0, 1.5, "2", None, float("nan")),
+)
+def test_real_chart_rejects_invalid_visible_floor_count(env_type, field, invalid_count):
+    segment = build_playable_segment(_compiled(), start_s=0.0, end_s=2.0)
+    kwargs = {"key_count": 4} if env_type is NKeyRealChartMotorEnv else {}
+    kwargs[field] = invalid_count
+    with pytest.raises(ValueError, match=f"{field} must be a non-negative integer"):
+        env_type(segment, **kwargs)
+
+
+@pytest.mark.parametrize("env_type", (RealChartMotorEnv, NKeyRealChartMotorEnv))
+@pytest.mark.parametrize("valid_count", (0, 1, 12))
+def test_real_chart_preserves_valid_visible_floor_counts(env_type, valid_count):
+    segment = build_playable_segment(_compiled(), start_s=0.0, end_s=2.0)
+    kwargs = {"key_count": 4} if env_type is NKeyRealChartMotorEnv else {}
+    env = env_type(
+        segment, behind_floors=valid_count, ahead_floors=valid_count, **kwargs
+    )
+    assert env.behind_floors == valid_count
+    assert env.ahead_floors == valid_count
+    assert env.reset().floors
 
 
 def test_playable_targets_exclude_start_floor_and_midspin_but_keep_following_equal_time_floor():
