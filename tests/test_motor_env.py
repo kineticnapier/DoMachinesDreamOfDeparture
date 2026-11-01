@@ -61,3 +61,46 @@ def test_motor_env_preserves_finite_control_clock():
     env = MotorEnv(control_dt_s=0.010)
     assert env.physics_substeps == 10
 
+
+from dmdod.motor.keyboard import KeyEvent, TwoKeyKeyboard
+
+
+@pytest.mark.parametrize(
+    "bad",
+    (float("nan"), float("inf"), float("-inf"), True, "0.02", None, 10**1000),
+)
+@pytest.mark.parametrize("bad_side", ("left", "right"))
+def test_two_key_keyboard_rejects_malformed_positions_atomically(
+    bad: object, bad_side: str
+) -> None:
+    keyboard = TwoKeyKeyboard()
+    # The valid key would otherwise be pressed before a malformed right key
+    # is inspected; neither key may change after invalid input.
+    positions = (bad, 1.0) if bad_side == "left" else (1.0, bad)
+    with pytest.raises(ValueError, match="keyboard positions must be finite numbers"):
+        keyboard.step(*positions)
+    assert not keyboard.left.pressed
+    assert not keyboard.right.pressed
+    assert keyboard.step(1.0, 1.0) == [
+        ("left", KeyEvent.DOWN), ("right", KeyEvent.DOWN)
+    ]
+
+
+@pytest.mark.parametrize(
+    "bad",
+    (float("nan"), float("inf"), float("-inf"), True, "0.02", None, 10**1000),
+)
+def test_two_key_keyboard_rejects_malformed_position_without_partial_keyup(
+    bad: object,
+) -> None:
+    keyboard = TwoKeyKeyboard()
+    assert keyboard.step(1.0, 1.0) == [
+        ("left", KeyEvent.DOWN), ("right", KeyEvent.DOWN)
+    ]
+    with pytest.raises(ValueError, match="keyboard positions must be finite numbers"):
+        keyboard.step(0.0, bad)
+    assert keyboard.left.pressed
+    assert keyboard.right.pressed
+    assert keyboard.step(0.0, 0.0) == [
+        ("left", KeyEvent.UP), ("right", KeyEvent.UP)
+    ]
