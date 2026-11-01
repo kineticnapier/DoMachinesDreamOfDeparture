@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import random
 from dataclasses import dataclass
-from math import exp
+from math import exp, isfinite, nextafter
 
 from dmdod.evaluation.evaluator import TargetHit
 from dmdod.motor.body import _finite_body_value
@@ -174,8 +174,25 @@ class VisualCueEncoder:
         # Advance from the ideal sensor clock rather than from the control-step
         # timestamp. With 10 ms control and a 60 Hz sensor this yields the
         # expected 20/20/10 ms pattern instead of silently degrading to 50 Hz.
-        while self._next_sample_time_s <= simulation_time_s + 1e-12:
-            self._next_sample_time_s += period
+        deadline = simulation_time_s + 1e-12
+        if self._next_sample_time_s <= deadline:
+            gap = deadline - self._next_sample_time_s
+            # Keep ordinary sampling bit-for-bit unchanged. A large jump in
+            # observation time must not loop once for every missed sensor frame.
+            if gap > 4096.0 * period:
+                cycles = gap / period
+                if not isfinite(cycles) or cycles > 2**40:
+                    # The original phase is below floating-point resolution.
+                    self._next_sample_time_s = nextafter(deadline, float("inf"))
+                    return
+                self._next_sample_time_s += max(0, int(cycles) - 8) * period
+            while self._next_sample_time_s <= deadline:
+                next_time = self._next_sample_time_s + period
+                if next_time <= self._next_sample_time_s:
+                    # A sub-ULP sample period would otherwise loop forever.
+                    self._next_sample_time_s = nextafter(deadline, float("inf"))
+                    return
+                self._next_sample_time_s = next_time
 
     def observe(
         self,
