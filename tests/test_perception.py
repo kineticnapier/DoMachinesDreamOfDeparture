@@ -109,3 +109,28 @@ def test_visual_cue_config_preserves_finite_boundary_values():
     assert config.dropout_probability == 1.0
     assert config.width_s == 1e-6
     assert VisualCueConfig().latency_s == 0.050
+
+
+@pytest.mark.parametrize(
+    "field",
+    (
+        "latency_s", "width_s", "horizon_s", "latency_jitter_s",
+        "sample_period_s", "amplitude_noise_std", "dropout_probability",
+    ),
+)
+@pytest.mark.parametrize("bad", (True, False, "0.1", b"0.1", None, 10**1000, object()))
+def test_visual_cue_config_rejects_malformed_sensor_parameters(field, bad):
+    # Each invalid field must raise the same public ValueError instead of
+    # silently accepting bool or leaking TypeError/OverflowError.
+    with pytest.raises(ValueError, match=rf"{field} must be finite"):
+        VisualCueConfig(**{field: bad})
+
+
+def test_visual_cue_config_preserves_integer_compatible_finite_values():
+    config = VisualCueConfig(
+        latency_s=0, width_s=1, horizon_s=2,
+        latency_jitter_s=0, sample_period_s=0,
+        amplitude_noise_std=0, dropout_probability=1,
+    )
+    assert config.width_s == 1
+    assert config.dropout_probability == 1
