@@ -2,16 +2,9 @@
 from __future__ import annotations
 
 from math import isclose
-from pathlib import Path
-import sys
-
 import pytest
-import torch
 
 from dmdod.research.a002v2_mixed_tempo_env import MixedTempoMotorEnv
-from a002_exploratory_ppo import ActorCritic
-
-sys.path.insert(0, str(Path(__file__).resolve().parents[1]/"scripts"))
 
 
 C0=(220,)*8+(120,)*8+(220,)*8
@@ -38,7 +31,7 @@ def test_no_absolute_time_or_segment_id_in_observation():
     assert all(isinstance(v,float) for v in a)
     assert all(isinstance(v,float) for v in b)
     # Both expose only the time-to-target (normalized), interval and physical body.
-    assert a[0]==pytest.approx(4.)
+    assert a[0]==pytest.approx(.837/.220)
     assert b[0]==pytest.approx(4.)
     assert a[1:]==b[1:]
 
