@@ -1,9 +1,6 @@
 name: Research A002-P from-scratch RL pilot (CPU)
 
 on:
-  pull_request:
-    branches:
-      - develop/dmdogo
   workflow_dispatch:
 
 permissions:
