@@ -211,15 +211,23 @@ class RhythmMotorEnv:
 
     def _resolve_bpm(self, bpm: float | None) -> float:
         if bpm is not None:
-            if bpm <= 0.0:
-                raise ValueError("bpm must be positive")
-            return bpm
+            resolved = _finite_body_value(
+                bpm, error="bpm must be finite and positive"
+            )
+            if resolved <= 0.0:
+                raise ValueError("bpm must be finite and positive")
+            return resolved
         if len(self._targets) < 2:
             raise ValueError("bpm is required when fewer than two targets are supplied")
         interval = self._targets[1].time_s - self._targets[0].time_s
         if interval <= 0.0:
             raise ValueError("cannot infer bpm from non-increasing targets")
-        return 60.0 / interval
+        if not isfinite(interval):
+            raise ValueError("cannot infer bpm from non-finite target intervals")
+        resolved = 60.0 / interval
+        if not isfinite(resolved):
+            raise ValueError("inferred bpm must be finite")
+        return resolved
 
     def reset(self) -> RhythmObservation:
         motor_observation = self.motor.reset()
