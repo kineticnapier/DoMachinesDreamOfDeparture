@@ -12,6 +12,67 @@ from dmdod import (
 
 
 @pytest.mark.parametrize(
+    "invalid_bpm",
+    (float("nan"), float("inf"), float("-inf"), True, False,
+     0.0, -120.0, "120", b"120", None, 10**1000, object()),
+)
+def test_regular_targets_rejects_invalid_bpm(invalid_bpm):
+    with pytest.raises(ValueError, match="bpm must be finite and positive"):
+        make_regular_targets(bpm=invalid_bpm, count=2)
+
+
+@pytest.mark.parametrize(
+    "invalid_count",
+    (True, False, 0, -1, 1.5, "2", b"2", None, object()),
+)
+def test_regular_targets_rejects_invalid_count(invalid_count):
+    with pytest.raises(ValueError, match="count must be a positive integer"):
+        make_regular_targets(bpm=120.0, count=invalid_count)
+
+
+@pytest.mark.parametrize(
+    "invalid_start",
+    (float("nan"), float("inf"), float("-inf"), True, False,
+     -0.1, "0.5", b"0.5", None, 10**1000, object()),
+)
+def test_regular_targets_rejects_invalid_start(invalid_start):
+    with pytest.raises(ValueError, match="start_s must be finite and non-negative"):
+        make_regular_targets(bpm=120.0, count=2, start_s=invalid_start)
+
+
+@pytest.mark.parametrize("invalid_pattern", ([], {}, None, 0, "unknown"))
+def test_regular_targets_rejects_invalid_pattern(invalid_pattern):
+    with pytest.raises(ValueError, match="pattern must be"):
+        make_regular_targets(bpm=120.0, count=2, pattern=invalid_pattern)
+
+
+def test_regular_targets_rejects_interval_overflow():
+    with pytest.raises(ValueError, match="target interval must be finite and positive"):
+        make_regular_targets(bpm=5e-324, count=2)
+
+
+@pytest.mark.parametrize(
+    "kwargs",
+    ({"bpm": 1e-306, "count": 4, "start_s": 0.0},
+     {"bpm": 1e-306, "count": 2, "start_s": 1.7e308}),
+)
+def test_regular_targets_rejects_target_time_overflow(kwargs):
+    with pytest.raises(ValueError, match="target time must be finite"):
+        make_regular_targets(**kwargs)
+
+
+def test_regular_targets_preserves_finite_schedule_and_keys():
+    targets = make_regular_targets(
+        bpm=120, count=3, start_s=0.75, pattern="alternate"
+    )
+    assert [target.time_s for target in targets] == pytest.approx([0.75, 1.25, 1.75])
+    assert [target.key for target in targets] == ["left", "right", "left"]
+    assert [target.key for target in make_regular_targets(bpm=120, count=2)] == [
+        "left", "left"
+    ]
+
+
+@pytest.mark.parametrize(
     "invalid_tail",
     (
         float("nan"), float("inf"), float("-inf"), True, False,
