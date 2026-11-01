@@ -134,6 +134,7 @@ def traced_episode(model: ActorCritic, *, arm: str, interval_ms: float,
     down_counts = dict(Counter(x["key"] for x in history))
     nearest_extra = [x["nearest_error_ms"] for x in extras]
     due_extra = [x["due_error_ms"] for x in extras if x["due_error_ms"] is not None]
+    extra_positive = [x for x in extras if x["reward"] > 0]
     return {
         "interval_ms": interval_ms,
         "start_s": start_s,
@@ -159,6 +160,9 @@ def traced_episode(model: ActorCritic, *, arm: str, interval_ms: float,
             "low": remaining_clipped_low / total_steps,
         },
         "physical_down_by_key": down_counts,
+        "extra_keydowns_with_positive_step_reward": len(extra_positive),
+        "extra_keydowns_without_positive_step_reward": len(extras) - len(extra_positive),
+        "sum_step_reward_for_extra_keydowns": round(sum(x["reward"] for x in extras), 6),
         "hit_error_ms": summarize([x["due_error_ms"] for x in hits]),
         "extra_nearest_error_ms": summarize(nearest_extra),
         "extra_due_error_ms": summarize(due_extra),
@@ -192,6 +196,9 @@ def aggregate(rows: list[dict]) -> dict:
         "targets": sum(r["targets"] for r in rows),
         "extra_keydowns": sum(r["extra_keydowns"] for r in rows),
         "physical_keydowns": sum(r["physical_keydowns"] for r in rows),
+        "extra_keydowns_with_positive_step_reward": sum(r["extra_keydowns_with_positive_step_reward"] for r in rows),
+        "extra_keydowns_without_positive_step_reward": sum(r["extra_keydowns_without_positive_step_reward"] for r in rows),
+        "sum_step_reward_for_extra_keydowns": round(sum(r["sum_step_reward_for_extra_keydowns"] for r in rows), 6),
         "physical_down_by_key": dict(
             sum((Counter(r["physical_down_by_key"]) for r in rows), Counter())
         ),
