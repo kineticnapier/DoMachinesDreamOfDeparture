@@ -6,6 +6,7 @@ from dmdod.four_key_motor import FourKeyAction, FourKeyMotorEnv
 from dmdod.n_key_capacity import CenterFirstNKeyTeacher, calibrate_n_key_press_lead
 from dmdod.n_key_motor import NKeyAction, NKeyMotorEnv, n_key_names, n_key_tiers
 from dmdod.motor.n_key import NKeyBody, NKeyKeyboard
+from dmdod.motor.keyboard import KeyConfig, KeyEvent, TwoKeyKeyboard
 
 
 def test_n_key_layout_is_center_symmetric() -> None:
@@ -564,3 +565,30 @@ def test_n_key_keyboard_rejects_malformed_positions_without_partial_keydown(
     events = keyboard.step((crossing, 0.0, 0.0, 0.0))
     assert [(key, event.value) for key, event in events] == [("left_2", "down")]
 
+
+
+@pytest.mark.parametrize(
+    ("field", "bad"),
+    [
+        ("actuation_m", float("inf")),
+        ("actuation_m", True),
+        ("actuation_m", 10**1000),
+        ("reset_m", float("nan")),
+        ("reset_m", False),
+        ("reset_m", "0.0"),
+        ("reset_m", None),
+    ],
+)
+def test_keyboard_config_rejects_invalid_thresholds(field: str, bad: object) -> None:
+    # In particular, +inf actuation previously passed the ordering check,
+    # making both keyboard implementations silently suppress every key-down.
+    with pytest.raises(ValueError, match="keyboard thresholds must be finite numbers"):
+        KeyConfig(**{field: bad})
+
+
+def test_keyboard_config_preserves_finite_integer_thresholds_for_both_keyboards() -> None:
+    config = KeyConfig(actuation_m=1, reset_m=0)
+    n_key = NKeyKeyboard(n_key_names(4), config)
+    two_key = TwoKeyKeyboard(config=config)
+    assert n_key.step((1, 0, 0, 0)) == [("left_2", KeyEvent.DOWN)]
+    assert two_key.step(1, 0) == [("left", KeyEvent.DOWN)]
