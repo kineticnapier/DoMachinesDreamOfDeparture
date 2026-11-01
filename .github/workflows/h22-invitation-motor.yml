@@ -1,0 +1,123 @@
+name: H2.2 invitation fresh-chart Motor pilot (CPU)
+
+on:
+  pull_request:
+    branches:
+      - develop/dmdogo
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  invitation-h22-motor:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - name: Check out PR merge candidate
+        uses: actions/checkout@v5
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v6
+        with:
+          python-version: '3.11'
+          cache: pip
+
+      - name: Install CPU dependencies
+        run: |
+          python -m pip install -e ".[dev]"
+          python -m pip install "numpy>=2.0" "tqdm>=4.67"
+          python -m pip install torch --index-url https://download.pytorch.org/whl/cpu
+
+      - name: Test H2.2 Motor export safety gates
+        run: python -m pytest -q tests/test_dmdogo_h22_motor_export.py tests/test_dmdogo_h22_frozen_transfer.py
+
+      - name: Download only the public ADOFAI chart file (not audio)
+        env:
+          CHART_ZIP_URL: https://api.tuforums.com/cdn/6cbcd9cf-6060-4127-875e-00371d6f812f
+        run: |
+          python - <<'PY'
+          import hashlib
+          from io import BytesIO
+          import json
+          import os
+          from pathlib import Path
+          import urllib.request
+          import zipfile
+
+          root = Path("artifacts/h22-invitation")
+          private = root / "private"
+          public = root / "out"
+          private.mkdir(parents=True, exist_ok=True)
+          public.mkdir(parents=True, exist_ok=True)
+          req = urllib.request.Request(os.environ["CHART_ZIP_URL"], headers={"User-Agent": "DMDOD-H22-research/1.0"})
+          with urllib.request.urlopen(req, timeout=120) as response:
+              data = response.read(48 * 1024 * 1024 + 1)
+          if len(data) > 48 * 1024 * 1024:
+              raise ValueError("download exceeds 48 MiB safety limit")
+          with zipfile.ZipFile(BytesIO(data)) as archive:
+              if "level.adofai" not in archive.namelist():
+                  raise ValueError("source ZIP is missing level.adofai")
+              info = archive.getinfo("level.adofai")
+              if info.file_size > 5 * 1024 * 1024:
+                  raise ValueError("ADOFAI chart exceeds 5 MiB safety limit")
+              chart = archive.read(info)
+          target = private / "level.adofai"
+          target.write_bytes(chart)
+          from dmdod.adofai.chart import load_adofai
+          from dmdod.adofai.timing import compile_adofai
+          from dmdod.adofai.playable import build_playable_segment
+          from dmdod.training.prestige1_autoplay_timing import AutoplayTimingTeacher
+
+          decoded = load_adofai(target)
+          compiled = compile_adofai(decoded)
+          segment = build_playable_segment(compiled)
+          oracle = AutoplayTimingTeacher.from_segment(segment)
+          meta = {
+              "chart": target.name, "chart_sha256": hashlib.sha256(chart).hexdigest(),
+              "zip_sha256": hashlib.sha256(data).hexdigest(),
+              "chart_size_bytes": len(chart),
+              "angle_count": len(decoded.angles),
+              "event_count": len(oracle.events),
+              "duration_s": segment.duration_s,
+              "initial_bpm": decoded.initial_bpm,
+              "source": "TUF level 17525 / Invitation to the Other",
+              "is_independent_of_h21_training_chart": True,
+              "human_data_uploaded": False,
+          }
+          with (public / "preflight.json").open("x", encoding="utf-8") as f:
+              json.dump(meta, f, indent=2, ensure_ascii=False)
+              f.write("\n")
+          print(json.dumps(meta, indent=2, ensure_ascii=False))
+          PY
+
+      - name: Execute original v0.8 gesture plan through physical Motor
+        run: |
+          python scripts/run_dmdogo_v06_pattern_first.py \
+            --chart artifacts/h22-invitation/private/level.adofai \
+            --output-dir artifacts/h22-invitation/out/runner \
+            --status-file artifacts/h22-invitation/out/runner-status.json \
+            --planning-mode gesture_v08 \
+            --wall-timeout-s 900
+
+      - name: Export event-level actual Motor trace for H2.2
+        run: |
+          python scripts/export_dmdogo_h22_motor_trace.py \
+            --summary artifacts/h22-invitation/out/runner/summary.json \
+            --telemetry artifacts/h22-invitation/out/runner/telemetry-v08.json \
+            --chart artifacts/h22-invitation/private/level.adofai \
+            --output artifacts/h22-invitation/out/h22-motor.json
+
+      - name: Upload research reports (exclude chart and audio, never upload human keydowns)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: h22-invitation-motor
+          if-no-files-found: warn
+          retention-days: 14
+          path: |
+            artifacts/h22-invitation/out/preflight.json
+            artifacts/h22-invitation/out/runner-status.json
+            artifacts/h22-invitation/out/runner/summary.json
+            artifacts/h22-invitation/out/runner/telemetry-v08.json
+            artifacts/h22-invitation/out/h22-motor.json
