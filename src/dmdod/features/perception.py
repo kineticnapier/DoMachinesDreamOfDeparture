@@ -82,6 +82,14 @@ class VisualCueEncoder:
         config: VisualCueConfig | None = None,
         seed: int | None = None,
     ) -> None:
+        # Standalone encoders must enforce the same target boundary as the
+        # rhythm environment. Invalid timestamps otherwise poison cue sampling.
+        for target in targets:
+            _finite_body_value(
+                target.time_s, error="target time_s must be finite"
+            )
+            if not isinstance(target.key, str) or target.key not in ("left", "right"):
+                raise ValueError("target key must be 'left' or 'right'")
         self._targets = tuple(sorted(targets, key=lambda target: target.time_s))
         self.config = config or VisualCueConfig()
         self._rng = random.Random(seed)
@@ -200,6 +208,11 @@ class VisualCueEncoder:
         *,
         active_target_indices: tuple[int, ...] | None = None,
     ) -> VisualCueObservation:
+        # Reject malformed timestamps before touching held frames or the
+        # sample clock. NaN can poison the clock; +Inf can hold a frame forever.
+        simulation_time_s = _finite_body_value(
+            simulation_time_s, error="simulation_time_s must be finite"
+        )
         # Only cue amplitudes leave this object; neither simulation time, target
         # indices, time-to-target nor sampled latency are exposed to the policy.
         signature = None if active_target_indices is None else tuple(active_target_indices)
