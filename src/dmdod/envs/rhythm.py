@@ -57,22 +57,26 @@ class RewardConfig:
     def __post_init__(self) -> None:
         # Reject invalid reward scales before they can contaminate training
         # returns, while retaining the existing rules for finite values.
+        scales = {}
         for name in (
             "hit_reward", "xacc_reward", "timing_bonus",
             "perfect_sigma_fraction", "miss_penalty",
             "too_early_penalty", "overload_penalty", "effort_penalty",
         ):
-            if not isfinite(getattr(self, name)):
-                raise ValueError(f"{name} must be finite")
-        if self.timing_sigma_s is not None and not isfinite(self.timing_sigma_s):
-            raise ValueError("timing_sigma_s must be finite")
-        if self.timing_sigma_s is not None and self.timing_sigma_s <= 0.0:
-            raise ValueError("timing_sigma_s must be positive when supplied")
-        if self.perfect_sigma_fraction <= 0.0:
+            scales[name] = _finite_body_value(
+                getattr(self, name), error=f"{name} must be finite"
+            )
+        if self.timing_sigma_s is not None:
+            sigma = _finite_body_value(
+                self.timing_sigma_s, error="timing_sigma_s must be finite"
+            )
+            if sigma <= 0.0:
+                raise ValueError("timing_sigma_s must be positive when supplied")
+        if scales["perfect_sigma_fraction"] <= 0.0:
             raise ValueError("perfect_sigma_fraction must be positive")
-        if self.xacc_reward < 0.0 or self.timing_bonus < 0.0:
+        if scales["xacc_reward"] < 0.0 or scales["timing_bonus"] < 0.0:
             raise ValueError("accuracy rewards must be non-negative")
-        if self.overload_penalty < 0.0:
+        if scales["overload_penalty"] < 0.0:
             raise ValueError("overload_penalty must be non-negative")
 
 
