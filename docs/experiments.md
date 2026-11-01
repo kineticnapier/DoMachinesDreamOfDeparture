@@ -52,7 +52,7 @@ TBD
 
 ## Experiment 002 — Emergent Alternation
 
-**Status:** Not started
+**Status:** Formal study not started; teacher-free exploratory pilot 002-P completed.
 
 ### Objective
 
@@ -67,15 +67,18 @@ Test whether an agent trained without fingering instructions independently learn
 
 ### Conditions
 
-TBD
+Formal preregistration remains unapproved. The isolated 002-P pilot compared A0 (right physical finger disabled) and A1 (two fingers enabled), two seeds per arm and 96 episodes per seed, using 100–130 ms intervals. Relative time to the next target was explicitly available, but no fingering teacher or finger-dependent reward was used.
 
 ### Results
 
-TBD
+On unseen timing conditions, A0 produced 0/144 hits for both seeds. A1 produced 14/144 and 46/144 hits but 119 and 110 extraneous KeyDowns. The matched-hit within-episode finger-switch fraction was 0% in both A1 seeds; all four trained models had zero full-hit evaluations. **No emergence of alternating fingering was established.** This is not the formal 002 result and does not prove physical impossibility for one finger.
 
 ### Observations
 
-TBD
+- [Exploratory 002-P protocol](research-a-experiment-002p-protocol.md)
+- [Exploratory 002-P results and negative observations](research-a-experiment-002p-results.md)
+- Sparse timing reward, exploration and training budget are untested possible contributors.
+- Formal 002 remains unstarted; all checkpoints and training results are preserved separately.
 
 ---
 
