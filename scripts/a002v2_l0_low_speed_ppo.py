@@ -9,6 +9,7 @@ from __future__ import annotations
 import argparse
 from collections import Counter
 from dataclasses import asdict
+from io import BytesIO
 import hashlib
 import json
 from pathlib import Path
@@ -200,9 +201,10 @@ def train_model(*,arm:str,seed:int,checkpoint_dir:Path)->dict:
     rng=random.Random(seed)
     model=ActorCritic()
     optimizer=torch.optim.Adam(model.parameters(),lr=.0005)
-    initial_weights=hashlib.sha256(
-        b"".join(t.detach().numpy().tobytes() for t in model.state_dict().values())
-    ).hexdigest()
+    # NumPy is intentionally not a dependency of this CPU pilot.
+    initial_serialized = BytesIO()
+    torch.save(model.state_dict(), initial_serialized)
+    initial_weights = hashlib.sha256(initial_serialized.getvalue()).hexdigest()
     evaluations=[]
     learning=[]
     def snapshot(at:int)->None:
