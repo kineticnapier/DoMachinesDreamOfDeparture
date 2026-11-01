@@ -2,9 +2,10 @@ from __future__ import annotations
 
 import random
 from dataclasses import dataclass
-from math import exp, isfinite
+from math import exp
 
 from dmdod.evaluation.evaluator import TargetHit
+from dmdod.motor.body import _finite_body_value
 
 
 @dataclass(frozen=True)
@@ -44,8 +45,9 @@ class VisualCueConfig:
             "latency_s", "width_s", "horizon_s", "latency_jitter_s",
             "sample_period_s", "amplitude_noise_std", "dropout_probability",
         ):
-            if not isfinite(getattr(self, name)):
-                raise ValueError(f"{name} must be finite")
+            _finite_body_value(
+                getattr(self, name), error=f"{name} must be finite"
+            )
         if self.latency_s < 0.0:
             raise ValueError("latency_s must be non-negative")
         if self.width_s <= 0.0:
