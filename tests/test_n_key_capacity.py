@@ -5,7 +5,7 @@ import pytest
 from dmdod.four_key_motor import FourKeyAction, FourKeyMotorEnv
 from dmdod.n_key_capacity import CenterFirstNKeyTeacher, calibrate_n_key_press_lead
 from dmdod.n_key_motor import NKeyAction, NKeyMotorEnv, n_key_names, n_key_tiers
-from dmdod.motor.n_key import NKeyBody
+from dmdod.motor.n_key import NKeyBody, NKeyKeyboard
 
 
 def test_n_key_layout_is_center_symmetric() -> None:
@@ -544,3 +544,19 @@ def test_n_key_hand_coordination_positions_are_reused_without_changing_physics(
         action = patterns[(index // 10) % len(patterns)]
         assert cached.step(action) == reference.step(action)
     assert cached.diagnostics() == reference.diagnostics()
+
+@pytest.mark.parametrize(
+    "bad", (float("nan"), float("inf"), float("-inf"), True, "0.02", None, 10**1000)
+)
+def test_n_key_keyboard_rejects_malformed_positions_without_partial_keydown(bad) -> None:
+    keyboard = NKeyKeyboard(n_key_names(4))
+    # The first key would be pressed if step() updated keys before validating
+    # the invalid last position. Invalid input must leave all keys untouched.
+    crossing = keyboard.config.actuation_m + 1.0
+    with pytest.raises(ValueError, match="keyboard positions must be finite numbers"):
+        keyboard.step((crossing, 0.0, 0.0, bad))
+    assert all(not state.pressed for state in keyboard.states)
+
+    events = keyboard.step((crossing, 0.0, 0.0, 0.0))
+    assert [(key, event.value) for key, event in events] == [("left_2", "down")]
+
