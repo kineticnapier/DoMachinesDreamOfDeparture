@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from enum import Enum
+from math import isfinite
 
 
 class KeyEvent(str, Enum):
@@ -15,6 +16,18 @@ class KeyConfig:
     reset_m: float = 0.0018
 
     def __post_init__(self) -> None:
+        # Reject malformed thresholds before they reach either keyboard.
+        # An infinite actuation threshold otherwise passes the ordering check
+        # and silently prevents all key-down events.
+        for threshold in (self.actuation_m, self.reset_m):
+            if isinstance(threshold, (bool, str, bytes)):
+                raise ValueError("keyboard thresholds must be finite numbers")
+            try:
+                finite = isfinite(threshold)
+            except (TypeError, ValueError, OverflowError) as exc:
+                raise ValueError("keyboard thresholds must be finite numbers") from exc
+            if not finite:
+                raise ValueError("keyboard thresholds must be finite numbers")
         if not 0.0 <= self.reset_m < self.actuation_m:
             raise ValueError("reset_m must be non-negative and below actuation_m")
 
