@@ -398,6 +398,18 @@ class NKeyKeyboard:
     def step(self, positions: tuple[float, ...]) -> list[tuple[str, KeyEvent]]:
         if len(positions) != len(self.key_names):
             raise ValueError("position count must match key count")
+        # Validate every position before changing any pressed state. A NaN
+        # otherwise matches neither threshold and can hide an invalid physics
+        # sample; an invalid later key must not leave earlier keys pressed.
+        for position in positions:
+            if isinstance(position, (bool, str, bytes)):
+                raise ValueError("keyboard positions must be finite numbers")
+            try:
+                finite = isfinite(position)
+            except (TypeError, ValueError, OverflowError) as exc:
+                raise ValueError("keyboard positions must be finite numbers") from exc
+            if not finite:
+                raise ValueError("keyboard positions must be finite numbers")
         events: list[tuple[str, KeyEvent]] = []
         for index, (name, position) in enumerate(zip(self.key_names, positions)):
             state = self.states[index]
