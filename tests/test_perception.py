@@ -169,3 +169,50 @@ def test_visual_cue_sample_clock_preserves_ordinary_repeated_addition():
     while expected <= 0.50 + 1e-12:
         expected += period
     assert encoder._next_sample_time_s == expected
+
+
+@pytest.mark.parametrize(
+    "bad",
+    (float("nan"), float("inf"), float("-inf"), True, False,
+     "0.46", b"0.46", None, 10**1000, object()),
+)
+def test_visual_cue_rejects_invalid_observation_times_without_state_mutation(bad):
+    config = VisualCueConfig(
+        latency_s=0.0, width_s=0.05, horizon_s=1.0,
+        sample_period_s=0.1,
+    )
+    encoder = VisualCueEncoder([TargetHit(0.5, "left")], config=config)
+    first = encoder.observe(0.45, active_target_indices=(0,))
+    next_sample = encoder._next_sample_time_s
+    with pytest.raises(ValueError, match="simulation_time_s must be finite"):
+        encoder.observe(bad, active_target_indices=(0,))
+    assert encoder._next_sample_time_s == next_sample
+    assert encoder._held_observation == first
+    assert encoder.observe(0.46, active_target_indices=(0,)) == first
+
+
+@pytest.mark.parametrize(
+    "bad",
+    (float("nan"), float("inf"), float("-inf"), True, False,
+     "0.5", b"0.5", None, 10**1000, object()),
+)
+def test_visual_cue_encoder_rejects_invalid_target_times(bad):
+    with pytest.raises(ValueError, match="target time_s must be finite"):
+        VisualCueEncoder([TargetHit(bad, "left")])
+
+
+@pytest.mark.parametrize("bad", ("", "middle", 1, True, None, []))
+def test_visual_cue_encoder_rejects_unsupported_target_keys(bad):
+    with pytest.raises(ValueError, match="target key must be"):
+        VisualCueEncoder([TargetHit(0.5, bad)])
+
+
+def test_visual_cue_encoder_preserves_finite_preroll_and_supported_keys():
+    config = VisualCueConfig(latency_s=0.0, width_s=0.05, horizon_s=1.0)
+    encoder = VisualCueEncoder(
+        [TargetHit(0.5, "left"), TargetHit(-0.2, "right")],
+        config=config,
+    )
+    observation = encoder.observe(-0.2, active_target_indices=(0,))
+    assert observation.right > 0.99
+    assert observation.left == 0.0
