@@ -545,10 +545,14 @@ def test_n_key_hand_coordination_positions_are_reused_without_changing_physics(
         assert cached.step(action) == reference.step(action)
     assert cached.diagnostics() == reference.diagnostics()
 
+
 @pytest.mark.parametrize(
-    "bad", (float("nan"), float("inf"), float("-inf"), True, "0.02", None, 10**1000)
+    "bad",
+    (float("nan"), float("inf"), float("-inf"), True, "0.02", None, 10**1000),
 )
-def test_n_key_keyboard_rejects_malformed_positions_without_partial_keydown(bad) -> None:
+def test_n_key_keyboard_rejects_malformed_positions_without_partial_keydown(
+    bad: object,
+) -> None:
     keyboard = NKeyKeyboard(n_key_names(4))
     # The first key would be pressed if step() updated keys before validating
     # the invalid last position. Invalid input must leave all keys untouched.
