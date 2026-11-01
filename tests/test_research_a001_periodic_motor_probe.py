@@ -31,7 +31,7 @@ def test_alternating_controls_use_both_axes_and_separate_duty_cycles():
     assert periodic_command_at(trial, 100, targets).right == -1.0
     assert periodic_command_at(trial, 120, targets).right == 1.0  # 1.20s
     assert periodic_command_at(trial, 120, targets).left == -1.0
-    assert periodic_command_at(trial, 145, targets) == type(periodic_command_at(trial, 0, targets))(-1., -1.)
+    assert periodic_command_at(trial, 135, targets) == type(periodic_command_at(trial, 0, targets))(-1., -1.)
 
 
 def test_ordered_event_matching_does_not_reuse_keydowns():
