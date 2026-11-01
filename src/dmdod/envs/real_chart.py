@@ -17,6 +17,7 @@ from dmdod.adofai_rules import (
     x_accuracy_weight,
 )
 from dmdod.adofai_timing import PI_STOCK
+from dmdod.motor.body import _finite_body_value
 from dmdod.motor.keyboard import KeyEvent
 from dmdod.motor.env import MotorAction, MotorEnv, MotorObservation, TimedKeyEvent
 from dmdod.envs.rhythm import EpisodeStats, RewardConfig
@@ -87,8 +88,11 @@ class RealChartMotorEnv:
     ) -> None:
         if not segment.targets:
             raise ValueError("real chart segment must contain at least one playable target")
+        tail_s = _finite_body_value(
+            tail_s, error="tail_s must be finite and non-negative"
+        )
         if tail_s < 0.0:
-            raise ValueError("tail_s must be non-negative")
+            raise ValueError("tail_s must be finite and non-negative")
         if behind_floors < 0 or ahead_floors < 0:
             raise ValueError("visible floor counts must be non-negative")
 
