@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from math import exp, isfinite
+from operator import index
 
 from dmdod.adofai_rules import (
     OverloadCounter,
@@ -496,16 +497,33 @@ def make_regular_targets(
     Exact returned timestamps stay environment-private once the task is built.
     """
 
-    if bpm <= 0.0 or count <= 0:
-        raise ValueError("bpm and count must be positive")
+    bpm = _finite_body_value(bpm, error="bpm must be finite and positive")
+    if bpm <= 0.0:
+        raise ValueError("bpm must be finite and positive")
+    if isinstance(count, bool):
+        raise ValueError("count must be a positive integer")
+    try:
+        count = index(count)
+    except TypeError as exc:
+        raise ValueError("count must be a positive integer") from exc
+    if count <= 0:
+        raise ValueError("count must be a positive integer")
+    start_s = _finite_body_value(
+        start_s, error="start_s must be finite and non-negative"
+    )
     if start_s < 0.0:
-        raise ValueError("start_s must be non-negative")
-    if pattern not in {"left", "alternate"}:
+        raise ValueError("start_s must be finite and non-negative")
+    if not isinstance(pattern, str) or pattern not in {"left", "alternate"}:
         raise ValueError("pattern must be 'left' or 'alternate'")
 
     interval = 60.0 / bpm
+    if not isfinite(interval) or interval <= 0.0:
+        raise ValueError("target interval must be finite and positive")
     targets: list[TargetHit] = []
     for i in range(count):
         key = "left" if pattern == "left" or i % 2 == 0 else "right"
-        targets.append(TargetHit(start_s + i * interval, key))
+        time_s = start_s + i * interval
+        if not isfinite(time_s):
+            raise ValueError("target time must be finite")
+        targets.append(TargetHit(time_s, key))
     return targets
