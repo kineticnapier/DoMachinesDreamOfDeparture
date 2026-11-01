@@ -8,6 +8,7 @@ from dmdod.adofai_timing import compile_adofai
 from dmdod.keyboard import KeyEvent
 from dmdod.motor_env import TimedKeyEvent
 from dmdod.real_chart_env import RealChartMotorEnv
+from dmdod.motor.capacity import NKeyRealChartMotorEnv
 
 
 def _compiled(*, pitch: float = 100.0):
@@ -28,6 +29,35 @@ def _compiled(*, pitch: float = 100.0):
         """
     )
     return compile_adofai(chart)
+
+
+
+@pytest.mark.parametrize("env_type", (RealChartMotorEnv, NKeyRealChartMotorEnv))
+@pytest.mark.parametrize(
+    "invalid_tail",
+    (
+        float("nan"), float("inf"), float("-inf"), True, False,
+        "0.4", b"0.4", None, -0.1, 10**1000,
+    ),
+)
+def test_real_chart_rejects_invalid_tail_before_initializing_motor(env_type, invalid_tail):
+    segment = build_playable_segment(_compiled(), start_s=0.0, end_s=2.0)
+    kwargs = {"key_count": 4} if env_type is NKeyRealChartMotorEnv else {}
+    with pytest.raises(ValueError, match="tail_s must be finite and non-negative"):
+        env_type(segment, tail_s=invalid_tail, **kwargs)
+
+
+@pytest.mark.parametrize("env_type", (RealChartMotorEnv, NKeyRealChartMotorEnv))
+@pytest.mark.parametrize("valid_tail", (0.0, 0.4, 2, -0.0))
+def test_real_chart_preserves_finite_tail_and_episode_end(env_type, valid_tail):
+    segment = build_playable_segment(_compiled(), start_s=0.0, end_s=2.0)
+    kwargs = {"key_count": 4} if env_type is NKeyRealChartMotorEnv else {}
+    env = env_type(segment, tail_s=valid_tail, **kwargs)
+    expected_end = max(segment.duration_s, segment.targets[-1].episode_time_s) + valid_tail
+    assert env.tail_s == float(valid_tail)
+    assert env._episode_end_s == pytest.approx(expected_end)
+    assert env.reset().floors
+
 
 
 def test_playable_targets_exclude_start_floor_and_midspin_but_keep_following_equal_time_floor():
