@@ -5,7 +5,6 @@ receive target finger labels and that the A0 restriction is physical.
 """
 from __future__ import annotations
 
-from dataclasses import fields
 from pathlib import Path
 import sys
 
@@ -30,7 +29,7 @@ def test_input_is_relative_timing_and_body_only_no_key_target_or_absolute_time()
     assert isinstance(x, tuple)
     assert abs(x[0] - .93 / .11) > 0  # clipped, not absolute time
     assert not any(isinstance(v, str) for v in x)
-    assert "key" not in str(fields(type(env.result))) if False else True
+    assert len(env.targets) == 16
     assert all(isinstance(t, float) for t in env.targets)
 
 
