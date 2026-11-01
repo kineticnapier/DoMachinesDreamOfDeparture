@@ -30,7 +30,7 @@ TBD
 
 ## Experiment 001 — Single Finger Limit
 
-**Status:** Not started
+**Status:** Formal experiment not started; exploratory periodic Motor studies 001a and 001b completed.
 
 ### Objective
 
@@ -38,15 +38,19 @@ Measure the single-finger tapping limit of the body model and determine the rate
 
 ### Conditions
 
-TBD
+Formal preregistration remains unapproved. Exploratory fixed periodic-command Motor probes 001a and 001b retained the existing body parameters and separated startup transient from sustained tapping.
 
 ### Results
 
-TBD
+Within the tested fixed periodic controllers, 001b confirmed left/right single-finger tapping at 160 ms and two-finger alternating tapping at 80 ms in all three sustained tests. These are **feasible witnessed intervals in a fixed controller family**, not proven fundamental physical speed limits.
 
 ### Observations
 
-TBD
+- [Original 001a pilot and post hoc diagnostics](research-a-experiment-001-exploratory-results.md)
+- [Precommitted 001b protocol](research-a-experiment-001b-fixed-protocol.md)
+- [001b positive and negative outcomes](research-a-experiment-001b-results.md)
+- Some slower intervals failed when the start phase changed; phase sensitivity remains unexplained.
+- Study 002 learning has not begun.
 
 ---
 

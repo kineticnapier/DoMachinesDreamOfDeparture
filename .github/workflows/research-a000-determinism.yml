@@ -1,0 +1,26 @@
+name: Research A Experiment 000 deterministic Motor (CPU)
+
+on:
+  pull_request:
+    branches:
+      - develop/dmdogo
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  a000-determinism:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Check out branch
+        uses: actions/checkout@v5
+      - name: Setup Python 3.11
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.11"
+      - name: Install CPU-only test dependencies
+        run: python -m pip install -e ".[dev]"
+      - name: Deterministic two-finger replay tests
+        run: python -m pytest -q tests/test_research_a000_two_finger_determinism.py

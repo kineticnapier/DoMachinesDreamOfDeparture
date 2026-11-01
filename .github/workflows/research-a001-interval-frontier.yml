@@ -1,0 +1,36 @@
+name: Research A001 post-hoc rate frontier (CPU)
+
+on:
+  pull_request:
+    branches:
+      - develop/dmdogo
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  a001-frontier:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.11"
+      - run: python -m pip install -e ".[dev]"
+      - name: Verify grid and matching rules
+        run: python -m pytest -q tests/test_research_a001_interval_frontier.py
+      - name: Diagnose retained misses across all v1 selected period controls
+        run: |
+          mkdir -p reports
+          python -u scripts/a001_interval_frontier_diagnostic.py \
+            --out reports/research-a001-interval-frontier.json \
+            | tee reports/research-a001-interval-frontier-summary.json
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: research-a001-posthoc-interval-frontier
+          path: reports/research-a001-interval-frontier*.json
+          retention-days: 30
+          if-no-files-found: warn
