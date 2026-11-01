@@ -10,6 +10,7 @@ keyboard threshold semantics, but carries the intermediate state in local
 variables and materializes body state only once at the end of the held command.
 """
 
+from dmdod.motor.body import _finite_body_value
 from dmdod.motor.keyboard import KeyEvent
 from dmdod.envs.simulator import Simulation
 
@@ -37,9 +38,9 @@ def step_held_exact(
     times, matching ``StepResult.time_s`` from the ordinary path.
     """
 
-    if int(substeps) < 0:
-        raise ValueError("substeps must be non-negative")
-    if not substeps:
+    if isinstance(substeps, bool) or not isinstance(substeps, int) or substeps < 0:
+        raise ValueError("substeps must be a non-negative integer")
+    if substeps == 0:
         return ()
 
     dt_s = sim.config.dt_s
@@ -53,6 +54,10 @@ def step_held_exact(
     hand_cfg = body_cfg.hand
     bilateral_cfg = body_cfg.bilateral
 
+    # Direct callers must meet the same finite-command contract as MotorEnv.
+    # Check both commands before replacing any body state objects.
+    left_command = _finite_body_value(left_command, error="motor commands must be finite")
+    right_command = _finite_body_value(right_command, error="motor commands must be finite")
     left_command = _clamp(left_command, -1.0, 1.0)
     right_command = _clamp(right_command, -1.0, 1.0)
 
@@ -91,7 +96,7 @@ def step_held_exact(
     time_s = sim.time_s
     events: list[tuple[float, str, KeyEvent]] = []
 
-    for _ in range(int(substeps)):
+    for _ in range(substeps):
         left_activation = left_activation + (
             left_command - left_activation
         ) * dt_s / left_cfg.activation_tau_s
