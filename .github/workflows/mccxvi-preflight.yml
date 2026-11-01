@@ -1,0 +1,26 @@
+name: MCCXVI 4K/2K preflight (CPU)
+
+on:
+  pull_request:
+    branches:
+      - develop/dmdogo
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  key-limit-preflight:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Check out PR merge candidate
+        uses: actions/checkout@v5
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.11"
+      - name: Install test runner
+        run: python -m pip install "pytest>=8.0"
+      - name: Run synthetic static key-limit tests without user chart
+        run: python -m pytest -q tests/test_mccxvi_4k_benchmark.py
