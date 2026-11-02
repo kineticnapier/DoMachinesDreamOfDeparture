@@ -141,6 +141,11 @@ def test_archival_validation_accepts_exact_d3(monkeypatch, tmp_path):
     monkeypatch.setattr(d8, "source_models", lambda *args: ([original], {}))
     file = tmp_path / "d3.json"
     file.write_text(json.dumps({"models": [replay]}))
-    result = d8.validate_archives(tmp_path, file)
+    d7 = tmp_path / "d7.json"
+    d7.write_text(json.dumps({"classification": "initial_evaluation_diverged",
+        "stage0_difference": {"path": "stage0.argmax.mean_entropy",
+            "expected": expected["original_stage0"]["argmax"]["mean_entropy"],
+            "actual": d8.D7_ENTROPY}}))
+    result = d8.validate_archives(tmp_path, file, d7)
     assert result["original_initial_sha256"] == "same"
     assert result["d3_r1_reproduced"] is True
