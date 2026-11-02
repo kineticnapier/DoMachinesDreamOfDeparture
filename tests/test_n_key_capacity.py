@@ -619,3 +619,42 @@ def test_n_key_keyboard_rejects_nonfinite_float_only_position_atomically() -> No
     with pytest.raises(ValueError, match="keyboard positions must be finite numbers"):
         keyboard.step((1.0, 0.0, 0.0, _FloatOnlyKeyboardPosition(float("inf"))))
     assert all(not state.pressed for state in keyboard.states)
+
+
+class _FloatOnlyKeyboardThreshold:
+    """Finite numeric wrapper supporting __float__ but not ordering."""
+
+    def __init__(self, value: float) -> None:
+        self.value = value
+
+    def __float__(self) -> float:
+        return self.value
+
+
+def test_keyboard_config_normalizes_float_only_thresholds_for_both_keyboards() -> None:
+    # isfinite() used to accept these wrappers before an ordering comparison
+    # raised TypeError in KeyConfig.__post_init__.
+    config = KeyConfig(
+        actuation_m=_FloatOnlyKeyboardThreshold(0.002),
+        reset_m=_FloatOnlyKeyboardThreshold(0.0018),
+    )
+    assert type(config.actuation_m) is float
+    assert type(config.reset_m) is float
+    assert config.actuation_m == 0.002
+    assert config.reset_m == 0.0018
+
+    two_key = TwoKeyKeyboard(config=config)
+    n_key = NKeyKeyboard(n_key_names(4), config=config)
+    assert two_key.step(0.002, 0.0) == [("left", KeyEvent.DOWN)]
+    assert n_key.step((0.002, 0.0, 0.0, 0.0)) == [("left_2", KeyEvent.DOWN)]
+    assert two_key.step(0.0018, 0.0) == [("left", KeyEvent.UP)]
+    assert n_key.step((0.0018, 0.0, 0.0, 0.0)) == [("left_2", KeyEvent.UP)]
+
+
+@pytest.mark.parametrize("field", ("actuation_m", "reset_m"))
+@pytest.mark.parametrize("bad", (float("nan"), float("inf"), float("-inf")))
+def test_keyboard_config_rejects_nonfinite_float_only_thresholds(
+    field: str, bad: float
+) -> None:
+    with pytest.raises(ValueError, match="keyboard thresholds must be finite numbers"):
+        KeyConfig(**{field: _FloatOnlyKeyboardThreshold(bad)})
