@@ -1,0 +1,112 @@
+name: Research A v2-L0-D5 R1 prefix process-order diagnostic (CPU)
+
+on:
+  pull_request:
+    branches:
+      - research/a-v2-l0-d4-r2-first-update-divergence
+    paths:
+      - "docs/research-a-v2-l0-d5-r1-prefix-order-protocol.md"
+      - "scripts/a002v2_l0_d5_r1_prefix_order.py"
+      - "tests/test_research_a_v2_l0_d5_r1_prefix_order.py"
+      - ".github/workflows/research-a-v2-l0-d5-r1-prefix-order.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  compare-r1-prefix:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    env:
+      PYTHONHASHSEED: "0"
+      OMP_NUM_THREADS: "1"
+      MKL_NUM_THREADS: "1"
+    steps:
+      - name: Checkout D5 Draft branch
+        uses: actions/checkout@v5
+      - name: Set up original Python 3.11
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.11"
+      - name: Install original pinned CPU dependencies
+        run: |
+          python -m pip install -e ".[dev]"
+          python -m pip install "torch==2.5.1+cpu" --index-url https://download.pytorch.org/whl/cpu
+      - name: Verify original trainer and Motor blobs remain unchanged
+        run: |
+          set -euo pipefail
+          mkdir -p reports/research_a_v2_l0_d5
+          while read -r path sha; do
+            actual="$(git rev-parse "HEAD:$path")"
+            printf '%s %s\n' "$actual" "$path" | tee -a reports/research_a_v2_l0_d5/source-code-shas.txt
+            test "$actual" = "$sha"
+          done <<'EOF'
+          scripts/a002v2_l0_low_speed_ppo.py 72f4a298d0e22050806df461a37d812ff7e52afd
+          scripts/a002v2_l0_r2_penalty_env.py 19a288d9758793de7a8603fa6e269910fa533049
+          scripts/a002_exploratory_ppo.py a38aec5e9ccc2d6ce03c41e07898e075d66667ca
+          src/dmdod/research/a002_timing_only_env.py 45b5c92505d78bfe4543d44d71c649c3cfc9f1ea
+          src/dmdod/research/a002p_reward_ablation.py 0b4740a3ba037eb0c595f2c88d120bbd50f2e489
+          src/dmdod/motor/env.py a82fc9e5a159dbcedf3c8cbb19873407086441af
+          EOF
+      - name: Test fixed comparison boundaries and classifications
+        run: |
+          python -m pytest -q tests/test_research_a_v2_l0_d5_r1_prefix_order.py
+      - name: Download original R1 histories
+        uses: actions/download-artifact@v4
+        with:
+          name: research-a-v2-l0-low-speed-learning
+          path: original-r1
+          run-id: 41309837474
+          github-token: ${{ github.token }}
+          repository: ${{ github.repository }}
+      - name: Download original R2 histories
+        uses: actions/download-artifact@v4
+        with:
+          name: research-a-v2-l0-r2-penalty-comparison
+          path: original-r2
+          run-id: 41312136897
+          github-token: ${{ github.token }}
+          repository: ${{ github.repository }}
+      - name: Download D3 failed R2 diagnostic
+        uses: actions/download-artifact@v4
+        with:
+          name: research-a-v2-l0-d3-actual-ppo-update
+          path: original-d3
+          run-id: 41369778494
+          github-token: ${{ github.token }}
+          repository: ${{ github.repository }}
+      - name: Fresh process A - R2 alone
+        run: |
+          set -o pipefail
+          python -u scripts/a002v2_l0_d5_r1_prefix_order.py \
+            --mode baseline --r1 original-r1 --r2 original-r2 \
+            --d3 original-d3/full-diagnostic.json \
+            --out-dir reports/research_a_v2_l0_d5/baseline \
+            | tee reports/research_a_v2_l0_d5/baseline.log
+      - name: Fresh process B - four exact R1 replays before R2
+        run: |
+          set -o pipefail
+          python -u scripts/a002v2_l0_d5_r1_prefix_order.py \
+            --mode preceded --r1 original-r1 --r2 original-r2 \
+            --d3 original-d3/full-diagnostic.json \
+            --out-dir reports/research_a_v2_l0_d5/preceded \
+            | tee reports/research_a_v2_l0_d5/preceded.log
+      - name: Compare both processes and original/D3 records
+        run: |
+          set -o pipefail
+          python -u scripts/a002v2_l0_d5_r1_prefix_order.py \
+            --mode compare \
+            --baseline-dir reports/research_a_v2_l0_d5/baseline \
+            --preceded-dir reports/research_a_v2_l0_d5/preceded \
+            --out reports/research_a_v2_l0_d5/comparison.json \
+            | tee reports/research_a_v2_l0_d5/comparison.log
+      - name: Preserve positive and negative results and failure logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: research-a-v2-l0-d5-r1-prefix-order
+          path: reports/research_a_v2_l0_d5/
+          retention-days: 30
+          if-no-files-found: warn
