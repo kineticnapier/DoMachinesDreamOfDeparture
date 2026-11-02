@@ -117,7 +117,7 @@ def test_archival_validation_rejects_nonexact_d3(monkeypatch, tmp_path):
     file = tmp_path / "d3.json"
     file.write_text(json.dumps({"models": [replay]}))
     with pytest.raises(ValueError, match="not exact"):
-        d8.validate_archives(tmp_path, file)
+        d8.validate_archives(tmp_path, file, file)
 
 
 def test_archival_validation_accepts_exact_d3(monkeypatch, tmp_path):
