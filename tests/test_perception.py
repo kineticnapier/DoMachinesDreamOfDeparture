@@ -34,6 +34,34 @@ def test_visual_cue_rejects_invalid_active_target_index():
         encoder.observe(0.0, active_target_indices=(1,))
 
 
+@pytest.mark.parametrize("sample_period_s", (0.0, 0.1))
+@pytest.mark.parametrize(
+    "bad",
+    (False, True, 0.0, 1.0, 0.5, "0", None, object(), -1, 2),
+)
+def test_visual_cue_rejects_non_integer_or_out_of_range_active_indices_without_mutation(
+    sample_period_s, bad,
+):
+    encoder = VisualCueEncoder(
+        [TargetHit(0.50, "left"), TargetHit(0.80, "right")],
+        config=VisualCueConfig(
+            latency_s=0.0, width_s=0.05, horizon_s=1.0,
+            sample_period_s=sample_period_s,
+        ),
+    )
+    first = encoder.observe(0.50, active_target_indices=(0,))
+    clock = encoder._next_sample_time_s
+    # False and 0.0 compare equal to 0, so the old held-frame fast path
+    # silently accepted them without indexing the targets.
+    with pytest.raises(IndexError, match="active target index"):
+        encoder.observe(0.51, active_target_indices=(bad,))
+    assert encoder._held_observation == first
+    assert encoder._held_active_signature == (0,)
+    assert encoder._next_sample_time_s == clock
+    if sample_period_s:
+        assert encoder.observe(0.51, active_target_indices=(0,)) == first
+
+
 def test_visual_cue_latency_jitter_is_reproducible_by_seed():
     config = VisualCueConfig(latency_s=0.050, latency_jitter_s=0.015)
     a = VisualCueEncoder([TargetHit(0.50, "left")], config=config, seed=123)
