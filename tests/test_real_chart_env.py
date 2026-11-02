@@ -98,6 +98,32 @@ def test_real_chart_preserves_valid_visible_floor_counts(env_type, valid_count):
     assert env.reset().floors
 
 
+@pytest.mark.parametrize("env_type", (RealChartMotorEnv, NKeyRealChartMotorEnv))
+@pytest.mark.parametrize(
+    "invalid_scale",
+    (
+        -1.0, 0.0, -0.0, float("nan"), float("inf"), float("-inf"),
+        True, False, "1", b"1", None, 10**1000, object(),
+    ),
+)
+def test_real_chart_rejects_invalid_timing_scale_before_motor_init(env_type, invalid_scale):
+    segment = build_playable_segment(_compiled(), start_s=0.0, end_s=2.0)
+    kwargs = {"key_count": 4} if env_type is NKeyRealChartMotorEnv else {}
+    with pytest.raises(ValueError, match="timing_scale must be finite and positive"):
+        env_type(segment, timing_scale=invalid_scale, **kwargs)
+
+
+@pytest.mark.parametrize("env_type", (RealChartMotorEnv, NKeyRealChartMotorEnv))
+@pytest.mark.parametrize("valid_scale", (0.25, 1, 1.0, 2.5))
+def test_real_chart_preserves_valid_timing_scale(env_type, valid_scale):
+    segment = build_playable_segment(_compiled(), start_s=0.0, end_s=2.0)
+    kwargs = {"key_count": 4} if env_type is NKeyRealChartMotorEnv else {}
+    env = env_type(segment, timing_scale=valid_scale, **kwargs)
+    assert env.timing_scale == float(valid_scale)
+    assert env.reset().floors
+    assert env._windows(segment.targets[0]).pass_s > 0.0
+
+
 def test_playable_targets_exclude_start_floor_and_midspin_but_keep_following_equal_time_floor():
     compiled = _compiled()
     assert compiled.floors[1].midspin is True
