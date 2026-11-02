@@ -1,0 +1,88 @@
+name: Research A v2-L0-D9 archived runtime evidence audit (no training)
+
+on:
+  pull_request:
+    branches:
+      - research/a-v2-l0-d8-cpu-dispatch-entropy
+    paths:
+      - "docs/research-a-v2-l0-d9-historical-runtime-protocol.md"
+      - "scripts/a002v2_l0_d9_historical_runtime.py"
+      - "tests/test_research_a_v2_l0_d9_historical_runtime.py"
+      - ".github/workflows/research-a-v2-l0-d9-historical-runtime.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  archived-runtime:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout isolated D9 branch
+        uses: actions/checkout@v5
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.11"
+      - name: Install test dependencies (no PyTorch and no training)
+        run: python -m pip install pytest
+      - name: Test eight D9 archive parser and fail-closed contracts
+        run: |
+          set -o pipefail
+          mkdir -p reports/research_a_v2_l0_d9/logs
+          python -m pytest -q tests/test_research_a_v2_l0_d9_historical_runtime.py 2>&1 | tee reports/research_a_v2_l0_d9/tests.log
+      - name: Download original five job logs read-only
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          for spec in "r1:124857703147" "d3:125037538287" "d5:125068823089" "d7:125102397739" "d8:125120568955"; do
+            label="${spec%%:*}"
+            job="${spec#*:}"
+            curl -fLsS --retry 2 --retry-all-errors \
+              -H "Authorization: Bearer ${GH_TOKEN}" \
+              -H "Accept: application/vnd.github+json" \
+              "https://api.github.com/repos/${GITHUB_REPOSITORY}/actions/jobs/${job}/logs" \
+              -o "reports/research_a_v2_l0_d9/logs/${label}.log"
+            test -s "reports/research_a_v2_l0_d9/logs/${label}.log"
+          done
+      - name: Download D7 frozen runtime record
+        uses: actions/download-artifact@v4
+        with:
+          name: research-a-v2-l0-d7-first-ppo-divergence
+          path: archived-d7
+          run-id: 41391082538
+          github-token: ${{ github.token }}
+          repository: ${{ github.repository }}
+      - name: Download D8 frozen native and default records
+        uses: actions/download-artifact@v4
+        with:
+          name: research-a-v2-l0-d8-cpu-dispatch
+          path: archived-d8
+          run-id: 41397065687
+          github-token: ${{ github.token }}
+          repository: ${{ github.repository }}
+      - name: Audit exact archived environment evidence
+        run: |
+          set -o pipefail
+          python -u scripts/a002v2_l0_d9_historical_runtime.py \
+            --log r1=reports/research_a_v2_l0_d9/logs/r1.log \
+            --log d3=reports/research_a_v2_l0_d9/logs/d3.log \
+            --log d5=reports/research_a_v2_l0_d9/logs/d5.log \
+            --log d7=reports/research_a_v2_l0_d9/logs/d7.log \
+            --log d8=reports/research_a_v2_l0_d9/logs/d8.log \
+            --d7 archived-d7/result.json \
+            --native archived-d8/native.json \
+            --default archived-d8/default.json \
+            --out reports/research_a_v2_l0_d9/audit.json \
+            2>&1 | tee reports/research_a_v2_l0_d9/audit.log
+      - name: Preserve positive and negative evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: research-a-v2-l0-d9-historical-runtime
+          path: reports/research_a_v2_l0_d9/
+          retention-days: 30
+          if-no-files-found: warn
