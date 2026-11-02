@@ -148,3 +148,32 @@ def test_two_key_motor_env_preserves_integer_commands() -> None:
     transition = env.step(MotorAction(1, -1))
     assert -1.0 <= transition.diagnostics.left_activation <= 1.0
     assert -1.0 <= transition.diagnostics.right_activation <= 1.0
+
+class _FloatOnlyKeyboardPosition:
+    """A finite numeric value with no ordering comparisons."""
+
+    def __init__(self, value: float) -> None:
+        self.value = value
+
+    def __float__(self) -> float:
+        return self.value
+
+def test_two_key_keyboard_normalizes_float_only_positions_before_mutation() -> None:
+    keyboard = TwoKeyKeyboard()
+    # Previously isfinite accepted the right position, but its >= check
+    # raised TypeError after the left key had already been pressed.
+    assert keyboard.step(1.0, _FloatOnlyKeyboardPosition(1.0)) == [
+        ("left", KeyEvent.DOWN), ("right", KeyEvent.DOWN),
+    ]
+    assert keyboard.left.pressed and keyboard.right.pressed
+    assert keyboard.step(0.0, _FloatOnlyKeyboardPosition(0.0)) == [
+        ("left", KeyEvent.UP), ("right", KeyEvent.UP),
+    ]
+    assert not keyboard.left.pressed and not keyboard.right.pressed
+
+
+def test_two_key_keyboard_rejects_nonfinite_float_only_position_atomically() -> None:
+    keyboard = TwoKeyKeyboard()
+    with pytest.raises(ValueError, match="keyboard positions must be finite numbers"):
+        keyboard.step(1.0, _FloatOnlyKeyboardPosition(float("nan")))
+    assert not keyboard.left.pressed and not keyboard.right.pressed
