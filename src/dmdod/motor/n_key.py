@@ -401,17 +401,22 @@ class NKeyKeyboard:
         # Validate every position before changing any pressed state. A NaN
         # otherwise matches neither threshold and can hide an invalid physics
         # sample; an invalid later key must not leave earlier keys pressed.
+        # Validate and normalize the complete frame before updating keys.
+        # isfinite(position) alone may accept float-only objects whose
+        # ordering comparisons fail after an earlier key was mutated.
+        validated_positions: list[float] = []
         for position in positions:
             if isinstance(position, (bool, str, bytes)):
                 raise ValueError("keyboard positions must be finite numbers")
             try:
-                finite = isfinite(position)
+                numeric = float(position)
             except (TypeError, ValueError, OverflowError) as exc:
                 raise ValueError("keyboard positions must be finite numbers") from exc
-            if not finite:
+            if not isfinite(numeric):
                 raise ValueError("keyboard positions must be finite numbers")
+            validated_positions.append(numeric)
         events: list[tuple[str, KeyEvent]] = []
-        for index, (name, position) in enumerate(zip(self.key_names, positions)):
+        for index, (name, position) in enumerate(zip(self.key_names, validated_positions)):
             state = self.states[index]
             if not state.pressed and position >= self.config.actuation_m:
                 state.pressed = True
