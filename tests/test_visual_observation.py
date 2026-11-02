@@ -32,6 +32,23 @@ def test_rgb_frame_requires_tightly_packed_rgb888() -> None:
         RgbFrame(width=2, height=1, data=b"short")
 
 
+@pytest.mark.parametrize(
+    "payload",
+    [
+        bytearray(b"\x00\x00\x00"),
+        memoryview(b"\x00\x00\x00"),
+        [0, 0, 0],
+        (0, 0, 0),
+        "abc",
+        None,
+    ],
+)
+def test_rgb_frame_rejects_non_byte_payloads(payload: object) -> None:
+    # Equal-length sequences must not cross the RGB888 byte boundary.
+    with pytest.raises(ValueError, match="RGB888 frame data must be bytes"):
+        RgbFrame(width=1, height=1, data=payload)
+
+
 def test_visual_policy_observation_contains_only_frame_and_motor() -> None:
     frame = RgbFrame(width=1, height=1, data=b"\x00\x00\x00")
     observation = VisualPolicyObservation(frame=frame, motor=_motor())
