@@ -49,6 +49,8 @@ def test_dispatch_effect_when_entropy_differs():
     assert result["classification"] == "dispatch_effect_observed"
     assert result["stage0_first_difference"] is not None
     assert result["physical"]["argmax"]["native"] == result["physical"]["argmax"]["default"]
+    assert result["physical_trace_exact"]["argmax"] is True
+    assert result["action_controls_exact"]["argmax"] is True
     assert result["new_training_episodes"] == result["ppo_updates"] == 0
 
 
