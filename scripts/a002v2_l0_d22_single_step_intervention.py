@@ -266,7 +266,8 @@ def run(d8_dir, d12_dir, d19_json, d21_trace_json):
                     "D19 archived row mismatch: " + side + "/" + key)
     b_step, a_step = before["steps"][INTERVENTION_STEP], after["steps"][INTERVENTION_STEP]
     require(b_step["step"] == a_step["step"] == INTERVENTION_STEP and
-            b_step["time_s"] == a_step["time_s"] == 3.62,
+            abs(b_step["time_s"] - 3.62) < 1e-8 and
+            abs(a_step["time_s"] - 3.62) < 1e-8,
             "intervention time mismatch")
     require(b_step["observation"] == a_step["observation"] and
             b_step["action"] == 0 and a_step["action"] == 2,
