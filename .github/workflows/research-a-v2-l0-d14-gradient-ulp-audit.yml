@@ -1,0 +1,58 @@
+name: Research A v2-L0-D14 archived gradient ULP audit (no training)
+
+on:
+  pull_request:
+    branches:
+      - research/a-v2-l0-d13-frozen-gradient-stage
+    paths:
+      - "docs/research-a-v2-l0-d14-gradient-ulp-protocol.md"
+      - "docs/research-a-v2-l0-d14-gradient-ulp-results.md"
+      - "scripts/a002v2_l0_d14_gradient_ulp_audit.py"
+      - "tests/test_research_a_v2_l0_d14_gradient_ulp_audit.py"
+      - ".github/workflows/research-a-v2-l0-d14-gradient-ulp-audit.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  archived-gradient-ulp:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout isolated D14 Draft branch
+        uses: actions/checkout@v5
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.11"
+      - name: Verify D14 preregistered float32 ULP contracts
+        run: |
+          set -o pipefail
+          mkdir -p reports/research_a_v2_l0_d14
+          python -m unittest discover -s tests -p 'test_research_a_v2_l0_d14_gradient_ulp_audit.py' -v \
+            2>&1 | tee reports/research_a_v2_l0_d14/tests.log
+      - name: Retrieve D12 final successful frozen PPO evidence
+        uses: actions/download-artifact@v4
+        with:
+          name: research-a-v2-l0-d12-frozen-ppo-cpu
+          path: archived-d12
+          run-id: 41424435292
+          github-token: ${{ github.token }}
+          repository: ${{ github.repository }}
+      - name: Audit archived gradient ULP distances without training
+        run: |
+          set -o pipefail
+          python -u scripts/a002v2_l0_d14_gradient_ulp_audit.py \
+            --source-dir archived-d12 \
+            --out reports/research_a_v2_l0_d14/result.json \
+            2>&1 | tee reports/research_a_v2_l0_d14/analysis.log
+      - name: Preserve successful and failed evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: research-a-v2-l0-d14-gradient-ulp-audit
+          path: reports/research_a_v2_l0_d14/
+          retention-days: 30
+          if-no-files-found: warn
