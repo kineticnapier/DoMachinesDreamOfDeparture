@@ -97,7 +97,7 @@ def cpu_name():
     return "unknown"
 
 
-def evaluate(expected: dict, condition: str):
+def evaluate(expected: dict, condition: str, weights_file=None, weights_out=None):
     if condition not in ("native", "default"):
         raise ValueError("unknown condition")
     configured = os.environ.get("ATEN_CPU_CAPABILITY")
@@ -109,9 +109,25 @@ def evaluate(expected: dict, condition: str):
     torch.manual_seed(SEED)
     model = l0.ActorCritic()
     model.eval()
+    seed_only_digest = initial_digest(model)
+    if condition == "native":
+        if weights_file is not None:
+            raise ValueError("native must generate original weights, not load them")
+        if weights_out is None or weights_out.exists():
+            raise ValueError("native requires unused --weights-out path")
+        if seed_only_digest != expected["original_initial_sha256"]:
+            raise ValueError("native initial weights differ from original R1")
+        weights_out.parent.mkdir(parents=True, exist_ok=True)
+        torch.save(model.state_dict(), weights_out)
+    else:
+        if weights_file is None or not weights_file.is_file():
+            raise ValueError("default requires native initial weights file")
+        model.load_state_dict(
+            torch.load(weights_file, map_location="cpu", weights_only=True),
+            strict=True)
     digest = initial_digest(model)
     if digest != expected["original_initial_sha256"]:
-        raise ValueError("initial model weights differ from original R1")
+        raise ValueError("shared initial model weights differ from original R1")
     stage0 = {
         "episode": 0,
         "argmax": l0.evaluate_set(arm=ARM, model=model, mode="argmax"),
@@ -129,6 +145,8 @@ def evaluate(expected: dict, condition: str):
         "schema": "research-a-v2-l0-d8-cpu-dispatch-stage0-v1",
         "protocol": PROTOCOL, "condition": condition,
         "initial_state_sha256": digest,
+        "seed_only_initial_state_sha256": seed_only_digest,
+        "loaded_original_native_weights": condition == "default",
         "runtime": {
             "python": sys.version,
             "torch": torch.__version__,
@@ -180,6 +198,13 @@ def compare(expected: dict, native: dict, default: dict):
         "cpu_capabilities": {"native": a["cpu_capability"],
                              "default": b["cpu_capability"]},
         "initial_state_sha256_match": True,
+        "seed_only_initial_sha256": {
+            "native": native["seed_only_initial_state_sha256"],
+            "default": default["seed_only_initial_state_sha256"],
+        },
+        "seed_only_initial_weights_equal":
+            native["seed_only_initial_state_sha256"] ==
+            default["seed_only_initial_state_sha256"],
         "stage0_first_difference": difference,
         "argmax_entropy": {
             "archived_r1_d3": expected["original_stage0"]["argmax"]["mean_entropy"],
@@ -230,6 +255,8 @@ def main():
     parser.add_argument("--condition", choices=("native", "default"))
     parser.add_argument("--native", type=Path)
     parser.add_argument("--default", type=Path)
+    parser.add_argument("--weights", type=Path)
+    parser.add_argument("--weights-out", type=Path)
     parser.add_argument("--out", type=Path, required=True)
     args = parser.parse_args()
     if args.out.exists():
@@ -241,7 +268,8 @@ def main():
     elif args.mode == "evaluate":
         if not (args.expected and args.condition):
             parser.error("evaluate requires --expected and --condition")
-        result = evaluate(json.loads(args.expected.read_text()), args.condition)
+        result = evaluate(json.loads(args.expected.read_text()), args.condition,
+                          weights_file=args.weights, weights_out=args.weights_out)
     else:
         if not (args.expected and args.native and args.default):
             parser.error("compare requires --expected, --native and --default")
