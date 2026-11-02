@@ -122,23 +122,35 @@ class VisualFrameScheduler:
         visual_hz: int = DEFAULT_VISUAL_HZ,
         policy_hz: int = DEFAULT_POLICY_HZ,
     ) -> None:
-        if any(isinstance(rate, bool) or not isinstance(rate, Integral) or rate <= 0
-               for rate in (visual_hz, policy_hz)):
-            raise ValueError("visual_hz and policy_hz must be positive integers")
+        # Compare only built-in ints. Integral subclasses may override ordering
+        # even when int(rate) is a valid positive integer.
+        rates: list[int] = []
+        for rate in (visual_hz, policy_hz):
+            if isinstance(rate, bool) or not isinstance(rate, Integral):
+                raise ValueError("visual_hz and policy_hz must be positive integers")
+            normalized = int(rate)
+            if normalized <= 0:
+                raise ValueError("visual_hz and policy_hz must be positive integers")
+            rates.append(normalized)
+        visual_hz, policy_hz = rates
         if visual_hz > policy_hz:
             raise ValueError("visual_hz must not exceed policy_hz for frame holding")
-        self.visual_hz = int(visual_hz)
-        self.policy_hz = int(policy_hz)
+        self.visual_hz = visual_hz
+        self.policy_hz = policy_hz
         self._last_frame_index: int | None = None
 
     def reset(self) -> None:
         self._last_frame_index = None
 
     def frame_index(self, policy_tick: int) -> int:
-        if isinstance(policy_tick, bool) or not isinstance(policy_tick, Integral) or policy_tick < 0:
+        if isinstance(policy_tick, bool) or not isinstance(policy_tick, Integral):
             raise ValueError("policy_tick must be a non-negative integer")
-        # Avoid fixed-width Integral multiplication wrapping the frame index.
-        return (int(policy_tick) * self.visual_hz) // self.policy_hz
+        # Normalize before comparing as well as multiplying; custom Integral
+        # ordering and fixed-width arithmetic must not leak into the clock.
+        tick = int(policy_tick)
+        if tick < 0:
+            raise ValueError("policy_tick must be a non-negative integer")
+        return (tick * self.visual_hz) // self.policy_hz
 
     def needs_new_frame(self, policy_tick: int) -> bool:
         index = self.frame_index(policy_tick)
