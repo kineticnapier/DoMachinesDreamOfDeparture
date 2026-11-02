@@ -173,9 +173,16 @@ class JudgementObserver:
         values: list[int] = []
         for label in self.labels:
             value = raw[label]
-            if isinstance(value, bool) or not isinstance(value, int) or value < 0:
+            if isinstance(value, bool) or not isinstance(value, int):
                 return self._invalid(frame, f"counter {label!r} must be a non-negative integer")
-            values.append(value)
+            # An int subclass may override ordering, subtraction or __int__.
+            # Read its actual integer payload before validating and storing
+            # the baseline; otherwise a malformed counter can invent deltas
+            # or raise while processing a visible frame.
+            normalized = int.__int__(value)
+            if normalized < 0:
+                return self._invalid(frame, f"counter {label!r} must be a non-negative integer")
+            values.append(normalized)
         current = tuple(values)
 
         if self._baseline is None:
