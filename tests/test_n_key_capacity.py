@@ -592,3 +592,30 @@ def test_keyboard_config_preserves_finite_integer_thresholds_for_both_keyboards(
     two_key = TwoKeyKeyboard(config=config)
     assert n_key.step((1, 0, 0, 0)) == [("left_2", KeyEvent.DOWN)]
     assert two_key.step(1, 0) == [("left", KeyEvent.DOWN)]
+
+class _FloatOnlyKeyboardPosition:
+    """A finite numeric value with no ordering comparisons."""
+
+    def __init__(self, value: float) -> None:
+        self.value = value
+
+    def __float__(self) -> float:
+        return self.value
+
+def test_n_key_keyboard_normalizes_float_only_positions_before_mutation() -> None:
+    keyboard = NKeyKeyboard(n_key_names(4))
+    assert keyboard.step((1.0, 0.0, 0.0, _FloatOnlyKeyboardPosition(1.0))) == [
+        ("left_2", KeyEvent.DOWN), ("right_2", KeyEvent.DOWN),
+    ]
+    assert [state.pressed for state in keyboard.states] == [True, False, False, True]
+    assert keyboard.step((0.0, 0.0, 0.0, _FloatOnlyKeyboardPosition(0.0))) == [
+        ("left_2", KeyEvent.UP), ("right_2", KeyEvent.UP),
+    ]
+    assert all(not state.pressed for state in keyboard.states)
+
+
+def test_n_key_keyboard_rejects_nonfinite_float_only_position_atomically() -> None:
+    keyboard = NKeyKeyboard(n_key_names(4))
+    with pytest.raises(ValueError, match="keyboard positions must be finite numbers"):
+        keyboard.step((1.0, 0.0, 0.0, _FloatOnlyKeyboardPosition(float("inf"))))
+    assert all(not state.pressed for state in keyboard.states)
