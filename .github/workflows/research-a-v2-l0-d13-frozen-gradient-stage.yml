@@ -1,0 +1,58 @@
+name: Research A v2-L0-D13 archived PPO gradient stages (no training)
+
+on:
+  pull_request:
+    branches:
+      - research/a-v2-l0-d12-frozen-ppo-cpu-update
+    paths:
+      - "docs/research-a-v2-l0-d13-frozen-gradient-stage-protocol.md"
+      - "docs/research-a-v2-l0-d13-frozen-gradient-stage-results.md"
+      - "scripts/a002v2_l0_d13_frozen_gradient_stage.py"
+      - "tests/test_research_a_v2_l0_d13_frozen_gradient_stage.py"
+      - ".github/workflows/research-a-v2-l0-d13-frozen-gradient-stage.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  archived-gradient-stage:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout isolated D13 Draft branch
+        uses: actions/checkout@v5
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.11"
+      - name: Verify D13 preregistered input and classification contracts
+        run: |
+          set -o pipefail
+          mkdir -p reports/research_a_v2_l0_d13
+          python -m unittest discover -s tests -p 'test_research_a_v2_l0_d13_frozen_gradient_stage.py' -v \
+            2>&1 | tee reports/research_a_v2_l0_d13/tests.log
+      - name: Retrieve D12 final successful frozen PPO evidence
+        uses: actions/download-artifact@v4
+        with:
+          name: research-a-v2-l0-d12-frozen-ppo-cpu
+          path: archived-d12
+          run-id: 41424435292
+          github-token: ${{ github.token }}
+          repository: ${{ github.repository }}
+      - name: Locate first gradient divergence using archived D12 only
+        run: |
+          set -o pipefail
+          python -u scripts/a002v2_l0_d13_frozen_gradient_stage.py \
+            --source-dir archived-d12 \
+            --out reports/research_a_v2_l0_d13/result.json \
+            2>&1 | tee reports/research_a_v2_l0_d13/analysis.log
+      - name: Preserve successful and failed analysis evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: research-a-v2-l0-d13-frozen-gradient-stage
+          path: reports/research_a_v2_l0_d13/
+          retention-days: 30
+          if-no-files-found: warn
