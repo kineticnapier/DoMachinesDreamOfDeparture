@@ -1,0 +1,84 @@
+name: Research A v2-L0-D10 fixed-forward CPU stages (no training)
+
+on:
+  pull_request:
+    branches:
+      - research/a-v2-l0-d9-historical-runtime-audit
+    paths:
+      - "docs/research-a-v2-l0-d10-fixed-forward-protocol.md"
+      - "scripts/a002v2_l0_d10_fixed_forward.py"
+      - "tests/test_research_a_v2_l0_d10_fixed_forward.py"
+      - ".github/workflows/research-a-v2-l0-d10-fixed-forward.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  fixed-forward:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      OMP_NUM_THREADS: "1"
+      MKL_NUM_THREADS: "1"
+      PYTHONHASHSEED: "0"
+    steps:
+      - name: Checkout isolated D10 Draft branch
+        uses: actions/checkout@v5
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.11"
+      - name: Install CPU dependencies
+        run: |
+          python -m pip install -e ".[dev]"
+          python -m pip install "torch==2.5.1+cpu" --index-url https://download.pytorch.org/whl/cpu
+      - name: Run D10 contract tests
+        run: |
+          set -o pipefail
+          mkdir -p reports/research_a_v2_l0_d10
+          python -m pytest -q tests/test_research_a_v2_l0_d10_fixed_forward.py 2>&1 | tee reports/research_a_v2_l0_d10/tests.log
+      - name: Download frozen D8 initial weights and evidence
+        uses: actions/download-artifact@v4
+        with:
+          name: research-a-v2-l0-d8-cpu-dispatch
+          path: archived-d8
+          run-id: 41397065687
+          github-token: ${{ github.token }}
+          repository: ${{ github.repository }}
+      - name: Native CPU forward stages
+        run: |
+          set -o pipefail
+          env -u ATEN_CPU_CAPABILITY python -u scripts/a002v2_l0_d10_fixed_forward.py \
+            --mode evaluate --condition native \
+            --weights archived-d8/native-initial-state.pt \
+            --d8-native archived-d8/native.json --d8-default archived-d8/default.json \
+            --out reports/research_a_v2_l0_d10/native.json \
+            2>&1 | tee reports/research_a_v2_l0_d10/native.log
+      - name: Generic CPU forward stages
+        run: |
+          set -o pipefail
+          ATEN_CPU_CAPABILITY=default python -u scripts/a002v2_l0_d10_fixed_forward.py \
+            --mode evaluate --condition default \
+            --weights archived-d8/native-initial-state.pt \
+            --d8-native archived-d8/native.json --d8-default archived-d8/default.json \
+            --out reports/research_a_v2_l0_d10/default.json \
+            2>&1 | tee reports/research_a_v2_l0_d10/default.log
+      - name: Compare first bit-exact divergent forward stage
+        run: |
+          set -o pipefail
+          python -u scripts/a002v2_l0_d10_fixed_forward.py \
+            --mode compare \
+            --native reports/research_a_v2_l0_d10/native.json \
+            --default reports/research_a_v2_l0_d10/default.json \
+            --out reports/research_a_v2_l0_d10/comparison.json \
+            2>&1 | tee reports/research_a_v2_l0_d10/comparison.log
+      - name: Preserve positive and negative results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: research-a-v2-l0-d10-fixed-forward
+          path: reports/research_a_v2_l0_d10/
+          retention-days: 30
+          if-no-files-found: warn
