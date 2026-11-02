@@ -103,6 +103,31 @@ def test_run_constant_accepts_finite_integer_duration_and_preserves_step_count()
     assert len(results) == 3
     assert [result.time_s for result in results] == pytest.approx([0.001, 0.002, 0.003])
 
+
+class _FloatOnlyNumber:
+    def __init__(self, value: float) -> None:
+        self.value = value
+
+    def __float__(self) -> float:
+        return self.value
+
+
+def test_simulation_config_normalizes_float_only_timestep_before_use() -> None:
+    config = SimulationConfig(dt_s=_FloatOnlyNumber(0.001))
+    assert type(config.dt_s) is float
+    assert config.dt_s == 0.001
+    sim = Simulation(config=config)
+    assert sim.step(0.0, 0.0).time_s == pytest.approx(0.001)
+    assert [step.time_s for step in sim.run_constant(0.0, 0.0, 0.002)] == pytest.approx(
+        [0.002, 0.003]
+    )
+
+
+@pytest.mark.parametrize("bad", (float("nan"), float("inf"), float("-inf"), 0.0, -0.001))
+def test_simulation_config_rejects_invalid_float_only_timestep(bad: float) -> None:
+    with pytest.raises(ValueError, match="dt_s must be finite and positive"):
+        SimulationConfig(dt_s=_FloatOnlyNumber(bad))
+
 def test_zero_command_stays_at_rest():
     sim = Simulation()
     results = sim.run_constant(0.0, 0.0, 0.100)
