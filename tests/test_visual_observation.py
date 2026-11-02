@@ -147,3 +147,39 @@ def test_scheduler_rejects_non_integer_policy_ticks(tick: object) -> None:
     # Rejected calls must not mutate the frame-holding state.
     assert scheduler.needs_new_frame(0)
     assert not scheduler.needs_new_frame(0)
+
+
+class _FixedWidthIntegral(int):
+    """Simulate a valid Integral whose multiplication wraps to zero."""
+
+    def __mul__(self, other: object) -> int:
+        return 0
+
+
+def test_rgb_frame_byte_length_uses_unbounded_integer_arithmetic() -> None:
+    # Before the fix, the custom Integral multiplication returned zero and
+    # incorrectly accepted an empty frame with nonzero dimensions.
+    with pytest.raises(ValueError, match="6 bytes"):
+        RgbFrame(width=_FixedWidthIntegral(2), height=1, data=b"")
+    frame = RgbFrame(width=_FixedWidthIntegral(2), height=1, data=bytes(6))
+    assert frame.data == bytes(6)
+
+
+def test_visual_scheduler_uses_unbounded_integer_tick_arithmetic() -> None:
+    scheduler = VisualFrameScheduler(visual_hz=60, policy_hz=100)
+    tick = _FixedWidthIntegral(10)
+    assert scheduler.frame_index(tick) == 6
+    assert scheduler.needs_new_frame(tick)
+    assert not scheduler.needs_new_frame(10)
+    assert scheduler.frame_time_s(tick) == pytest.approx(6 / 60)
+
+
+def test_numpy_int64_overflow_does_not_corrupt_visual_sizes_or_ticks() -> None:
+    np = pytest.importorskip("numpy")
+    width = np.int64(2**62)
+    with np.errstate(over="ignore"):
+        # Fixed-width multiplication previously wrapped to zero.
+        with pytest.raises(ValueError, match="RGB888 frame must contain"):
+            RgbFrame(width=width, height=np.int64(4), data=b"")
+        scheduler = VisualFrameScheduler(visual_hz=60, policy_hz=100)
+        assert scheduler.frame_index(width) == (int(width) * 60) // 100
