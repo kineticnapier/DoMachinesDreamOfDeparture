@@ -164,6 +164,51 @@ def test_visual_cue_config_preserves_integer_compatible_finite_values():
     assert config.dropout_probability == 1
 
 
+class _FloatOnlySensorValue:
+    """Numeric input accepted by float() but without ordering operators."""
+
+    def __init__(self, value):
+        self.value = value
+
+    def __float__(self):
+        return float(self.value)
+
+
+@pytest.mark.parametrize(
+    "field,value",
+    (
+        ("latency_s", 0.025),
+        ("width_s", 0.075),
+        ("horizon_s", 0.5),
+        ("latency_jitter_s", 0.01),
+        ("sample_period_s", 0.02),
+        ("amplitude_noise_std", 0.005),
+        ("dropout_probability", 0.25),
+    ),
+)
+def test_visual_cue_config_normalizes_float_only_sensor_values(field, value):
+    config = VisualCueConfig(**{field: _FloatOnlySensorValue(value)})
+    assert type(getattr(config, field)) is float
+    assert getattr(config, field) == value
+
+
+def test_visual_cue_encoder_uses_normalized_float_only_sensor_values():
+    config = VisualCueConfig(
+        latency_s=_FloatOnlySensorValue(0.0),
+        width_s=_FloatOnlySensorValue(0.05),
+        horizon_s=_FloatOnlySensorValue(1.0),
+        latency_jitter_s=_FloatOnlySensorValue(0.0),
+        sample_period_s=_FloatOnlySensorValue(0.02),
+        amplitude_noise_std=_FloatOnlySensorValue(0.0),
+        dropout_probability=_FloatOnlySensorValue(0.0),
+    )
+    encoder = VisualCueEncoder([TargetHit(0.5, "left")], config=config)
+    first = encoder.observe(0.5, active_target_indices=(0,))
+    assert first.left > 0.99
+    assert first.right == 0.0
+    assert encoder.observe(0.51, active_target_indices=(0,)) == first
+
+
 def test_visual_cue_sample_clock_skips_large_observation_gap():
     # An unbounded per-frame loop would require 50 million iterations.
     config = VisualCueConfig(
