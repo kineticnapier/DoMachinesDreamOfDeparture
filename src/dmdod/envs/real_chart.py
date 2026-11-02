@@ -108,6 +108,11 @@ class RealChartMotorEnv:
         )
         if tail_s < 0.0:
             raise ValueError("tail_s must be finite and non-negative")
+        timing_scale = _finite_body_value(
+            timing_scale, error="timing_scale must be finite and positive"
+        )
+        if timing_scale <= 0.0:
+            raise ValueError("timing_scale must be finite and positive")
         behind_floors = _visible_floor_count(behind_floors, "behind_floors")
         ahead_floors = _visible_floor_count(ahead_floors, "ahead_floors")
         episode_end_s = max(
