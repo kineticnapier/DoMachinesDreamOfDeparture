@@ -95,11 +95,22 @@ class StraightPlanetGeometryEncoder:
         bpm = _finite_body_value(bpm, error="bpm must be finite and positive")
         if bpm <= 0.0:
             raise ValueError("bpm must be positive")
+        validated_targets: list[TargetHit] = []
         for target in targets:
-            _finite_body_value(target.time_s, error="target time_s must be finite")
+            time_s = _finite_body_value(
+                target.time_s, error="target time_s must be finite"
+            )
             if not isinstance(target.key, str) or target.key not in ("left", "right"):
                 raise ValueError("target key must be 'left' or 'right'")
-        self._targets = tuple(sorted(targets, key=lambda target: target.time_s))
+            # float()-only timestamps pass finite validation but cannot be
+            # sorted or subtracted. Keep ordinary int/float targets unchanged.
+            if not isinstance(target.time_s, (int, float)):
+                validated_targets.append(TargetHit(time_s, target.key))
+            else:
+                validated_targets.append(target)
+        self._targets = tuple(
+            sorted(validated_targets, key=lambda target: target.time_s)
+        )
         self.bpm = float(bpm)
         self.config = config or PlanetVisionConfig()
         self.clockwise = bool(clockwise)
@@ -188,6 +199,9 @@ class StraightPlanetGeometryEncoder:
         if active_target_index is not None:
             if isinstance(active_target_index, bool) or not isinstance(active_target_index, Integral):
                 raise IndexError("active target index must be an integer")
+            # Integral subclasses may override ordering and equality. Convert
+            # before both range checks and held-frame signature comparison.
+            active_target_index = int(active_target_index)
             if active_target_index < 0 or active_target_index >= len(self._targets):
                 raise IndexError(f"active target index out of range: {active_target_index}")
         sample_period = self.config.sample_period_s
