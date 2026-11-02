@@ -4,6 +4,8 @@ import random
 from dataclasses import dataclass
 from math import cos, pi, sin
 
+from dmdod.motor.body import _finite_body_value
+
 from dmdod.evaluation.evaluator import TargetHit
 
 
@@ -40,6 +42,12 @@ class PlanetVisionConfig:
     dropout_probability: float = 0.01
 
     def __post_init__(self) -> None:
+        # Reject malformed sensor values before they can corrupt sampling state.
+        for name in (
+            "latency_s", "latency_jitter_s", "sample_period_s",
+            "position_noise_std", "dropout_probability",
+        ):
+            _finite_body_value(getattr(self, name), error=f"{name} must be finite")
         if self.latency_s < 0.0:
             raise ValueError("latency_s must be non-negative")
         if self.latency_jitter_s < 0.0:
@@ -76,8 +84,13 @@ class StraightPlanetGeometryEncoder:
         seed: int | None = None,
         clockwise: bool = False,
     ) -> None:
+        _finite_body_value(bpm, error="bpm must be finite and positive")
         if bpm <= 0.0:
             raise ValueError("bpm must be positive")
+        for target in targets:
+            _finite_body_value(target.time_s, error="target time_s must be finite")
+            if not isinstance(target.key, str) or target.key not in ("left", "right"):
+                raise ValueError("target key must be 'left' or 'right'")
         self._targets = tuple(sorted(targets, key=lambda target: target.time_s))
         self.bpm = float(bpm)
         self.config = config or PlanetVisionConfig()
@@ -159,6 +172,7 @@ class StraightPlanetGeometryEncoder:
         *,
         active_target_index: int | None,
     ) -> PlanetGeometryObservation:
+        _finite_body_value(simulation_time_s, error="simulation_time_s must be finite")
         sample_period = self.config.sample_period_s
         can_hold = (
             sample_period > 0.0
