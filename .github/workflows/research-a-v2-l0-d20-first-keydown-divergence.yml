@@ -1,0 +1,56 @@
+name: Research A v2-L0-D20 archived first physical KeyDown divergence
+
+on:
+  pull_request:
+    branches:
+      - research/a-v2-l0-d19-paired-motor-post-ppo
+    paths:
+      - "docs/research-a-v2-l0-d20-*.md"
+      - "scripts/a002v2_l0_d20_first_keydown_divergence.py"
+      - "tests/test_research_a_v2_l0_d20_first_keydown_divergence.py"
+      - ".github/workflows/research-a-v2-l0-d20-first-keydown-divergence.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  compare-archived-traces:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - name: Checkout isolated D20 Draft branch
+        uses: actions/checkout@v5
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.11"
+      - name: Run D20 contracts without training or Motor
+        run: |
+          set -o pipefail
+          mkdir -p reports/research_a_v2_l0_d20
+          python -m unittest discover -s tests -p 'test_research_a_v2_l0_d20_first_keydown_divergence.py' -v 2>&1 | tee reports/research_a_v2_l0_d20/tests.log
+      - name: Download untouched D19 archived physical traces
+        uses: actions/download-artifact@v4
+        with:
+          name: research-a-v2-l0-d19-paired-physical-motor
+          path: archived-d19
+          run-id: 41485667328
+          github-token: ${{ github.token }}
+          repository: ${{ github.repository }}
+      - name: Analyze first divergent physical KeyDown without new Motor
+        run: |
+          set -o pipefail
+          python -u scripts/a002v2_l0_d20_first_keydown_divergence.py \
+            --d19-json archived-d19/result.json \
+            --out reports/research_a_v2_l0_d20/result.json \
+            2>&1 | tee reports/research_a_v2_l0_d20/run.log
+      - name: Preserve success and failure evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: research-a-v2-l0-d20-first-keydown-divergence
+          path: reports/research_a_v2_l0_d20/
+          retention-days: 30
+          if-no-files-found: warn
