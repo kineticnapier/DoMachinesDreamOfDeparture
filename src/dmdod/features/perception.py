@@ -42,27 +42,35 @@ class VisualCueConfig:
     def __post_init__(self) -> None:
         # Non-finite sensor parameters silently corrupt visible cues or clocks.
         # Reject them before preserving the existing finite-value range rules.
-        for name in (
+        # math.isfinite accepts __float__-only objects, but the following
+        # range comparisons and the encoder's arithmetic need actual numbers.
+        # Validate all fields before storing their normalized float values.
+        names = (
             "latency_s", "width_s", "horizon_s", "latency_jitter_s",
             "sample_period_s", "amplitude_noise_std", "dropout_probability",
-        ):
-            _finite_body_value(
+        )
+        values = {
+            name: _finite_body_value(
                 getattr(self, name), error=f"{name} must be finite"
             )
-        if self.latency_s < 0.0:
+            for name in names
+        }
+        if values["latency_s"] < 0.0:
             raise ValueError("latency_s must be non-negative")
-        if self.width_s <= 0.0:
+        if values["width_s"] <= 0.0:
             raise ValueError("width_s must be positive")
-        if self.horizon_s <= 0.0:
+        if values["horizon_s"] <= 0.0:
             raise ValueError("horizon_s must be positive")
-        if self.latency_jitter_s < 0.0:
+        if values["latency_jitter_s"] < 0.0:
             raise ValueError("latency_jitter_s must be non-negative")
-        if self.sample_period_s < 0.0:
+        if values["sample_period_s"] < 0.0:
             raise ValueError("sample_period_s must be non-negative")
-        if self.amplitude_noise_std < 0.0:
+        if values["amplitude_noise_std"] < 0.0:
             raise ValueError("amplitude_noise_std must be non-negative")
-        if not 0.0 <= self.dropout_probability <= 1.0:
+        if not 0.0 <= values["dropout_probability"] <= 1.0:
             raise ValueError("dropout_probability must be between 0 and 1")
+        for name in names:
+            object.__setattr__(self, name, values[name])
 
 
 class VisualCueEncoder:
