@@ -38,8 +38,14 @@ class RealChartFeatureConfig:
         # Reject bool/fractional values instead of silently changing the layout.
         for name in ("behind_floors", "ahead_floors"):
             value = getattr(self, name)
-            if isinstance(value, bool) or not isinstance(value, int) or value < 0:
+            if isinstance(value, bool) or not isinstance(value, int):
                 raise ValueError(f"{name} must be a non-negative integer")
+            # int subclasses can override comparison, addition, and __int__.
+            # Use the underlying integer before validating the fixed layout.
+            count = int.__int__(value)
+            if count < 0:
+                raise ValueError(f"{name} must be a non-negative integer")
+            object.__setattr__(self, name, count)
 
         # Both scales and their product are used as divisors in the visible
         # feature encoder. Individually finite values can still underflow or
