@@ -84,7 +84,7 @@ def batch_digest(batch):
             digest.update(key.encode())
             digest.update(str(tensor.dtype).encode())
             digest.update(json.dumps(list(tensor.shape)).encode())
-            digest.update(tensor.numpy().tobytes())
+            digest.update(bytes(tensor.reshape(-1).view(torch.uint8).tolist()))
         digest.update(json.dumps({key: ep[key] for key in
                                   ("score", "interval_ms", "start_s")},
                                  sort_keys=True, separators=(",", ":")).encode())
