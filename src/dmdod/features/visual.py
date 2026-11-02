@@ -35,6 +35,9 @@ class RgbFrame:
     data: bytes
 
     def __post_init__(self) -> None:
+        # Reject mutable or non-binary payloads even when their length matches.
+        if not isinstance(self.data, bytes):
+            raise ValueError("RGB888 frame data must be bytes")
         if any(isinstance(size, bool) or not isinstance(size, Integral) or size <= 0
                for size in (self.width, self.height)):
             raise ValueError("RGB frame dimensions must be positive integers")
