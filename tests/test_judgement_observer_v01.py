@@ -275,3 +275,52 @@ def test_large_counter_schema_checks_membership_without_sorting_each_frame(monke
     changed["unknown"] = 1
     assert observer.observe(frame(0.2, changed)).status is JudgementDeltaStatus.INVALID
     assert observer.observe(frame(0.3, dict.fromkeys(labels, 0))).status is JudgementDeltaStatus.BASELINE
+
+
+class _CounterWithMisleadingOperators(int):
+    def __lt__(self, other):
+        return False
+
+    def __sub__(self, other):
+        return 999
+
+    def __int__(self):
+        return 999
+
+
+class _CounterWithoutOrdering(int):
+    def __lt__(self, other):
+        raise TypeError("counter does not support ordering")
+
+
+def test_int_subclass_counter_uses_underlying_integer_for_visible_delta():
+    observer = JudgementObserver(LABELS)
+    assert observer.observe(frame(0.0, dict.fromkeys(LABELS, 0))).status is JudgementDeltaStatus.BASELINE
+    delta = observer.observe(
+        frame(0.1, {"perfect": _CounterWithMisleadingOperators(2), "very_late": 0, "too_early": 0})
+    )
+    assert delta.status is JudgementDeltaStatus.DELTA
+    assert delta.delta_map["perfect"] == 2
+    assert delta.total_increment == 2
+    assert type(delta.delta_map["perfect"]) is int
+
+
+def test_negative_int_subclass_cannot_bypass_visible_counter_validation():
+    observer = JudgementObserver(LABELS)
+    observer.observe(frame(0.0, dict.fromkeys(LABELS, 0)))
+    invalid = observer.observe(
+        frame(0.1, {"perfect": _CounterWithMisleadingOperators(-1), "very_late": 0, "too_early": 0})
+    )
+    assert invalid.status is JudgementDeltaStatus.INVALID
+    assert not invalid.delta_available
+    assert observer.observe(frame(0.2, dict.fromkeys(LABELS, 1))).status is JudgementDeltaStatus.BASELINE
+
+
+def test_int_subclass_without_ordering_does_not_crash_visible_counter_observer():
+    observer = JudgementObserver(LABELS)
+    observer.observe(frame(0.0, dict.fromkeys(LABELS, 0)))
+    delta = observer.observe(
+        frame(0.1, {"perfect": _CounterWithoutOrdering(3), "very_late": 0, "too_early": 0})
+    )
+    assert delta.status is JudgementDeltaStatus.DELTA
+    assert delta.delta_map["perfect"] == 3
