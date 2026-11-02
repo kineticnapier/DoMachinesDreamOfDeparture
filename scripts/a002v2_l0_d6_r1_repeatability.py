@@ -14,7 +14,8 @@ SOURCE_RUNS = {"r1": 41309837474, "d3": 41369778494,
                "d5a": 41380105087, "d5b": 41380334940}
 SOURCE_ARTIFACTS = {"r1": 13084957586, "d3": 13109230783,
                     "d5a": 13112861470, "d5b": 13112708284}
-D5_HEAD = "b118bc6ee596bf5dffb08d1d0300489ff46b08b7"
+D5_HEADS = {"d5a": "8df77ed43f993d5c187614c95966705b97f471b2",
+            "d5b": "b118bc6ee596bf5dffb08d1d0300489ff46b08b7"}
 MODEL_KEYS = [("a0", 0), ("a0", 1), ("a1", 0), ("a1", 1)]
 MODEL_NAME = "research-a-v2-l0-a0-seed0-ep256.pt"
 
@@ -184,7 +185,7 @@ def audit(r1: Path, d3: Path, d5a: Path, d5b: Path) -> dict:
         "protocol": PROTOCOL, "type": "retrospective_archived_audit",
         "not_blind_or_new_intervention": True, "new_training_episodes": 0,
         "source_runs": SOURCE_RUNS, "source_artifacts": SOURCE_ARTIFACTS,
-        "d5_head": D5_HEAD,
+        "d5_heads": D5_HEADS,
         "classification": classify(d5_runs_equal=all_files_equal,
                                    d5_matches_r1=d5_matches_r1),
         "d5_all_files_byte_equal": all_files_equal,
