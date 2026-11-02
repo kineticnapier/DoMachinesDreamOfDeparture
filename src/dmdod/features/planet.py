@@ -44,21 +44,28 @@ class PlanetVisionConfig:
 
     def __post_init__(self) -> None:
         # Reject malformed sensor values before they can corrupt sampling state.
-        for name in (
+        names = (
             "latency_s", "latency_jitter_s", "sample_period_s",
             "position_noise_std", "dropout_probability",
-        ):
-            _finite_body_value(getattr(self, name), error=f"{name} must be finite")
-        if self.latency_s < 0.0:
+        )
+        # Validate all values before storing them: __float__-only inputs pass
+        # finite checks but cannot necessarily be compared or used in math.
+        values = {
+            name: _finite_body_value(getattr(self, name), error=f"{name} must be finite")
+            for name in names
+        }
+        if values["latency_s"] < 0.0:
             raise ValueError("latency_s must be non-negative")
-        if self.latency_jitter_s < 0.0:
+        if values["latency_jitter_s"] < 0.0:
             raise ValueError("latency_jitter_s must be non-negative")
-        if self.sample_period_s < 0.0:
+        if values["sample_period_s"] < 0.0:
             raise ValueError("sample_period_s must be non-negative")
-        if self.position_noise_std < 0.0:
+        if values["position_noise_std"] < 0.0:
             raise ValueError("position_noise_std must be non-negative")
-        if not 0.0 <= self.dropout_probability <= 1.0:
+        if not 0.0 <= values["dropout_probability"] <= 1.0:
             raise ValueError("dropout_probability must be between 0 and 1")
+        for name in names:
+            object.__setattr__(self, name, values[name])
 
 
 class StraightPlanetGeometryEncoder:
@@ -85,7 +92,7 @@ class StraightPlanetGeometryEncoder:
         seed: int | None = None,
         clockwise: bool = False,
     ) -> None:
-        _finite_body_value(bpm, error="bpm must be finite and positive")
+        bpm = _finite_body_value(bpm, error="bpm must be finite and positive")
         if bpm <= 0.0:
             raise ValueError("bpm must be positive")
         for target in targets:
@@ -173,7 +180,9 @@ class StraightPlanetGeometryEncoder:
         *,
         active_target_index: int | None,
     ) -> PlanetGeometryObservation:
-        _finite_body_value(simulation_time_s, error="simulation_time_s must be finite")
+        simulation_time_s = _finite_body_value(
+            simulation_time_s, error="simulation_time_s must be finite"
+        )
         # Validate before the held-frame fast path: False compares equal to 0,
         # and True to 1, but neither is a valid target index.
         if active_target_index is not None:
