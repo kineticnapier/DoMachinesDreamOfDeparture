@@ -3,6 +3,7 @@ from __future__ import annotations
 import random
 from dataclasses import dataclass
 from math import cos, pi, sin
+from numbers import Integral
 
 from dmdod.motor.body import _finite_body_value
 
@@ -173,6 +174,13 @@ class StraightPlanetGeometryEncoder:
         active_target_index: int | None,
     ) -> PlanetGeometryObservation:
         _finite_body_value(simulation_time_s, error="simulation_time_s must be finite")
+        # Validate before the held-frame fast path: False compares equal to 0,
+        # and True to 1, but neither is a valid target index.
+        if active_target_index is not None:
+            if isinstance(active_target_index, bool) or not isinstance(active_target_index, Integral):
+                raise IndexError("active target index must be an integer")
+            if active_target_index < 0 or active_target_index >= len(self._targets):
+                raise IndexError(f"active target index out of range: {active_target_index}")
         sample_period = self.config.sample_period_s
         can_hold = (
             sample_period > 0.0
