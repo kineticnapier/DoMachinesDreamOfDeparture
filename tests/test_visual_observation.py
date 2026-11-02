@@ -92,7 +92,7 @@ def test_scheduler_rejects_invalid_rates_and_ticks() -> None:
 )
 def test_rgb_frame_rejects_non_integer_dimensions(width: object, height: object) -> None:
     with pytest.raises(ValueError, match="positive integers"):
-        RgbFrame(width=width, height=height, data=b"\\x00" * 3)
+        RgbFrame(width=width, height=height, data=bytes(3))
 
 
 @pytest.mark.parametrize(
