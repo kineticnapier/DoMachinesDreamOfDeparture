@@ -309,3 +309,84 @@ def test_planet_encoder_rejects_nonfinite_float_only_time_atomically(bad):
     assert (encoder._held_observation, encoder._held_target_index,
             encoder._next_sample_time_s) == before
     assert encoder.observe(0.91, active_target_index=0) == first
+
+
+def test_planet_normalizes_float_only_target_times_without_mutating_input():
+    original = [
+        TargetHit(_FloatOnly(1.5), "right"),
+        TargetHit(_FloatOnly(1.0), "left"),
+    ]
+    config = PlanetVisionConfig(
+        latency_s=0.0, latency_jitter_s=0.0, sample_period_s=0.0,
+        position_noise_std=0.0, dropout_probability=0.0,
+    )
+    encoder = StraightPlanetGeometryEncoder(original, bpm=120.0, config=config)
+    baseline = StraightPlanetGeometryEncoder(
+        [TargetHit(1.5, "right"), TargetHit(1.0, "left")],
+        bpm=120.0, config=config,
+    )
+    assert [target.time_s for target in encoder._targets] == [1.0, 1.5]
+    assert all(type(target.time_s) is float for target in encoder._targets)
+    assert isinstance(original[0].time_s, _FloatOnly)
+    for time_s in (0.9, 1.0, 1.5):
+        for index in (0, 1):
+            assert encoder.observe(time_s, active_target_index=index) == baseline.observe(
+                time_s, active_target_index=index
+            )
+
+
+@pytest.mark.parametrize("bad", (float("nan"), float("inf"), float("-inf")))
+def test_planet_rejects_nonfinite_float_only_target_times(bad):
+    with pytest.raises(ValueError, match="target time_s must be finite"):
+        StraightPlanetGeometryEncoder(
+            [TargetHit(_FloatOnly(bad), "left")], bpm=120.0
+        )
+
+
+class _UnorderablePlanetIndex(int):
+    def __lt__(self, other):
+        raise TypeError("custom ordering unavailable")
+
+    def __ge__(self, other):
+        raise TypeError("custom ordering unavailable")
+
+
+class _AlwaysEqualPlanetIndex(int):
+    def __eq__(self, other):
+        return True
+
+
+def test_planet_normalizes_integral_target_indices_before_range_checks():
+    encoder = StraightPlanetGeometryEncoder(
+        [TargetHit(1.0, "left"), TargetHit(1.5, "right")],
+        bpm=120.0,
+        config=PlanetVisionConfig(
+            latency_s=0.0, latency_jitter_s=0.0, sample_period_s=0.5,
+            position_noise_std=0.0, dropout_probability=0.0,
+        ),
+    )
+    first = encoder.observe(0.9, active_target_index=_UnorderablePlanetIndex(0))
+    assert encoder._held_target_index == 0
+    assert type(encoder._held_target_index) is int
+    clock = encoder._next_sample_time_s
+    with pytest.raises(IndexError, match="out of range"):
+        encoder.observe(0.91, active_target_index=_UnorderablePlanetIndex(2))
+    assert encoder._held_observation == first
+    assert encoder._held_target_index == 0
+    assert encoder._next_sample_time_s == clock
+
+
+def test_planet_normalizes_integral_index_before_held_frame_comparison():
+    encoder = StraightPlanetGeometryEncoder(
+        [TargetHit(1.0, "left"), TargetHit(1.5, "right")],
+        bpm=120.0,
+        config=PlanetVisionConfig(
+            latency_s=0.0, latency_jitter_s=0.0, sample_period_s=0.5,
+            position_noise_std=0.0, dropout_probability=0.0,
+        ),
+    )
+    first = encoder.observe(0.9, active_target_index=0)
+    second = encoder.observe(0.91, active_target_index=_AlwaysEqualPlanetIndex(1))
+    assert second != first
+    assert encoder._held_target_index == 1
+    assert type(encoder._held_target_index) is int
