@@ -167,7 +167,7 @@ class TestD23(unittest.TestCase):
 
     def test_reject_bad_clock(self):
         source, traces = fixture()
-        traces["before"]["steps"][370]["end_time_s"] = 3.9
+        traces["before_to_left"]["steps"][370]["end_time_s"] = 3.9
         with self.assertRaisesRegex(ValueError, "step clock"):
             d23.analyze(source, traces)
 
