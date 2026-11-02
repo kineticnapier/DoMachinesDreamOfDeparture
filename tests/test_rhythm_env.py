@@ -518,3 +518,46 @@ def test_rhythm_preserves_finite_target_order_and_supported_keys():
     targets = [TargetHit(0.50, "right"), TargetHit(-0.10, "left")]
     env = RhythmMotorEnv(targets, bpm=120.0)
     assert env._targets == (targets[1], targets[0])
+
+
+class _FloatOnlyTargetTime:
+    """A finite timestamp accepted by float() without ordering/arithmetic."""
+
+    def __init__(self, value):
+        self.value = value
+
+    def __float__(self):
+        return float(self.value)
+
+
+def test_rhythm_normalizes_float_only_target_times_before_sorting():
+    original = [
+        TargetHit(_FloatOnlyTargetTime(0.8), "right"),
+        TargetHit(_FloatOnlyTargetTime(0.5), "left"),
+    ]
+    env = RhythmMotorEnv(original, bpm=120.0)
+    baseline = RhythmMotorEnv(
+        [TargetHit(0.8, "right"), TargetHit(0.5, "left")], bpm=120.0
+    )
+    assert [target.time_s for target in env._targets] == [0.5, 0.8]
+    assert all(type(target.time_s) is float for target in env._targets)
+    assert isinstance(original[0].time_s, _FloatOnlyTargetTime)
+    assert env.reset() == baseline.reset()
+    event = TimedKeyEvent(0.5, "left", KeyEvent.DOWN)
+    assert env._score_event(event) == baseline._score_event(event)
+    assert env.stats == baseline.stats
+
+
+def test_rhythm_infers_bpm_from_float_only_target_times():
+    env = RhythmMotorEnv([
+        TargetHit(_FloatOnlyTargetTime(1.0), "right"),
+        TargetHit(_FloatOnlyTargetTime(0.5), "left"),
+    ])
+    assert env.bpm == pytest.approx(120.0)
+    assert [target.time_s for target in env._targets] == [0.5, 1.0]
+
+
+@pytest.mark.parametrize("bad", (float("nan"), float("inf"), float("-inf")))
+def test_rhythm_rejects_nonfinite_float_only_target_times(bad):
+    with pytest.raises(ValueError, match="target time_s must be finite"):
+        RhythmMotorEnv([TargetHit(_FloatOnlyTargetTime(bad), "left")], bpm=120.0)
