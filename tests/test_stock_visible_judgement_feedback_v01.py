@@ -370,3 +370,47 @@ def test_visible_capture_rejects_overflowed_render_cutoff_without_state_change(d
     frame = renderer.capture(1e308)
     assert dict(frame.counters)["perfect"] == 1
     assert frame.displayed_at_s == 1e308
+
+
+class _MisleadingNotificationCount(int):
+    def __le__(self, other):
+        return False
+
+    def __radd__(self, other):
+        return 999
+
+    def __int__(self):
+        return 999
+
+
+class _UnorderableNotificationCount(int):
+    def __le__(self, other):
+        raise TypeError("comparison is unavailable")
+
+
+def test_visible_notification_int_subclass_uses_actual_count_not_overridden_addition() -> None:
+    renderer = VisibleCounterRenderer(_contract(fail_miss=False))
+    assert renderer.notify(
+        StockJudgementNotification(0.05, "perfect", _MisleadingNotificationCount(2))
+    ).accepted
+    count = dict(renderer.capture(0.1).counters)["perfect"]
+    assert count == 2
+    assert type(count) is int
+
+
+def test_visible_notification_negative_int_subclass_cannot_bypass_validation() -> None:
+    renderer = VisibleCounterRenderer(_contract(fail_miss=False))
+    with pytest.raises(ValueError, match="judgement count must be a positive integer"):
+        renderer.notify(
+            StockJudgementNotification(0.05, "perfect", _MisleadingNotificationCount(-2))
+        )
+    assert dict(renderer.capture(0.1).counters)["perfect"] == 0
+    assert not renderer._pending
+
+
+def test_visible_notification_int_subclass_without_ordering_is_normalized() -> None:
+    renderer = VisibleCounterRenderer(_contract(fail_miss=False))
+    assert renderer.notify(
+        StockJudgementNotification(0.05, "perfect", _UnorderableNotificationCount(3))
+    ).accepted
+    assert dict(renderer.capture(0.1).counters)["perfect"] == 3
