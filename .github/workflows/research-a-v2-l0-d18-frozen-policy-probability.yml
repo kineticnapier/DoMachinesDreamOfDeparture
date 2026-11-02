@@ -1,0 +1,72 @@
+name: Research A v2-L0-D18 frozen policy probability comparison
+
+on:
+  pull_request:
+    branches:
+      - research/a-v2-l0-d17-action-gradient-decomposition
+    paths:
+      - "docs/research-a-v2-l0-d18-frozen-policy-probability-*.md"
+      - "scripts/a002v2_l0_d18_frozen_policy_probability.py"
+      - "tests/test_research_a_v2_l0_d18_frozen_policy_probability.py"
+      - ".github/workflows/research-a-v2-l0-d18-frozen-policy-probability.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  frozen-policy-probabilities:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    env:
+      PYTHONHASHSEED: "0"
+      OMP_NUM_THREADS: "1"
+      MKL_NUM_THREADS: "1"
+    steps:
+      - name: Checkout isolated D18 Draft branch
+        uses: actions/checkout@v5
+      - name: Use Python 3.11
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.11"
+      - name: Install pinned CPU dependencies
+        run: |
+          python -m pip install -e ".[dev]"
+          python -m pip install "torch==2.5.1+cpu" --index-url https://download.pytorch.org/whl/cpu
+      - name: Verify preregistered D18 contracts
+        run: |
+          set -o pipefail
+          mkdir -p reports/research_a_v2_l0_d18
+          python -m pytest -q tests/test_research_a_v2_l0_d18_frozen_policy_probability.py 2>&1 | tee reports/research_a_v2_l0_d18/tests.log
+      - name: Download archived D8 initial state
+        uses: actions/download-artifact@v4
+        with:
+          name: research-a-v2-l0-d8-cpu-dispatch
+          path: archived-d8
+          run-id: 41397065687
+          github-token: ${{ github.token }}
+          repository: ${{ github.repository }}
+      - name: Download archived D12 frozen batch and two updated models
+        uses: actions/download-artifact@v4
+        with:
+          name: research-a-v2-l0-d12-frozen-ppo-cpu
+          path: archived-d12
+          run-id: 41424435292
+          github-token: ${{ github.token }}
+          repository: ${{ github.repository }}
+      - name: Compare three policies on exactly the same 3800 frozen observations
+        run: |
+          set -o pipefail
+          env -u ATEN_CPU_CAPABILITY python -u scripts/a002v2_l0_d18_frozen_policy_probability.py \
+            --d8-dir archived-d8 --d12-dir archived-d12 \
+            --out reports/research_a_v2_l0_d18/result.json \
+            2>&1 | tee reports/research_a_v2_l0_d18/run.log
+      - name: Preserve success and failure evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: research-a-v2-l0-d18-frozen-policy-probabilities
+          path: reports/research_a_v2_l0_d18/
+          retention-days: 30
+          if-no-files-found: warn
