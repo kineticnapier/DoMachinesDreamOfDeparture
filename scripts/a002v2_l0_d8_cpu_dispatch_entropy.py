@@ -35,7 +35,7 @@ def initial_digest(model):
     return sha256(stream.getvalue()).hexdigest()
 
 
-def validate_archives(r1_dir: Path, d3_file: Path):
+def validate_archives(r1_dir: Path, d3_file: Path, d7_file: Path):
     models, _ = source_models(r1_dir, "r1")
     original = [m for m in models if (m["arm"], m["seed"]) == (ARM, SEED)]
     d3 = json.loads(d3_file.read_text(encoding="utf-8"))
@@ -60,6 +60,16 @@ def validate_archives(r1_dir: Path, d3_file: Path):
     if len(original["evaluations"]) != 3 or len(replay["all_updates"]) != 32:
         raise ValueError("incomplete R1/D3 archive")
     stage0 = original["evaluations"][0]
+    d7 = json.loads(d7_file.read_text(encoding="utf-8"))
+    diff = d7.get("stage0_difference")
+    if d7.get("classification") != "initial_evaluation_diverged":
+        raise ValueError("D7 archival stop classification differs")
+    if not isinstance(diff, dict) or diff.get("path") != "stage0.argmax.mean_entropy":
+        raise ValueError("D7 archival initial entropy difference missing")
+    if diff.get("expected") != stage0["argmax"]["mean_entropy"]:
+        raise ValueError("D7 archival original entropy differs")
+    if diff.get("actual") != D7_ENTROPY:
+        raise ValueError("D7 archival observed entropy differs")
     if stage0["episode"] != 0:
         raise ValueError("archived stage0 not initial")
     for mode, count in EXPECTED_EPISODES.items():
@@ -73,6 +83,7 @@ def validate_archives(r1_dir: Path, d3_file: Path):
         "original_stage0": stage0,
         "source_runs": {"r1": R1_RUN, "d3": D3_RUN, "d7": D7_RUN},
         "d3_r1_reproduced": True,
+        "d7_initial_entropy_difference_verified": True,
     }
 
 
@@ -214,6 +225,7 @@ def main():
                         required=True)
     parser.add_argument("--r1", type=Path)
     parser.add_argument("--d3", type=Path)
+    parser.add_argument("--d7", type=Path)
     parser.add_argument("--expected", type=Path)
     parser.add_argument("--condition", choices=("native", "default"))
     parser.add_argument("--native", type=Path)
@@ -223,9 +235,9 @@ def main():
     if args.out.exists():
         raise FileExistsError("refuse to overwrite D8 output")
     if args.mode == "validate":
-        if not (args.r1 and args.d3):
-            parser.error("validate requires --r1 and --d3")
-        result = validate_archives(args.r1, args.d3)
+        if not (args.r1 and args.d3 and args.d7):
+            parser.error("validate requires --r1, --d3 and --d7")
+        result = validate_archives(args.r1, args.d3, args.d7)
     elif args.mode == "evaluate":
         if not (args.expected and args.condition):
             parser.error("evaluate requires --expected and --condition")
