@@ -184,6 +184,10 @@ class VisibleCounterRenderer:
         if not isfinite(observed):
             raise ValueError("observation timestamp must be finite")
         cutoff = displayed - self.display_latency_s
+        # Subtraction of two finite timestamps can still overflow to -inf.
+        # Reject before consuming notifications or updating the capture clock.
+        if not isfinite(cutoff):
+            raise ValueError("render cutoff timestamp must be finite")
         mapping = self._category_to_label
         # Leave future events in the heap without scanning them each frame.
         # Keep the original inclusive 1e-12 boundary unchanged.

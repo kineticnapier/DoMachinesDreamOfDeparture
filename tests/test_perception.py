@@ -109,3 +109,110 @@ def test_visual_cue_config_preserves_finite_boundary_values():
     assert config.dropout_probability == 1.0
     assert config.width_s == 1e-6
     assert VisualCueConfig().latency_s == 0.050
+
+
+@pytest.mark.parametrize(
+    "field",
+    (
+        "latency_s", "width_s", "horizon_s", "latency_jitter_s",
+        "sample_period_s", "amplitude_noise_std", "dropout_probability",
+    ),
+)
+@pytest.mark.parametrize("bad", (True, False, "0.1", b"0.1", None, 10**1000, object()))
+def test_visual_cue_config_rejects_malformed_sensor_parameters(field, bad):
+    # Each invalid field must raise the same public ValueError instead of
+    # silently accepting bool or leaking TypeError/OverflowError.
+    with pytest.raises(ValueError, match=rf"{field} must be finite"):
+        VisualCueConfig(**{field: bad})
+
+
+def test_visual_cue_config_preserves_integer_compatible_finite_values():
+    config = VisualCueConfig(
+        latency_s=0, width_s=1, horizon_s=2,
+        latency_jitter_s=0, sample_period_s=0,
+        amplitude_noise_std=0, dropout_probability=1,
+    )
+    assert config.width_s == 1
+    assert config.dropout_probability == 1
+
+
+def test_visual_cue_sample_clock_skips_large_observation_gap():
+    # An unbounded per-frame loop would require 50 million iterations.
+    config = VisualCueConfig(
+        latency_s=0.0, sample_period_s=0.020,
+    )
+    encoder = VisualCueEncoder([TargetHit(0.5, "left")], config=config)
+    encoder.observe(0.45, active_target_indices=(0,))
+    result = encoder.observe(1_000_000.0, active_target_indices=(0,))
+    assert result.left == result.right == 0.0
+    assert 1_000_000.0 < encoder._next_sample_time_s <= 1_000_000.021
+
+
+def test_visual_cue_sample_clock_sub_ulp_period_makes_progress():
+    # At 0.45 seconds, adding the smallest subnormal does not advance a float.
+    config = VisualCueConfig(
+        latency_s=0.0, sample_period_s=5e-324,
+    )
+    encoder = VisualCueEncoder([TargetHit(0.5, "left")], config=config)
+    encoder.observe(0.45, active_target_indices=(0,))
+    encoder.observe(0.46, active_target_indices=(0,))
+    assert encoder._next_sample_time_s > 0.46
+
+
+def test_visual_cue_sample_clock_preserves_ordinary_repeated_addition():
+    period = 0.0001
+    config = VisualCueConfig(latency_s=0.0, sample_period_s=period)
+    encoder = VisualCueEncoder([TargetHit(0.5, "left")], config=config)
+    encoder.observe(0.45, active_target_indices=(0,))
+    encoder.observe(0.50, active_target_indices=(0,))
+    expected = 0.45 + period
+    while expected <= 0.50 + 1e-12:
+        expected += period
+    assert encoder._next_sample_time_s == expected
+
+
+@pytest.mark.parametrize(
+    "bad",
+    (float("nan"), float("inf"), float("-inf"), True, False,
+     "0.46", b"0.46", None, 10**1000, object()),
+)
+def test_visual_cue_rejects_invalid_observation_times_without_state_mutation(bad):
+    config = VisualCueConfig(
+        latency_s=0.0, width_s=0.05, horizon_s=1.0,
+        sample_period_s=0.1,
+    )
+    encoder = VisualCueEncoder([TargetHit(0.5, "left")], config=config)
+    first = encoder.observe(0.45, active_target_indices=(0,))
+    next_sample = encoder._next_sample_time_s
+    with pytest.raises(ValueError, match="simulation_time_s must be finite"):
+        encoder.observe(bad, active_target_indices=(0,))
+    assert encoder._next_sample_time_s == next_sample
+    assert encoder._held_observation == first
+    assert encoder.observe(0.46, active_target_indices=(0,)) == first
+
+
+@pytest.mark.parametrize(
+    "bad",
+    (float("nan"), float("inf"), float("-inf"), True, False,
+     "0.5", b"0.5", None, 10**1000, object()),
+)
+def test_visual_cue_encoder_rejects_invalid_target_times(bad):
+    with pytest.raises(ValueError, match="target time_s must be finite"):
+        VisualCueEncoder([TargetHit(bad, "left")])
+
+
+@pytest.mark.parametrize("bad", ("", "middle", 1, True, None, []))
+def test_visual_cue_encoder_rejects_unsupported_target_keys(bad):
+    with pytest.raises(ValueError, match="target key must be"):
+        VisualCueEncoder([TargetHit(0.5, bad)])
+
+
+def test_visual_cue_encoder_preserves_finite_preroll_and_supported_keys():
+    config = VisualCueConfig(latency_s=0.0, width_s=0.05, horizon_s=1.0)
+    encoder = VisualCueEncoder(
+        [TargetHit(0.5, "left"), TargetHit(-0.2, "right")],
+        config=config,
+    )
+    observation = encoder.observe(-0.2, active_target_indices=(0,))
+    assert observation.right > 0.99
+    assert observation.left == 0.0

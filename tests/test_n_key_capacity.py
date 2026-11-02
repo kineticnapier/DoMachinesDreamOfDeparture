@@ -5,7 +5,8 @@ import pytest
 from dmdod.four_key_motor import FourKeyAction, FourKeyMotorEnv
 from dmdod.n_key_capacity import CenterFirstNKeyTeacher, calibrate_n_key_press_lead
 from dmdod.n_key_motor import NKeyAction, NKeyMotorEnv, n_key_names, n_key_tiers
-from dmdod.motor.n_key import NKeyBody
+from dmdod.motor.n_key import NKeyBody, NKeyKeyboard
+from dmdod.motor.keyboard import KeyConfig, KeyEvent, TwoKeyKeyboard
 
 
 def test_n_key_layout_is_center_symmetric() -> None:
@@ -488,6 +489,36 @@ def test_n_key_env_accepts_finite_integer_clock_configuration() -> None:
     env = NKeyMotorEnv(4, control_dt_s=1, physics_dt_s=1)
     assert env.physics_substeps == 1
 
+
+@pytest.mark.parametrize(
+    ("control_dt_s", "physics_dt_s"),
+    [(1e308, 1e-308), (1e-10, 5e-324)],
+)
+def test_n_key_env_rejects_overflowed_substep_ratio(control_dt_s, physics_dt_s) -> None:
+    # Both clock values are finite and positive, but their ratio is infinity.
+    # The constructor must report a configuration error, not OverflowError.
+    with pytest.raises(ValueError, match="integer multiple of physics_dt_s"):
+        NKeyMotorEnv(4, control_dt_s=control_dt_s, physics_dt_s=physics_dt_s)
+
+
+@pytest.mark.parametrize(
+    ("control_dt_s", "physics_dt_s"),
+    [(1e-13, 6e-14), (1e-14, 6e-15)],
+)
+def test_n_key_env_rejects_fractional_substeps_for_tiny_clocks(
+    control_dt_s, physics_dt_s
+) -> None:
+    # The former absolute 1e-12-second tolerance accepted 5/3 steps
+    # because the rounding error was smaller than the tolerance.
+    with pytest.raises(ValueError, match="integer multiple of physics_dt_s"):
+        NKeyMotorEnv(4, control_dt_s=control_dt_s, physics_dt_s=physics_dt_s)
+
+
+def test_n_key_env_accepts_exact_tiny_integer_substeps() -> None:
+    env = NKeyMotorEnv(4, control_dt_s=1e-13, physics_dt_s=5e-14)
+    assert env.physics_substeps == 2
+
+
 @pytest.mark.parametrize("trace", (False, True))
 def test_n_key_hand_coordination_positions_are_reused_without_changing_physics(
     monkeypatch, trace: bool
@@ -514,3 +545,50 @@ def test_n_key_hand_coordination_positions_are_reused_without_changing_physics(
         action = patterns[(index // 10) % len(patterns)]
         assert cached.step(action) == reference.step(action)
     assert cached.diagnostics() == reference.diagnostics()
+
+
+@pytest.mark.parametrize(
+    "bad",
+    (float("nan"), float("inf"), float("-inf"), True, "0.02", None, 10**1000),
+)
+def test_n_key_keyboard_rejects_malformed_positions_without_partial_keydown(
+    bad: object,
+) -> None:
+    keyboard = NKeyKeyboard(n_key_names(4))
+    # The first key would be pressed if step() updated keys before validating
+    # the invalid last position. Invalid input must leave all keys untouched.
+    crossing = keyboard.config.actuation_m + 1.0
+    with pytest.raises(ValueError, match="keyboard positions must be finite numbers"):
+        keyboard.step((crossing, 0.0, 0.0, bad))
+    assert all(not state.pressed for state in keyboard.states)
+
+    events = keyboard.step((crossing, 0.0, 0.0, 0.0))
+    assert [(key, event.value) for key, event in events] == [("left_2", "down")]
+
+
+
+@pytest.mark.parametrize(
+    ("field", "bad"),
+    [
+        ("actuation_m", float("inf")),
+        ("actuation_m", True),
+        ("actuation_m", 10**1000),
+        ("reset_m", float("nan")),
+        ("reset_m", False),
+        ("reset_m", "0.0"),
+        ("reset_m", None),
+    ],
+)
+def test_keyboard_config_rejects_invalid_thresholds(field: str, bad: object) -> None:
+    # In particular, +inf actuation previously passed the ordering check,
+    # making both keyboard implementations silently suppress every key-down.
+    with pytest.raises(ValueError, match="keyboard thresholds must be finite numbers"):
+        KeyConfig(**{field: bad})
+
+
+def test_keyboard_config_preserves_finite_integer_thresholds_for_both_keyboards() -> None:
+    config = KeyConfig(actuation_m=1, reset_m=0)
+    n_key = NKeyKeyboard(n_key_names(4), config)
+    two_key = TwoKeyKeyboard(config=config)
+    assert n_key.step((1, 0, 0, 0)) == [("left_2", KeyEvent.DOWN)]
+    assert two_key.step(1, 0) == [("left", KeyEvent.DOWN)]

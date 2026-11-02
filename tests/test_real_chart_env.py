@@ -1,4 +1,4 @@
-from dataclasses import fields
+from dataclasses import fields, replace
 
 import pytest
 
@@ -8,6 +8,7 @@ from dmdod.adofai_timing import compile_adofai
 from dmdod.keyboard import KeyEvent
 from dmdod.motor_env import TimedKeyEvent
 from dmdod.real_chart_env import RealChartMotorEnv
+from dmdod.motor.capacity import NKeyRealChartMotorEnv
 
 
 def _compiled(*, pitch: float = 100.0):
@@ -28,6 +29,99 @@ def _compiled(*, pitch: float = 100.0):
         """
     )
     return compile_adofai(chart)
+
+
+
+@pytest.mark.parametrize("env_type", (RealChartMotorEnv, NKeyRealChartMotorEnv))
+@pytest.mark.parametrize(
+    "invalid_tail",
+    (
+        float("nan"), float("inf"), float("-inf"), True, False,
+        "0.4", b"0.4", None, -0.1, 10**1000,
+    ),
+)
+def test_real_chart_rejects_invalid_tail_before_initializing_motor(env_type, invalid_tail):
+    segment = build_playable_segment(_compiled(), start_s=0.0, end_s=2.0)
+    kwargs = {"key_count": 4} if env_type is NKeyRealChartMotorEnv else {}
+    with pytest.raises(ValueError, match="tail_s must be finite and non-negative"):
+        env_type(segment, tail_s=invalid_tail, **kwargs)
+
+
+@pytest.mark.parametrize("env_type", (RealChartMotorEnv, NKeyRealChartMotorEnv))
+@pytest.mark.parametrize("valid_tail", (0.0, 0.4, 2, -0.0))
+def test_real_chart_preserves_finite_tail_and_episode_end(env_type, valid_tail):
+    segment = build_playable_segment(_compiled(), start_s=0.0, end_s=2.0)
+    kwargs = {"key_count": 4} if env_type is NKeyRealChartMotorEnv else {}
+    env = env_type(segment, tail_s=valid_tail, **kwargs)
+    expected_end = max(segment.duration_s, segment.targets[-1].episode_time_s) + valid_tail
+    assert env.tail_s == float(valid_tail)
+    assert env._episode_end_s == pytest.approx(expected_end)
+    assert env.reset().floors
+
+
+
+
+@pytest.mark.parametrize("env_type", (RealChartMotorEnv, NKeyRealChartMotorEnv))
+def test_real_chart_rejects_episode_end_float_overflow(env_type):
+    segment = build_playable_segment(_compiled(), start_s=0.0, end_s=2.0)
+    # Both operands are finite, but their sum is not.
+    segment = replace(segment, end_chart_s=1e308)
+    kwargs = {"key_count": 4} if env_type is NKeyRealChartMotorEnv else {}
+    with pytest.raises(ValueError, match="episode end time must be finite"):
+        env_type(segment, tail_s=1e308, **kwargs)
+
+
+@pytest.mark.parametrize("env_type", (RealChartMotorEnv, NKeyRealChartMotorEnv))
+@pytest.mark.parametrize("field", ("behind_floors", "ahead_floors"))
+@pytest.mark.parametrize(
+    "invalid_count",
+    (-1, True, False, 1.0, 1.5, "2", None, float("nan")),
+)
+def test_real_chart_rejects_invalid_visible_floor_count(env_type, field, invalid_count):
+    segment = build_playable_segment(_compiled(), start_s=0.0, end_s=2.0)
+    kwargs = {"key_count": 4} if env_type is NKeyRealChartMotorEnv else {}
+    kwargs[field] = invalid_count
+    with pytest.raises(ValueError, match=f"{field} must be a non-negative integer"):
+        env_type(segment, **kwargs)
+
+
+@pytest.mark.parametrize("env_type", (RealChartMotorEnv, NKeyRealChartMotorEnv))
+@pytest.mark.parametrize("valid_count", (0, 1, 12))
+def test_real_chart_preserves_valid_visible_floor_counts(env_type, valid_count):
+    segment = build_playable_segment(_compiled(), start_s=0.0, end_s=2.0)
+    kwargs = {"key_count": 4} if env_type is NKeyRealChartMotorEnv else {}
+    env = env_type(
+        segment, behind_floors=valid_count, ahead_floors=valid_count, **kwargs
+    )
+    assert env.behind_floors == valid_count
+    assert env.ahead_floors == valid_count
+    assert env.reset().floors
+
+
+@pytest.mark.parametrize("env_type", (RealChartMotorEnv, NKeyRealChartMotorEnv))
+@pytest.mark.parametrize(
+    "invalid_scale",
+    (
+        -1.0, 0.0, -0.0, float("nan"), float("inf"), float("-inf"),
+        True, False, "1", b"1", None, 10**1000, object(),
+    ),
+)
+def test_real_chart_rejects_invalid_timing_scale_before_motor_init(env_type, invalid_scale):
+    segment = build_playable_segment(_compiled(), start_s=0.0, end_s=2.0)
+    kwargs = {"key_count": 4} if env_type is NKeyRealChartMotorEnv else {}
+    with pytest.raises(ValueError, match="timing_scale must be finite and positive"):
+        env_type(segment, timing_scale=invalid_scale, **kwargs)
+
+
+@pytest.mark.parametrize("env_type", (RealChartMotorEnv, NKeyRealChartMotorEnv))
+@pytest.mark.parametrize("valid_scale", (0.25, 1, 1.0, 2.5))
+def test_real_chart_preserves_valid_timing_scale(env_type, valid_scale):
+    segment = build_playable_segment(_compiled(), start_s=0.0, end_s=2.0)
+    kwargs = {"key_count": 4} if env_type is NKeyRealChartMotorEnv else {}
+    env = env_type(segment, timing_scale=valid_scale, **kwargs)
+    assert env.timing_scale == float(valid_scale)
+    assert env.reset().floors
+    assert env._windows(segment.targets[0]).pass_s > 0.0
 
 
 def test_playable_targets_exclude_start_floor_and_midspin_but_keep_following_equal_time_floor():

@@ -11,6 +11,122 @@ from dmdod import (
 )
 
 
+@pytest.mark.parametrize(
+    "invalid_bpm",
+    (float("nan"), float("inf"), float("-inf"), True, False,
+     0.0, -120.0, "120", b"120", None, 10**1000, object()),
+)
+def test_regular_targets_rejects_invalid_bpm(invalid_bpm):
+    with pytest.raises(ValueError, match="bpm must be finite and positive"):
+        make_regular_targets(bpm=invalid_bpm, count=2)
+
+
+@pytest.mark.parametrize(
+    "invalid_count",
+    (True, False, 0, -1, 1.5, "2", b"2", None, object()),
+)
+def test_regular_targets_rejects_invalid_count(invalid_count):
+    with pytest.raises(ValueError, match="count must be a positive integer"):
+        make_regular_targets(bpm=120.0, count=invalid_count)
+
+
+@pytest.mark.parametrize(
+    "invalid_start",
+    (float("nan"), float("inf"), float("-inf"), True, False,
+     -0.1, "0.5", b"0.5", None, 10**1000, object()),
+)
+def test_regular_targets_rejects_invalid_start(invalid_start):
+    with pytest.raises(ValueError, match="start_s must be finite and non-negative"):
+        make_regular_targets(bpm=120.0, count=2, start_s=invalid_start)
+
+
+@pytest.mark.parametrize("invalid_pattern", ([], {}, None, 0, "unknown"))
+def test_regular_targets_rejects_invalid_pattern(invalid_pattern):
+    with pytest.raises(ValueError, match="pattern must be"):
+        make_regular_targets(bpm=120.0, count=2, pattern=invalid_pattern)
+
+
+def test_regular_targets_rejects_interval_overflow():
+    with pytest.raises(ValueError, match="target interval must be finite and positive"):
+        make_regular_targets(bpm=5e-324, count=2)
+
+
+@pytest.mark.parametrize(
+    "kwargs",
+    ({"bpm": 1e-306, "count": 4, "start_s": 0.0},
+     {"bpm": 1e-306, "count": 2, "start_s": 1.7e308}),
+)
+def test_regular_targets_rejects_target_time_overflow(kwargs):
+    with pytest.raises(ValueError, match="target time must be finite"):
+        make_regular_targets(**kwargs)
+
+
+def test_regular_targets_preserves_finite_schedule_and_keys():
+    targets = make_regular_targets(
+        bpm=120, count=3, start_s=0.75, pattern="alternate"
+    )
+    assert [target.time_s for target in targets] == pytest.approx([0.75, 1.25, 1.75])
+    assert [target.key for target in targets] == ["left", "right", "left"]
+    assert [target.key for target in make_regular_targets(bpm=120, count=2)] == [
+        "left", "left"
+    ]
+
+
+@pytest.mark.parametrize(
+    "invalid_tail",
+    (
+        float("nan"), float("inf"), float("-inf"), True, False,
+        "0.4", b"0.4", None, -0.1, 10**1000,
+    ),
+)
+def test_rhythm_rejects_invalid_tail_before_initialization(invalid_tail):
+    with pytest.raises(ValueError, match="tail_s must be finite and non-negative"):
+        RhythmMotorEnv([TargetHit(0.5, "left")], bpm=120.0, tail_s=invalid_tail)
+
+
+@pytest.mark.parametrize("valid_tail", (0.0, 0.4, 2, -0.0))
+def test_rhythm_preserves_finite_tail_and_episode_end(valid_tail):
+    env = RhythmMotorEnv([TargetHit(0.5, "left")], bpm=120.0, tail_s=valid_tail)
+    assert env._episode_end_s == pytest.approx(0.5 + valid_tail)
+    assert env.reset().cue is not None
+
+
+def test_rhythm_rejects_episode_end_float_overflow():
+    # Each operand is finite, but their sum is not.
+    with pytest.raises(ValueError, match="episode end time must be finite"):
+        RhythmMotorEnv([TargetHit(1e308, "left")], bpm=120.0, tail_s=1e308)
+
+
+@pytest.mark.parametrize(
+    "invalid_bpm",
+    (
+        float("nan"), float("inf"), float("-inf"),
+        True, False, 0.0, -120.0,
+        "120", b"120", 10**1000, object(),
+    ),
+)
+def test_rhythm_rejects_invalid_explicit_bpm(invalid_bpm):
+    with pytest.raises(ValueError, match="bpm must be finite and positive"):
+        RhythmMotorEnv([TargetHit(0.5, "left")], bpm=invalid_bpm)
+
+
+@pytest.mark.parametrize("valid_bpm", (120.0, 120, 120.5))
+def test_rhythm_preserves_valid_explicit_bpm(valid_bpm):
+    env = RhythmMotorEnv([TargetHit(0.5, "left")], bpm=valid_bpm)
+    assert env.bpm == pytest.approx(float(valid_bpm))
+
+
+def test_rhythm_rejects_inferred_bpm_overflow():
+    # The target interval is finite and positive, but 60 / interval is infinite.
+    with pytest.raises(ValueError, match="inferred bpm must be finite"):
+        RhythmMotorEnv([TargetHit(0.0, "left"), TargetHit(5e-324, "right")])
+
+
+def test_rhythm_infers_bpm_from_finite_target_interval():
+    env = RhythmMotorEnv([TargetHit(0.5, "left"), TargetHit(1.0, "right")])
+    assert env.bpm == pytest.approx(120.0)
+
+
 def test_rhythm_observation_does_not_expose_exact_time():
     env = RhythmMotorEnv(make_regular_targets(bpm=120.0, count=2), bpm=120.0)
     observation = env.reset()
@@ -291,6 +407,23 @@ def test_reward_config_rejects_nonfinite_scales(field, bad):
         RewardConfig(**{field: bad})
 
 
+
+@pytest.mark.parametrize(
+    "field",
+    (
+        "hit_reward", "xacc_reward", "timing_bonus",
+        "perfect_sigma_fraction", "timing_sigma_s",
+        "miss_penalty", "too_early_penalty",
+        "overload_penalty", "effort_penalty",
+    ),
+)
+@pytest.mark.parametrize("bad", (True, False, "1", b"1", 10**1000, object()))
+def test_reward_config_rejects_malformed_numeric_scales(field, bad):
+    from dmdod.envs.rhythm import RewardConfig
+
+    with pytest.raises(ValueError, match=rf"{field} must be finite"):
+        RewardConfig(**{field: bad})
+
 def test_reward_config_preserves_finite_ablation_scales_and_defaults():
     from dmdod.envs.rhythm import RewardConfig
 
@@ -307,3 +440,38 @@ def test_reward_config_preserves_finite_ablation_scales_and_defaults():
     assert config.too_early_penalty == -0.1
     assert config.effort_penalty == -0.01
     assert config.timing_sigma_s == 0.01
+
+
+@pytest.mark.parametrize(
+    "bad_time",
+    (
+        float("nan"), float("inf"), float("-inf"), True, False,
+        "0.5", b"0.5", None, 10**1000, object(),
+    ),
+)
+@pytest.mark.parametrize("target_index", (0, 1))
+def test_rhythm_rejects_invalid_target_times_before_motor_initialization(
+    bad_time, target_index,
+):
+    targets = [TargetHit(0.25, "left"), TargetHit(0.50, "right")]
+    targets[target_index] = TargetHit(bad_time, targets[target_index].key)
+    with pytest.raises(ValueError, match="target time_s must be finite"):
+        RhythmMotorEnv(targets, bpm=120.0)
+
+
+@pytest.mark.parametrize("bad_key", ("", "other", None, True, 123, ["left"]))
+@pytest.mark.parametrize("target_index", (0, 1))
+def test_rhythm_rejects_unsupported_target_keys_before_motor_initialization(
+    bad_key, target_index,
+):
+    targets = [TargetHit(0.25, "left"), TargetHit(0.50, "right")]
+    targets[target_index] = TargetHit(targets[target_index].time_s, bad_key)
+    with pytest.raises(ValueError, match="target key must be"):
+        RhythmMotorEnv(targets, bpm=120.0)
+
+
+def test_rhythm_preserves_finite_target_order_and_supported_keys():
+    # Existing finite targets, including pre-roll times, remain valid.
+    targets = [TargetHit(0.50, "right"), TargetHit(-0.10, "left")]
+    env = RhythmMotorEnv(targets, bpm=120.0)
+    assert env._targets == (targets[1], targets[0])

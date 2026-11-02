@@ -2,9 +2,10 @@ from __future__ import annotations
 
 import random
 from dataclasses import dataclass
-from math import exp, isfinite
+from math import exp, isfinite, nextafter
 
 from dmdod.evaluation.evaluator import TargetHit
+from dmdod.motor.body import _finite_body_value
 
 
 @dataclass(frozen=True)
@@ -44,8 +45,9 @@ class VisualCueConfig:
             "latency_s", "width_s", "horizon_s", "latency_jitter_s",
             "sample_period_s", "amplitude_noise_std", "dropout_probability",
         ):
-            if not isfinite(getattr(self, name)):
-                raise ValueError(f"{name} must be finite")
+            _finite_body_value(
+                getattr(self, name), error=f"{name} must be finite"
+            )
         if self.latency_s < 0.0:
             raise ValueError("latency_s must be non-negative")
         if self.width_s <= 0.0:
@@ -80,6 +82,14 @@ class VisualCueEncoder:
         config: VisualCueConfig | None = None,
         seed: int | None = None,
     ) -> None:
+        # Standalone encoders must enforce the same target boundary as the
+        # rhythm environment. Invalid timestamps otherwise poison cue sampling.
+        for target in targets:
+            _finite_body_value(
+                target.time_s, error="target time_s must be finite"
+            )
+            if not isinstance(target.key, str) or target.key not in ("left", "right"):
+                raise ValueError("target key must be 'left' or 'right'")
         self._targets = tuple(sorted(targets, key=lambda target: target.time_s))
         self.config = config or VisualCueConfig()
         self._rng = random.Random(seed)
@@ -172,8 +182,25 @@ class VisualCueEncoder:
         # Advance from the ideal sensor clock rather than from the control-step
         # timestamp. With 10 ms control and a 60 Hz sensor this yields the
         # expected 20/20/10 ms pattern instead of silently degrading to 50 Hz.
-        while self._next_sample_time_s <= simulation_time_s + 1e-12:
-            self._next_sample_time_s += period
+        deadline = simulation_time_s + 1e-12
+        if self._next_sample_time_s <= deadline:
+            gap = deadline - self._next_sample_time_s
+            # Keep ordinary sampling bit-for-bit unchanged. A large jump in
+            # observation time must not loop once for every missed sensor frame.
+            if gap > 4096.0 * period:
+                cycles = gap / period
+                if not isfinite(cycles) or cycles > 2**40:
+                    # The original phase is below floating-point resolution.
+                    self._next_sample_time_s = nextafter(deadline, float("inf"))
+                    return
+                self._next_sample_time_s += max(0, int(cycles) - 8) * period
+            while self._next_sample_time_s <= deadline:
+                next_time = self._next_sample_time_s + period
+                if next_time <= self._next_sample_time_s:
+                    # A sub-ULP sample period would otherwise loop forever.
+                    self._next_sample_time_s = nextafter(deadline, float("inf"))
+                    return
+                self._next_sample_time_s = next_time
 
     def observe(
         self,
@@ -181,6 +208,11 @@ class VisualCueEncoder:
         *,
         active_target_indices: tuple[int, ...] | None = None,
     ) -> VisualCueObservation:
+        # Reject malformed timestamps before touching held frames or the
+        # sample clock. NaN can poison the clock; +Inf can hold a frame forever.
+        simulation_time_s = _finite_body_value(
+            simulation_time_s, error="simulation_time_s must be finite"
+        )
         # Only cue amplitudes leave this object; neither simulation time, target
         # indices, time-to-target nor sampled latency are exposed to the policy.
         signature = None if active_target_indices is None else tuple(active_target_indices)

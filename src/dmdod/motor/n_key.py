@@ -398,6 +398,18 @@ class NKeyKeyboard:
     def step(self, positions: tuple[float, ...]) -> list[tuple[str, KeyEvent]]:
         if len(positions) != len(self.key_names):
             raise ValueError("position count must match key count")
+        # Validate every position before changing any pressed state. A NaN
+        # otherwise matches neither threshold and can hide an invalid physics
+        # sample; an invalid later key must not leave earlier keys pressed.
+        for position in positions:
+            if isinstance(position, (bool, str, bytes)):
+                raise ValueError("keyboard positions must be finite numbers")
+            try:
+                finite = isfinite(position)
+            except (TypeError, ValueError, OverflowError) as exc:
+                raise ValueError("keyboard positions must be finite numbers") from exc
+            if not finite:
+                raise ValueError("keyboard positions must be finite numbers")
         events: list[tuple[str, KeyEvent]] = []
         for index, (name, position) in enumerate(zip(self.key_names, positions)):
             state = self.states[index]
@@ -431,8 +443,20 @@ class NKeyMotorEnv:
             raise ValueError("physics_dt_s must be positive")
         if control_dt_s < physics_dt_s:
             raise ValueError("control_dt_s must be at least one physics step")
-        substeps = round(control_dt_s / physics_dt_s)
-        if abs(substeps * physics_dt_s - control_dt_s) > 1e-12:
+        # Finite clock values can still overflow when divided (for example,
+        # 1e308 / 1e-308). round(inf) raises OverflowError instead of the
+        # configuration's documented ValueError.
+        ratio = control_dt_s / physics_dt_s
+        if not isfinite(ratio):
+            raise ValueError("control_dt_s must be an integer multiple of physics_dt_s")
+        substeps = round(ratio)
+        # The absolute 1e-12-second tolerance alone can accept a fractional
+        # number of steps for tiny clocks (1e-13 / 6e-14 rounds from 5/3 to
+        # 2). Check the ratio as well, before the simulation can drift.
+        if (
+            abs(ratio - substeps) > 1e-9
+            or abs(substeps * physics_dt_s - control_dt_s) > 1e-12
+        ):
             raise ValueError("control_dt_s must be an integer multiple of physics_dt_s")
 
         self.key_names = n_key_names(key_count)

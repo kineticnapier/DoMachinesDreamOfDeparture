@@ -4,6 +4,19 @@ from dataclasses import dataclass, field
 from math import isfinite
 
 
+def _finite_body_value(value: object, *, error: str) -> float:
+    """Reject malformed physical inputs before any body state is updated."""
+    if isinstance(value, (bool, str, bytes)):
+        raise ValueError(error)
+    try:
+        number = float(value)
+    except (TypeError, ValueError, OverflowError) as exc:
+        raise ValueError(error) from exc
+    if not isfinite(number):
+        raise ValueError(error)
+    return number
+
+
 @dataclass(frozen=True)
 class FingerConfig:
     """Provisional per-finger parameters; calibration targets, not physiology claims."""
@@ -134,9 +147,16 @@ class TwoFingerBody:
         return 0
 
     def step(self, left_command: float, right_command: float, dt_s: float) -> tuple[FingerState, FingerState]:
-        if not isfinite(dt_s) or dt_s <= 0.0:
+        dt_s = _finite_body_value(dt_s, error="dt_s must be finite and positive")
+        if dt_s <= 0.0:
             raise ValueError("dt_s must be finite and positive")
-
+        # Validate both commands before fatigue or coordination can change.
+        left_command = _finite_body_value(
+            left_command, error="motor commands must be finite"
+        )
+        right_command = _finite_body_value(
+            right_command, error="motor commands must be finite"
+        )
         commands = (self._clamp(left_command, -1.0, 1.0), self._clamp(right_command, -1.0, 1.0))
         configs = (self.config.left, self.config.right)
         old = (self.left.copy(), self.right.copy())

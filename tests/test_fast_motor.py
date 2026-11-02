@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from copy import deepcopy
+
 import pytest
 
 from dmdod.body import TwoFingerBody
@@ -90,3 +92,46 @@ def test_exact_fast_zero_substeps_is_noop():
     assert sim.time_s == 0.0
     assert sim.body.left == before_left
     assert sim.body.right == before_right
+
+
+@pytest.mark.parametrize(
+    "bad_substeps",
+    [True, False, 1.5, -0.5, 0.0, "2", b"2", None, float("nan"), float("inf"), -1],
+)
+def test_fast_rejects_noninteger_substeps_without_mutation(bad_substeps):
+    sim = _simulation(same_hand=True)
+    step_held_exact(sim, 1.0, 0.0, 10)
+    before = deepcopy(sim)
+
+    with pytest.raises(ValueError, match="substeps"):
+        step_held_exact(sim, 1.0, -1.0, bad_substeps)
+
+    assert sim == before
+
+
+@pytest.mark.parametrize("side", ["left", "right"])
+@pytest.mark.parametrize(
+    "bad_command",
+    [True, "1", b"1", None, float("nan"), float("inf"), float("-inf"), 10**1000],
+)
+def test_fast_rejects_invalid_direct_commands_without_mutation(side, bad_command):
+    sim = _simulation(same_hand=False)
+    step_held_exact(sim, 1.0, 0.0, 10)
+    before = deepcopy(sim)
+    left = bad_command if side == "left" else 1.0
+    right = bad_command if side == "right" else -1.0
+
+    with pytest.raises(ValueError, match="motor commands must be finite"):
+        step_held_exact(sim, left, right, 10)
+
+    assert sim == before
+
+
+def test_fast_accepts_integer_commands_and_preserves_saturation():
+    fast = _simulation(same_hand=True)
+    reference = _simulation(same_hand=True)
+    actual = step_held_exact(fast, 2, -2, 10)
+    expected = _reference_held(reference, 1.0, -1.0, 10)
+
+    assert actual == expected
+    _assert_state_matches(fast, reference)

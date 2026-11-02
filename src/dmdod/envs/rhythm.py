@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from math import exp, isfinite
+from operator import index
 
 from dmdod.adofai_rules import (
     OverloadCounter,
@@ -18,6 +19,7 @@ from dmdod.adofai_rules import (
 from dmdod.evaluation.evaluator import TargetHit
 from dmdod.motor.keyboard import KeyEvent
 from dmdod.motor.env import MotorAction, MotorEnv, MotorObservation, TimedKeyEvent
+from dmdod.motor.body import _finite_body_value
 from dmdod.features.perception import VisualCueConfig, VisualCueEncoder, VisualCueObservation
 
 
@@ -56,22 +58,26 @@ class RewardConfig:
     def __post_init__(self) -> None:
         # Reject invalid reward scales before they can contaminate training
         # returns, while retaining the existing rules for finite values.
+        scales = {}
         for name in (
             "hit_reward", "xacc_reward", "timing_bonus",
             "perfect_sigma_fraction", "miss_penalty",
             "too_early_penalty", "overload_penalty", "effort_penalty",
         ):
-            if not isfinite(getattr(self, name)):
-                raise ValueError(f"{name} must be finite")
-        if self.timing_sigma_s is not None and not isfinite(self.timing_sigma_s):
-            raise ValueError("timing_sigma_s must be finite")
-        if self.timing_sigma_s is not None and self.timing_sigma_s <= 0.0:
-            raise ValueError("timing_sigma_s must be positive when supplied")
-        if self.perfect_sigma_fraction <= 0.0:
+            scales[name] = _finite_body_value(
+                getattr(self, name), error=f"{name} must be finite"
+            )
+        if self.timing_sigma_s is not None:
+            sigma = _finite_body_value(
+                self.timing_sigma_s, error="timing_sigma_s must be finite"
+            )
+            if sigma <= 0.0:
+                raise ValueError("timing_sigma_s must be positive when supplied")
+        if scales["perfect_sigma_fraction"] <= 0.0:
             raise ValueError("perfect_sigma_fraction must be positive")
-        if self.xacc_reward < 0.0 or self.timing_bonus < 0.0:
+        if scales["xacc_reward"] < 0.0 or scales["timing_bonus"] < 0.0:
             raise ValueError("accuracy rewards must be non-negative")
-        if self.overload_penalty < 0.0:
+        if scales["overload_penalty"] < 0.0:
             raise ValueError("overload_penalty must be non-negative")
 
 
@@ -145,10 +151,24 @@ class RhythmMotorEnv:
     ) -> None:
         if not targets:
             raise ValueError("at least one target is required")
+        # Every target must be valid, not only the last sorted target used
+        # for episode termination. NaN earlier in the chart never expires.
+        for target in targets:
+            _finite_body_value(
+                target.time_s, error="target time_s must be finite"
+            )
+            if not isinstance(target.key, str) or target.key not in ("left", "right"):
+                raise ValueError("target key must be 'left' or 'right'")
+        tail_s = _finite_body_value(
+            tail_s, error="tail_s must be finite and non-negative"
+        )
         if tail_s < 0.0:
-            raise ValueError("tail_s must be non-negative")
+            raise ValueError("tail_s must be finite and non-negative")
 
         self._targets = tuple(sorted(targets, key=lambda target: target.time_s))
+        episode_end_s = self._targets[-1].time_s + tail_s
+        if not isfinite(episode_end_s):
+            raise ValueError("episode end time must be finite")
         self.bpm = self._resolve_bpm(bpm)
         self.difficulty = (
             TimingDifficulty(str(difficulty).lower())
@@ -177,7 +197,7 @@ class RhythmMotorEnv:
             config=cue_config,
             seed=perception_seed,
         )
-        self._episode_end_s = self._targets[-1].time_s + tail_s
+        self._episode_end_s = episode_end_s
 
         self._used: list[bool] = []
         self._missed: list[bool] = []
@@ -200,15 +220,23 @@ class RhythmMotorEnv:
 
     def _resolve_bpm(self, bpm: float | None) -> float:
         if bpm is not None:
-            if bpm <= 0.0:
-                raise ValueError("bpm must be positive")
-            return bpm
+            resolved = _finite_body_value(
+                bpm, error="bpm must be finite and positive"
+            )
+            if resolved <= 0.0:
+                raise ValueError("bpm must be finite and positive")
+            return resolved
         if len(self._targets) < 2:
             raise ValueError("bpm is required when fewer than two targets are supplied")
         interval = self._targets[1].time_s - self._targets[0].time_s
         if interval <= 0.0:
             raise ValueError("cannot infer bpm from non-increasing targets")
-        return 60.0 / interval
+        if not isfinite(interval):
+            raise ValueError("cannot infer bpm from non-finite target intervals")
+        resolved = 60.0 / interval
+        if not isfinite(resolved):
+            raise ValueError("inferred bpm must be finite")
+        return resolved
 
     def reset(self) -> RhythmObservation:
         motor_observation = self.motor.reset()
@@ -477,16 +505,33 @@ def make_regular_targets(
     Exact returned timestamps stay environment-private once the task is built.
     """
 
-    if bpm <= 0.0 or count <= 0:
-        raise ValueError("bpm and count must be positive")
+    bpm = _finite_body_value(bpm, error="bpm must be finite and positive")
+    if bpm <= 0.0:
+        raise ValueError("bpm must be finite and positive")
+    if isinstance(count, bool):
+        raise ValueError("count must be a positive integer")
+    try:
+        count = index(count)
+    except TypeError as exc:
+        raise ValueError("count must be a positive integer") from exc
+    if count <= 0:
+        raise ValueError("count must be a positive integer")
+    start_s = _finite_body_value(
+        start_s, error="start_s must be finite and non-negative"
+    )
     if start_s < 0.0:
-        raise ValueError("start_s must be non-negative")
-    if pattern not in {"left", "alternate"}:
+        raise ValueError("start_s must be finite and non-negative")
+    if not isinstance(pattern, str) or pattern not in {"left", "alternate"}:
         raise ValueError("pattern must be 'left' or 'alternate'")
 
     interval = 60.0 / bpm
+    if not isfinite(interval) or interval <= 0.0:
+        raise ValueError("target interval must be finite and positive")
     targets: list[TargetHit] = []
     for i in range(count):
         key = "left" if pattern == "left" or i % 2 == 0 else "right"
-        targets.append(TargetHit(start_s + i * interval, key))
+        time_s = start_s + i * interval
+        if not isfinite(time_s):
+            raise ValueError("target time must be finite")
+        targets.append(TargetHit(time_s, key))
     return targets

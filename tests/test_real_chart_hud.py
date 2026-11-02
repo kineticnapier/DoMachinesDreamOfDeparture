@@ -9,6 +9,7 @@ from dmdod.adofai_timing import compile_adofai
 from dmdod.keyboard import KeyEvent
 from dmdod.motor_env import TimedKeyEvent
 from dmdod.real_chart_hud import HudRealChartMotorEnv, hud_bpms_for_floor
+from dmdod.envs.n_key import DiagnosticHudNKeyRealChartMotorEnv
 
 
 def _segment(*, bpm: float = 120.0, pitch: float = 100.0):
@@ -28,6 +29,27 @@ def _segment(*, bpm: float = 120.0, pitch: float = 100.0):
     )
     compiled = compile_adofai(chart)
     return build_playable_segment(compiled, start_s=0.0, end_s=compiled.duration_s)
+
+
+@pytest.mark.parametrize("env_type", (HudRealChartMotorEnv, DiagnosticHudNKeyRealChartMotorEnv))
+@pytest.mark.parametrize(
+    "invalid",
+    (float("nan"), float("inf"), float("-inf"), True, False,
+     "0.75", b"0.75", None, -0.1, 10**1000),
+)
+def test_hud_feedback_hold_rejects_invalid_duration(env_type, invalid):
+    kwargs = {"key_count": 4} if env_type is DiagnosticHudNKeyRealChartMotorEnv else {}
+    with pytest.raises(ValueError, match="feedback_hold_s must be finite and non-negative"):
+        env_type(_segment(), feedback_hold_s=invalid, **kwargs)
+
+
+@pytest.mark.parametrize("env_type", (HudRealChartMotorEnv, DiagnosticHudNKeyRealChartMotorEnv))
+@pytest.mark.parametrize("valid", (0.0, 0.75, 2, -0.0))
+def test_hud_feedback_hold_preserves_valid_duration(env_type, valid):
+    kwargs = {"key_count": 4} if env_type is DiagnosticHudNKeyRealChartMotorEnv else {}
+    env = env_type(_segment(), feedback_hold_s=valid, **kwargs)
+    assert env.feedback_hold_s == float(valid)
+    assert not env.reset().feedback_visible
 
 
 def test_hud_reports_tile_and_angle_normalized_real_bpm():
