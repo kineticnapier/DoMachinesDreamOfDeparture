@@ -3,6 +3,7 @@ from __future__ import annotations
 import random
 from dataclasses import dataclass
 from math import exp, isfinite, nextafter
+from numbers import Integral
 
 from dmdod.evaluation.evaluator import TargetHit
 from dmdod.motor.body import _finite_body_value
@@ -127,6 +128,10 @@ class VisualCueEncoder:
 
         indices = tuple(active_target_indices)
         for index in indices:
+            # bool and floats can compare equal to a valid integer index, so
+            # reject them before they can alias a held-frame signature.
+            if isinstance(index, bool) or not isinstance(index, Integral):
+                raise IndexError(f"active target index must be an integer: {index!r}")
             if index < 0 or index >= len(self._targets):
                 raise IndexError(f"active target index out of range: {index}")
         return indices, ((index, self._targets[index]) for index in indices)
@@ -215,7 +220,9 @@ class VisualCueEncoder:
         )
         # Only cue amplitudes leave this object; neither simulation time, target
         # indices, time-to-target nor sampled latency are exposed to the policy.
-        signature = None if active_target_indices is None else tuple(active_target_indices)
+        # Validate even on a held-frame tick. For example, (False,) compares
+        # equal to (0,) but must not reuse that target's cached observation.
+        signature, _ = self._indexed_targets(active_target_indices)
         sample_period = self.config.sample_period_s
         target_changed = (
             self._held_observation is not None
@@ -235,7 +242,7 @@ class VisualCueEncoder:
 
         observation = self._sample_raw(
             simulation_time_s,
-            active_target_indices=active_target_indices,
+            active_target_indices=signature,
         )
         self._held_observation = observation
         self._held_active_signature = signature
