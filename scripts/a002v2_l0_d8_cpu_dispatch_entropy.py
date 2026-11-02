@@ -235,8 +235,16 @@ def compare(expected: dict, native: dict, default: dict):
         },
         "physical_trace_exact": {
             mode: first_difference(
-                native["stage0"][mode]["rows"],
-                default["stage0"][mode]["rows"], mode + ".rows") is None
+                [row["physical_trace"] for row in native["stage0"][mode]["rows"]],
+                [row["physical_trace"] for row in default["stage0"][mode]["rows"]],
+                mode + ".physical_trace") is None
+            for mode in EXPECTED_EPISODES
+        },
+        "action_controls_exact": {
+            mode: first_difference(
+                [row["controls"] for row in native["stage0"][mode]["rows"]],
+                [row["controls"] for row in default["stage0"][mode]["rows"]],
+                mode + ".controls") is None
             for mode in EXPECTED_EPISODES
         },
         "new_training_episodes": 0, "ppo_updates": 0,
