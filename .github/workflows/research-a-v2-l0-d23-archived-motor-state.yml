@@ -1,0 +1,59 @@
+name: Research A v2-L0-D23 archived Motor threshold trace
+
+on:
+  pull_request:
+    branches:
+      - research/a-v2-l0-d22-single-step-left-command-intervention
+    paths:
+      - "docs/research-a-v2-l0-d23-*.md"
+      - "scripts/a002v2_l0_d23_archived_motor_state.py"
+      - "tests/test_research_a_v2_l0_d23_archived_motor_state.py"
+      - ".github/workflows/research-a-v2-l0-d23-archived-motor-state.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  archived-motor-state:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout D23 Draft branch
+        uses: actions/checkout@v5
+      - name: Use Python 3.11
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.11"
+      - name: Install pytest only (no training dependencies)
+        run: python -m pip install "pytest>=8,<10"
+      - name: Verify D23 read-only analysis contracts
+        run: |
+          set -o pipefail
+          mkdir -p reports/research_a_v2_l0_d23
+          python -m pytest -q tests/test_research_a_v2_l0_d23_archived_motor_state.py 2>&1 | tee reports/research_a_v2_l0_d23/tests.log
+      - name: Download final D22 archived result and full-step trace
+        uses: actions/download-artifact@v4
+        with:
+          name: research-a-v2-l0-d22-single-step-intervention
+          path: archived-d22
+          run-id: 41515190995
+          github-token: ${{ github.token }}
+          repository: ${{ github.repository }}
+      - name: Compare archived Motor state and threshold gap
+        run: |
+          set -o pipefail
+          python -u scripts/a002v2_l0_d23_archived_motor_state.py \
+            --d22-result archived-d22/result.json \
+            --d22-traces archived-d22/steps.json \
+            --out reports/research_a_v2_l0_d23/result.json \
+            2>&1 | tee reports/research_a_v2_l0_d23/run.log
+      - name: Preserve success and failure evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: research-a-v2-l0-d23-archived-motor-state
+          path: reports/research_a_v2_l0_d23/
+          retention-days: 30
+          if-no-files-found: warn
