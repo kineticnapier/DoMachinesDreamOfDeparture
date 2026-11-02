@@ -210,3 +210,49 @@ def test_numpy_int64_overflow_does_not_corrupt_visual_sizes_or_ticks() -> None:
             RgbFrame(width=width, height=np.int64(4), data=b"")
         scheduler = VisualFrameScheduler(visual_hz=60, policy_hz=100)
         assert scheduler.frame_index(width) == (int(width) * 60) // 100
+
+
+class _UnorderableSchedulerIntegral(int):
+    """An Integral with valid int() conversion but unusable ordering."""
+
+    def __lt__(self, other: object) -> bool:
+        raise TypeError("comparison deliberately unavailable")
+
+    def __le__(self, other: object) -> bool:
+        raise TypeError("comparison deliberately unavailable")
+
+    def __gt__(self, other: object) -> bool:
+        raise TypeError("comparison deliberately unavailable")
+
+    def __ge__(self, other: object) -> bool:
+        raise TypeError("comparison deliberately unavailable")
+
+
+def test_scheduler_normalizes_integral_rates_before_comparing() -> None:
+    scheduler = VisualFrameScheduler(
+        visual_hz=_UnorderableSchedulerIntegral(60),
+        policy_hz=_UnorderableSchedulerIntegral(100),
+    )
+    assert type(scheduler.visual_hz) is int
+    assert type(scheduler.policy_hz) is int
+    assert scheduler.frame_index(10) == 6
+    with pytest.raises(ValueError, match="positive integers"):
+        VisualFrameScheduler(visual_hz=_UnorderableSchedulerIntegral(0))
+    with pytest.raises(ValueError, match="must not exceed"):
+        VisualFrameScheduler(
+            visual_hz=_UnorderableSchedulerIntegral(101),
+            policy_hz=_UnorderableSchedulerIntegral(100),
+        )
+
+
+def test_scheduler_normalizes_integral_ticks_before_comparing() -> None:
+    scheduler = VisualFrameScheduler()
+    tick = _UnorderableSchedulerIntegral(10)
+    assert scheduler.frame_index(tick) == 6
+    assert scheduler.needs_new_frame(tick)
+    assert not scheduler.needs_new_frame(10)
+    assert scheduler.frame_time_s(tick) == pytest.approx(6 / 60)
+    with pytest.raises(ValueError, match="non-negative integer"):
+        scheduler.frame_index(_UnorderableSchedulerIntegral(-1))
+    # An invalid tick must not change the held frame.
+    assert not scheduler.needs_new_frame(10)
