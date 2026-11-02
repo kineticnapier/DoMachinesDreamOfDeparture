@@ -136,6 +136,14 @@ def save_new_json(path: Path, data: dict) -> None:
 def audit(r1: Path, d3: Path, d5a: Path, d5b: Path) -> dict:
     roots = {'r1': r1, 'd3': d3, 'd5a': d5a, 'd5b': d5b}
     files = {key: inventory(root) for key, root in roots.items()}
+    required_d5 = {'baseline/summary.json', 'baseline/first-batch.pt',
+                   'baseline.log', 'preceded.log', 'source-code-shas.txt',
+                   'preceded/r1-replayed-checkpoints/' + MODEL_NAME}
+    for key in ('d5a', 'd5b'):
+        if set(files[key]) != required_d5:
+            raise ValueError(f"D5 artifact {key} file set differs: "
+                             f"missing={sorted(required_d5 - set(files[key]))}, "
+                             f"extra={sorted(set(files[key]) - required_d5)}")
     source = read_json(r1 / 'full-results.json')
     replay = read_json(d3 / 'full-diagnostic.json')
     originals = {(m['arm'], m['seed']): m for m in source['models']}
