@@ -1,0 +1,91 @@
+name: Research A v2-L0-D22 single-step left command intervention
+
+on:
+  pull_request:
+    branches:
+      - research/a-v2-l0-d21-single-case-command-latency
+    paths:
+      - "docs/research-a-v2-l0-d22-*.md"
+      - "scripts/a002v2_l0_d22_single_step_intervention.py"
+      - "tests/test_research_a_v2_l0_d22_single_step_intervention.py"
+      - ".github/workflows/research-a-v2-l0-d22-single-step-intervention.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  single-step-intervention:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    env:
+      PYTHONHASHSEED: "0"
+      OMP_NUM_THREADS: "1"
+      MKL_NUM_THREADS: "1"
+    steps:
+      - name: Checkout D22 Draft branch
+        uses: actions/checkout@v5
+      - name: Use Python 3.11
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.11"
+      - name: Install pinned CPU dependencies
+        run: |
+          python -m pip install -e ".[dev]"
+          python -m pip install "torch==2.5.1+cpu" --index-url https://download.pytorch.org/whl/cpu
+      - name: Verify D22 intervention and event contracts
+        run: |
+          set -o pipefail
+          mkdir -p reports/research_a_v2_l0_d22
+          python -m pytest -q tests/test_research_a_v2_l0_d22_single_step_intervention.py 2>&1 | tee reports/research_a_v2_l0_d22/tests.log
+      - name: Download D8 archived initial policy
+        uses: actions/download-artifact@v4
+        with:
+          name: research-a-v2-l0-d8-cpu-dispatch
+          path: archived-d8
+          run-id: 41397065687
+          github-token: ${{ github.token }}
+          repository: ${{ github.repository }}
+      - name: Download D12 archived PPO update
+        uses: actions/download-artifact@v4
+        with:
+          name: research-a-v2-l0-d12-frozen-ppo-cpu
+          path: archived-d12
+          run-id: 41424435292
+          github-token: ${{ github.token }}
+          repository: ${{ github.repository }}
+      - name: Download D19 archived physical trace
+        uses: actions/download-artifact@v4
+        with:
+          name: research-a-v2-l0-d19-paired-physical-motor
+          path: archived-d19
+          run-id: 41485667328
+          github-token: ${{ github.token }}
+          repository: ${{ github.repository }}
+      - name: Download D21 archived full-step trace
+        uses: actions/download-artifact@v4
+        with:
+          name: research-a-v2-l0-d21-command-latency
+          path: archived-d21
+          run-id: 41505006857
+          github-token: ${{ github.token }}
+          repository: ${{ github.repository }}
+      - name: Intervene at step362 and record physical KeyDown
+        run: |
+          set -o pipefail
+          env -u ATEN_CPU_CAPABILITY python -u scripts/a002v2_l0_d22_single_step_intervention.py \
+            --d8-dir archived-d8 --d12-dir archived-d12 \
+            --d19-json archived-d19/result.json \
+            --d21-trace-json archived-d21/steps.json \
+            --out reports/research_a_v2_l0_d22/result.json \
+            --trace-out reports/research_a_v2_l0_d22/steps.json \
+            2>&1 | tee reports/research_a_v2_l0_d22/run.log
+      - name: Preserve success and failure evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: research-a-v2-l0-d22-single-step-intervention
+          path: reports/research_a_v2_l0_d22/
+          retention-days: 30
+          if-no-files-found: warn
