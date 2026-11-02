@@ -85,6 +85,16 @@ class TestD18(unittest.TestCase):
         self.assertGreater(row["by_action"]["left"]["mean_delta"], 0)
         self.assertEqual(row["by_action"]["right"]["unchanged_rows"], d18.N)
 
+    def test_kl_uses_normalized_float64_distributions(self):
+        # Float32 rows need not sum to exactly one after softmax rounding.
+        b = torch.tensor([[0.1, 0.2, 0.3, 0.4]], dtype=torch.float32).repeat(d18.N, 1)
+        a = b.clone()
+        a[:, 0] = torch.nextafter(a[:, 0], torch.ones_like(a[:, 0]))
+        actions = torch.zeros(d18.N, dtype=torch.long)
+        row = d18.compare_probabilities(b, a, actions)
+        self.assertGreaterEqual(row["kl_before_after_mean"], -1e-8)
+        self.assertEqual(row["argmax_changed_rows"], 0)
+
     def test_reject_wrong_shapes_and_invalid_actions(self):
         model, obs, actions = self.fixture()
         p = d18.policy_probabilities(model, obs)
