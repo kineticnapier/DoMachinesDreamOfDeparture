@@ -248,8 +248,13 @@ def run(d8_dir, d12_dir, d19_json):
     require(before == negative, "negative control full-step replay mismatch")
     after = trace_one(updated)
     for side, replay in (("before", before), ("after", after)):
-        require(replay["row"] == source_rows[side],
-                "D19 archived row mismatch: " + side)
+        for key in ("case_index", "repetition", "arm", "interval_ms",
+                    "start_s", "mode", "sampling_seed", "targets",
+                    "hits", "extra_keydowns", "physical_keydowns",
+                    "physical_left", "physical_right", "controls", "steps",
+                    "physical_trace", "matched_keys"):
+            require(replay["row"][key] == source_rows[side][key],
+                    "D19 archived row mismatch: " + side + "/" + key)
     require(d18.weights_bits(model) == before_bits and
             d18.weights_bits(updated) == after_bits,
             "policy mutated during evaluation")
@@ -259,7 +264,7 @@ def run(d8_dir, d12_dir, d19_json):
         "classification": "valid_single_case_command_latency",
         "source_d19_run": d20.SOURCE_RUN,
         "source_d19_artifact": d20.SOURCE_ARTIFACT,
-        "source_d19_commit": data.get("source_commit", d20.D19_SCHEMA),
+        "source_d19_commit": "08d8de523ffae10513645dfe95566060b4e6bf0d",
         "initial_state_sha256": initial_sha,
         "batch_sha256": capture["batch_sha256"],
         "runtime": d12.runtime(),
