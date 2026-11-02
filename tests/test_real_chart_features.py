@@ -148,3 +148,55 @@ def test_real_chart_feature_config_preserves_valid_custom_layout_and_defaults():
     encoded = encode_real_chart_observation(observation, config=config)
     assert len(encoded) == config.input_dim
     assert encoded[6:8] == (1.0, -1.0)
+
+
+class _FloatOnlyScale:
+    """Accepts float() but deliberately has no arithmetic operators."""
+
+    def __init__(self, value):
+        self.value = value
+
+    def __float__(self):
+        return float(self.value)
+
+
+@pytest.mark.parametrize(
+    ("field", "value"),
+    (("tile_size", 2.0), ("position_span_tiles", 4.0)),
+)
+def test_real_chart_feature_config_normalizes_float_only_scales_before_encoding(field, value):
+    config = RealChartFeatureConfig(**{field: _FloatOnlyScale(value)})
+    assert type(getattr(config, field)) is float
+
+    observation = RealChartObservation(
+        motor=_motor(),
+        orbiting_x=1.5,
+        orbiting_y=-1.5,
+        floors=(_floor(1),),
+    )
+    actual = encode_real_chart_observation(observation, config=config)
+    expected = encode_real_chart_observation(
+        observation, config=RealChartFeatureConfig(**{field: value})
+    )
+    assert actual == pytest.approx(expected)
+
+
+def test_real_chart_feature_config_normalizes_both_scales_before_encoding():
+    config = RealChartFeatureConfig(
+        tile_size=_FloatOnlyScale(2.0),
+        position_span_tiles=_FloatOnlyScale(4.0),
+    )
+    assert type(config.tile_size) is float
+    assert type(config.position_span_tiles) is float
+    observation = RealChartObservation(
+        motor=_motor(),
+        orbiting_x=2.0,
+        orbiting_y=-2.0,
+        floors=(_floor(1),),
+    )
+    actual = encode_real_chart_observation(observation, config=config)
+    expected = encode_real_chart_observation(
+        observation,
+        config=RealChartFeatureConfig(tile_size=2.0, position_span_tiles=4.0),
+    )
+    assert actual == pytest.approx(expected)
