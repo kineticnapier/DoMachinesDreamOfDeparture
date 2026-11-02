@@ -41,7 +41,9 @@ class RgbFrame:
         if any(isinstance(size, bool) or not isinstance(size, Integral) or size <= 0
                for size in (self.width, self.height)):
             raise ValueError("RGB frame dimensions must be positive integers")
-        expected = self.width * self.height * 3
+        # Integral implementations (e.g. NumPy int64) may overflow before
+        # the byte-length check. Use unbounded Python integer arithmetic.
+        expected = int(self.width) * int(self.height) * 3
         if len(self.data) != expected:
             raise ValueError(
                 f"RGB888 frame must contain {expected} bytes, got {len(self.data)}"
@@ -125,7 +127,8 @@ class VisualFrameScheduler:
     def frame_index(self, policy_tick: int) -> int:
         if isinstance(policy_tick, bool) or not isinstance(policy_tick, Integral) or policy_tick < 0:
             raise ValueError("policy_tick must be a non-negative integer")
-        return (policy_tick * self.visual_hz) // self.policy_hz
+        # Avoid fixed-width Integral multiplication wrapping the frame index.
+        return (int(policy_tick) * self.visual_hz) // self.policy_hz
 
     def needs_new_frame(self, policy_tick: int) -> bool:
         index = self.frame_index(policy_tick)
