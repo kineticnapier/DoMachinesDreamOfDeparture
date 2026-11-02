@@ -175,6 +175,8 @@ def compare(expected: dict, native: dict, default: dict):
             raise ValueError("initial model weights mismatch: " + label)
         if row["runtime"]["torch_threads"] != 1:
             raise ValueError("thread count mismatch")
+    if native["loaded_original_native_weights"] or not default["loaded_original_native_weights"]:
+        raise ValueError("CPU comparison did not reuse the exact native initial weights")
     a, b = native["runtime"], default["runtime"]
     same_cpu = a["cpu_model"] == b["cpu_model"]
     same_torch = a["torch"] == b["torch"]
