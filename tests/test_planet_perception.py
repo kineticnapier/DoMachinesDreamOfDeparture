@@ -185,3 +185,51 @@ def test_planet_vision_config_preserves_finite_zero_and_dropout_one():
         [TargetHit(-0.5, "right")], bpm=120.0, config=config,
     )
     assert encoder.observe(-0.5, active_target_index=0).orbit_x == 0.0
+
+
+@pytest.mark.parametrize("sample_period_s", (0.0, 0.5))
+@pytest.mark.parametrize(
+    "invalid",
+    (False, True, 0.0, 1.0, 0.5, "0", b"0", object(), -1, 2,
+     float("nan"), float("inf")),
+)
+def test_planet_rejects_invalid_active_index_before_held_frame_without_mutation(
+    sample_period_s, invalid,
+):
+    encoder = StraightPlanetGeometryEncoder(
+        [TargetHit(1.0, "left"), TargetHit(1.5, "right")],
+        bpm=120.0,
+        config=PlanetVisionConfig(
+            latency_s=0.0,
+            latency_jitter_s=0.0,
+            sample_period_s=sample_period_s,
+            position_noise_std=0.0,
+            dropout_probability=0.0,
+        ),
+    )
+    first = encoder.observe(0.9, active_target_index=0)
+    clock = encoder._next_sample_time_s
+    with pytest.raises(IndexError, match="active target index"):
+        encoder.observe(0.91, active_target_index=invalid)
+    assert encoder._held_observation == first
+    assert encoder._held_target_index == 0
+    assert encoder._next_sample_time_s == clock
+    if sample_period_s:
+        assert encoder.observe(0.91, active_target_index=0) == first
+
+
+def test_planet_allows_none_and_integer_indices_after_validation():
+    encoder = StraightPlanetGeometryEncoder(
+        [TargetHit(1.0, "left"), TargetHit(1.5, "right")],
+        bpm=120.0,
+        config=PlanetVisionConfig(
+            latency_s=0.0, latency_jitter_s=0.0,
+            sample_period_s=0.5, position_noise_std=0.0,
+            dropout_probability=0.0,
+        ),
+    )
+    first = encoder.observe(0.9, active_target_index=0)
+    assert encoder.observe(0.91, active_target_index=0) == first
+    assert encoder.observe(0.91, active_target_index=1) != first
+    blank = encoder.observe(0.91, active_target_index=None)
+    assert blank.orbit_x == blank.orbit_y == blank.next_x == blank.next_y == 0.0
