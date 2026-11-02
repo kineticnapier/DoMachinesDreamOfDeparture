@@ -424,6 +424,49 @@ def test_reward_config_rejects_malformed_numeric_scales(field, bad):
     with pytest.raises(ValueError, match=rf"{field} must be finite"):
         RewardConfig(**{field: bad})
 
+
+class _FloatOnlyRewardNumber:
+    def __init__(self, value: float) -> None:
+        self.value = value
+
+    def __float__(self) -> float:
+        return self.value
+
+
+@pytest.mark.parametrize(
+    "field",
+    (
+        "hit_reward", "xacc_reward", "timing_bonus", "perfect_sigma_fraction",
+        "timing_sigma_s", "miss_penalty", "too_early_penalty",
+        "overload_penalty", "effort_penalty",
+    ),
+)
+def test_reward_config_stores_validated_float_only_scales(field: str) -> None:
+    from dmdod.envs.rhythm import RewardConfig
+
+    config = RewardConfig(**{field: _FloatOnlyRewardNumber(0.25)})
+    assert type(getattr(config, field)) is float
+    assert getattr(config, field) == 0.25
+    env = RhythmMotorEnv([TargetHit(0.5, "left")], bpm=120.0, reward_config=config)
+    env.reset()
+    assert env.step(MotorAction(0.0, 0.0)).reward == pytest.approx(0.0)
+
+
+@pytest.mark.parametrize(
+    "field",
+    (
+        "hit_reward", "xacc_reward", "timing_bonus", "perfect_sigma_fraction",
+        "timing_sigma_s", "miss_penalty", "too_early_penalty",
+        "overload_penalty", "effort_penalty",
+    ),
+)
+@pytest.mark.parametrize("bad", (float("nan"), float("inf"), float("-inf")))
+def test_reward_config_rejects_nonfinite_float_only_scales(field: str, bad: float) -> None:
+    from dmdod.envs.rhythm import RewardConfig
+
+    with pytest.raises(ValueError, match=rf"{field} must be finite"):
+        RewardConfig(**{field: _FloatOnlyRewardNumber(bad)})
+
 def test_reward_config_preserves_finite_ablation_scales_and_defaults():
     from dmdod.envs.rhythm import RewardConfig
 
