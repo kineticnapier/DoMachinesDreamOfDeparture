@@ -289,3 +289,40 @@ def test_visual_cue_encoder_preserves_finite_preroll_and_supported_keys():
     observation = encoder.observe(-0.2, active_target_indices=(0,))
     assert observation.right > 0.99
     assert observation.left == 0.0
+
+
+class _FloatOnlyTargetTime:
+    """A finite timestamp accepted by float() without ordering/arithmetic."""
+
+    def __init__(self, value):
+        self.value = value
+
+    def __float__(self):
+        return float(self.value)
+
+
+def test_visual_cue_normalizes_float_only_target_times():
+    original = [
+        TargetHit(_FloatOnlyTargetTime(0.8), "right"),
+        TargetHit(_FloatOnlyTargetTime(0.5), "left"),
+    ]
+    config = VisualCueConfig(latency_s=0.0, width_s=0.05, horizon_s=1.0)
+    encoder = VisualCueEncoder(original, config=config)
+    baseline = VisualCueEncoder(
+        [TargetHit(0.8, "right"), TargetHit(0.5, "left")], config=config
+    )
+    assert [target.time_s for target in encoder._targets] == [0.5, 0.8]
+    assert all(type(target.time_s) is float for target in encoder._targets)
+    assert isinstance(original[0].time_s, _FloatOnlyTargetTime)
+    for t in (0.5, 0.8):
+        assert encoder.observe(t) == baseline.observe(t)
+        for index in (0, 1):
+            assert encoder.observe(t, active_target_indices=(index,)) == baseline.observe(
+                t, active_target_indices=(index,)
+            )
+
+
+@pytest.mark.parametrize("bad", (float("nan"), float("inf"), float("-inf")))
+def test_visual_cue_rejects_nonfinite_float_only_target_times(bad):
+    with pytest.raises(ValueError, match="target time_s must be finite"):
+        VisualCueEncoder([TargetHit(_FloatOnlyTargetTime(bad), "left")])
