@@ -141,14 +141,18 @@ class VisualCueEncoder:
         if active_target_indices is None:
             return None, enumerate(self._targets)
 
-        indices = tuple(active_target_indices)
-        for index in indices:
-            # bool and floats can compare equal to a valid integer index, so
-            # reject them before they can alias a held-frame signature.
+        normalized_indices: list[int] = []
+        for index in active_target_indices:
+            # Validate and normalize before comparing, indexing or caching.
+            # Integral subclasses can override ordering/equality, and a raw
+            # subclass in the held-frame signature may alias another target.
             if isinstance(index, bool) or not isinstance(index, Integral):
                 raise IndexError(f"active target index must be an integer: {index!r}")
-            if index < 0 or index >= len(self._targets):
-                raise IndexError(f"active target index out of range: {index}")
+            normalized = int(index)
+            if normalized < 0 or normalized >= len(self._targets):
+                raise IndexError(f"active target index out of range: {normalized}")
+            normalized_indices.append(normalized)
+        indices = tuple(normalized_indices)
         return indices, ((index, self._targets[index]) for index in indices)
 
     def _sample_raw(
