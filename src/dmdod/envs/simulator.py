@@ -15,6 +15,8 @@ class SimulationConfig:
         dt = _finite_body_value(self.dt_s, error="dt_s must be finite and positive")
         if dt <= 0.0:
             raise ValueError("dt_s must be finite and positive")
+        # Keep the validated numeric value; later steps use this field directly.
+        object.__setattr__(self, "dt_s", dt)
 
 
 @dataclass(frozen=True)
