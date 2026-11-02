@@ -38,12 +38,22 @@ class RgbFrame:
         # Reject mutable or non-binary payloads even when their length matches.
         if not isinstance(self.data, bytes):
             raise ValueError("RGB888 frame data must be bytes")
-        if any(isinstance(size, bool) or not isinstance(size, Integral) or size <= 0
-               for size in (self.width, self.height)):
-            raise ValueError("RGB frame dimensions must be positive integers")
-        # Integral implementations (e.g. NumPy int64) may overflow before
-        # the byte-length check. Use unbounded Python integer arithmetic.
-        expected = int(self.width) * int(self.height) * 3
+        # Convert Integral subclasses before comparing or multiplying. Their
+        # overloaded operators may not implement ordinary integer arithmetic.
+        dimensions: list[int] = []
+        for size in (self.width, self.height):
+            if isinstance(size, bool) or not isinstance(size, Integral):
+                raise ValueError("RGB frame dimensions must be positive integers")
+            normalized = int(size)
+            if normalized <= 0:
+                raise ValueError("RGB frame dimensions must be positive integers")
+            dimensions.append(normalized)
+        width, height = dimensions
+        # Keep plain Python ints in the immutable frame: downstream consumers
+        # must not inherit an Integral subclass with wrapping arithmetic.
+        object.__setattr__(self, "width", width)
+        object.__setattr__(self, "height", height)
+        expected = width * height * 3
         if len(self.data) != expected:
             raise ValueError(
                 f"RGB888 frame must contain {expected} bytes, got {len(self.data)}"
