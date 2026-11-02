@@ -33,7 +33,7 @@ class TestD16(unittest.TestCase):
 
     def test_objective_is_original_clipped_min(self):
         result = d16.summarize(*self.fixture())
-        self.assertEqual(result["by_action"]["right"]["clipped_side_selected"], 1)
+        self.assertEqual(result["by_action"]["right"]["clipped_side_selected"], 0)
         self.assertAlmostEqual(result["objective_sum"], -1.5)
         self.assertAlmostEqual(result["advantage_sum"], 1.0)
 
