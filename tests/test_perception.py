@@ -62,6 +62,54 @@ def test_visual_cue_rejects_non_integer_or_out_of_range_active_indices_without_m
         assert encoder.observe(0.51, active_target_indices=(0,)) == first
 
 
+class _UnorderableTargetIndex(int):
+    """Integral that converts to int but cannot be compared directly."""
+
+    def __lt__(self, other):
+        raise TypeError("custom ordering unavailable")
+
+    def __ge__(self, other):
+        raise TypeError("custom ordering unavailable")
+
+
+def test_visual_cue_normalizes_integral_target_indices_before_range_checks():
+    encoder = VisualCueEncoder(
+        [TargetHit(0.50, "left"), TargetHit(0.80, "right")],
+        config=VisualCueConfig(latency_s=0.0, width_s=0.05, horizon_s=1.0),
+    )
+    observation = encoder.observe(0.50, active_target_indices=(_UnorderableTargetIndex(0),))
+    assert observation.left > 0.99
+    assert observation.right == 0.0
+    assert encoder._held_active_signature == (0,)
+    assert type(encoder._held_active_signature[0]) is int
+    with pytest.raises(IndexError, match="out of range"):
+        encoder.observe(0.51, active_target_indices=(_UnorderableTargetIndex(2),))
+    assert encoder._held_active_signature == (0,)
+
+
+class _AlwaysEqualTargetIndex(int):
+    """Misleading equality must not reuse another target's held frame."""
+
+    def __eq__(self, other):
+        return True
+
+
+def test_visual_cue_normalizes_integral_index_before_held_frame_comparison():
+    encoder = VisualCueEncoder(
+        [TargetHit(0.50, "left"), TargetHit(0.80, "right")],
+        config=VisualCueConfig(
+            latency_s=0.0, width_s=0.05, horizon_s=1.0,
+            sample_period_s=0.1,
+        ),
+    )
+    first = encoder.observe(0.50, active_target_indices=(0,))
+    second = encoder.observe(0.51, active_target_indices=(_AlwaysEqualTargetIndex(1),))
+    assert first.left > 0.99 and first.right == 0.0
+    assert second.left == 0.0 and second.right > 0.0
+    assert encoder._held_active_signature == (1,)
+    assert type(encoder._held_active_signature[0]) is int
+
+
 def test_visual_cue_latency_jitter_is_reproducible_by_seed():
     config = VisualCueConfig(latency_s=0.050, latency_jitter_s=0.015)
     a = VisualCueEncoder([TargetHit(0.50, "left")], config=config, seed=123)
