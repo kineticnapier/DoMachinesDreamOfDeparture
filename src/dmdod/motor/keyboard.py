@@ -50,18 +50,23 @@ class TwoKeyKeyboard:
     def step(self, left_position_m: float, right_position_m: float) -> list[tuple[str, KeyEvent]]:
         # Validate both positions before changing either key's pressed state.
         # Otherwise a malformed right position can leave the left key updated.
+        # math.isfinite() accepts objects with __float__, even if they do
+        # not support >= or <=. Normalize both positions before touching
+        # either key so an invalid comparison cannot partially change state.
+        validated_positions: list[float] = []
         for position in (left_position_m, right_position_m):
             if isinstance(position, (bool, str, bytes)):
                 raise ValueError("keyboard positions must be finite numbers")
             try:
-                finite = isfinite(position)
+                numeric = float(position)
             except (TypeError, ValueError, OverflowError) as exc:
                 raise ValueError("keyboard positions must be finite numbers") from exc
-            if not finite:
+            if not isfinite(numeric):
                 raise ValueError("keyboard positions must be finite numbers")
+            validated_positions.append(numeric)
         events: list[tuple[str, KeyEvent]] = []
-        self._step_key("left", self.left, left_position_m, events)
-        self._step_key("right", self.right, right_position_m, events)
+        self._step_key("left", self.left, validated_positions[0], events)
+        self._step_key("right", self.right, validated_positions[1], events)
         return events
 
     def _step_key(
