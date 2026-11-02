@@ -44,15 +44,21 @@ class RealChartFeatureConfig:
         # Both scales and their product are used as divisors in the visible
         # feature encoder. Individually finite values can still underflow or
         # overflow when multiplied, producing invalid policy observations.
+        normalized_scales = {}
         for name in ("tile_size", "position_span_tiles"):
             value = _finite_body_value(
                 getattr(self, name), error=f"{name} must be finite and positive"
             )
             if value <= 0.0:
                 raise ValueError(f"{name} must be finite and positive")
-        scale = float(self.tile_size) * float(self.position_span_tiles)
+            normalized_scales[name] = value
+        scale = normalized_scales["tile_size"] * normalized_scales["position_span_tiles"]
         if not isfinite(scale) or scale <= 0.0:
             raise ValueError("tile_size * position_span_tiles must be finite and positive")
+        # Store the validated floats, not objects that merely implement
+        # __float__: the encoder later divides and multiplies these fields.
+        for name, value in normalized_scales.items():
+            object.__setattr__(self, name, value)
 
     @property
     def floor_slots(self) -> int:
