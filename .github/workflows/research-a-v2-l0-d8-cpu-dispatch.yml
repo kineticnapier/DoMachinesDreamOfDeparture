@@ -1,0 +1,108 @@
+name: Research A v2-L0-D8 CPU dispatch stage-zero entropy (no training)
+
+on:
+  pull_request:
+    branches:
+      - research/a-v2-l0-d7-first-ppo-divergence
+    paths:
+      - "docs/research-a-v2-l0-d8-cpu-dispatch-protocol.md"
+      - "scripts/a002v2_l0_d8_cpu_dispatch_entropy.py"
+      - "tests/test_research_a_v2_l0_d8_cpu_dispatch_entropy.py"
+      - ".github/workflows/research-a-v2-l0-d8-cpu-dispatch.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  stage-zero-dispatch:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    env:
+      OMP_NUM_THREADS: "1"
+      MKL_NUM_THREADS: "1"
+      PYTHONHASHSEED: "0"
+    steps:
+      - name: Checkout D8 Draft branch
+        uses: actions/checkout@v5
+      - name: Set up original Python 3.11
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.11"
+      - name: Install CPU-only dependencies
+        run: |
+          python -m pip install -e ".[dev]"
+          python -m pip install "torch==2.5.1+cpu" --index-url https://download.pytorch.org/whl/cpu
+      - name: Run ten D8 contract tests
+        run: |
+          set -o pipefail
+          mkdir -p reports/research_a_v2_l0_d8
+          python -m pytest -q tests/test_research_a_v2_l0_d8_cpu_dispatch_entropy.py 2>&1 | tee reports/research_a_v2_l0_d8/tests.log
+      - name: Download original R1
+        uses: actions/download-artifact@v4
+        with:
+          name: research-a-v2-l0-low-speed-learning
+          path: original-r1
+          run-id: 41309837474
+          github-token: ${{ github.token }}
+          repository: ${{ github.repository }}
+      - name: Download exact R1 replay D3
+        uses: actions/download-artifact@v4
+        with:
+          name: research-a-v2-l0-d3-actual-ppo-update
+          path: original-d3
+          run-id: 41369778494
+          github-token: ${{ github.token }}
+          repository: ${{ github.repository }}
+      - name: Download D7 initial mismatch
+        uses: actions/download-artifact@v4
+        with:
+          name: research-a-v2-l0-d7-first-ppo-divergence
+          path: original-d7
+          run-id: 41391082538
+          github-token: ${{ github.token }}
+          repository: ${{ github.repository }}
+      - name: Verify three original archives before diagnostics
+        run: |
+          set -o pipefail
+          python -u scripts/a002v2_l0_d8_cpu_dispatch_entropy.py \
+            --mode validate --r1 original-r1 \
+            --d3 original-d3/full-diagnostic.json \
+            --d7 original-d7/result.json \
+            --out reports/research_a_v2_l0_d8/validated.json \
+            2>&1 | tee reports/research_a_v2_l0_d8/validation.log
+      - name: Original native ATen CPU dispatch (no training)
+        run: |
+          set -o pipefail
+          env -u ATEN_CPU_CAPABILITY python -u scripts/a002v2_l0_d8_cpu_dispatch_entropy.py \
+            --mode evaluate --condition native \
+            --expected reports/research_a_v2_l0_d8/validated.json \
+            --out reports/research_a_v2_l0_d8/native.json \
+            2>&1 | tee reports/research_a_v2_l0_d8/native.log
+      - name: Generic ATen CPU dispatch (no training)
+        run: |
+          set -o pipefail
+          ATEN_CPU_CAPABILITY=default python -u scripts/a002v2_l0_d8_cpu_dispatch_entropy.py \
+            --mode evaluate --condition default \
+            --expected reports/research_a_v2_l0_d8/validated.json \
+            --out reports/research_a_v2_l0_d8/default.json \
+            2>&1 | tee reports/research_a_v2_l0_d8/default.log
+      - name: Compare exact entropy, physical KeyDown and CPU capability
+        run: |
+          set -o pipefail
+          python -u scripts/a002v2_l0_d8_cpu_dispatch_entropy.py \
+            --mode compare \
+            --expected reports/research_a_v2_l0_d8/validated.json \
+            --native reports/research_a_v2_l0_d8/native.json \
+            --default reports/research_a_v2_l0_d8/default.json \
+            --out reports/research_a_v2_l0_d8/comparison.json \
+            2>&1 | tee reports/research_a_v2_l0_d8/comparison.log
+      - name: Preserve all positive and negative outcomes
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: research-a-v2-l0-d8-cpu-dispatch
+          path: reports/research_a_v2_l0_d8/
+          retention-days: 30
+          if-no-files-found: warn
