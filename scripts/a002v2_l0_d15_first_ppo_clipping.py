@@ -89,7 +89,10 @@ def run_condition(condition, source, d8_dir, d12_dir):
     d13.require(d12.batch_digest(batch) == c["batch_sha256"],
                 "D12 frozen PPO batch SHA mismatch")
     runtime = d12.runtime()
-    for key in ("torch", "cpu_model", "cpu_capability", "torch_threads"):
+    # The archived D12 run may have used a different hosted runner CPU.
+    # Require the same PyTorch and thread count, then require a bit-exact
+    # match against the archived gradient. A CPU model is not a replay key.
+    for key in ("torch", "torch_threads"):
         d13.require(runtime[key] == row["runtime"][key],
                     "D12 runtime mismatch: " + key)
     before, after, norm = original_first_backward(model, batch)
@@ -128,9 +131,10 @@ def compare(source, native, default):
         d13.require(row["initial_state_sha256"] == c["initial_state_sha256"]
                     and row["batch_sha256"] == c["batch_sha256"],
                     "D15 frozen identity mismatch")
-        d13.require(row["runtime"]["cpu_capability"] ==
-                    original["runtime"]["cpu_capability"],
-                    "D15 CPU capability differs from archived D12")
+        d13.require(row["runtime"]["torch"] == original["runtime"]["torch"]
+                    and row["runtime"]["torch_threads"] ==
+                    original["runtime"]["torch_threads"],
+                    "D15 PyTorch or thread count differs from D12")
         d13.require(row["archived_first_gradient_exact_match"] is True
                     and row["postclip"] == original["actor_and_critic_gradients"][0],
                     "D15 postclip replay differs from D12")
@@ -139,6 +143,9 @@ def compare(source, native, default):
                              d13.compare_parameters(
                                  row["preclip"], row["postclip"])["different_elements"]),
                     "D15 clipping classification mismatch")
+    for key in ("python", "torch", "platform", "cpu_model", "torch_threads"):
+        d13.require(native["runtime"][key] == default["runtime"][key],
+                    "D15 CPU conditions not on same runner: " + key)
     d13.require(native["runtime"]["cpu_capability"] !=
                 default["runtime"]["cpu_capability"],
                 "CPU capabilities not distinct")
