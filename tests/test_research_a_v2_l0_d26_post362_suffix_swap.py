@@ -62,6 +62,7 @@ class TestD26(unittest.TestCase):
     def test_prefix_physical_difference_rejected(self):
         source = mock_traces()
         source["after"]["steps"][100]["action"] = 2
+        source["after_to_none"]["steps"][100]["action"] = 2
         with self.assertRaisesRegex(ValueError, "effective left-command prefix"):
             d26.build_plans(source)
 
