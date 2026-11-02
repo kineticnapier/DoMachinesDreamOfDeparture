@@ -160,19 +160,26 @@ class RhythmMotorEnv:
             raise ValueError("at least one target is required")
         # Every target must be valid, not only the last sorted target used
         # for episode termination. NaN earlier in the chart never expires.
+        validated_targets = []
         for target in targets:
-            _finite_body_value(
+            time_s = _finite_body_value(
                 target.time_s, error="target time_s must be finite"
             )
             if not isinstance(target.key, str) or target.key not in ("left", "right"):
                 raise ValueError("target key must be 'left' or 'right'")
+            # Preserve ordinary int/float targets, but never retain an object
+            # that only implements __float__: sorting and scoring need arithmetic.
+            validated_targets.append(
+                target if type(target.time_s) in (int, float)
+                else TargetHit(time_s, target.key)
+            )
         tail_s = _finite_body_value(
             tail_s, error="tail_s must be finite and non-negative"
         )
         if tail_s < 0.0:
             raise ValueError("tail_s must be finite and non-negative")
 
-        self._targets = tuple(sorted(targets, key=lambda target: target.time_s))
+        self._targets = tuple(sorted(validated_targets, key=lambda target: target.time_s))
         episode_end_s = self._targets[-1].time_s + tail_s
         if not isfinite(episode_end_s):
             raise ValueError("episode end time must be finite")
