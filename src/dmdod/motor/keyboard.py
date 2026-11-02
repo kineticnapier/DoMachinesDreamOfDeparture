@@ -19,17 +19,25 @@ class KeyConfig:
         # Reject malformed thresholds before they reach either keyboard.
         # An infinite actuation threshold otherwise passes the ordering check
         # and silently prevents all key-down events.
+        # isfinite() accepts __float__-only values, but the subsequent
+        # comparisons (and key presses) require real ordering operators.
+        # Normalize both thresholds before comparing or storing them.
+        normalized: list[float] = []
         for threshold in (self.actuation_m, self.reset_m):
             if isinstance(threshold, (bool, str, bytes)):
                 raise ValueError("keyboard thresholds must be finite numbers")
             try:
-                finite = isfinite(threshold)
+                numeric = float(threshold)
             except (TypeError, ValueError, OverflowError) as exc:
                 raise ValueError("keyboard thresholds must be finite numbers") from exc
-            if not finite:
+            if not isfinite(numeric):
                 raise ValueError("keyboard thresholds must be finite numbers")
-        if not 0.0 <= self.reset_m < self.actuation_m:
+            normalized.append(numeric)
+        actuation, reset = normalized
+        if not 0.0 <= reset < actuation:
             raise ValueError("reset_m must be non-negative and below actuation_m")
+        object.__setattr__(self, "actuation_m", actuation)
+        object.__setattr__(self, "reset_m", reset)
 
 
 @dataclass
