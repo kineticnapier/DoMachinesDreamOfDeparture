@@ -26,6 +26,8 @@ def fake_evaluations():
     expected = fake_expected()
     native = {
         "condition": "native", "initial_state_sha256": "same",
+        "seed_only_initial_state_sha256": "same",
+        "loaded_original_native_weights": False,
         "runtime": {"cpu_model": "cpu", "torch": "2.5.1+cpu",
                     "platform": "Linux", "cpu_capability": "AVX2",
                     "torch_threads": 1},
@@ -34,6 +36,7 @@ def fake_evaluations():
     }
     default = deepcopy(native)
     default["condition"] = "default"
+    default["loaded_original_native_weights"] = True
     default["runtime"]["cpu_capability"] = "DEFAULT"
     return expected, native, default
 
@@ -149,3 +152,10 @@ def test_archival_validation_accepts_exact_d3(monkeypatch, tmp_path):
     result = d8.validate_archives(tmp_path, file, d7)
     assert result["original_initial_sha256"] == "same"
     assert result["d3_r1_reproduced"] is True
+
+def test_native_and_default_seed_only_digests_recorded():
+    expected, native, default = fake_evaluations()
+    default["seed_only_initial_state_sha256"] = "different-seed-only"
+    result = d8.compare(expected, native, default)
+    assert result["classification"] == "no_dispatch_effect_observed"
+    assert result["seed_only_initial_weights_equal"] is False
