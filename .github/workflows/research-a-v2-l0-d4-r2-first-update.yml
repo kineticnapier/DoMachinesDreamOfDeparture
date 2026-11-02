@@ -1,0 +1,87 @@
+name: Research A v2-L0-D4 R2 first PPO update divergence (CPU)
+
+on:
+  pull_request:
+    branches:
+      - research/a-v2-l0-d3-actual-ppo-update
+    paths:
+      - "docs/research-a-v2-l0-d4-r2-first-update-protocol.md"
+      - "scripts/a002v2_l0_d4_r2_first_update.py"
+      - "tests/test_research_a_v2_l0_d4_r2_first_update.py"
+      - ".github/workflows/research-a-v2-l0-d4-r2-first-update.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  localize-first-update:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      PYTHONHASHSEED: "0"
+      OMP_NUM_THREADS: "1"
+      MKL_NUM_THREADS: "1"
+    steps:
+      - name: Checkout isolated D4 Draft branch
+        uses: actions/checkout@v5
+      - name: Set up original Python 3.11
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.11"
+      - name: Install original pinned CPU dependencies
+        run: |
+          python -m pip install -e ".[dev]"
+          python -m pip install "torch==2.5.1+cpu" --index-url https://download.pytorch.org/whl/cpu
+      - name: Verify original R2 trainer and Motor blobs remain unchanged
+        run: |
+          set -euo pipefail
+          mkdir -p reports/research_a_v2_l0_d4
+          while read -r path sha; do
+            actual="$(git rev-parse "HEAD:$path")"
+            printf '%s %s\n' "$actual" "$path" | tee -a reports/research_a_v2_l0_d4/source-code-shas.txt
+            test "$actual" = "$sha"
+          done <<'EOF'
+          scripts/a002v2_l0_low_speed_ppo.py 72f4a298d0e22050806df461a37d812ff7e52afd
+          scripts/a002v2_l0_r2_penalty_env.py 19a288d9758793de7a8603fa6e269910fa533049
+          scripts/a002_exploratory_ppo.py a38aec5e9ccc2d6ce03c41e07898e075d66667ca
+          src/dmdod/research/a002_timing_only_env.py 45b5c92505d78bfe4543d44d71c649c3cfc9f1ea
+          src/dmdod/research/a002p_reward_ablation.py 0b4740a3ba037eb0c595f2c88d120bbd50f2e489
+          src/dmdod/motor/env.py a82fc9e5a159dbcedf3c8cbb19873407086441af
+          EOF
+      - name: Test strict archive comparison and first-update boundaries
+        run: |
+          python -m pytest -q tests/test_research_a_v2_l0_d4_r2_first_update.py
+      - name: Download original R2 immutable training history
+        uses: actions/download-artifact@v4
+        with:
+          name: research-a-v2-l0-r2-penalty-comparison
+          path: original-r2
+          run-id: 41312136897
+          github-token: ${{ github.token }}
+          repository: ${{ github.repository }}
+      - name: Download D3 failure diagnostic without rerunning training
+        uses: actions/download-artifact@v4
+        with:
+          name: research-a-v2-l0-d3-actual-ppo-update
+          path: original-d3
+          run-id: 41369778494
+          github-token: ${{ github.token }}
+          repository: ${{ github.repository }}
+      - name: Compare 32 archived rows and only first 8 episodes in two environments
+        run: |
+          set -o pipefail
+          python -u scripts/a002v2_l0_d4_r2_first_update.py \
+            --r2-file original-r2/full-comparison.json \
+            --d3-file original-d3/full-diagnostic.json \
+            --out reports/research_a_v2_l0_d4/first-update.json \
+            | tee reports/research_a_v2_l0_d4/summary.log
+      - name: Preserve success and failure evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: research-a-v2-l0-d4-r2-first-update
+          path: reports/research_a_v2_l0_d4/
+          retention-days: 30
+          if-no-files-found: warn
