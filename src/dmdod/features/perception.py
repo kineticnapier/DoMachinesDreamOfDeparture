@@ -93,13 +93,20 @@ class VisualCueEncoder:
     ) -> None:
         # Standalone encoders must enforce the same target boundary as the
         # rhythm environment. Invalid timestamps otherwise poison cue sampling.
+        validated_targets = []
         for target in targets:
-            _finite_body_value(
+            time_s = _finite_body_value(
                 target.time_s, error="target time_s must be finite"
             )
             if not isinstance(target.key, str) or target.key not in ("left", "right"):
                 raise ValueError("target key must be 'left' or 'right'")
-        self._targets = tuple(sorted(targets, key=lambda target: target.time_s))
+            # Do not leave __float__-only timestamps in sorting or cue arithmetic.
+            # Keep ordinary numeric targets unchanged for existing experiments.
+            validated_targets.append(
+                target if type(target.time_s) in (int, float)
+                else TargetHit(time_s, target.key)
+            )
+        self._targets = tuple(sorted(validated_targets, key=lambda target: target.time_s))
         self.config = config or VisualCueConfig()
         self._rng = random.Random(seed)
         self._episode_latency_s = self.config.latency_s
