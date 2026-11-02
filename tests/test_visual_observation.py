@@ -165,6 +165,33 @@ def test_rgb_frame_byte_length_uses_unbounded_integer_arithmetic() -> None:
     assert frame.data == bytes(6)
 
 
+class _UnorderableIntegral(int):
+    """Valid Integral that cannot compare using its inherited operators."""
+
+    def __le__(self, other: object) -> bool:
+        raise TypeError("comparison deliberately unavailable")
+
+
+def test_rgb_frame_normalizes_integral_dimensions_before_comparison() -> None:
+    frame = RgbFrame(width=_UnorderableIntegral(2), height=1, data=bytes(6))
+    assert type(frame.width) is int
+    assert type(frame.height) is int
+    assert (frame.width, frame.height) == (2, 1)
+    with pytest.raises(ValueError, match="positive integers"):
+        RgbFrame(width=_UnorderableIntegral(0), height=1, data=b"")
+
+
+def test_rgb_frame_normalizes_wrapping_integral_dimensions_for_consumers() -> None:
+    frame = RgbFrame(
+        width=_FixedWidthIntegral(2),
+        height=_FixedWidthIntegral(1),
+        data=bytes(6),
+    )
+    assert type(frame.width) is int
+    assert type(frame.height) is int
+    assert frame.width * frame.height * 3 == len(frame.data)
+
+
 def test_visual_scheduler_uses_unbounded_integer_tick_arithmetic() -> None:
     scheduler = VisualFrameScheduler(visual_hz=60, policy_hz=100)
     tick = _FixedWidthIntegral(10)
