@@ -233,3 +233,79 @@ def test_planet_allows_none_and_integer_indices_after_validation():
     assert encoder.observe(0.91, active_target_index=1) != first
     blank = encoder.observe(0.91, active_target_index=None)
     assert blank.orbit_x == blank.orbit_y == blank.next_x == blank.next_y == 0.0
+
+
+class _FloatOnly:
+    """A finite numeric input without ordering or arithmetic operators."""
+
+    def __init__(self, value):
+        self.value = value
+
+    def __float__(self):
+        return float(self.value)
+
+
+@pytest.mark.parametrize(
+    "field",
+    (
+        "latency_s", "latency_jitter_s", "sample_period_s",
+        "position_noise_std", "dropout_probability",
+    ),
+)
+def test_planet_config_normalizes_float_only_sensor_values(field):
+    config = PlanetVisionConfig(**{field: _FloatOnly(0.1)})
+    assert type(getattr(config, field)) is float
+    assert getattr(config, field) == pytest.approx(0.1)
+    # The normalized field must also be usable by the sensor at runtime.
+    encoder = StraightPlanetGeometryEncoder(
+        [TargetHit(1.0, "left")], bpm=120.0, config=config, seed=1,
+    )
+    assert math.isfinite(encoder.observe(0.9, active_target_index=0).orbit_x)
+
+
+@pytest.mark.parametrize(
+    "field",
+    (
+        "latency_s", "latency_jitter_s", "sample_period_s",
+        "position_noise_std", "dropout_probability",
+    ),
+)
+@pytest.mark.parametrize("bad", (float("nan"), float("inf"), float("-inf")))
+def test_planet_config_rejects_nonfinite_float_only_values(field, bad):
+    with pytest.raises(ValueError, match=f"{field} must be finite"):
+        PlanetVisionConfig(**{field: _FloatOnly(bad)})
+
+
+def test_planet_encoder_accepts_float_only_bpm_and_observation_time():
+    encoder = StraightPlanetGeometryEncoder(
+        [TargetHit(1.0, "left")],
+        bpm=_FloatOnly(120.0),
+        config=PlanetVisionConfig(
+            latency_s=0.0, latency_jitter_s=0.0,
+            sample_period_s=0.5, position_noise_std=0.0,
+            dropout_probability=0.0,
+        ),
+    )
+    assert encoder.bpm == 120.0
+    first = encoder.observe(_FloatOnly(0.9), active_target_index=0)
+    assert encoder.observe(_FloatOnly(0.91), active_target_index=0) == first
+
+
+@pytest.mark.parametrize("bad", (float("nan"), float("inf"), float("-inf")))
+def test_planet_encoder_rejects_nonfinite_float_only_time_atomically(bad):
+    encoder = StraightPlanetGeometryEncoder(
+        [TargetHit(1.0, "left")], bpm=120.0,
+        config=PlanetVisionConfig(
+            latency_s=0.0, latency_jitter_s=0.0,
+            sample_period_s=0.5, position_noise_std=0.0,
+            dropout_probability=0.0,
+        ),
+    )
+    first = encoder.observe(0.9, active_target_index=0)
+    before = (encoder._held_observation, encoder._held_target_index,
+              encoder._next_sample_time_s)
+    with pytest.raises(ValueError, match="simulation_time_s must be finite"):
+        encoder.observe(_FloatOnly(bad), active_target_index=0)
+    assert (encoder._held_observation, encoder._held_target_index,
+            encoder._next_sample_time_s) == before
+    assert encoder.observe(0.91, active_target_index=0) == first
