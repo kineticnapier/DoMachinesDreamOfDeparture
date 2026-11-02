@@ -67,6 +67,7 @@ class RewardConfig:
             scales[name] = _finite_body_value(
                 getattr(self, name), error=f"{name} must be finite"
             )
+        sigma = None
         if self.timing_sigma_s is not None:
             sigma = _finite_body_value(
                 self.timing_sigma_s, error="timing_sigma_s must be finite"
@@ -79,6 +80,12 @@ class RewardConfig:
             raise ValueError("accuracy rewards must be non-negative")
         if scales["overload_penalty"] < 0.0:
             raise ValueError("overload_penalty must be non-negative")
+        # Preserve the checked floats rather than storing objects that only
+        # implement __float__ and fail during subsequent reward arithmetic.
+        for name, value in scales.items():
+            object.__setattr__(self, name, value)
+        if sigma is not None:
+            object.__setattr__(self, "timing_sigma_s", sigma)
 
 
 @dataclass(frozen=True)
