@@ -86,7 +86,11 @@ def compare_probabilities(before, after, actions):
     b, a = before.double(), after.double()
     delta = a - b
     l1 = delta.abs().sum(dim=1)
-    # Float32 softmax row sums can differ from 1 by an ulp. Normalize only\n    # for the mathematical KL, without changing reported raw probabilities.\n    bn = b / b.sum(dim=1, keepdim=True)\n    an = a / a.sum(dim=1, keepdim=True)\n    kl = (bn * (bn.log() - an.log())).sum(dim=1)
+    # Float32 softmax row sums can differ from 1 by an ulp. Normalize only
+    # for the mathematical KL, without changing reported raw probabilities.
+    bn = b / b.sum(dim=1, keepdim=True)
+    an = a / a.sum(dim=1, keepdim=True)
+    kl = (bn * (bn.log() - an.log())).sum(dim=1)
     require(bool(torch.isfinite(delta).all()) and bool(torch.isfinite(kl).all()),
             "nonfinite probability difference")
     require(float(kl.min().item()) >= -1e-8, "KL unexpectedly negative")
