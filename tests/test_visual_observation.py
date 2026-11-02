@@ -75,3 +75,58 @@ def test_scheduler_rejects_invalid_rates_and_ticks() -> None:
     scheduler = VisualFrameScheduler()
     with pytest.raises(ValueError):
         scheduler.frame_index(-1)
+
+
+@pytest.mark.parametrize(
+    ("width", "height"),
+    [
+        (True, 1),
+        (1, False),
+        (1.5, 1),
+        (1, 1.5),
+        ("1", 1),
+        (1, "1"),
+        (None, 1),
+        (1, None),
+    ],
+)
+def test_rgb_frame_rejects_non_integer_dimensions(width: object, height: object) -> None:
+    with pytest.raises(ValueError, match="positive integers"):
+        RgbFrame(width=width, height=height, data=b"\\x00" * 3)
+
+
+@pytest.mark.parametrize(
+    ("visual_hz", "policy_hz"),
+    [
+        (True, 100),
+        (60, False),
+        (60.5, 100),
+        (60, 100.5),
+        ("60", 100),
+        (60, "100"),
+        (float("nan"), 100),
+        (60, float("inf")),
+        (None, 100),
+        (60, None),
+    ],
+)
+def test_scheduler_rejects_non_integer_rates(visual_hz: object, policy_hz: object) -> None:
+    with pytest.raises(ValueError, match="positive integers"):
+        VisualFrameScheduler(visual_hz=visual_hz, policy_hz=policy_hz)
+
+
+@pytest.mark.parametrize(
+    "tick",
+    [True, False, 0.5, 1.5, "1", None, float("nan"), float("inf"), -1],
+)
+def test_scheduler_rejects_non_integer_policy_ticks(tick: object) -> None:
+    scheduler = VisualFrameScheduler()
+    with pytest.raises(ValueError, match="non-negative integer"):
+        scheduler.frame_index(tick)
+    with pytest.raises(ValueError, match="non-negative integer"):
+        scheduler.needs_new_frame(tick)
+    with pytest.raises(ValueError, match="non-negative integer"):
+        scheduler.frame_time_s(tick)
+    # Rejected calls must not mutate the frame-holding state.
+    assert scheduler.needs_new_frame(0)
+    assert not scheduler.needs_new_frame(0)
