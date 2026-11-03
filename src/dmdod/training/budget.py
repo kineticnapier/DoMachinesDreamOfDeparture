@@ -21,14 +21,34 @@ class TrustRadiusController:
         reject_shrink: float,
         safe_grow: float,
     ) -> "TrustRadiusController":
+        normalized: dict[str, float] = {}
         for name, value in (
             ("initial", initial),
             ("minimum", minimum),
             ("reject_shrink", reject_shrink),
             ("safe_grow", safe_grow),
         ):
-            if not isfinite(value):
+            # Check the numeric payload, not overloaded comparisons or
+            # __float__ on built-in numeric subclasses. Normalize once before
+            # validating or storing the controller's training parameters.
+            if isinstance(value, (bool, str, bytes)):
                 raise ValueError(f"{name} must be finite")
+            try:
+                if isinstance(value, float):
+                    number = float.__float__(value)
+                elif isinstance(value, int):
+                    number = int.__float__(value)
+                else:
+                    number = float(value)
+            except (TypeError, ValueError, OverflowError) as exc:
+                raise ValueError(f"{name} must be finite") from exc
+            if not isfinite(number):
+                raise ValueError(f"{name} must be finite")
+            normalized[name] = number
+        initial = normalized["initial"]
+        minimum = normalized["minimum"]
+        reject_shrink = normalized["reject_shrink"]
+        safe_grow = normalized["safe_grow"]
         if initial <= 0.0 or minimum <= 0.0:
             raise ValueError("trust radii must be positive")
         if minimum > initial:
