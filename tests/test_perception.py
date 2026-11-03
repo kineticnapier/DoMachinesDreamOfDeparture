@@ -374,3 +374,32 @@ def test_visual_cue_normalizes_float_only_target_times():
 def test_visual_cue_rejects_nonfinite_float_only_target_times(bad):
     with pytest.raises(ValueError, match="target time_s must be finite"):
         VisualCueEncoder([TargetHit(_FloatOnlyTargetTime(bad), "left")])
+
+
+class _RedirectedTargetIndex(int):
+    """An int subclass whose __int__ lies about its stored value."""
+
+    def __int__(self):
+        return 0
+
+
+def test_visual_cue_uses_stored_int_subclass_index_for_target_and_held_frame():
+    encoder = VisualCueEncoder(
+        [TargetHit(0.50, "left"), TargetHit(0.80, "right")],
+        config=VisualCueConfig(
+            latency_s=0.0, width_s=0.05, horizon_s=1.0,
+            sample_period_s=0.1,
+        ),
+    )
+    first = encoder.observe(0.50, active_target_indices=(0,))
+    second = encoder.observe(0.51, active_target_indices=(_RedirectedTargetIndex(1),))
+    assert first.left > 0.99 and first.right == 0.0
+    assert second.left == 0.0 and second.right > 0.0
+    assert encoder._held_active_signature == (1,)
+    assert type(encoder._held_active_signature[0]) is int
+    clock = encoder._next_sample_time_s
+    with pytest.raises(IndexError, match="out of range"):
+        encoder.observe(0.52, active_target_indices=(_RedirectedTargetIndex(2),))
+    assert encoder._held_active_signature == (1,)
+    assert encoder._held_observation == second
+    assert encoder._next_sample_time_s == clock

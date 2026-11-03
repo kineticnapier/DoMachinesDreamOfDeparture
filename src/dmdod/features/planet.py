@@ -201,7 +201,13 @@ class StraightPlanetGeometryEncoder:
                 raise IndexError("active target index must be an integer")
             # Integral subclasses may override ordering and equality. Convert
             # before both range checks and held-frame signature comparison.
-            active_target_index = int(active_target_index)
+            # An int subclass can override __int__ to select another target.
+            # Use the stored integer value for indexing and held-frame identity.
+            active_target_index = (
+                int.__int__(active_target_index)
+                if isinstance(active_target_index, int)
+                else int(active_target_index)
+            )
             if active_target_index < 0 or active_target_index >= len(self._targets):
                 raise IndexError(f"active target index out of range: {active_target_index}")
         sample_period = self.config.sample_period_s

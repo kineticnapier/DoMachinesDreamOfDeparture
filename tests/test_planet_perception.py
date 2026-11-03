@@ -390,3 +390,35 @@ def test_planet_normalizes_integral_index_before_held_frame_comparison():
     assert second != first
     assert encoder._held_target_index == 1
     assert type(encoder._held_target_index) is int
+
+
+class _RedirectedPlanetTargetIndex(int):
+    """An int subclass whose __int__ lies about its stored value."""
+
+    def __int__(self):
+        return 0
+
+
+def test_planet_uses_stored_int_subclass_index_for_target_and_held_frame():
+    encoder = StraightPlanetGeometryEncoder(
+        [TargetHit(1.0, "left"), TargetHit(1.5, "right")],
+        bpm=120.0,
+        config=PlanetVisionConfig(
+            latency_s=0.0, latency_jitter_s=0.0,
+            sample_period_s=0.5, position_noise_std=0.0,
+            dropout_probability=0.0,
+        ),
+    )
+    first = encoder.observe(1.0, active_target_index=0)
+    second = encoder.observe(1.01, active_target_index=_RedirectedPlanetTargetIndex(1))
+    assert first.orbit_x == pytest.approx(1.0)
+    assert second.orbit_x < -0.99
+    assert second != first
+    assert encoder._held_target_index == 1
+    assert type(encoder._held_target_index) is int
+    clock = encoder._next_sample_time_s
+    with pytest.raises(IndexError, match="out of range"):
+        encoder.observe(1.02, active_target_index=_RedirectedPlanetTargetIndex(2))
+    assert encoder._held_target_index == 1
+    assert encoder._held_observation == second
+    assert encoder._next_sample_time_s == clock

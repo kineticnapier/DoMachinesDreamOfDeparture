@@ -148,7 +148,9 @@ class VisualCueEncoder:
             # subclass in the held-frame signature may alias another target.
             if isinstance(index, bool) or not isinstance(index, Integral):
                 raise IndexError(f"active target index must be an integer: {index!r}")
-            normalized = int(index)
+            # int subclasses may override __int__ to redirect to a different
+            # target. Read the stored integer value before caching its identity.
+            normalized = int.__int__(index) if isinstance(index, int) else int(index)
             if normalized < 0 or normalized >= len(self._targets):
                 raise IndexError(f"active target index out of range: {normalized}")
             normalized_indices.append(normalized)
