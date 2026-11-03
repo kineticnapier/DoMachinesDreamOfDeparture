@@ -3,6 +3,8 @@ from __future__ import annotations
 import json
 from types import SimpleNamespace
 
+import pytest
+
 from dmdod.training.action_trust import ActionTrustMetrics
 from dmdod.training.trajectory_trust import (
     BoundaryDivergence,
@@ -10,6 +12,7 @@ from dmdod.training.trajectory_trust import (
     EventGuardViolation,
     TrajectoryProbeResult,
     _SquaredAccumulator,
+    probe_anchor_pair,
     boundary_event_guard_reason,
     format_probe_result,
     save_probe_report,
@@ -22,6 +25,42 @@ def test_squared_accumulator_tracks_rms_and_max() -> None:
 
     assert abs(acc.rms - (2.5 ** 0.5)) < 1e-12
     assert acc.maximum == 2.0
+
+
+@pytest.mark.parametrize(
+    "left,right",
+    (
+        ((1.0, 2.0), (1.0,)),
+        ((1.0,), (1.0, 2.0)),
+    ),
+)
+def test_squared_accumulator_rejects_mismatched_vector_lengths_without_mutation(
+    left, right,
+) -> None:
+    acc = _SquaredAccumulator()
+    acc.add((0.0, 2.0), (1.0, 0.0))
+    original = (acc.squared, acc.count, acc.maximum)
+
+    with pytest.raises(ValueError, match="paired trajectory vectors must have equal lengths"):
+        acc.add(left, right)
+
+    assert (acc.squared, acc.count, acc.maximum) == original
+
+
+def test_trajectory_probe_rejects_incompatible_key_counts_before_environment_setup() -> None:
+    baseline = SimpleNamespace(key_count=4)
+    candidate = SimpleNamespace(key_count=8)
+
+    with pytest.raises(ValueError, match="paired trajectory policies must have equal key counts"):
+        probe_anchor_pair(
+            baseline,
+            candidate,
+            None,
+            anchor_index=1,
+            control_dt_s=0.01,
+            physics_dt_s=0.001,
+            device=None,
+        )
 
 
 def test_probe_report_serializes_divergence_points(tmp_path) -> None:
