@@ -1,0 +1,66 @@
+name: Research A v2-L0-D29 frozen multinomial RNG counterfactual
+
+on:
+  pull_request:
+    branches:
+      - research/a-v2-l0-d28-step413-policy-reward-audit
+    paths:
+      - 'docs/research-a-v2-l0-d29-*.md'
+      - 'scripts/a002v2_l0_d29_frozen_multinomial_rng.py'
+      - 'tests/test_research_a_v2_l0_d29_frozen_multinomial_rng.py'
+      - '.github/workflows/research-a-v2-l0-d29-frozen-multinomial.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  frozen-multinomial:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      PYTHONHASHSEED: '0'
+      OMP_NUM_THREADS: '1'
+      MKL_NUM_THREADS: '1'
+    steps:
+      - name: Checkout D29 Draft branch
+        uses: actions/checkout@v5
+      - name: Use Python 3.11
+        uses: actions/setup-python@v6
+        with:
+          python-version: '3.11'
+      - name: Install package, pytest and original CPU torch
+        run: |
+          python -m pip install -e '.[dev]'
+          python -m pip install 'torch==2.5.1+cpu' --index-url https://download.pytorch.org/whl/cpu
+      - name: Test frozen RNG replay and negative controls
+        run: |
+          set -o pipefail
+          mkdir -p reports/research_a_v2_l0_d29
+          python -m pytest -q tests/test_research_a_v2_l0_d29_frozen_multinomial_rng.py \
+            2>&1 | tee reports/research_a_v2_l0_d29/tests.log
+      - name: Download frozen D22 source
+        uses: actions/download-artifact@v4
+        with:
+          name: research-a-v2-l0-d22-single-step-intervention
+          path: archived-d22
+          run-id: 41515190995
+          github-token: ${{ github.token }}
+          repository: ${{ github.repository }}
+      - name: Replay archived draws and swap step413 probabilities
+        run: |
+          set -o pipefail
+          python -u scripts/a002v2_l0_d29_frozen_multinomial_rng.py \
+            --d22-result archived-d22/result.json \
+            --d22-traces archived-d22/steps.json \
+            --out reports/research_a_v2_l0_d29/result.json \
+            2>&1 | tee reports/research_a_v2_l0_d29/run.log
+      - name: Preserve success and failure evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: research-a-v2-l0-d29-frozen-multinomial-rng
+          path: reports/research_a_v2_l0_d29/
+          retention-days: 30
+          if-no-files-found: warn
