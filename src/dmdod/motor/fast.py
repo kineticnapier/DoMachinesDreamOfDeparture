@@ -38,7 +38,12 @@ def step_held_exact(
     times, matching ``StepResult.time_s`` from the ordinary path.
     """
 
-    if isinstance(substeps, bool) or not isinstance(substeps, int) or substeps < 0:
+    if isinstance(substeps, bool) or not isinstance(substeps, int):
+        raise ValueError("substeps must be a non-negative integer")
+    # int subclasses may override comparison and __int__, but the physics
+    # step count must use the actual stored integer, not those overrides.
+    substeps = int.__int__(substeps)
+    if substeps < 0:
         raise ValueError("substeps must be a non-negative integer")
     if substeps == 0:
         return ()
