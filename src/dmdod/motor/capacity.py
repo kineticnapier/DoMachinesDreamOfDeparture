@@ -100,9 +100,12 @@ class NKeyRealChartMotorEnv(RealChartMotorEnv):
         physics_dt_s: float = 0.001,
         **kwargs,
     ) -> None:
+        # Validate the physical key count before constructing either motor.
+        # int(4.9) or int("4") must not silently turn into a valid 4K layout.
+        key_names = n_key_names(key_count)
         super().__init__(segment, same_hand=True, control_dt_s=control_dt_s, **kwargs)
-        self.key_count = int(key_count)
-        self.key_names = n_key_names(self.key_count)
+        self.key_count = key_count
+        self.key_names = key_names
         self.motor = NKeyMotorEnv(
             self.key_count,
             control_dt_s=control_dt_s,
@@ -168,8 +171,10 @@ class CenterFirstNKeyTeacher:
     """Reserve unresolved future targets from the center pair outward."""
 
     def __init__(self, key_count: int) -> None:
-        self.key_count = int(key_count)
-        self.key_names = n_key_names(self.key_count)
+        # Keep the same strict even-integer boundary as NKeyMotorEnv.
+        # Coercing first accepts fractional floats and numeric strings.
+        self.key_names = n_key_names(key_count)
+        self.key_count = key_count
         self.tiers = n_key_tiers(self.key_count)
         self.reset()
 
