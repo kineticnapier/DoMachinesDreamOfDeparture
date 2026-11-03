@@ -1,7 +1,9 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from math import cos, sin
+from math import cos, isfinite, sin
+
+from dmdod.motor.body import _finite_body_value
 
 from dmdod.envs.real_chart import RealChartObservation, RelativeVisibleFloor
 
@@ -32,12 +34,37 @@ class RealChartFeatureConfig:
     position_span_tiles: float = 8.0
 
     def __post_init__(self) -> None:
-        if self.behind_floors < 0 or self.ahead_floors < 0:
-            raise ValueError("visible floor counts must be non-negative")
-        if self.tile_size <= 0.0:
-            raise ValueError("tile_size must be positive")
-        if self.position_span_tiles <= 0.0:
-            raise ValueError("position_span_tiles must be positive")
+        # The floor counts control fixed policy input dimensions and range().
+        # Reject bool/fractional values instead of silently changing the layout.
+        for name in ("behind_floors", "ahead_floors"):
+            value = getattr(self, name)
+            if isinstance(value, bool) or not isinstance(value, int):
+                raise ValueError(f"{name} must be a non-negative integer")
+            # int subclasses can override comparison, addition, and __int__.
+            # Use the underlying integer before validating the fixed layout.
+            count = int.__int__(value)
+            if count < 0:
+                raise ValueError(f"{name} must be a non-negative integer")
+            object.__setattr__(self, name, count)
+
+        # Both scales and their product are used as divisors in the visible
+        # feature encoder. Individually finite values can still underflow or
+        # overflow when multiplied, producing invalid policy observations.
+        normalized_scales = {}
+        for name in ("tile_size", "position_span_tiles"):
+            value = _finite_body_value(
+                getattr(self, name), error=f"{name} must be finite and positive"
+            )
+            if value <= 0.0:
+                raise ValueError(f"{name} must be finite and positive")
+            normalized_scales[name] = value
+        scale = normalized_scales["tile_size"] * normalized_scales["position_span_tiles"]
+        if not isfinite(scale) or scale <= 0.0:
+            raise ValueError("tile_size * position_span_tiles must be finite and positive")
+        # Store the validated floats, not objects that merely implement
+        # __float__: the encoder later divides and multiplies these fields.
+        for name, value in normalized_scales.items():
+            object.__setattr__(self, name, value)
 
     @property
     def floor_slots(self) -> int:

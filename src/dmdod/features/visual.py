@@ -12,6 +12,7 @@ backend) can be connected later without changing the policy-visible contract.
 """
 
 from dataclasses import dataclass
+from numbers import Integral
 from typing import Protocol
 
 from dmdod.motor.env import MotorObservation
@@ -34,9 +35,25 @@ class RgbFrame:
     data: bytes
 
     def __post_init__(self) -> None:
-        if self.width <= 0 or self.height <= 0:
-            raise ValueError("RGB frame dimensions must be positive")
-        expected = int(self.width) * int(self.height) * 3
+        # Reject mutable or non-binary payloads even when their length matches.
+        if not isinstance(self.data, bytes):
+            raise ValueError("RGB888 frame data must be bytes")
+        # Normalize Integral values before arithmetic. For int subclasses, use
+        # the stored integer rather than an overridden __int__ conversion.
+        dimensions: list[int] = []
+        for size in (self.width, self.height):
+            if isinstance(size, bool) or not isinstance(size, Integral):
+                raise ValueError("RGB frame dimensions must be positive integers")
+            normalized = int.__int__(size) if isinstance(size, int) else int(size)
+            if normalized <= 0:
+                raise ValueError("RGB frame dimensions must be positive integers")
+            dimensions.append(normalized)
+        width, height = dimensions
+        # Keep plain Python ints in the immutable frame: downstream consumers
+        # must not inherit an Integral subclass with wrapping arithmetic.
+        object.__setattr__(self, "width", width)
+        object.__setattr__(self, "height", height)
+        expected = width * height * 3
         if len(self.data) != expected:
             raise ValueError(
                 f"RGB888 frame must contain {expected} bytes, got {len(self.data)}"
@@ -105,21 +122,35 @@ class VisualFrameScheduler:
         visual_hz: int = DEFAULT_VISUAL_HZ,
         policy_hz: int = DEFAULT_POLICY_HZ,
     ) -> None:
-        if visual_hz <= 0 or policy_hz <= 0:
-            raise ValueError("visual_hz and policy_hz must be positive")
+        # Compare built-in ints, preserving the stored value of int subclasses
+        # even when their __int__ conversion is overridden.
+        rates: list[int] = []
+        for rate in (visual_hz, policy_hz):
+            if isinstance(rate, bool) or not isinstance(rate, Integral):
+                raise ValueError("visual_hz and policy_hz must be positive integers")
+            normalized = int.__int__(rate) if isinstance(rate, int) else int(rate)
+            if normalized <= 0:
+                raise ValueError("visual_hz and policy_hz must be positive integers")
+            rates.append(normalized)
+        visual_hz, policy_hz = rates
         if visual_hz > policy_hz:
             raise ValueError("visual_hz must not exceed policy_hz for frame holding")
-        self.visual_hz = int(visual_hz)
-        self.policy_hz = int(policy_hz)
+        self.visual_hz = visual_hz
+        self.policy_hz = policy_hz
         self._last_frame_index: int | None = None
 
     def reset(self) -> None:
         self._last_frame_index = None
 
     def frame_index(self, policy_tick: int) -> int:
-        if policy_tick < 0:
-            raise ValueError("policy_tick must be non-negative")
-        return (int(policy_tick) * self.visual_hz) // self.policy_hz
+        if isinstance(policy_tick, bool) or not isinstance(policy_tick, Integral):
+            raise ValueError("policy_tick must be a non-negative integer")
+        # Normalize before comparing and multiplying; custom Integral operators
+        # and overridden int-subclass __int__ must not alter the clock.
+        tick = int.__int__(policy_tick) if isinstance(policy_tick, int) else int(policy_tick)
+        if tick < 0:
+            raise ValueError("policy_tick must be a non-negative integer")
+        return (tick * self.visual_hz) // self.policy_hz
 
     def needs_new_frame(self, policy_tick: int) -> bool:
         index = self.frame_index(policy_tick)

@@ -34,6 +34,82 @@ def test_visual_cue_rejects_invalid_active_target_index():
         encoder.observe(0.0, active_target_indices=(1,))
 
 
+@pytest.mark.parametrize("sample_period_s", (0.0, 0.1))
+@pytest.mark.parametrize(
+    "bad",
+    (False, True, 0.0, 1.0, 0.5, "0", None, object(), -1, 2),
+)
+def test_visual_cue_rejects_non_integer_or_out_of_range_active_indices_without_mutation(
+    sample_period_s, bad,
+):
+    encoder = VisualCueEncoder(
+        [TargetHit(0.50, "left"), TargetHit(0.80, "right")],
+        config=VisualCueConfig(
+            latency_s=0.0, width_s=0.05, horizon_s=1.0,
+            sample_period_s=sample_period_s,
+        ),
+    )
+    first = encoder.observe(0.50, active_target_indices=(0,))
+    clock = encoder._next_sample_time_s
+    # False and 0.0 compare equal to 0, so the old held-frame fast path
+    # silently accepted them without indexing the targets.
+    with pytest.raises(IndexError, match="active target index"):
+        encoder.observe(0.51, active_target_indices=(bad,))
+    assert encoder._held_observation == first
+    assert encoder._held_active_signature == (0,)
+    assert encoder._next_sample_time_s == clock
+    if sample_period_s:
+        assert encoder.observe(0.51, active_target_indices=(0,)) == first
+
+
+class _UnorderableTargetIndex(int):
+    """Integral that converts to int but cannot be compared directly."""
+
+    def __lt__(self, other):
+        raise TypeError("custom ordering unavailable")
+
+    def __ge__(self, other):
+        raise TypeError("custom ordering unavailable")
+
+
+def test_visual_cue_normalizes_integral_target_indices_before_range_checks():
+    encoder = VisualCueEncoder(
+        [TargetHit(0.50, "left"), TargetHit(0.80, "right")],
+        config=VisualCueConfig(latency_s=0.0, width_s=0.05, horizon_s=1.0),
+    )
+    observation = encoder.observe(0.50, active_target_indices=(_UnorderableTargetIndex(0),))
+    assert observation.left > 0.99
+    assert observation.right == 0.0
+    assert encoder._held_active_signature == (0,)
+    assert type(encoder._held_active_signature[0]) is int
+    with pytest.raises(IndexError, match="out of range"):
+        encoder.observe(0.51, active_target_indices=(_UnorderableTargetIndex(2),))
+    assert encoder._held_active_signature == (0,)
+
+
+class _AlwaysEqualTargetIndex(int):
+    """Misleading equality must not reuse another target's held frame."""
+
+    def __eq__(self, other):
+        return True
+
+
+def test_visual_cue_normalizes_integral_index_before_held_frame_comparison():
+    encoder = VisualCueEncoder(
+        [TargetHit(0.50, "left"), TargetHit(0.80, "right")],
+        config=VisualCueConfig(
+            latency_s=0.0, width_s=0.05, horizon_s=1.0,
+            sample_period_s=0.1,
+        ),
+    )
+    first = encoder.observe(0.50, active_target_indices=(0,))
+    second = encoder.observe(0.51, active_target_indices=(_AlwaysEqualTargetIndex(1),))
+    assert first.left > 0.99 and first.right == 0.0
+    assert second.left == 0.0 and second.right > 0.0
+    assert encoder._held_active_signature == (1,)
+    assert type(encoder._held_active_signature[0]) is int
+
+
 def test_visual_cue_latency_jitter_is_reproducible_by_seed():
     config = VisualCueConfig(latency_s=0.050, latency_jitter_s=0.015)
     a = VisualCueEncoder([TargetHit(0.50, "left")], config=config, seed=123)
@@ -109,3 +185,221 @@ def test_visual_cue_config_preserves_finite_boundary_values():
     assert config.dropout_probability == 1.0
     assert config.width_s == 1e-6
     assert VisualCueConfig().latency_s == 0.050
+
+
+@pytest.mark.parametrize(
+    "field",
+    (
+        "latency_s", "width_s", "horizon_s", "latency_jitter_s",
+        "sample_period_s", "amplitude_noise_std", "dropout_probability",
+    ),
+)
+@pytest.mark.parametrize("bad", (True, False, "0.1", b"0.1", None, 10**1000, object()))
+def test_visual_cue_config_rejects_malformed_sensor_parameters(field, bad):
+    # Each invalid field must raise the same public ValueError instead of
+    # silently accepting bool or leaking TypeError/OverflowError.
+    with pytest.raises(ValueError, match=rf"{field} must be finite"):
+        VisualCueConfig(**{field: bad})
+
+
+def test_visual_cue_config_preserves_integer_compatible_finite_values():
+    config = VisualCueConfig(
+        latency_s=0, width_s=1, horizon_s=2,
+        latency_jitter_s=0, sample_period_s=0,
+        amplitude_noise_std=0, dropout_probability=1,
+    )
+    assert config.width_s == 1
+    assert config.dropout_probability == 1
+
+
+class _FloatOnlySensorValue:
+    """Numeric input accepted by float() but without ordering operators."""
+
+    def __init__(self, value):
+        self.value = value
+
+    def __float__(self):
+        return float(self.value)
+
+
+@pytest.mark.parametrize(
+    "field,value",
+    (
+        ("latency_s", 0.025),
+        ("width_s", 0.075),
+        ("horizon_s", 0.5),
+        ("latency_jitter_s", 0.01),
+        ("sample_period_s", 0.02),
+        ("amplitude_noise_std", 0.005),
+        ("dropout_probability", 0.25),
+    ),
+)
+def test_visual_cue_config_normalizes_float_only_sensor_values(field, value):
+    config = VisualCueConfig(**{field: _FloatOnlySensorValue(value)})
+    assert type(getattr(config, field)) is float
+    assert getattr(config, field) == value
+
+
+def test_visual_cue_encoder_uses_normalized_float_only_sensor_values():
+    config = VisualCueConfig(
+        latency_s=_FloatOnlySensorValue(0.0),
+        width_s=_FloatOnlySensorValue(0.05),
+        horizon_s=_FloatOnlySensorValue(1.0),
+        latency_jitter_s=_FloatOnlySensorValue(0.0),
+        sample_period_s=_FloatOnlySensorValue(0.02),
+        amplitude_noise_std=_FloatOnlySensorValue(0.0),
+        dropout_probability=_FloatOnlySensorValue(0.0),
+    )
+    encoder = VisualCueEncoder([TargetHit(0.5, "left")], config=config)
+    first = encoder.observe(0.5, active_target_indices=(0,))
+    assert first.left > 0.99
+    assert first.right == 0.0
+    assert encoder.observe(0.51, active_target_indices=(0,)) == first
+
+
+def test_visual_cue_sample_clock_skips_large_observation_gap():
+    # An unbounded per-frame loop would require 50 million iterations.
+    config = VisualCueConfig(
+        latency_s=0.0, sample_period_s=0.020,
+    )
+    encoder = VisualCueEncoder([TargetHit(0.5, "left")], config=config)
+    encoder.observe(0.45, active_target_indices=(0,))
+    result = encoder.observe(1_000_000.0, active_target_indices=(0,))
+    assert result.left == result.right == 0.0
+    assert 1_000_000.0 < encoder._next_sample_time_s <= 1_000_000.021
+
+
+def test_visual_cue_sample_clock_sub_ulp_period_makes_progress():
+    # At 0.45 seconds, adding the smallest subnormal does not advance a float.
+    config = VisualCueConfig(
+        latency_s=0.0, sample_period_s=5e-324,
+    )
+    encoder = VisualCueEncoder([TargetHit(0.5, "left")], config=config)
+    encoder.observe(0.45, active_target_indices=(0,))
+    encoder.observe(0.46, active_target_indices=(0,))
+    assert encoder._next_sample_time_s > 0.46
+
+
+def test_visual_cue_sample_clock_preserves_ordinary_repeated_addition():
+    period = 0.0001
+    config = VisualCueConfig(latency_s=0.0, sample_period_s=period)
+    encoder = VisualCueEncoder([TargetHit(0.5, "left")], config=config)
+    encoder.observe(0.45, active_target_indices=(0,))
+    encoder.observe(0.50, active_target_indices=(0,))
+    expected = 0.45 + period
+    while expected <= 0.50 + 1e-12:
+        expected += period
+    assert encoder._next_sample_time_s == expected
+
+
+@pytest.mark.parametrize(
+    "bad",
+    (float("nan"), float("inf"), float("-inf"), True, False,
+     "0.46", b"0.46", None, 10**1000, object()),
+)
+def test_visual_cue_rejects_invalid_observation_times_without_state_mutation(bad):
+    config = VisualCueConfig(
+        latency_s=0.0, width_s=0.05, horizon_s=1.0,
+        sample_period_s=0.1,
+    )
+    encoder = VisualCueEncoder([TargetHit(0.5, "left")], config=config)
+    first = encoder.observe(0.45, active_target_indices=(0,))
+    next_sample = encoder._next_sample_time_s
+    with pytest.raises(ValueError, match="simulation_time_s must be finite"):
+        encoder.observe(bad, active_target_indices=(0,))
+    assert encoder._next_sample_time_s == next_sample
+    assert encoder._held_observation == first
+    assert encoder.observe(0.46, active_target_indices=(0,)) == first
+
+
+@pytest.mark.parametrize(
+    "bad",
+    (float("nan"), float("inf"), float("-inf"), True, False,
+     "0.5", b"0.5", None, 10**1000, object()),
+)
+def test_visual_cue_encoder_rejects_invalid_target_times(bad):
+    with pytest.raises(ValueError, match="target time_s must be finite"):
+        VisualCueEncoder([TargetHit(bad, "left")])
+
+
+@pytest.mark.parametrize("bad", ("", "middle", 1, True, None, []))
+def test_visual_cue_encoder_rejects_unsupported_target_keys(bad):
+    with pytest.raises(ValueError, match="target key must be"):
+        VisualCueEncoder([TargetHit(0.5, bad)])
+
+
+def test_visual_cue_encoder_preserves_finite_preroll_and_supported_keys():
+    config = VisualCueConfig(latency_s=0.0, width_s=0.05, horizon_s=1.0)
+    encoder = VisualCueEncoder(
+        [TargetHit(0.5, "left"), TargetHit(-0.2, "right")],
+        config=config,
+    )
+    observation = encoder.observe(-0.2, active_target_indices=(0,))
+    assert observation.right > 0.99
+    assert observation.left == 0.0
+
+
+class _FloatOnlyTargetTime:
+    """A finite timestamp accepted by float() without ordering/arithmetic."""
+
+    def __init__(self, value):
+        self.value = value
+
+    def __float__(self):
+        return float(self.value)
+
+
+def test_visual_cue_normalizes_float_only_target_times():
+    original = [
+        TargetHit(_FloatOnlyTargetTime(0.8), "right"),
+        TargetHit(_FloatOnlyTargetTime(0.5), "left"),
+    ]
+    config = VisualCueConfig(latency_s=0.0, width_s=0.05, horizon_s=1.0)
+    encoder = VisualCueEncoder(original, config=config)
+    baseline = VisualCueEncoder(
+        [TargetHit(0.8, "right"), TargetHit(0.5, "left")], config=config
+    )
+    assert [target.time_s for target in encoder._targets] == [0.5, 0.8]
+    assert all(type(target.time_s) is float for target in encoder._targets)
+    assert isinstance(original[0].time_s, _FloatOnlyTargetTime)
+    for t in (0.5, 0.8):
+        assert encoder.observe(t) == baseline.observe(t)
+        for index in (0, 1):
+            assert encoder.observe(t, active_target_indices=(index,)) == baseline.observe(
+                t, active_target_indices=(index,)
+            )
+
+
+@pytest.mark.parametrize("bad", (float("nan"), float("inf"), float("-inf")))
+def test_visual_cue_rejects_nonfinite_float_only_target_times(bad):
+    with pytest.raises(ValueError, match="target time_s must be finite"):
+        VisualCueEncoder([TargetHit(_FloatOnlyTargetTime(bad), "left")])
+
+
+class _RedirectedTargetIndex(int):
+    """An int subclass whose __int__ lies about its stored value."""
+
+    def __int__(self):
+        return 0
+
+
+def test_visual_cue_uses_stored_int_subclass_index_for_target_and_held_frame():
+    encoder = VisualCueEncoder(
+        [TargetHit(0.50, "left"), TargetHit(0.80, "right")],
+        config=VisualCueConfig(
+            latency_s=0.0, width_s=0.05, horizon_s=1.0,
+            sample_period_s=0.1,
+        ),
+    )
+    first = encoder.observe(0.50, active_target_indices=(0,))
+    second = encoder.observe(0.51, active_target_indices=(_RedirectedTargetIndex(1),))
+    assert first.left > 0.99 and first.right == 0.0
+    assert second.left == 0.0 and second.right > 0.0
+    assert encoder._held_active_signature == (1,)
+    assert type(encoder._held_active_signature[0]) is int
+    clock = encoder._next_sample_time_s
+    with pytest.raises(IndexError, match="out of range"):
+        encoder.observe(0.52, active_target_indices=(_RedirectedTargetIndex(2),))
+    assert encoder._held_active_signature == (1,)
+    assert encoder._held_observation == second
+    assert encoder._next_sample_time_s == clock

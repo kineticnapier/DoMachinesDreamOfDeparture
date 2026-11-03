@@ -349,3 +349,68 @@ def test_visible_contract_preserves_valid_one_shot_label_iterable() -> None:
     renderer = VisibleCounterRenderer(contract)
     assert renderer.notify(StockJudgementNotification(0.05, "perfect")).accepted
     assert dict(renderer.capture(0.1).counters) == {"perfect": 1, "very_late": 0}
+
+@pytest.mark.parametrize(
+    "displayed_at_s",
+    [-1e308, -float.fromhex("0x1.fffffffffffffp+1023")],
+)
+def test_visible_capture_rejects_overflowed_render_cutoff_without_state_change(displayed_at_s) -> None:
+    # Both operands are finite, but displayed_at_s - display_latency_s
+    # underflows to -inf. A failed capture must not advance the clock or
+    # consume any pending judgement notification.
+    renderer = VisibleCounterRenderer(
+        _contract(fail_miss=False), display_latency_s=1e308
+    )
+    renderer.notify(StockJudgementNotification(-1e307, "perfect"))
+    with pytest.raises(ValueError, match="render cutoff timestamp must be finite"):
+        renderer.capture(displayed_at_s)
+
+    assert renderer._last_capture_s is None
+    assert len(renderer._pending) == 1
+    frame = renderer.capture(1e308)
+    assert dict(frame.counters)["perfect"] == 1
+    assert frame.displayed_at_s == 1e308
+
+
+class _MisleadingNotificationCount(int):
+    def __le__(self, other):
+        return False
+
+    def __radd__(self, other):
+        return 999
+
+    def __int__(self):
+        return 999
+
+
+class _UnorderableNotificationCount(int):
+    def __le__(self, other):
+        raise TypeError("comparison is unavailable")
+
+
+def test_visible_notification_int_subclass_uses_actual_count_not_overridden_addition() -> None:
+    renderer = VisibleCounterRenderer(_contract(fail_miss=False))
+    assert renderer.notify(
+        StockJudgementNotification(0.05, "perfect", _MisleadingNotificationCount(2))
+    ).accepted
+    count = dict(renderer.capture(0.1).counters)["perfect"]
+    assert count == 2
+    assert type(count) is int
+
+
+def test_visible_notification_negative_int_subclass_cannot_bypass_validation() -> None:
+    renderer = VisibleCounterRenderer(_contract(fail_miss=False))
+    with pytest.raises(ValueError, match="judgement count must be a positive integer"):
+        renderer.notify(
+            StockJudgementNotification(0.05, "perfect", _MisleadingNotificationCount(-2))
+        )
+    assert dict(renderer.capture(0.1).counters)["perfect"] == 0
+    assert not renderer._pending
+
+
+def test_visible_notification_int_subclass_without_ordering_is_normalized() -> None:
+    renderer = VisibleCounterRenderer(_contract(fail_miss=False))
+    assert renderer.notify(
+        StockJudgementNotification(0.05, "perfect", _UnorderableNotificationCount(3))
+    ).accepted
+    assert dict(renderer.capture(0.1).counters)["perfect"] == 3

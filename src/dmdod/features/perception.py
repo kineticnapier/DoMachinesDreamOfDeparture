@@ -2,9 +2,11 @@ from __future__ import annotations
 
 import random
 from dataclasses import dataclass
-from math import exp, isfinite
+from math import exp, isfinite, nextafter
+from numbers import Integral
 
 from dmdod.evaluation.evaluator import TargetHit
+from dmdod.motor.body import _finite_body_value
 
 
 @dataclass(frozen=True)
@@ -40,26 +42,35 @@ class VisualCueConfig:
     def __post_init__(self) -> None:
         # Non-finite sensor parameters silently corrupt visible cues or clocks.
         # Reject them before preserving the existing finite-value range rules.
-        for name in (
+        # math.isfinite accepts __float__-only objects, but the following
+        # range comparisons and the encoder's arithmetic need actual numbers.
+        # Validate all fields before storing their normalized float values.
+        names = (
             "latency_s", "width_s", "horizon_s", "latency_jitter_s",
             "sample_period_s", "amplitude_noise_std", "dropout_probability",
-        ):
-            if not isfinite(getattr(self, name)):
-                raise ValueError(f"{name} must be finite")
-        if self.latency_s < 0.0:
+        )
+        values = {
+            name: _finite_body_value(
+                getattr(self, name), error=f"{name} must be finite"
+            )
+            for name in names
+        }
+        if values["latency_s"] < 0.0:
             raise ValueError("latency_s must be non-negative")
-        if self.width_s <= 0.0:
+        if values["width_s"] <= 0.0:
             raise ValueError("width_s must be positive")
-        if self.horizon_s <= 0.0:
+        if values["horizon_s"] <= 0.0:
             raise ValueError("horizon_s must be positive")
-        if self.latency_jitter_s < 0.0:
+        if values["latency_jitter_s"] < 0.0:
             raise ValueError("latency_jitter_s must be non-negative")
-        if self.sample_period_s < 0.0:
+        if values["sample_period_s"] < 0.0:
             raise ValueError("sample_period_s must be non-negative")
-        if self.amplitude_noise_std < 0.0:
+        if values["amplitude_noise_std"] < 0.0:
             raise ValueError("amplitude_noise_std must be non-negative")
-        if not 0.0 <= self.dropout_probability <= 1.0:
+        if not 0.0 <= values["dropout_probability"] <= 1.0:
             raise ValueError("dropout_probability must be between 0 and 1")
+        for name in names:
+            object.__setattr__(self, name, values[name])
 
 
 class VisualCueEncoder:
@@ -80,7 +91,22 @@ class VisualCueEncoder:
         config: VisualCueConfig | None = None,
         seed: int | None = None,
     ) -> None:
-        self._targets = tuple(sorted(targets, key=lambda target: target.time_s))
+        # Standalone encoders must enforce the same target boundary as the
+        # rhythm environment. Invalid timestamps otherwise poison cue sampling.
+        validated_targets = []
+        for target in targets:
+            time_s = _finite_body_value(
+                target.time_s, error="target time_s must be finite"
+            )
+            if not isinstance(target.key, str) or target.key not in ("left", "right"):
+                raise ValueError("target key must be 'left' or 'right'")
+            # Do not leave __float__-only timestamps in sorting or cue arithmetic.
+            # Keep ordinary numeric targets unchanged for existing experiments.
+            validated_targets.append(
+                target if type(target.time_s) in (int, float)
+                else TargetHit(time_s, target.key)
+            )
+        self._targets = tuple(sorted(validated_targets, key=lambda target: target.time_s))
         self.config = config or VisualCueConfig()
         self._rng = random.Random(seed)
         self._episode_latency_s = self.config.latency_s
@@ -115,10 +141,20 @@ class VisualCueEncoder:
         if active_target_indices is None:
             return None, enumerate(self._targets)
 
-        indices = tuple(active_target_indices)
-        for index in indices:
-            if index < 0 or index >= len(self._targets):
-                raise IndexError(f"active target index out of range: {index}")
+        normalized_indices: list[int] = []
+        for index in active_target_indices:
+            # Validate and normalize before comparing, indexing or caching.
+            # Integral subclasses can override ordering/equality, and a raw
+            # subclass in the held-frame signature may alias another target.
+            if isinstance(index, bool) or not isinstance(index, Integral):
+                raise IndexError(f"active target index must be an integer: {index!r}")
+            # int subclasses may override __int__ to redirect to a different
+            # target. Read the stored integer value before caching its identity.
+            normalized = int.__int__(index) if isinstance(index, int) else int(index)
+            if normalized < 0 or normalized >= len(self._targets):
+                raise IndexError(f"active target index out of range: {normalized}")
+            normalized_indices.append(normalized)
+        indices = tuple(normalized_indices)
         return indices, ((index, self._targets[index]) for index in indices)
 
     def _sample_raw(
@@ -172,8 +208,25 @@ class VisualCueEncoder:
         # Advance from the ideal sensor clock rather than from the control-step
         # timestamp. With 10 ms control and a 60 Hz sensor this yields the
         # expected 20/20/10 ms pattern instead of silently degrading to 50 Hz.
-        while self._next_sample_time_s <= simulation_time_s + 1e-12:
-            self._next_sample_time_s += period
+        deadline = simulation_time_s + 1e-12
+        if self._next_sample_time_s <= deadline:
+            gap = deadline - self._next_sample_time_s
+            # Keep ordinary sampling bit-for-bit unchanged. A large jump in
+            # observation time must not loop once for every missed sensor frame.
+            if gap > 4096.0 * period:
+                cycles = gap / period
+                if not isfinite(cycles) or cycles > 2**40:
+                    # The original phase is below floating-point resolution.
+                    self._next_sample_time_s = nextafter(deadline, float("inf"))
+                    return
+                self._next_sample_time_s += max(0, int(cycles) - 8) * period
+            while self._next_sample_time_s <= deadline:
+                next_time = self._next_sample_time_s + period
+                if next_time <= self._next_sample_time_s:
+                    # A sub-ULP sample period would otherwise loop forever.
+                    self._next_sample_time_s = nextafter(deadline, float("inf"))
+                    return
+                self._next_sample_time_s = next_time
 
     def observe(
         self,
@@ -181,9 +234,16 @@ class VisualCueEncoder:
         *,
         active_target_indices: tuple[int, ...] | None = None,
     ) -> VisualCueObservation:
+        # Reject malformed timestamps before touching held frames or the
+        # sample clock. NaN can poison the clock; +Inf can hold a frame forever.
+        simulation_time_s = _finite_body_value(
+            simulation_time_s, error="simulation_time_s must be finite"
+        )
         # Only cue amplitudes leave this object; neither simulation time, target
         # indices, time-to-target nor sampled latency are exposed to the policy.
-        signature = None if active_target_indices is None else tuple(active_target_indices)
+        # Validate even on a held-frame tick. For example, (False,) compares
+        # equal to (0,) but must not reuse that target's cached observation.
+        signature, _ = self._indexed_targets(active_target_indices)
         sample_period = self.config.sample_period_s
         target_changed = (
             self._held_observation is not None
@@ -203,7 +263,7 @@ class VisualCueEncoder:
 
         observation = self._sample_raw(
             simulation_time_s,
-            active_target_indices=active_target_indices,
+            active_target_indices=signature,
         )
         self._held_observation = observation
         self._held_active_signature = signature

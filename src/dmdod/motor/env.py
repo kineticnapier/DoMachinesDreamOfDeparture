@@ -11,6 +11,19 @@ from dmdod.envs.simulator import Simulation
 from dmdod.motor.body import TwoFingerBody
 
 
+def _finite_motor_value(value: object, *, error: str) -> float:
+    """Validate a physical command or clock before it changes motor state."""
+    if isinstance(value, (bool, str, bytes)):
+        raise ValueError(error)
+    try:
+        number = float(value)
+    except (TypeError, ValueError, OverflowError) as exc:
+        raise ValueError(error) from exc
+    if not isfinite(number):
+        raise ValueError(error)
+    return number
+
+
 @dataclass(frozen=True)
 class MotorAction:
     """Continuous motor commands issued by a policy.
@@ -88,12 +101,19 @@ class MotorEnv:
         body_config = personal_blue_switch_v0_1(same_hand=same_hand)
         self.sim = Simulation(body=TwoFingerBody(config=body_config))
         physics_dt = self.sim.config.dt_s
-        if not isfinite(control_dt_s):
-            raise ValueError("control_dt_s must be finite")
+        control_dt_s = _finite_motor_value(
+            control_dt_s, error="control_dt_s must be finite"
+        )
         if control_dt_s < physics_dt:
             raise ValueError("control_dt_s must be at least one physics step")
-        substeps = round(control_dt_s / physics_dt)
-        if abs(substeps * physics_dt - control_dt_s) > 1e-12:
+        ratio = control_dt_s / physics_dt
+        if not isfinite(ratio):
+            raise ValueError("control_dt_s must be an integer multiple of physics dt")
+        substeps = round(ratio)
+        if (
+            abs(ratio - substeps) > 1e-9
+            or abs(substeps * physics_dt - control_dt_s) > 1e-12
+        ):
             raise ValueError("control_dt_s must be an integer multiple of physics dt")
         self.control_dt_s = control_dt_s
         self.physics_substeps = substeps
@@ -125,10 +145,15 @@ class MotorEnv:
         )
 
     def step(self, action: MotorAction) -> MotorTransition:
-        if not isfinite(action.left) or not isfinite(action.right):
-            raise ValueError("motor commands must be finite")
-        left = max(-1.0, min(1.0, action.left))
-        right = max(-1.0, min(1.0, action.right))
+        # Check both policy commands before either can advance the physics.
+        left_command = _finite_motor_value(
+            action.left, error="motor commands must be finite"
+        )
+        right_command = _finite_motor_value(
+            action.right, error="motor commands must be finite"
+        )
+        left = max(-1.0, min(1.0, left_command))
+        right = max(-1.0, min(1.0, right_command))
         raw_events = step_held_exact(
             self.sim,
             left,

@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from enum import Enum
+from math import isfinite
 
 
 class KeyEvent(str, Enum):
@@ -15,8 +16,28 @@ class KeyConfig:
     reset_m: float = 0.0018
 
     def __post_init__(self) -> None:
-        if not 0.0 <= self.reset_m < self.actuation_m:
+        # Reject malformed thresholds before they reach either keyboard.
+        # An infinite actuation threshold otherwise passes the ordering check
+        # and silently prevents all key-down events.
+        # isfinite() accepts __float__-only values, but the subsequent
+        # comparisons (and key presses) require real ordering operators.
+        # Normalize both thresholds before comparing or storing them.
+        normalized: list[float] = []
+        for threshold in (self.actuation_m, self.reset_m):
+            if isinstance(threshold, (bool, str, bytes)):
+                raise ValueError("keyboard thresholds must be finite numbers")
+            try:
+                numeric = float(threshold)
+            except (TypeError, ValueError, OverflowError) as exc:
+                raise ValueError("keyboard thresholds must be finite numbers") from exc
+            if not isfinite(numeric):
+                raise ValueError("keyboard thresholds must be finite numbers")
+            normalized.append(numeric)
+        actuation, reset = normalized
+        if not 0.0 <= reset < actuation:
             raise ValueError("reset_m must be non-negative and below actuation_m")
+        object.__setattr__(self, "actuation_m", actuation)
+        object.__setattr__(self, "reset_m", reset)
 
 
 @dataclass
@@ -35,9 +56,25 @@ class TwoKeyKeyboard:
         self.right = KeyState()
 
     def step(self, left_position_m: float, right_position_m: float) -> list[tuple[str, KeyEvent]]:
+        # Validate both positions before changing either key's pressed state.
+        # Otherwise a malformed right position can leave the left key updated.
+        # math.isfinite() accepts objects with __float__, even if they do
+        # not support >= or <=. Normalize both positions before touching
+        # either key so an invalid comparison cannot partially change state.
+        validated_positions: list[float] = []
+        for position in (left_position_m, right_position_m):
+            if isinstance(position, (bool, str, bytes)):
+                raise ValueError("keyboard positions must be finite numbers")
+            try:
+                numeric = float(position)
+            except (TypeError, ValueError, OverflowError) as exc:
+                raise ValueError("keyboard positions must be finite numbers") from exc
+            if not isfinite(numeric):
+                raise ValueError("keyboard positions must be finite numbers")
+            validated_positions.append(numeric)
         events: list[tuple[str, KeyEvent]] = []
-        self._step_key("left", self.left, left_position_m, events)
-        self._step_key("right", self.right, right_position_m, events)
+        self._step_key("left", self.left, validated_positions[0], events)
+        self._step_key("right", self.right, validated_positions[1], events)
         return events
 
     def _step_key(

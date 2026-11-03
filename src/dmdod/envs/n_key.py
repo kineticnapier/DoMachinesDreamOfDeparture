@@ -21,7 +21,11 @@ from dmdod.features.real_chart import (
     RealChartFeatureConfig,
     _floor_features,
 )
-from dmdod.features.hud import DEFAULT_FEEDBACK_HOLD_S, hud_bpms_for_floor
+from dmdod.features.hud import (
+    DEFAULT_FEEDBACK_HOLD_S,
+    _validated_feedback_hold_s,
+    hud_bpms_for_floor,
+)
 from dmdod.features.hud_features import (
     HUD_ERROR_CLIP,
     HUD_ERROR_SCALE_MS,
@@ -145,9 +149,7 @@ class DiagnosticHudNKeyRealChartMotorEnv(NKeyRealChartMotorEnv):
         capture_overload_trace: bool = False,
         **kwargs,
     ) -> None:
-        if feedback_hold_s < 0.0:
-            raise ValueError("feedback_hold_s must be non-negative")
-        self.feedback_hold_s = float(feedback_hold_s)
+        self.feedback_hold_s = _validated_feedback_hold_s(feedback_hold_s)
         self.capture_overload_trace = bool(capture_overload_trace)
         self._trace_keydowns: list[float] = []
         self._trace_too_early: list[TooEarlyKeyDownTrace] = []

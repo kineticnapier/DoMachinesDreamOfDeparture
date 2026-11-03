@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from math import isfinite
 
 from dmdod.adofai_rules import TimingJudgement
 from dmdod.motor.keyboard import KeyEvent
@@ -9,6 +10,20 @@ from dmdod.envs.real_chart import RealChartMotorEnv, RelativeVisibleFloor
 
 
 DEFAULT_FEEDBACK_HOLD_S = 0.75
+
+
+def _validated_feedback_hold_s(value: object) -> float:
+    """Reject invalid HUD display durations before they affect visibility."""
+    error = "feedback_hold_s must be finite and non-negative"
+    if isinstance(value, (bool, str, bytes)):
+        raise ValueError(error)
+    try:
+        duration = float(value)
+    except (TypeError, ValueError, OverflowError) as exc:
+        raise ValueError(error) from exc
+    if not isfinite(duration) or duration < 0.0:
+        raise ValueError(error)
+    return duration
 
 
 @dataclass(frozen=True, slots=True)
@@ -59,9 +74,7 @@ class HudRealChartMotorEnv(RealChartMotorEnv):
     """RealChartMotorEnv with human-visible BPM and transient judgement HUD."""
 
     def __init__(self, *args, feedback_hold_s: float = DEFAULT_FEEDBACK_HOLD_S, **kwargs) -> None:
-        if feedback_hold_s < 0.0:
-            raise ValueError("feedback_hold_s must be non-negative")
-        self.feedback_hold_s = float(feedback_hold_s)
+        self.feedback_hold_s = _validated_feedback_hold_s(feedback_hold_s)
         self._hud_judgement: TimingJudgement | None = None
         self._hud_error_ms = 0.0
         self._hud_feedback_until_s = -1.0

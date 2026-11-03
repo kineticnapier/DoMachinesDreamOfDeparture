@@ -6,6 +6,7 @@ from dmdod.motor_env import MotorObservation
 from dmdod.real_chart_env import RealChartObservation, RelativeVisibleFloor
 from dmdod.real_chart_features import (
     DEFAULT_REAL_CHART_FEATURE_CONFIG,
+    RealChartFeatureConfig,
     REAL_CHART_FLOOR_FEATURE_DIM,
     REAL_CHART_INPUT_DIM,
     encode_real_chart_observation,
@@ -99,3 +100,145 @@ def test_real_chart_encoder_maps_visible_event_markers_without_event_payloads():
     # six event-presence bits, mask.
     assert slot[8:14] == (1.0, 1.0, 0.0, 0.0, 1.0, 0.0)
     assert slot[14] == 1.0
+
+
+@pytest.mark.parametrize("field", ("behind_floors", "ahead_floors"))
+@pytest.mark.parametrize("bad", (True, False, 1.5, "2", None, object(), -1))
+def test_real_chart_feature_config_rejects_noninteger_floor_counts(field, bad):
+    with pytest.raises(ValueError, match=rf"{field} must be a non-negative integer"):
+        RealChartFeatureConfig(**{field: bad})
+
+
+@pytest.mark.parametrize("field", ("tile_size", "position_span_tiles"))
+@pytest.mark.parametrize(
+    "bad",
+    (True, False, "1.5", None, object(), float("nan"), float("inf"),
+     float("-inf"), 10**1000, 0.0, -1.0),
+)
+def test_real_chart_feature_config_rejects_invalid_scales(field, bad):
+    with pytest.raises(ValueError, match=rf"{field} must be finite and positive"):
+        RealChartFeatureConfig(**{field: bad})
+
+
+@pytest.mark.parametrize(
+    "kwargs",
+    (
+        {"tile_size": 1e-300, "position_span_tiles": 1e-300},
+        {"tile_size": 1e308, "position_span_tiles": 1e308},
+    ),
+)
+def test_real_chart_feature_config_rejects_nonfinite_derived_scale(kwargs):
+    with pytest.raises(
+        ValueError, match=r"tile_size \* position_span_tiles must be finite and positive"
+    ):
+        RealChartFeatureConfig(**kwargs)
+
+
+def test_real_chart_feature_config_preserves_valid_custom_layout_and_defaults():
+    config = RealChartFeatureConfig(
+        behind_floors=0, ahead_floors=3, tile_size=2.0, position_span_tiles=4.0
+    )
+    assert config.floor_slots == 4
+    assert config.input_dim == 8 + 4 * REAL_CHART_FLOOR_FEATURE_DIM
+    assert DEFAULT_REAL_CHART_FEATURE_CONFIG.input_dim == REAL_CHART_INPUT_DIM
+    observation = RealChartObservation(
+        motor=_motor(), orbiting_x=2.0, orbiting_y=-2.0,
+        floors=(_floor(0),),
+    )
+    encoded = encode_real_chart_observation(observation, config=config)
+    assert len(encoded) == config.input_dim
+    assert encoded[6:8] == (1.0, -1.0)
+
+
+class _FloatOnlyScale:
+    """Accepts float() but deliberately has no arithmetic operators."""
+
+    def __init__(self, value):
+        self.value = value
+
+    def __float__(self):
+        return float(self.value)
+
+
+@pytest.mark.parametrize(
+    ("field", "value"),
+    (("tile_size", 2.0), ("position_span_tiles", 4.0)),
+)
+def test_real_chart_feature_config_normalizes_float_only_scales_before_encoding(field, value):
+    config = RealChartFeatureConfig(**{field: _FloatOnlyScale(value)})
+    assert type(getattr(config, field)) is float
+
+    observation = RealChartObservation(
+        motor=_motor(),
+        orbiting_x=1.5,
+        orbiting_y=-1.5,
+        floors=(_floor(1),),
+    )
+    actual = encode_real_chart_observation(observation, config=config)
+    expected = encode_real_chart_observation(
+        observation, config=RealChartFeatureConfig(**{field: value})
+    )
+    assert actual == pytest.approx(expected)
+
+
+def test_real_chart_feature_config_normalizes_both_scales_before_encoding():
+    config = RealChartFeatureConfig(
+        tile_size=_FloatOnlyScale(2.0),
+        position_span_tiles=_FloatOnlyScale(4.0),
+    )
+    assert type(config.tile_size) is float
+    assert type(config.position_span_tiles) is float
+    observation = RealChartObservation(
+        motor=_motor(),
+        orbiting_x=2.0,
+        orbiting_y=-2.0,
+        floors=(_floor(1),),
+    )
+    actual = encode_real_chart_observation(observation, config=config)
+    expected = encode_real_chart_observation(
+        observation,
+        config=RealChartFeatureConfig(tile_size=2.0, position_span_tiles=4.0),
+    )
+    assert actual == pytest.approx(expected)
+
+
+class _MisleadingFloorCount(int):
+    """An int payload whose overridden operators report different values."""
+
+    def __lt__(self, other):
+        return False
+
+    def __add__(self, other):
+        return 999
+
+    def __radd__(self, other):
+        return 999
+
+    def __int__(self):
+        return 999
+
+
+@pytest.mark.parametrize("field", ("behind_floors", "ahead_floors"))
+def test_real_chart_feature_config_normalizes_int_subclass_floor_counts(field):
+    config = RealChartFeatureConfig(**{field: _MisleadingFloorCount(3)})
+    expected_config = RealChartFeatureConfig(**{field: 3})
+    assert type(getattr(config, field)) is int
+    assert config.floor_slots == expected_config.floor_slots
+    assert config.input_dim == expected_config.input_dim
+
+    observation = RealChartObservation(
+        motor=_motor(),
+        orbiting_x=1.5,
+        orbiting_y=-1.5,
+        floors=(_floor(-1), _floor(0), _floor(1)),
+    )
+    actual = encode_real_chart_observation(observation, config=config)
+    expected = encode_real_chart_observation(observation, config=expected_config)
+    assert actual == pytest.approx(expected)
+
+
+@pytest.mark.parametrize("field", ("behind_floors", "ahead_floors"))
+def test_real_chart_feature_config_rejects_negative_int_subclass_floor_counts(field):
+    # A custom __lt__ must not make an underlying negative count appear valid.
+    with pytest.raises(ValueError, match=rf"{field} must be a non-negative integer"):
+        RealChartFeatureConfig(**{field: _MisleadingFloorCount(-1)})

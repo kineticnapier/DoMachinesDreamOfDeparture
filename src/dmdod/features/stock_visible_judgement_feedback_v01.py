@@ -145,7 +145,12 @@ class VisibleCounterRenderer:
 
     def notify(self, event: StockJudgementNotification) -> CounterRenderDiagnostic:
         occurred_at_s = _finite_timestamp(event.occurred_at_s, name="judgement occurrence time")
-        if isinstance(event.count, bool) or not isinstance(event.count, int) or event.count <= 0:
+        if isinstance(event.count, bool) or not isinstance(event.count, int):
+            raise ValueError("judgement count must be a positive integer")
+        # int subclasses can override ordering, addition, and even __int__.
+        # Capture the actual integer payload before validating or queuing it.
+        count = int.__int__(event.count)
+        if count <= 0:
             raise ValueError("judgement count must be a positive integer")
         # Only literal category strings may enter the pending heap. Coercing an
         # object with __str__ can pass the visibility check but later fail
@@ -163,8 +168,15 @@ class VisibleCounterRenderer:
                 float(event.occurred_at_s),
             )
         self._pending_sequence += 1
-        heappush(self._pending, (occurred_at_s, self._pending_sequence, event))
-        return CounterRenderDiagnostic(True, "queued for visible rendering", str(event.category), float(event.occurred_at_s))
+        heappush(
+            self._pending,
+            (
+                occurred_at_s,
+                self._pending_sequence,
+                StockJudgementNotification(occurred_at_s, event.category, count),
+            ),
+        )
+        return CounterRenderDiagnostic(True, "queued for visible rendering", str(event.category), occurred_at_s)
 
     def reset_visible_counters(self) -> None:
         self._counters = {label: 0 for label in self.contract.labels}
@@ -184,6 +196,10 @@ class VisibleCounterRenderer:
         if not isfinite(observed):
             raise ValueError("observation timestamp must be finite")
         cutoff = displayed - self.display_latency_s
+        # Subtraction of two finite timestamps can still overflow to -inf.
+        # Reject before consuming notifications or updating the capture clock.
+        if not isfinite(cutoff):
+            raise ValueError("render cutoff timestamp must be finite")
         mapping = self._category_to_label
         # Leave future events in the heap without scanning them each frame.
         # Keep the original inclusive 1e-12 boundary unchanged.

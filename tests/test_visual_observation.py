@@ -32,6 +32,23 @@ def test_rgb_frame_requires_tightly_packed_rgb888() -> None:
         RgbFrame(width=2, height=1, data=b"short")
 
 
+@pytest.mark.parametrize(
+    "payload",
+    [
+        bytearray(b"\x00\x00\x00"),
+        memoryview(b"\x00\x00\x00"),
+        [0, 0, 0],
+        (0, 0, 0),
+        "abc",
+        None,
+    ],
+)
+def test_rgb_frame_rejects_non_byte_payloads(payload: object) -> None:
+    # Equal-length sequences must not cross the RGB888 byte boundary.
+    with pytest.raises(ValueError, match="RGB888 frame data must be bytes"):
+        RgbFrame(width=1, height=1, data=payload)
+
+
 def test_visual_policy_observation_contains_only_frame_and_motor() -> None:
     frame = RgbFrame(width=1, height=1, data=b"\x00\x00\x00")
     observation = VisualPolicyObservation(frame=frame, motor=_motor())
@@ -75,3 +92,212 @@ def test_scheduler_rejects_invalid_rates_and_ticks() -> None:
     scheduler = VisualFrameScheduler()
     with pytest.raises(ValueError):
         scheduler.frame_index(-1)
+
+
+@pytest.mark.parametrize(
+    ("width", "height"),
+    [
+        (True, 1),
+        (1, False),
+        (1.5, 1),
+        (1, 1.5),
+        ("1", 1),
+        (1, "1"),
+        (None, 1),
+        (1, None),
+    ],
+)
+def test_rgb_frame_rejects_non_integer_dimensions(width: object, height: object) -> None:
+    with pytest.raises(ValueError, match="positive integers"):
+        RgbFrame(width=width, height=height, data=bytes(3))
+
+
+@pytest.mark.parametrize(
+    ("visual_hz", "policy_hz"),
+    [
+        (True, 100),
+        (60, False),
+        (60.5, 100),
+        (60, 100.5),
+        ("60", 100),
+        (60, "100"),
+        (float("nan"), 100),
+        (60, float("inf")),
+        (None, 100),
+        (60, None),
+    ],
+)
+def test_scheduler_rejects_non_integer_rates(visual_hz: object, policy_hz: object) -> None:
+    with pytest.raises(ValueError, match="positive integers"):
+        VisualFrameScheduler(visual_hz=visual_hz, policy_hz=policy_hz)
+
+
+@pytest.mark.parametrize(
+    "tick",
+    [True, False, 0.5, 1.5, "1", None, float("nan"), float("inf"), -1],
+)
+def test_scheduler_rejects_non_integer_policy_ticks(tick: object) -> None:
+    scheduler = VisualFrameScheduler()
+    with pytest.raises(ValueError, match="non-negative integer"):
+        scheduler.frame_index(tick)
+    with pytest.raises(ValueError, match="non-negative integer"):
+        scheduler.needs_new_frame(tick)
+    with pytest.raises(ValueError, match="non-negative integer"):
+        scheduler.frame_time_s(tick)
+    # Rejected calls must not mutate the frame-holding state.
+    assert scheduler.needs_new_frame(0)
+    assert not scheduler.needs_new_frame(0)
+
+
+class _FixedWidthIntegral(int):
+    """Simulate a valid Integral whose multiplication wraps to zero."""
+
+    def __mul__(self, other: object) -> int:
+        return 0
+
+
+def test_rgb_frame_byte_length_uses_unbounded_integer_arithmetic() -> None:
+    # Before the fix, the custom Integral multiplication returned zero and
+    # incorrectly accepted an empty frame with nonzero dimensions.
+    with pytest.raises(ValueError, match="6 bytes"):
+        RgbFrame(width=_FixedWidthIntegral(2), height=1, data=b"")
+    frame = RgbFrame(width=_FixedWidthIntegral(2), height=1, data=bytes(6))
+    assert frame.data == bytes(6)
+
+
+class _UnorderableIntegral(int):
+    """Valid Integral that cannot compare using its inherited operators."""
+
+    def __le__(self, other: object) -> bool:
+        raise TypeError("comparison deliberately unavailable")
+
+
+def test_rgb_frame_normalizes_integral_dimensions_before_comparison() -> None:
+    frame = RgbFrame(width=_UnorderableIntegral(2), height=1, data=bytes(6))
+    assert type(frame.width) is int
+    assert type(frame.height) is int
+    assert (frame.width, frame.height) == (2, 1)
+    with pytest.raises(ValueError, match="positive integers"):
+        RgbFrame(width=_UnorderableIntegral(0), height=1, data=b"")
+
+
+def test_rgb_frame_normalizes_wrapping_integral_dimensions_for_consumers() -> None:
+    frame = RgbFrame(
+        width=_FixedWidthIntegral(2),
+        height=_FixedWidthIntegral(1),
+        data=bytes(6),
+    )
+    assert type(frame.width) is int
+    assert type(frame.height) is int
+    assert frame.width * frame.height * 3 == len(frame.data)
+
+
+def test_visual_scheduler_uses_unbounded_integer_tick_arithmetic() -> None:
+    scheduler = VisualFrameScheduler(visual_hz=60, policy_hz=100)
+    tick = _FixedWidthIntegral(10)
+    assert scheduler.frame_index(tick) == 6
+    assert scheduler.needs_new_frame(tick)
+    assert not scheduler.needs_new_frame(10)
+    assert scheduler.frame_time_s(tick) == pytest.approx(6 / 60)
+
+
+def test_numpy_int64_overflow_does_not_corrupt_visual_sizes_or_ticks() -> None:
+    np = pytest.importorskip("numpy")
+    width = np.int64(2**62)
+    with np.errstate(over="ignore"):
+        # Fixed-width multiplication previously wrapped to zero.
+        with pytest.raises(ValueError, match="RGB888 frame must contain"):
+            RgbFrame(width=width, height=np.int64(4), data=b"")
+        scheduler = VisualFrameScheduler(visual_hz=60, policy_hz=100)
+        assert scheduler.frame_index(width) == (int(width) * 60) // 100
+
+
+class _UnorderableSchedulerIntegral(int):
+    """An Integral with valid int() conversion but unusable ordering."""
+
+    def __lt__(self, other: object) -> bool:
+        raise TypeError("comparison deliberately unavailable")
+
+    def __le__(self, other: object) -> bool:
+        raise TypeError("comparison deliberately unavailable")
+
+    def __gt__(self, other: object) -> bool:
+        raise TypeError("comparison deliberately unavailable")
+
+    def __ge__(self, other: object) -> bool:
+        raise TypeError("comparison deliberately unavailable")
+
+
+def test_scheduler_normalizes_integral_rates_before_comparing() -> None:
+    scheduler = VisualFrameScheduler(
+        visual_hz=_UnorderableSchedulerIntegral(60),
+        policy_hz=_UnorderableSchedulerIntegral(100),
+    )
+    assert type(scheduler.visual_hz) is int
+    assert type(scheduler.policy_hz) is int
+    assert scheduler.frame_index(10) == 6
+    with pytest.raises(ValueError, match="positive integers"):
+        VisualFrameScheduler(visual_hz=_UnorderableSchedulerIntegral(0))
+    with pytest.raises(ValueError, match="must not exceed"):
+        VisualFrameScheduler(
+            visual_hz=_UnorderableSchedulerIntegral(101),
+            policy_hz=_UnorderableSchedulerIntegral(100),
+        )
+
+
+def test_scheduler_normalizes_integral_ticks_before_comparing() -> None:
+    scheduler = VisualFrameScheduler()
+    tick = _UnorderableSchedulerIntegral(10)
+    assert scheduler.frame_index(tick) == 6
+    assert scheduler.needs_new_frame(tick)
+    assert not scheduler.needs_new_frame(10)
+    assert scheduler.frame_time_s(tick) == pytest.approx(6 / 60)
+    with pytest.raises(ValueError, match="non-negative integer"):
+        scheduler.frame_index(_UnorderableSchedulerIntegral(-1))
+    # An invalid tick must not change the held frame.
+    assert not scheduler.needs_new_frame(10)
+
+
+class _MisleadingIntIntegral(int):
+    """An int subclass whose __int__ hides its actual stored value."""
+
+    def __int__(self) -> int:
+        return 1 if self < 0 else 0
+
+
+def test_rgb_frame_uses_stored_int_subclass_dimensions() -> None:
+    frame = RgbFrame(
+        width=_MisleadingIntIntegral(2),
+        height=_MisleadingIntIntegral(1),
+        data=bytes(6),
+    )
+    assert (frame.width, frame.height) == (2, 1)
+    assert type(frame.width) is int
+    assert type(frame.height) is int
+    with pytest.raises(ValueError, match="positive integers"):
+        RgbFrame(width=_MisleadingIntIntegral(-1), height=1, data=bytes(3))
+
+
+def test_scheduler_uses_stored_int_subclass_rates() -> None:
+    scheduler = VisualFrameScheduler(
+        visual_hz=_MisleadingIntIntegral(60),
+        policy_hz=_MisleadingIntIntegral(100),
+    )
+    assert (scheduler.visual_hz, scheduler.policy_hz) == (60, 100)
+    assert scheduler.frame_index(10) == 6
+    with pytest.raises(ValueError, match="positive integers"):
+        VisualFrameScheduler(visual_hz=_MisleadingIntIntegral(-60))
+    with pytest.raises(ValueError, match="positive integers"):
+        VisualFrameScheduler(policy_hz=_MisleadingIntIntegral(-100))
+
+
+def test_scheduler_uses_stored_int_subclass_tick_without_state_corruption() -> None:
+    scheduler = VisualFrameScheduler()
+    tick = _MisleadingIntIntegral(10)
+    assert scheduler.frame_index(tick) == 6
+    assert scheduler.needs_new_frame(tick)
+    assert not scheduler.needs_new_frame(10)
+    assert scheduler.frame_time_s(tick) == pytest.approx(6 / 60)
+    with pytest.raises(ValueError, match="non-negative integer"):
+        scheduler.needs_new_frame(_MisleadingIntIntegral(-1))
+    assert not scheduler.needs_new_frame(10)

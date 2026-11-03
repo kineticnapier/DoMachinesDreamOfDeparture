@@ -3,6 +3,9 @@ from __future__ import annotations
 import random
 from dataclasses import dataclass
 from math import cos, pi, sin
+from numbers import Integral
+
+from dmdod.motor.body import _finite_body_value
 
 from dmdod.evaluation.evaluator import TargetHit
 
@@ -40,16 +43,29 @@ class PlanetVisionConfig:
     dropout_probability: float = 0.01
 
     def __post_init__(self) -> None:
-        if self.latency_s < 0.0:
+        # Reject malformed sensor values before they can corrupt sampling state.
+        names = (
+            "latency_s", "latency_jitter_s", "sample_period_s",
+            "position_noise_std", "dropout_probability",
+        )
+        # Validate all values before storing them: __float__-only inputs pass
+        # finite checks but cannot necessarily be compared or used in math.
+        values = {
+            name: _finite_body_value(getattr(self, name), error=f"{name} must be finite")
+            for name in names
+        }
+        if values["latency_s"] < 0.0:
             raise ValueError("latency_s must be non-negative")
-        if self.latency_jitter_s < 0.0:
+        if values["latency_jitter_s"] < 0.0:
             raise ValueError("latency_jitter_s must be non-negative")
-        if self.sample_period_s < 0.0:
+        if values["sample_period_s"] < 0.0:
             raise ValueError("sample_period_s must be non-negative")
-        if self.position_noise_std < 0.0:
+        if values["position_noise_std"] < 0.0:
             raise ValueError("position_noise_std must be non-negative")
-        if not 0.0 <= self.dropout_probability <= 1.0:
+        if not 0.0 <= values["dropout_probability"] <= 1.0:
             raise ValueError("dropout_probability must be between 0 and 1")
+        for name in names:
+            object.__setattr__(self, name, values[name])
 
 
 class StraightPlanetGeometryEncoder:
@@ -76,9 +92,25 @@ class StraightPlanetGeometryEncoder:
         seed: int | None = None,
         clockwise: bool = False,
     ) -> None:
+        bpm = _finite_body_value(bpm, error="bpm must be finite and positive")
         if bpm <= 0.0:
             raise ValueError("bpm must be positive")
-        self._targets = tuple(sorted(targets, key=lambda target: target.time_s))
+        validated_targets: list[TargetHit] = []
+        for target in targets:
+            time_s = _finite_body_value(
+                target.time_s, error="target time_s must be finite"
+            )
+            if not isinstance(target.key, str) or target.key not in ("left", "right"):
+                raise ValueError("target key must be 'left' or 'right'")
+            # float()-only timestamps pass finite validation but cannot be
+            # sorted or subtracted. Keep ordinary int/float targets unchanged.
+            if not isinstance(target.time_s, (int, float)):
+                validated_targets.append(TargetHit(time_s, target.key))
+            else:
+                validated_targets.append(target)
+        self._targets = tuple(
+            sorted(validated_targets, key=lambda target: target.time_s)
+        )
         self.bpm = float(bpm)
         self.config = config or PlanetVisionConfig()
         self.clockwise = bool(clockwise)
@@ -159,6 +191,25 @@ class StraightPlanetGeometryEncoder:
         *,
         active_target_index: int | None,
     ) -> PlanetGeometryObservation:
+        simulation_time_s = _finite_body_value(
+            simulation_time_s, error="simulation_time_s must be finite"
+        )
+        # Validate before the held-frame fast path: False compares equal to 0,
+        # and True to 1, but neither is a valid target index.
+        if active_target_index is not None:
+            if isinstance(active_target_index, bool) or not isinstance(active_target_index, Integral):
+                raise IndexError("active target index must be an integer")
+            # Integral subclasses may override ordering and equality. Convert
+            # before both range checks and held-frame signature comparison.
+            # An int subclass can override __int__ to select another target.
+            # Use the stored integer value for indexing and held-frame identity.
+            active_target_index = (
+                int.__int__(active_target_index)
+                if isinstance(active_target_index, int)
+                else int(active_target_index)
+            )
+            if active_target_index < 0 or active_target_index >= len(self._targets):
+                raise IndexError(f"active target index out of range: {active_target_index}")
         sample_period = self.config.sample_period_s
         can_hold = (
             sample_period > 0.0

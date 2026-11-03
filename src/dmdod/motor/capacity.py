@@ -100,9 +100,12 @@ class NKeyRealChartMotorEnv(RealChartMotorEnv):
         physics_dt_s: float = 0.001,
         **kwargs,
     ) -> None:
+        # Validate the physical key count before constructing either motor.
+        # int(4.9) or int("4") must not silently turn into a valid 4K layout.
+        key_names = n_key_names(key_count)
         super().__init__(segment, same_hand=True, control_dt_s=control_dt_s, **kwargs)
-        self.key_count = int(key_count)
-        self.key_names = n_key_names(self.key_count)
+        self.key_count = key_count
+        self.key_names = key_names
         self.motor = NKeyMotorEnv(
             self.key_count,
             control_dt_s=control_dt_s,
@@ -125,7 +128,11 @@ class NKeyRealChartMotorEnv(RealChartMotorEnv):
         if len(action.values) != self.key_count:
             raise ValueError(f"expected {self.key_count} action values")
 
-        transition = self.motor.step(action)
+        # Reuse the finite numeric commands for both physics and reward.
+        # NKeyAction.as_tuple() accepts __float__-only numeric objects, which
+        # otherwise raise TypeError in the effort calculation after stepping.
+        commands = action.as_tuple()
+        transition = self.motor.step(NKeyAction(commands))
         reward = 0.0
         for event in transition.evaluator_events:
             self._advance_overload(event.time_s)
@@ -140,7 +147,7 @@ class NKeyRealChartMotorEnv(RealChartMotorEnv):
         if not self._failed_on_miss and not self._overload.overloaded:
             self._advance_overload(now)
             reward += self._expire_misses(now)
-        reward -= self.reward_config.effort_penalty * sum(abs(value) for value in action.values)
+        reward -= self.reward_config.effort_penalty * sum(abs(value) for value in commands)
 
         all_resolved = self._all_targets_resolved()
         self._done = (
@@ -164,8 +171,10 @@ class CenterFirstNKeyTeacher:
     """Reserve unresolved future targets from the center pair outward."""
 
     def __init__(self, key_count: int) -> None:
-        self.key_count = int(key_count)
-        self.key_names = n_key_names(self.key_count)
+        # Keep the same strict even-integer boundary as NKeyMotorEnv.
+        # Coercing first accepts fractional floats and numeric strings.
+        self.key_names = n_key_names(key_count)
+        self.key_count = key_count
         self.tiers = n_key_tiers(self.key_count)
         self.reset()
 

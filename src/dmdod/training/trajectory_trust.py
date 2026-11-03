@@ -112,6 +112,8 @@ class _SquaredAccumulator:
         self.maximum = 0.0
 
     def add(self, left, right) -> None:
+        if len(left) != len(right):
+            raise ValueError("paired trajectory vectors must have equal lengths")
         for a, b in zip(left, right):
             delta = float(a) - float(b)
             self.squared += delta * delta
@@ -259,6 +261,9 @@ def probe_anchor_pair(
     mismatch_grace_s: float = 0.0,
 ) -> TrajectoryProbeResult:
     """Run two policies synchronously on independent copies of one anchor."""
+
+    if int(baseline_model.key_count) != int(candidate_model.key_count):
+        raise ValueError("paired trajectory policies must have equal key counts")
 
     env_a = _make_env(
         named.segment,
