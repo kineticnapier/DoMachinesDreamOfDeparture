@@ -31,7 +31,9 @@ def test_n_key_layout_is_center_symmetric() -> None:
     "bad",
     (4.0, 4.9, True, False, "4", None, float("nan"), float("inf")),
 )
-@pytest.mark.parametrize("factory", (n_key_names, n_key_tiers, NKeyBody, NKeyMotorEnv))
+@pytest.mark.parametrize(
+    "factory", (n_key_names, n_key_tiers, NKeyBody, NKeyMotorEnv, CenterFirstNKeyTeacher)
+)
 def test_n_key_count_rejects_implicit_integer_conversion(factory, bad) -> None:
     with pytest.raises(ValueError, match="key_count must be an even integer >= 2"):
         factory(bad)
@@ -44,6 +46,7 @@ def test_n_key_count_preserves_valid_integer_layout_and_body(count: int) -> None
     assert len(n_key_tiers(count)) == count // 2
     assert NKeyBody(count).key_names == names
     assert NKeyMotorEnv(count).key_names == names
+    assert CenterFirstNKeyTeacher(count).key_names == names
 
 
 @pytest.mark.parametrize("bad", [0, 1, 3, 5])
