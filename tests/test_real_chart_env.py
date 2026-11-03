@@ -9,6 +9,7 @@ from dmdod.keyboard import KeyEvent
 from dmdod.motor_env import TimedKeyEvent
 from dmdod.real_chart_env import RealChartMotorEnv
 from dmdod.motor.capacity import NKeyRealChartMotorEnv
+from dmdod.motor.n_key import n_key_names
 
 
 def _compiled(*, pitch: float = 100.0):
@@ -45,6 +46,23 @@ def test_real_chart_rejects_invalid_tail_before_initializing_motor(env_type, inv
     kwargs = {"key_count": 4} if env_type is NKeyRealChartMotorEnv else {}
     with pytest.raises(ValueError, match="tail_s must be finite and non-negative"):
         env_type(segment, tail_s=invalid_tail, **kwargs)
+
+
+@pytest.mark.parametrize(
+    "bad", (4.0, 4.9, True, False, "4", None, float("nan"), float("inf"))
+)
+def test_n_key_real_chart_rejects_implicit_key_count_conversion(bad) -> None:
+    segment = build_playable_segment(_compiled(), start_s=0.0, end_s=2.0)
+    with pytest.raises(ValueError, match="key_count must be an even integer >= 2"):
+        NKeyRealChartMotorEnv(segment, key_count=bad)
+
+
+def test_n_key_real_chart_preserves_valid_integer_key_count() -> None:
+    segment = build_playable_segment(_compiled(), start_s=0.0, end_s=2.0)
+    env = NKeyRealChartMotorEnv(segment, key_count=4)
+    assert env.key_count == 4
+    assert env.key_names == n_key_names(4)
+    assert env.reset().floors
 
 
 @pytest.mark.parametrize("env_type", (RealChartMotorEnv, NKeyRealChartMotorEnv))
