@@ -135,3 +135,39 @@ def test_fast_accepts_integer_commands_and_preserves_saturation():
 
     assert actual == expected
     _assert_state_matches(fast, reference)
+
+
+class _AdversarialSubsteps(int):
+    """Expose the stored integer despite overridden numeric operators."""
+
+    def __lt__(self, other):
+        raise TypeError("comparison must not be used")
+
+    def __eq__(self, other):
+        raise TypeError("equality must not be used")
+
+    def __int__(self):
+        return 0
+
+
+@pytest.mark.parametrize("count", [0, 10])
+def test_fast_substeps_int_subclass_uses_stored_count(count: int) -> None:
+    fast = _simulation(same_hand=True)
+    reference = _simulation(same_hand=True)
+
+    actual = step_held_exact(fast, 1.0, -1.0, _AdversarialSubsteps(count))
+    expected = _reference_held(reference, 1.0, -1.0, count)
+
+    assert actual == expected
+    _assert_state_matches(fast, reference)
+
+
+def test_fast_substeps_int_subclass_negative_rejected_without_mutation() -> None:
+    sim = _simulation(same_hand=False)
+    step_held_exact(sim, 1.0, 0.0, 10)
+    before = deepcopy(sim)
+
+    with pytest.raises(ValueError, match="substeps"):
+        step_held_exact(sim, 1.0, -1.0, _AdversarialSubsteps(-3))
+
+    assert sim == before
