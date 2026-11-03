@@ -14,6 +14,71 @@ def test_trust_radius_rejects_nonfinite_parameters(field: str, bad: float) -> No
         TrustRadiusController.create(**values)
 
 
+class _FloatOnlyRadius:
+    def __init__(self, value: float) -> None:
+        self.value = value
+
+    def __float__(self) -> float:
+        return self.value
+
+
+class _SpoofedFloatRadius(float):
+    def __float__(self) -> float:
+        return float("nan")
+
+
+class _SpoofedIntRadius(int):
+    def __float__(self) -> float:
+        return float("nan")
+
+
+@pytest.mark.parametrize("field", ("initial", "minimum", "reject_shrink", "safe_grow"))
+@pytest.mark.parametrize("wrapper", (_FloatOnlyRadius, _SpoofedFloatRadius))
+def test_trust_radius_normalizes_numeric_objects_before_comparison(field, wrapper) -> None:
+    values = dict(initial=0.01, minimum=0.001, reject_shrink=0.5, safe_grow=1.25)
+    values[field] = wrapper(values[field])
+    radius = TrustRadiusController.create(**values)
+    assert getattr(radius, field) == (
+        float.__float__(values[field]) if isinstance(values[field], float)
+        else values[field].value
+    )
+    assert type(getattr(radius, field)) is float
+    assert radius.current == 0.01
+
+
+def test_trust_radius_uses_stored_integer_payload_not_overridden_float() -> None:
+    radius = TrustRadiusController.create(
+        initial=0.01, minimum=0.001, reject_shrink=0.5,
+        safe_grow=_SpoofedIntRadius(2),
+    )
+    assert radius.safe_grow == 2.0
+    assert type(radius.safe_grow) is float
+
+
+@pytest.mark.parametrize("field", ("initial", "minimum", "reject_shrink", "safe_grow"))
+@pytest.mark.parametrize("bad", (True, "0.5"))
+def test_trust_radius_rejects_boolean_and_string_parameters(field, bad) -> None:
+    values = dict(initial=0.01, minimum=0.001, reject_shrink=0.5, safe_grow=1.25)
+    values[field] = bad
+    with pytest.raises(ValueError, match=rf"{field} must be finite"):
+        TrustRadiusController.create(**values)
+
+
+class _FalseComparisonRadius(float):
+    def __float__(self) -> float:
+        return 2.0
+
+    def __lt__(self, other) -> bool:
+        return False
+
+
+def test_trust_radius_rejects_invalid_stored_float_despite_overrides() -> None:
+    values = dict(initial=0.01, minimum=0.001, reject_shrink=0.5, safe_grow=1.25)
+    values["safe_grow"] = _FalseComparisonRadius(-1.0)
+    with pytest.raises(ValueError, match="safe_grow must be >= 1"):
+        TrustRadiusController.create(**values)
+
+
 def test_trust_radius_preserves_finite_parameter_behavior() -> None:
     radius = TrustRadiusController.create(
         initial=0.01, minimum=0.001, reject_shrink=0.5, safe_grow=1.25,
