@@ -38,13 +38,13 @@ class RgbFrame:
         # Reject mutable or non-binary payloads even when their length matches.
         if not isinstance(self.data, bytes):
             raise ValueError("RGB888 frame data must be bytes")
-        # Convert Integral subclasses before comparing or multiplying. Their
-        # overloaded operators may not implement ordinary integer arithmetic.
+        # Normalize Integral values before arithmetic. For int subclasses, use
+        # the stored integer rather than an overridden __int__ conversion.
         dimensions: list[int] = []
         for size in (self.width, self.height):
             if isinstance(size, bool) or not isinstance(size, Integral):
                 raise ValueError("RGB frame dimensions must be positive integers")
-            normalized = int(size)
+            normalized = int.__int__(size) if isinstance(size, int) else int(size)
             if normalized <= 0:
                 raise ValueError("RGB frame dimensions must be positive integers")
             dimensions.append(normalized)
@@ -122,13 +122,13 @@ class VisualFrameScheduler:
         visual_hz: int = DEFAULT_VISUAL_HZ,
         policy_hz: int = DEFAULT_POLICY_HZ,
     ) -> None:
-        # Compare only built-in ints. Integral subclasses may override ordering
-        # even when int(rate) is a valid positive integer.
+        # Compare built-in ints, preserving the stored value of int subclasses
+        # even when their __int__ conversion is overridden.
         rates: list[int] = []
         for rate in (visual_hz, policy_hz):
             if isinstance(rate, bool) or not isinstance(rate, Integral):
                 raise ValueError("visual_hz and policy_hz must be positive integers")
-            normalized = int(rate)
+            normalized = int.__int__(rate) if isinstance(rate, int) else int(rate)
             if normalized <= 0:
                 raise ValueError("visual_hz and policy_hz must be positive integers")
             rates.append(normalized)
@@ -145,9 +145,9 @@ class VisualFrameScheduler:
     def frame_index(self, policy_tick: int) -> int:
         if isinstance(policy_tick, bool) or not isinstance(policy_tick, Integral):
             raise ValueError("policy_tick must be a non-negative integer")
-        # Normalize before comparing as well as multiplying; custom Integral
-        # ordering and fixed-width arithmetic must not leak into the clock.
-        tick = int(policy_tick)
+        # Normalize before comparing and multiplying; custom Integral operators
+        # and overridden int-subclass __int__ must not alter the clock.
+        tick = int.__int__(policy_tick) if isinstance(policy_tick, int) else int(policy_tick)
         if tick < 0:
             raise ValueError("policy_tick must be a non-negative integer")
         return (tick * self.visual_hz) // self.policy_hz
