@@ -125,7 +125,11 @@ class NKeyRealChartMotorEnv(RealChartMotorEnv):
         if len(action.values) != self.key_count:
             raise ValueError(f"expected {self.key_count} action values")
 
-        transition = self.motor.step(action)
+        # Reuse the finite numeric commands for both physics and reward.
+        # NKeyAction.as_tuple() accepts __float__-only numeric objects, which
+        # otherwise raise TypeError in the effort calculation after stepping.
+        commands = action.as_tuple()
+        transition = self.motor.step(NKeyAction(commands))
         reward = 0.0
         for event in transition.evaluator_events:
             self._advance_overload(event.time_s)
@@ -140,7 +144,7 @@ class NKeyRealChartMotorEnv(RealChartMotorEnv):
         if not self._failed_on_miss and not self._overload.overloaded:
             self._advance_overload(now)
             reward += self._expire_misses(now)
-        reward -= self.reward_config.effort_penalty * sum(abs(value) for value in action.values)
+        reward -= self.reward_config.effort_penalty * sum(abs(value) for value in commands)
 
         all_resolved = self._all_targets_resolved()
         self._done = (

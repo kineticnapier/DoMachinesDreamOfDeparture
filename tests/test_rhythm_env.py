@@ -561,3 +561,27 @@ def test_rhythm_infers_bpm_from_float_only_target_times():
 def test_rhythm_rejects_nonfinite_float_only_target_times(bad):
     with pytest.raises(ValueError, match="target time_s must be finite"):
         RhythmMotorEnv([TargetHit(_FloatOnlyTargetTime(bad), "left")], bpm=120.0)
+
+
+class _FloatOnlyEffortCommand:
+    """Numeric policy command with __float__ but no abs/arithmetic operators."""
+
+    def __init__(self, value: float) -> None:
+        self.value = value
+
+    def __float__(self) -> float:
+        return self.value
+
+
+def test_rhythm_step_uses_normalized_motor_commands_for_effort_reward() -> None:
+    env = RhythmMotorEnv([TargetHit(0.5, "left")], bpm=120.0)
+    baseline = RhythmMotorEnv([TargetHit(0.5, "left")], bpm=120.0)
+    env.reset()
+    baseline.reset()
+
+    actual = env.step(MotorAction(_FloatOnlyEffortCommand(0.4), _FloatOnlyEffortCommand(-0.3)))
+    expected = baseline.step(MotorAction(0.4, -0.3))
+    assert actual.reward == pytest.approx(expected.reward)
+    assert actual.observation.motor == expected.observation.motor
+    assert env.motor.diagnostics() == baseline.motor.diagnostics()
+    assert env.stats == baseline.stats

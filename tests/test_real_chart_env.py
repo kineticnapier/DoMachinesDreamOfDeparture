@@ -320,3 +320,48 @@ def test_overload_six_beat_reset_at_floor_speed_boundary():
 
     assert env._overload.multipress_value == 0.0
     assert env._overload.multipress_reset_beats == 0.0
+
+
+class _FloatOnlyEffortCommand:
+    """A numeric command accepted by float(), without abs()."""
+
+    def __init__(self, value: float) -> None:
+        self.value = value
+
+    def __float__(self) -> float:
+        return self.value
+
+
+def test_real_chart_step_uses_normalized_motor_commands_for_effort_reward() -> None:
+    from dmdod.motor.env import MotorAction
+
+    segment = build_playable_segment(_compiled(), start_s=0.0, end_s=2.0)
+    env = RealChartMotorEnv(segment)
+    baseline = RealChartMotorEnv(segment)
+    env.reset()
+    baseline.reset()
+
+    actual = env.step(MotorAction(_FloatOnlyEffortCommand(0.4), _FloatOnlyEffortCommand(-0.3)))
+    expected = baseline.step(MotorAction(0.4, -0.3))
+    assert actual.reward == pytest.approx(expected.reward)
+    assert actual.observation.motor == expected.observation.motor
+    assert env.motor.diagnostics() == baseline.motor.diagnostics()
+    assert env.stats == baseline.stats
+
+
+def test_n_key_real_chart_step_uses_normalized_commands_for_effort_reward() -> None:
+    from dmdod.motor.n_key import NKeyAction
+
+    segment = build_playable_segment(_compiled(), start_s=0.0, end_s=2.0)
+    env = NKeyRealChartMotorEnv(segment, key_count=4)
+    baseline = NKeyRealChartMotorEnv(segment, key_count=4)
+    env.reset()
+    baseline.reset()
+    values = (0.4, -0.3, 0.2, -0.1)
+
+    actual = env.step(NKeyAction(tuple(_FloatOnlyEffortCommand(v) for v in values)))
+    expected = baseline.step(NKeyAction(values))
+    assert actual.reward == pytest.approx(expected.reward)
+    assert actual.observation.motor == expected.observation.motor
+    assert env.motor.diagnostics() == baseline.motor.diagnostics()
+    assert env.stats == baseline.stats

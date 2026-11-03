@@ -420,7 +420,16 @@ class RhythmMotorEnv:
         if self._done:
             raise RuntimeError("episode is done; call reset() before step()")
 
-        transition = self.motor.step(action)
+        # MotorEnv validates and normalizes commands before physical stepping.
+        # Use the same finite values for the effort term: a command may
+        # implement __float__ without implementing abs().
+        left_command = _finite_body_value(
+            action.left, error="motor commands must be finite"
+        )
+        right_command = _finite_body_value(
+            action.right, error="motor commands must be finite"
+        )
+        transition = self.motor.step(MotorAction(left_command, right_command))
         reward = 0.0
         for event in transition.evaluator_events:
             self._advance_overload(event.time_s)
@@ -435,7 +444,7 @@ class RhythmMotorEnv:
         if not self._failed_on_miss and not self._overload.overloaded:
             self._advance_overload(now)
             reward += self._expire_misses(now)
-        reward -= self.reward_config.effort_penalty * (abs(action.left) + abs(action.right))
+        reward -= self.reward_config.effort_penalty * (abs(left_command) + abs(right_command))
 
         all_resolved = self._remaining == 0
         self._done = (
